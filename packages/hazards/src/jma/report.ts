@@ -13,6 +13,7 @@ export const JMA_FAMILIES = [
 export type JmaFamily = (typeof JMA_FAMILIES)[number];
 type Node = Record<string, unknown>;
 export interface JmaWarning {
+  product: string;
   system: string;
   area: string;
   name: string;
@@ -48,6 +49,98 @@ export interface JmaReport {
   };
   nativeXml: string;
   warnings: JmaWarning[];
+}
+// 20261104 manual, 気象警報・注意報（Ｒ０６）_解説資料_別表類.xlsx, 別表3.
+const WEATHER_CODES: Partial<Record<JmaFamily, Record<string, string>>> = {
+  VPWW55: {
+    "00": "解除",
+    "10": "レベル２大雨注意報",
+    "03": "レベル３大雨警報",
+    "43": "レベル４大雨危険警報",
+    "33": "レベル５大雨特別警報",
+  },
+  VPWW56: {
+    "00": "解除",
+    "29": "レベル２土砂災害注意報",
+    "09": "レベル３土砂災害警報",
+    "49": "レベル４土砂災害危険警報",
+    "39": "レベル５土砂災害特別警報",
+  },
+  VPWW57: {
+    "00": "解除",
+    "19": "レベル２高潮注意報",
+    "08": "レベル３高潮警報",
+    "48": "レベル４高潮危険警報",
+    "38": "レベル５高潮特別警報",
+  },
+};
+const HEADERS: Record<JmaFamily, { kind: string; version: string; title: string }> = {
+  VXSE51: { kind: "震度速報", version: "1.0_0", title: "震度速報" },
+  VXSE52: { kind: "震源速報", version: "1.0_0", title: "震源に関する情報" },
+  VXSE53: { kind: "地震情報", version: "1.0_0", title: "震源・震度に関する情報" },
+  VPWW55: {
+    kind: "気象警報・注意報",
+    version: "1.5_0",
+    title: "気象警報・注意報（Ｒ０６）（大雨）",
+  },
+  VPWW56: {
+    kind: "気象警報・注意報",
+    version: "1.5_0",
+    title: "気象警報・注意報（Ｒ０６）（土砂）",
+  },
+  VPWW57: {
+    kind: "気象警報・注意報",
+    version: "1.5_0",
+    title: "気象警報・注意報（Ｒ０６）（高潮）",
+  },
+  VFVO50: { kind: "噴火警報・予報", version: "1.0_0", title: "噴火警報・予報" },
+};
+
+// Resolve every element, including unused native details, before selecting fields.
+function validateNamespaces(
+  element: Node,
+  inherited: Record<string, string>,
+  expected: string,
+): void {
+  const scope = { ...inherited };
+  for (const [key, value] of Object.entries(element)) {
+    if (key === "@_xmlns" || key.startsWith("@_xmlns:")) {
+      const prefix = key === "@_xmlns" ? "" : key.slice(8);
+      if (
+        typeof value !== "string" ||
+        ![
+          NS,
+          `${NS}informationBasis1/`,
+          `${NS}body/seismology1/`,
+          `${NS}body/meteorology1/`,
+          `${NS}body/volcanology1/`,
+          `${NS}elementBasis1/`,
+          `${NS}addition1/`,
+          "http://www.w3.org/2001/XMLSchema-instance",
+        ].includes(value)
+      )
+        throw new Error("JMA: unknown namespace declaration");
+      scope[prefix] = value;
+    }
+  }
+  if (scope[""] !== expected) throw new Error("JMA: nested namespace substitution");
+  for (const [key, value] of Object.entries(element)) {
+    if (key.startsWith("@_") || key === "#text") continue;
+    const parts = key.split(":");
+    const ns = parts.length === 2 ? scope[parts[0]!] : scope[""];
+    if (!ns) throw new Error("JMA: undeclared namespace prefix");
+    for (const child of list(value)) {
+      if (child && typeof child === "object") {
+        const childExpected =
+          key === "Head"
+            ? `${NS}informationBasis1/`
+            : key === "Body"
+              ? text(node(child)["@_xmlns"])
+              : expected;
+        validateNamespaces(node(child), scope, childExpected);
+      }
+    }
+  }
 }
 const parser = new XMLParser({
   ignoreAttributes: false,
@@ -122,6 +215,18 @@ export function readJmaReport(body: Buffer, family: JmaFamily): JmaReport {
     b["@_xmlns"] !== `${NS}body/${bodyNs}`
   )
     throw new Error("JMA: unexpected namespace");
+  validateNamespaces(r, {}, NS);
+  const header = HEADERS[family];
+  if (
+    required(h["InfoKind"]) !== header.kind ||
+    ![header.version, ...(family === "VXSE52" ? ["1.0_1"] : [])].includes(
+      required(h["InfoKindVersion"]),
+    ) ||
+    required(c["Title"]) !== header.title
+  )
+    throw new Error("JMA: unsupported operational header");
+  const status = required(c["Status"]);
+  if (!["通常", "訓練", "試験"].includes(status)) throw new Error("JMA: unknown Control status");
   const infoType = required(h["InfoType"]);
   if (!["発表", "訂正", "取消"].includes(infoType)) throw new Error("JMA: unknown InfoType");
   const result: JmaReport = {
@@ -138,7 +243,7 @@ export function readJmaReport(body: Buffer, family: JmaFamily): JmaReport {
     title: required(h["Title"]),
     headline: h["Headline"] ? text(node(h["Headline"])["Text"]) : "",
     cancelled: infoType === "取消",
-    operational: required(c["Status"]) === "通常",
+    operational: status === "通常",
     warnings: [],
   };
   for (const [key, field] of [
@@ -154,6 +259,8 @@ export function readJmaReport(body: Buffer, family: JmaFamily): JmaReport {
   if (family.startsWith("VXSE")) {
     const eq = b["Earthquake"] ? node(b["Earthquake"]) : undefined;
     const intensity = b["Intensity"] ? node(b["Intensity"]) : undefined;
+    if ((family === "VXSE51" && !intensity) || (family !== "VXSE51" && !eq))
+      throw new Error("JMA: unusable earthquake body");
     result.earthquake = {};
     if (intensity?.["Observation"]) {
       const max = text(node(intensity["Observation"])["MaxInt"]);
@@ -194,12 +301,31 @@ export function readJmaReport(body: Buffer, family: JmaFamily): JmaReport {
           const area = node(rawArea);
           for (const rawKind of list(item["Kind"])) {
             const kind = node(rawKind);
+            const noWarning = text(kind["Status"]) === "発表警報・注意報はなし";
+            const codes = WEATHER_CODES[family];
+            if (
+              codes &&
+              !noWarning &&
+              (codes[text(kind["Code"])] === undefined ||
+                codes[text(kind["Code"])] !== text(kind["Name"]))
+            )
+              throw new Error("JMA: unknown weather code or wording mismatch");
+            if (noWarning && (text(kind["Code"]) || text(kind["Name"])))
+              throw new Error("JMA: contradictory no-warning item");
             result.warnings.push({
-              system,
+              product: system,
+              system:
+                family === "VFVO50"
+                  ? required(node(item["Areas"])["@_codeType"])
+                  : system === "気象警報・注意報（市町村等）"
+                    ? "気象・地震・火山情報／市町村等"
+                    : system === "気象警報・注意報（高潮予報区）"
+                      ? "高潮予報区間"
+                      : "気象情報／府県予報区・細分区域等",
               area: required(area["Code"]),
               name: required(area["Name"]),
-              code: required(kind["Code"]),
-              wording: required(kind["Name"]),
+              code: noWarning ? "" : required(kind["Code"]),
+              wording: noWarning ? "" : required(kind["Name"]),
               status: text(kind["Status"] ?? kind["Condition"]),
             });
           }

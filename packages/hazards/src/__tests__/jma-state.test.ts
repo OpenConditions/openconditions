@@ -21,3 +21,43 @@ test("family tombstones survive serialized state and block old replay", () => {
 test("conflicting same-clock revisions refuse the whole poll", () => {
   expect(() => applyJmaReports({}, [report, { ...report, serial: "2" }])).toThrow();
 });
+
+import { applyJmaAreaReports } from "../jma/state.js";
+
+const rain = readJmaReport(
+  readFileSync(new URL("./fixtures/jma/VPWW55_JPTF_170922.xml", import.meta.url)),
+  "VPWW55",
+);
+test("area omissions and unchanged areas retain previous state across restart", () => {
+  const state = applyJmaAreaReports({ areas: {}, products: {} }, [rain]);
+  const changed = { ...rain, controlAt: "2026-02-17T01:00:00Z", warnings: [rain.warnings[0]!] };
+  const next = applyJmaAreaReports(JSON.parse(JSON.stringify(state)), [changed]);
+  expect(Object.keys(next.areas)).toHaveLength(Object.keys(state.areas).length);
+  expect(applyJmaAreaReports(next, []).areas).toEqual(next.areas);
+});
+test("per-area releases survive old and empty replays", () => {
+  const release = {
+    ...rain,
+    controlAt: "2026-02-17T01:00:00Z",
+    warnings: [{ ...rain.warnings[0]!, status: "解除" }],
+  };
+  const state = applyJmaAreaReports({ areas: {}, products: {} }, [rain, release]);
+  expect(Object.values(state.areas).filter((a) => a.ended)).toHaveLength(1);
+  expect(applyJmaAreaReports(JSON.parse(JSON.stringify(state)), [rain])).toEqual(state);
+});
+test("cancelling one earthquake family leaves the other family intact", () => {
+  const other = { ...report, family: "VXSE53" as const };
+  const state = applyJmaReports({}, [report, other]);
+  const next = applyJmaReports(state, [
+    { ...report, cancelled: true, controlAt: "2012-02-14T13:00:00Z" },
+  ]);
+  expect(Object.values(next).find((r) => r.family === "VXSE53")?.cancelled).toBe(false);
+});
+
+test("batch recovery applies older area deltas before later partial reports", () => {
+  const changed = { ...rain, controlAt: "2026-02-17T01:00:00Z", warnings: [rain.warnings[0]!] };
+  const expected = applyJmaAreaReports(applyJmaAreaReports({ areas: {}, products: {} }, [rain]), [
+    changed,
+  ]);
+  expect(applyJmaAreaReports({ areas: {}, products: {} }, [changed, rain])).toEqual(expected);
+});
