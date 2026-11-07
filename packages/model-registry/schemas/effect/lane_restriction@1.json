@@ -1605,6 +1605,9 @@
             "irwin",
             "nwcg:unique_fire_id",
             "usgs:event",
+            "jma:event",
+            "jma:message",
+            "jma:warning",
             "gdacs:event",
             "glide",
             "gvp:volcano"

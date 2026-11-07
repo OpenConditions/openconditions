@@ -1,5 +1,6 @@
 import { Bcp47, defineKind, defineVocabulary, Iso8601 } from "@openconditions/model";
 import { z } from "zod";
+import { JmaDetails } from "./jma.js";
 import { VTEC_ACTIONS, VTEC_PRODUCT_CLASSES, VTEC_SIGNIFICANCES } from "./vtec.js";
 
 const DOMAIN = "hazards";
@@ -248,99 +249,109 @@ export const alertKind = defineKind({
   domain: DOMAIN,
   version: "1.1",
   description:
-    "A warning an authority issued as a CAP message: weather warnings, hazard, civil and public-service alerts.",
+    "A warning an authority issued as CAP or native JMA XML: weather warnings, hazard, civil and public-service alerts.",
   types: ALERT_TYPES,
+  refineDetails: (details, ctx) => {
+    if ((details["cap"] !== undefined) === (details["jma"] !== undefined))
+      ctx.addIssue({
+        code: "custom",
+        message: "exactly one native CAP or JMA payload is required",
+      });
+  },
   details: (k) => ({
-    cap: z.strictObject({
-      identifier: z.string().min(1),
-      sender: z.string().min(1),
-      sent: Iso8601,
-      status: k.vocab("cap_status"),
-      msgType: k.vocab("cap_msg_type"),
-      scope: k.vocab("cap_scope"),
-      /** The messages this one updates, cancels or acknowledges. */
-      references: z
-        .array(
-          z.strictObject({
-            sender: z.string().min(1),
-            identifier: z.string().min(1),
-            sent: Iso8601,
-          }),
-        )
-        .min(1)
-        .optional(),
-      /** Profiles the message follows (`IPAWSv1.0`, `profile:CAP-CP:0.4`); they say how to read its codes. */
-      codes: z.array(z.string().min(1)).min(1).optional(),
-      category: z.array(k.vocab("cap_category")).min(1),
-      event: k.Text,
-      eventCodes: z.array(Pair).min(1).optional(),
-      responseType: z.array(k.vocab("cap_response_type")).min(1).optional(),
-      urgency: k.vocab("cap_urgency"),
-      severity: k.vocab("cap_severity"),
-      certainty: k.vocab("cap_certainty"),
-      audience: k.Text.optional(),
-      effective: Iso8601.optional(),
-      onset: Iso8601.optional(),
-      /** CAP's `expires`, verbatim; the validity ends later where the publisher states the hazard lasts longer (NWS `ends`). */
-      expires: Iso8601.optional(),
-      /** When the hazard itself is expected to end, where the publisher states it apart from `expires` (NWS `ends`). */
-      ends: Iso8601.optional(),
-      /** Publisher parameters, verbatim and in order; a valueName may repeat. */
-      parameters: z.array(Pair).min(1).optional(),
-      /** The NWS events the message acts on, read from its `VTEC` parameters. */
-      vtec: z
-        .array(
-          z.strictObject({
-            productClass: z.enum(VTEC_PRODUCT_CLASSES),
-            action: z.enum(VTEC_ACTIONS),
-            office: z.string().regex(/^[A-Z]{4}$/),
-            phenomenon: z.string().regex(/^[A-Z]{2}$/),
-            significance: z.enum(VTEC_SIGNIFICANCES),
-            eventNumber: z.number().int().nonnegative(),
-            begin: Iso8601.optional(),
-            end: Iso8601.optional(),
-          }),
-        )
-        .min(1)
-        .optional(),
-      /** The first language's link to more information. */
-      web: z.url().optional(),
-      /** Every language's own link, where the languages link to different pages. */
-      localizedWeb: z
-        .array(z.strictObject({ lang: Bcp47, url: z.url() }))
-        .min(2)
-        .optional(),
-      senderName: k.Text.optional(),
-      contact: k.Text.optional(),
-      /** The system or originator that produced the message, as the sender names it (DWD's `PVW`). */
-      source: z.string().min(1).optional(),
-      /** The sender's note on the message itself rather than the hazard (a service notice, why it was corrected). */
-      note: z.string().min(1).optional(),
-      /** The incidents the message belongs to, as the sender names them; messages of one incident share a name. */
-      incidents: z.array(z.string().min(1)).min(1).optional(),
-      /**
-       * The vertical extent of the warned areas in feet above mean sea level,
-       * as CAP states it: the lowest `altitude` and the highest `ceiling` of
-       * its areas, present only when every area states one. Without it the
-       * warning has no vertical limit.
-       */
-      altitudeFt: z.number().optional(),
-      ceilingFt: z.number().optional(),
-      /** Files the message points to (a map, an image, an audio recording); embedded content is not kept. */
-      resources: z
-        .array(
-          z.strictObject({
-            description: z.string().min(1),
-            mimeType: z.string().min(1),
-            /** Size in bytes. */
-            size: z.number().int().nonnegative().optional(),
-            uri: z.url().optional(),
-            /** SHA-1 of the file, as CAP states it. */
-            digest: z.string().min(1).optional(),
-          }),
-        )
-        .min(1)
-        .optional(),
-    }),
+    jma: JmaDetails.optional(),
+    cap: z
+      .strictObject({
+        identifier: z.string().min(1),
+        sender: z.string().min(1),
+        sent: Iso8601,
+        status: k.vocab("cap_status"),
+        msgType: k.vocab("cap_msg_type"),
+        scope: k.vocab("cap_scope"),
+        /** The messages this one updates, cancels or acknowledges. */
+        references: z
+          .array(
+            z.strictObject({
+              sender: z.string().min(1),
+              identifier: z.string().min(1),
+              sent: Iso8601,
+            }),
+          )
+          .min(1)
+          .optional(),
+        /** Profiles the message follows (`IPAWSv1.0`, `profile:CAP-CP:0.4`); they say how to read its codes. */
+        codes: z.array(z.string().min(1)).min(1).optional(),
+        category: z.array(k.vocab("cap_category")).min(1),
+        event: k.Text,
+        eventCodes: z.array(Pair).min(1).optional(),
+        responseType: z.array(k.vocab("cap_response_type")).min(1).optional(),
+        urgency: k.vocab("cap_urgency"),
+        severity: k.vocab("cap_severity"),
+        certainty: k.vocab("cap_certainty"),
+        audience: k.Text.optional(),
+        effective: Iso8601.optional(),
+        onset: Iso8601.optional(),
+        /** CAP's `expires`, verbatim; the validity ends later where the publisher states the hazard lasts longer (NWS `ends`). */
+        expires: Iso8601.optional(),
+        /** When the hazard itself is expected to end, where the publisher states it apart from `expires` (NWS `ends`). */
+        ends: Iso8601.optional(),
+        /** Publisher parameters, verbatim and in order; a valueName may repeat. */
+        parameters: z.array(Pair).min(1).optional(),
+        /** The NWS events the message acts on, read from its `VTEC` parameters. */
+        vtec: z
+          .array(
+            z.strictObject({
+              productClass: z.enum(VTEC_PRODUCT_CLASSES),
+              action: z.enum(VTEC_ACTIONS),
+              office: z.string().regex(/^[A-Z]{4}$/),
+              phenomenon: z.string().regex(/^[A-Z]{2}$/),
+              significance: z.enum(VTEC_SIGNIFICANCES),
+              eventNumber: z.number().int().nonnegative(),
+              begin: Iso8601.optional(),
+              end: Iso8601.optional(),
+            }),
+          )
+          .min(1)
+          .optional(),
+        /** The first language's link to more information. */
+        web: z.url().optional(),
+        /** Every language's own link, where the languages link to different pages. */
+        localizedWeb: z
+          .array(z.strictObject({ lang: Bcp47, url: z.url() }))
+          .min(2)
+          .optional(),
+        senderName: k.Text.optional(),
+        contact: k.Text.optional(),
+        /** The system or originator that produced the message, as the sender names it (DWD's `PVW`). */
+        source: z.string().min(1).optional(),
+        /** The sender's note on the message itself rather than the hazard (a service notice, why it was corrected). */
+        note: z.string().min(1).optional(),
+        /** The incidents the message belongs to, as the sender names them; messages of one incident share a name. */
+        incidents: z.array(z.string().min(1)).min(1).optional(),
+        /**
+         * The vertical extent of the warned areas in feet above mean sea level,
+         * as CAP states it: the lowest `altitude` and the highest `ceiling` of
+         * its areas, present only when every area states one. Without it the
+         * warning has no vertical limit.
+         */
+        altitudeFt: z.number().optional(),
+        ceilingFt: z.number().optional(),
+        /** Files the message points to (a map, an image, an audio recording); embedded content is not kept. */
+        resources: z
+          .array(
+            z.strictObject({
+              description: z.string().min(1),
+              mimeType: z.string().min(1),
+              /** Size in bytes. */
+              size: z.number().int().nonnegative().optional(),
+              uri: z.url().optional(),
+              /** SHA-1 of the file, as CAP states it. */
+              digest: z.string().min(1).optional(),
+            }),
+          )
+          .min(1)
+          .optional(),
+      })
+      .optional(),
   }),
 });

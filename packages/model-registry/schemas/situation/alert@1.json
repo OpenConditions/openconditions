@@ -373,6 +373,135 @@
           "type": "number",
           "const": 1
         },
+        "jma": {
+          "type": "object",
+          "properties": {
+            "messageUrl": {
+              "type": "string",
+              "format": "uri"
+            },
+            "family": {
+              "type": "string",
+              "enum": [
+                "VXSE51",
+                "VXSE52",
+                "VXSE53",
+                "VPWW55",
+                "VPWW56",
+                "VPWW57",
+                "VFVO50"
+              ]
+            },
+            "controlAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+            },
+            "reportAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+            },
+            "targetAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+            },
+            "validAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+            },
+            "eventId": {
+              "type": "string"
+            },
+            "serial": {
+              "type": "string"
+            },
+            "infoType": {
+              "type": "string",
+              "enum": [
+                "発表",
+                "訂正",
+                "取消"
+              ]
+            },
+            "infoKindVersion": {
+              "type": "string",
+              "minLength": 1
+            },
+            "publishingOffice": {
+              "type": "string",
+              "minLength": 1
+            },
+            "editorialOffice": {
+              "type": "string",
+              "minLength": 1
+            },
+            "nativeXml": {
+              "type": "string",
+              "minLength": 1
+            },
+            "areaSystem": {
+              "type": "string",
+              "minLength": 1
+            },
+            "areaCode": {
+              "type": "string",
+              "minLength": 1
+            },
+            "warningCode": {
+              "type": "string",
+              "minLength": 1
+            },
+            "warningWording": {
+              "type": "string",
+              "minLength": 1
+            },
+            "warningStatus": {
+              "type": "string"
+            },
+            "intensity": {
+              "type": "string",
+              "enum": [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "7",
+                "5-",
+                "5+",
+                "6-",
+                "6+",
+                "不明"
+              ]
+            },
+            "coordinateRaw": {
+              "type": "string"
+            },
+            "coordinateDescription": {
+              "type": "string"
+            },
+            "magnitudeDescription": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "messageUrl",
+            "family",
+            "controlAt",
+            "reportAt",
+            "eventId",
+            "serial",
+            "infoType",
+            "infoKindVersion",
+            "publishingOffice",
+            "editorialOffice",
+            "nativeXml"
+          ],
+          "additionalProperties": false
+        },
         "cap": {
           "type": "object",
           "properties": {
@@ -775,8 +904,7 @@
       },
       "required": [
         "kind",
-        "v",
-        "cap"
+        "v"
       ],
       "additionalProperties": false
     }
@@ -850,6 +978,9 @@
             "irwin",
             "nwcg:unique_fire_id",
             "usgs:event",
+            "jma:event",
+            "jma:message",
+            "jma:warning",
             "gdacs:event",
             "glide",
             "gvp:volcano"
@@ -2407,6 +2538,7 @@
             "minetur",
             "cbp-bwt",
             "cbsa-bwt",
+            "jma-xml",
             "cap",
             "nws",
             "meteoalarm",

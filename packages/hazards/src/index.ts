@@ -19,6 +19,9 @@ export * from "./formats/slstr-frp.js";
 export * from "./formats/usgs.js";
 export * from "./formats/wfigs.js";
 export * from "./geometry.js";
+export * from "./jma/index.js";
+
+export * from "./jma/report.js";
 export {
   freshness,
   type HazardsFeed,
