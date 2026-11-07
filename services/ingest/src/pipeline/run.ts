@@ -1472,12 +1472,17 @@ async function finishFeaturePoll(
     console.warn(`[ingest] ${src.id}: ${error}`);
     return fail(poll, "failed", error);
   }
+  if (parse.publication?.sourcePublishedAt !== undefined) {
+    if (!poll.statesComplete || poll.warning)
+      return fail(poll, "failed", "source-clock snapshot requires successful current roles");
+  }
   const shrunk = await shrinkTripped(deps.sql, src.id, parse.features.length, deps.now());
   if (shrunk) return failShrunk(poll, "features", "features", parse.features.length, shrunk);
 
   const stampOne = attributionStamp(src, new Date(poll.attempt.at));
   const stamp = (drafts: readonly RecordDraft[]) => drafts.map((d) => stampOne(d));
   const output = {
+    ...(parse.publication ? { publication: parse.publication } : {}),
     features: stamp(parse.features),
     observations: stamp(parse.observations),
     offers: stamp(parse.offers),

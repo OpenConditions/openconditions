@@ -270,3 +270,16 @@ describe("fusion", () => {
     });
   });
 });
+
+it("does not fuse a publisher snapshot past its explicit expiry", () => {
+  const c = feed("free_flow", "2026-10-01T08:00:00Z");
+  c.observation.freshness = { expiresAt: "2026-10-01T10:00:00Z" };
+  expect(winner([c])).toBeUndefined();
+});
+
+it("preserves existing on-demand expiry handling at the storage lifecycle seam", () => {
+  const c = feed("free_flow", "2026-10-01T08:00:00Z");
+  c.observation.provenance.accessMode = "on_demand";
+  c.observation.freshness = { expiresAt: "2026-10-01T10:00:00Z" };
+  expect(winner([c])).toBe("free_flow");
+});

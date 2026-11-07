@@ -1553,6 +1553,52 @@
         }
       ]
     },
+    "parking/tw": {
+      "$schema": "../schema/parking.schema.json",
+      "feeds": [
+        {
+          "subdivision": "tpe",
+          "operator": "pma",
+          "product": "parking",
+          "name": "Taipei off-street parking inventory and category availability",
+          "format": "taipei",
+          "tier": "authoritative",
+          "endpoints": {
+            "sites": {
+              "url": "https://tcgbusfs.blob.core.windows.net/blobtcmsv/TCMSV_alldesc.xml",
+              "cadenceSec": 86400
+            },
+            "status": {
+              "url": "https://tcgbusfs.blob.core.windows.net/blobtcmsv/TCMSV_allavailable.xml",
+              "cadenceSec": 300
+            }
+          },
+          "freshnessWindowSec": 1800,
+          "license": "OGDL-Taiwan-1.0",
+          "licenseUrl": "https://data.gov.tw/license",
+          "attribution": "臺北市停車管理工程處 2026 臺北市停車場資訊V2／剩餘停車位數V2；依政府資料開放授權條款第1版釋出 (https://data.gov.tw/license)",
+          "terms": {
+            "url": "https://data.gov.tw/dataset/128435",
+            "reviewedAt": "2026-11-07",
+            "note": "Dataset-specific OGDL 1.0 redistribution grant confirmed. Activation awaits independent geometry/time and snapshot withdrawal qualification. Heavy motorcycles retained in raw XML only; five canonical categories, reserved counts overlap vehicle totals. Cadences are operator choices, not a publisher SLA or quota."
+          },
+          "privacyUrl": "https://data.gov.tw/privacy",
+          "homepage": "https://data.gov.tw/dataset/128435",
+          "coverage": {
+            "countries": [
+              "TW-TPE"
+            ]
+          },
+          "disabled": {
+            "reason": "Pending source geometry/time and snapshot withdrawal qualification; see Taipei format documentation",
+            "since": "2026-11-07"
+          },
+          "taipei": {
+            "qualifiedSnapshot": false
+          }
+        }
+      ]
+    },
     "credentials": {
       "credentials": {
         "au-nsw-tfnsw": {
@@ -3990,6 +4036,76 @@
       },
       "cadenceSec": 300,
       "country": "SG"
+    },
+    {
+      "subdivision": "tpe",
+      "operator": "pma",
+      "product": "parking",
+      "name": "Taipei off-street parking inventory and category availability",
+      "format": "taipei",
+      "tier": "authoritative",
+      "endpoints": {
+        "sites": {
+          "url": "https://tcgbusfs.blob.core.windows.net/blobtcmsv/TCMSV_alldesc.xml",
+          "cadenceSec": 86400
+        },
+        "status": {
+          "url": "https://tcgbusfs.blob.core.windows.net/blobtcmsv/TCMSV_allavailable.xml",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 1800,
+      "license": "OGDL-Taiwan-1.0",
+      "licenseUrl": "https://data.gov.tw/license",
+      "attribution": "臺北市停車管理工程處 2026 臺北市停車場資訊V2／剩餘停車位數V2；依政府資料開放授權條款第1版釋出 (https://data.gov.tw/license)",
+      "terms": {
+        "url": "https://data.gov.tw/dataset/128435",
+        "reviewedAt": "2026-11-07",
+        "note": "Dataset-specific OGDL 1.0 redistribution grant confirmed. Activation awaits independent geometry/time and snapshot withdrawal qualification. Heavy motorcycles retained in raw XML only; five canonical categories, reserved counts overlap vehicle totals. Cadences are operator choices, not a publisher SLA or quota."
+      },
+      "privacyUrl": "https://data.gov.tw/privacy",
+      "homepage": "https://data.gov.tw/dataset/128435",
+      "coverage": {
+        "countries": [
+          "TW-TPE"
+        ]
+      },
+      "disabled": {
+        "reason": "Pending source geometry/time and snapshot withdrawal qualification; see Taipei format documentation",
+        "since": "2026-11-07"
+      },
+      "taipei": {
+        "qualifiedSnapshot": false
+      },
+      "id": "tw-tpe-pma-parking",
+      "domain": "parking",
+      "region": "tw",
+      "file": "feeds/parking/tw.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": true,
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "changeNotice": false,
+        "retention": true,
+        "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://data.gov.tw/dataset/128435",
+        "reviewedAt": "2026-11-07"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
+      },
+      "restricted": false,
+      "cadenceSec": 300,
+      "country": "TW"
     }
   ]
 }

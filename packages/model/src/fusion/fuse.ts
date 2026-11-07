@@ -113,9 +113,11 @@ export function fuse(
       const rank = tier === undefined ? -1 : order.indexOf(tier);
       if (rank < 0 || startOf(o) > nowMs) return [];
       if (o.validUntil !== undefined && Date.parse(o.validUntil) <= nowMs) return [];
-      // A crowd report's life is its expiry, which its evidence may not have caught up with
-      // yet (a peer's report is never re-evaluated here).
-      const expiresAt = o.provenance.origin === "crowd" ? o.freshness.expiresAt : undefined;
+      // Bulk snapshot expiries cap polling; on-demand expiry remains owned by its lifecycle seam.
+      const expiresAt =
+        o.provenance.origin === "crowd" || o.provenance.accessMode === "bulk"
+          ? o.freshness.expiresAt
+          : undefined;
       if (expiresAt !== undefined && Date.parse(expiresAt) <= nowMs) return [];
       return [{ c, rank }];
     })
