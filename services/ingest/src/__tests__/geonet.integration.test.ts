@@ -42,6 +42,7 @@ let xml = capturedXml;
 let exactXml: string | undefined;
 let historyRows: unknown[] = [];
 let recent = true;
+let malformedDiscovery = false;
 let noData = false;
 let xmlMissing = false;
 let noDetail = false;
@@ -57,7 +58,18 @@ const fakeFetch = (async (input: string | URL | Request, init?: RequestInit) => 
   if (outage) return new Response(null, { status: 503 });
   if (u.hostname === "api.geonet.org.nz") {
     expect(new Headers(init?.headers).get("Accept")).toBe("application/vnd.geo+json;version=2");
-    if (u.pathname === "/quake") return new Response(collection(recent ? [feature] : []));
+    if (u.pathname === "/quake")
+      return new Response(
+        collection(
+          recent
+            ? [
+                malformedDiscovery
+                  ? { ...feature, properties: { ...feature.properties, quality: ["best"] } }
+                  : feature,
+              ]
+            : [],
+        ),
+      );
     if (u.pathname.includes("/history/")) return new Response(collection(historyRows));
     if (noData || noDetail) return new Response(null, { status: 204 });
     return new Response(collection([feature]));
@@ -283,6 +295,7 @@ describe("GeoNet bounded worker and durable publication lifecycle", () => {
     xml = xml.replace("<type>quarry blast</type>", "<type>earthquake</type>");
     noDetail = false;
     recent = true;
+    malformedDiscovery = false;
     now = "2026-11-07T12:46:00Z";
     expect((await poll()).error).toBeUndefined();
     expect((await kept()).tombstone_reason).toBeNull();
@@ -294,6 +307,7 @@ describe("GeoNet bounded worker and durable publication lifecycle", () => {
     expect((await kept()).tombstone_reason).toBe("withdrawn");
     feature.properties.quality = "best";
     recent = true;
+    malformedDiscovery = false;
     now = "2026-11-07T13:00:00Z";
     expect((await poll()).error).toBeUndefined();
     expect((await kept()).tombstone_reason).toBeNull();
@@ -328,6 +342,7 @@ describe("GeoNet conflicting and malformed revisions retain publication atomical
   const cases = [
     "stale best history",
     "stale deleted history",
+    "bad discovery quality",
     "bad JSON depth",
     "bad JSON mmi",
     "bad JSON clock",
@@ -351,6 +366,7 @@ describe("GeoNet conflicting and malformed revisions retain publication atomical
     exactXml = undefined;
     historyRows = [];
     recent = true;
+    malformedDiscovery = false;
     noData = false;
     noDetail = false;
     outage = false;
@@ -370,6 +386,7 @@ describe("GeoNet conflicting and malformed revisions retain publication atomical
       else h.properties.quality = "deleted";
       historyRows = [h];
     }
+    if (scenario === "bad discovery quality") malformedDiscovery = true;
     if (scenario === "bad JSON depth") feature.properties.depth = "broken";
     if (scenario === "bad JSON mmi") feature.properties.mmi = "broken";
     if (scenario === "bad JSON clock") feature.properties.modificationTime = "broken";
@@ -416,6 +433,7 @@ describe("GeoNet conflicting and malformed revisions retain publication atomical
     expect(status.at(-1)?.outcome).toBe("failed");
   });
   it("accepts a newer exact earthquake after an older window reclassification", async () => {
+    malformedDiscovery = false;
     Object.assign(feature, structuredClone(captured));
     historyRows = [];
     noData = false;

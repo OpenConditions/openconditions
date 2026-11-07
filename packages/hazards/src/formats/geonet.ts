@@ -265,7 +265,8 @@ function validateFeature(raw: Rec): void {
     raw["type"] !== "Feature" ||
     typeof p["publicID"] !== "string" ||
     !GEONET_ID.test(p["publicID"]) ||
-    !["best", "automatic", "preliminary", "deleted"].includes(String(p["quality"]))
+    typeof p["quality"] !== "string" ||
+    !["best", "automatic", "preliminary", "deleted"].includes(p["quality"])
   )
     throw new Error("Invalid GeoNet identity/quality");
   if (!geonetInstant(p["time"])) throw new Error("Invalid GeoNet time");

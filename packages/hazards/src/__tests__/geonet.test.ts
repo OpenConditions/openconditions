@@ -22,6 +22,16 @@ const newest = () => history()[0]!;
 const props = (f: Record<string, unknown>) => f["properties"] as Record<string, unknown>;
 
 describe("GeoNet exact authority and preferred solutions", () => {
+  it.each([["best"], ["deleted"], {}, null, 1])(
+    "rejects a non-string discovery quality %j",
+    (quality) => {
+      const f = newest();
+      props(f)["quality"] = quality;
+      expect(() =>
+        geonetFeatures(Buffer.from(JSON.stringify({ type: "FeatureCollection", features: [f] }))),
+      ).toThrow("quality");
+    },
+  );
   it("retains the exact bounded capture bytes and named extras policy", () => {
     const receipt = JSON.parse(body("captures.json").toString("utf8"));
     for (const capture of receipt.captures) {
