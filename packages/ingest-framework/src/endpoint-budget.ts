@@ -23,8 +23,10 @@ export function budgetFetch(
       const response = await Promise.race([base(url, { ...init, signal }), deadline]);
       const declared = Number(response.headers.get("content-length"));
       if (declared > budget.maxBytes) {
-        await response.body?.cancel();
-        throw new Error("endpoint byte budget exceeded");
+        const error = new Error("endpoint byte budget exceeded");
+        controller.abort(error);
+        void response.body?.cancel().catch(() => {});
+        throw error;
       }
       if (!response.body) {
         clear();

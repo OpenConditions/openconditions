@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { productionRegistry } from "@openconditions/model-registry";
+import { parkregAcquisitionHash } from "@openconditions/parking";
 import { syncSources } from "@openconditions/storage";
 import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import Fastify, { type FastifyInstance } from "fastify";
@@ -20,7 +21,11 @@ const captured = JSON.parse(
     "utf8",
   ),
 );
-const feed = { ...repoFeed("no-vegvesen-parking"), parkreg: { qualified: true } };
+const base = repoFeed("no-vegvesen-parking");
+const feed = {
+  ...base,
+  parkreg: { qualified: true, acquisitionSha256: parkregAcquisitionHash(base) },
+};
 delete feed.disabled;
 let db: TestDatabase;
 let app: FastifyInstance;
@@ -30,20 +35,29 @@ let map = structuredClone(records);
 let status = 200;
 let malformed = false;
 let inventoryFail = false;
+let conditionalMode = "off";
+let unexpected304 = false;
 const roles = createRoleState();
 const now = () => new Date(Date.parse("2026-11-07T12:00:00Z") + day * 86400000);
 const child = createParseProcess({ minBytes: 0 });
-const upstream = (async (url: string | URL | Request) =>
-  new Response(
+const upstream = (async (url: string | URL | Request, init?: RequestInit) => {
+  const kart = String(url).includes("datafelter=kart");
+  const conditional = new Headers(init?.headers).has("if-none-match");
+  if (
+    unexpected304 ||
+    (conditional && (conditionalMode === "all" || (conditionalMode === "mixed" && kart)))
+  )
+    return new Response(null, { status: 304 });
+  return new Response(
     malformed
       ? "["
-      : JSON.stringify(
-          String(url).includes("datafelter=kart")
-            ? map.map((r: { id: number }) => ({ id: r.id }))
-            : records,
-        ),
-    { status: inventoryFail && String(url).includes("datafelter=kart") ? 503 : status },
-  )) as typeof fetch;
+      : JSON.stringify(kart ? map.map((r: { id: number }) => ({ id: r.id })) : records),
+    {
+      status: inventoryFail && kart ? 503 : status,
+      headers: { etag: "v1" },
+    },
+  );
+}) as typeof fetch;
 const tick = () =>
   runSource(feed, {
     sql: db.sql,
@@ -79,6 +93,9 @@ afterAll(async () => {
 test("qualified worker snapshot reaches public API and only complete snapshots withdraw", async () => {
   expect((await tick()).error).toBeUndefined();
   expect(roles.payloads).toEqual({});
+  expect(roles.urls).toEqual({});
+  expect(roles.items).toEqual({});
+  expect(roles.answers).toEqual({});
   const original = await live();
   expect(original).toHaveLength(2);
   const response = await app.inject({
@@ -140,6 +157,7 @@ test("qualified worker snapshot reaches public API and only complete snapshots w
 
 test("qualified snapshot cannot withdraw through held-role fallback and no-retention drops old caches", async () => {
   feed.rawRetention = "reference";
+  feed.parkreg.acquisitionSha256 = parkregAcquisitionHash(feed);
   inventoryFail = false;
   records = structuredClone(captured);
   map = structuredClone(captured);
@@ -151,10 +169,60 @@ test("qualified snapshot cannot withdraw through held-role fallback and no-reten
   records[0].deaktivert = { deaktivertTidspunkt: now().toISOString() };
   expect((await tick()).error).toMatch(/successful acquisition/);
   expect(await live()).toHaveLength(2);
+  const body = { data: Buffer.from("excluded assessment"), bytes: 19, gzipped: false };
+  roles.items["inventory"] = new Map([["old", { at: 0, body }]]);
+  roles.answers["inventory"] = { old: { at: 0, body } };
   feed.rawRetention = "none";
+  feed.parkreg.acquisitionSha256 = parkregAcquisitionHash(feed);
   inventoryFail = false;
   records = structuredClone(captured);
   day++;
   expect((await tick()).error).toBeUndefined();
   expect(roles.payloads).toEqual({});
+  expect(roles.urls).toEqual({});
+  expect(roles.items).toEqual({});
+  expect(roles.answers).toEqual({});
+}, 60000);
+
+test("worker rejects equal-ID organization subsets and preserves last-good", async () => {
+  day++;
+  const original = await live();
+  const endpoints = structuredClone(feed.endpoints);
+  const receipt = feed.parkreg.acquisitionSha256;
+  for (const endpoint of Object.values(feed.endpoints)) endpoint.url += "&orgnr=998472156";
+  feed.parkreg.acquisitionSha256 = parkregAcquisitionHash(feed);
+  records = structuredClone(captured).slice(0, 1);
+  map = structuredClone(records);
+  expect((await tick()).error).toMatch(/national acquisition/);
+  expect(await live()).toEqual(original);
+  feed.endpoints = endpoints;
+  feed.parkreg.acquisitionSha256 = receipt;
+}, 60000);
+
+test("no-retention re-evaluates activation/end dates across mixed and all conditional polls", async () => {
+  for (const mode of ["mixed", "all"]) {
+    conditionalMode = "off";
+    records = structuredClone(captured);
+    map = structuredClone(records);
+    day++;
+    records[0].aktivVersjon.sluttidspunkt = new Date(now().getTime() + 86400000).toISOString();
+    records[1].aktivVersjon.aktiveringstidspunkt = records[0].aktivVersjon.sluttidspunkt;
+    expect((await tick()).error).toBeUndefined();
+    expect(await live()).toEqual([`oc:feature:${feed.id}:32771`]);
+    day++;
+    conditionalMode = mode;
+    expect((await tick()).error).toBeUndefined();
+    expect(await live()).toEqual([`oc:feature:${feed.id}:98316`]);
+    expect(roles.payloads).toEqual({});
+    expect(roles.urls).toEqual({});
+    expect(roles.items).toEqual({});
+    expect(roles.answers).toEqual({});
+    const original = await live();
+    day++;
+    unexpected304 = true;
+    expect((await tick()).error).toBeDefined();
+    expect(await live()).toEqual(original);
+    unexpected304 = false;
+  }
+  conditionalMode = "off";
 }, 60000);

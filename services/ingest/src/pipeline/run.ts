@@ -840,7 +840,12 @@ async function runAttempt(
         }
         // The walk's kept items are renewed even when its snapshot is refused:
         // they are the publisher's answers, and the next poll builds on them.
-        if (result.status === "partial" && deps.roles && result.kept) {
+        if (
+          src.rawRetention !== "none" &&
+          result.status === "partial" &&
+          deps.roles &&
+          result.kept
+        ) {
           deps.roles.items[role] = result.kept;
         }
         if (result.status === "partial" && eachPartial) {
@@ -872,7 +877,8 @@ async function runAttempt(
           }
           // The items kept are the role's own cache of the publisher's
           // answers, renewed whatever becomes of this poll.
-          if (deps.roles && result.kept) deps.roles.items[role] = result.kept;
+          if (src.rawRetention !== "none" && deps.roles && result.kept)
+            deps.roles.items[role] = result.kept;
         }
         if (result.status === "no-endpoint") {
           await recordStatus({

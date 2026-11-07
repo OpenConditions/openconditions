@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import {
   emptyParseOutput,
   type FeedPayloads,
@@ -45,6 +46,46 @@ function collection(payloads: FeedPayloads, role: string): Map<number, Record<st
   return byId;
 }
 
+/** Receipt binding: requalify after any endpoint, authorization, pacing or retention change. */
+export function parkregAcquisitionHash(feed: ParkingCatalogFeed): string {
+  return createHash("sha256")
+    .update(
+      JSON.stringify({
+        endpoints: feed.endpoints,
+        auth: feed.auth,
+        requestLimits: feed.requestLimits,
+        rawRetention: feed.rawRetention,
+      }),
+    )
+    .digest("hex");
+}
+
+function nationalAcquisition(feed: ParkingCatalogFeed): boolean {
+  const base =
+    "https://parkreg-open.atlas.vegvesen.no/ws/no/vegvesen/veg/parkeringsomraade/parkeringsregisteret/v1/parkeringsomraade?datafelter=";
+  if (
+    Object.keys(feed.endpoints).sort().join(",") !== "inventory,main" ||
+    feed.catalog ||
+    feed.auth
+  )
+    return false;
+  for (const [role, projection] of [
+    ["main", "alle"],
+    ["inventory", "kart"],
+  ]) {
+    const endpoint = feed.endpoints[role!];
+    if (!endpoint || endpoint.url !== base + projection) return false;
+    // Only timing/size limits may accompany the fixed ordinary GET collection.
+    if (
+      Object.keys(endpoint).some(
+        (key) => !["url", "cadenceSec", "timeoutSec", "budget"].includes(key),
+      )
+    )
+      return false;
+  }
+  return feed.parkreg?.acquisitionSha256 === parkregAcquisitionHash(feed);
+}
+
 /** Ordinary national collections only. Historical versions, contacts and assessment/media links are never projected. */
 export function parseVegvesenParkreg(
   feed: ParkingCatalogFeed,
@@ -53,6 +94,8 @@ export function parseVegvesenParkreg(
 ): ParseOutput {
   if (feed.parkreg?.qualified !== true)
     throw new Error("parkreg: national load has not been qualified");
+  if (!nationalAcquisition(feed))
+    throw new Error("parkreg: national acquisition requires qualification");
   const rows = collection(payloads, "main");
   const inventory = collection(payloads, "inventory");
   if (rows.size !== inventory.size || [...rows.keys()].some((id) => !inventory.has(id)))

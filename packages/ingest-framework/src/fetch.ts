@@ -1184,7 +1184,15 @@ export async function fetchEndpoint(
   opts: FetchOptions = {},
 ): Promise<FetchResult> {
   const { unzip } = feedEndpoint(feed, role);
-  const result = await fetchRole(feed, role, baseFetch, opts);
+  const none = feed.rawRetention === "none";
+  const state = opts.state ?? sharedFetchState;
+  if (none) {
+    for (const key of state.conditional.keys()) {
+      if (key.startsWith(`${feed.id}#`)) state.conditional.delete(key);
+    }
+  }
+  const result = await fetchRole(feed, role, baseFetch, none ? { ...opts, kept: undefined } : opts);
+  if (none && (result.status === "fetched" || result.status === "partial")) delete result.kept;
   return unzip ? unzipped(result, unzip) : result;
 }
 
@@ -1217,7 +1225,19 @@ async function fetchRole(
   const transport = endpoint.impersonate
     ? guardedImpersonatingFetch(opts.impersonation)
     : baseFetch;
-  const base = endpoint.budget ? budgetFetch(transport, endpoint.budget) : transport;
+  const bounded = endpoint.budget ? budgetFetch(transport, endpoint.budget) : transport;
+  const base: FetchFn =
+    feed.rawRetention === "none"
+      ? async (url, init) => {
+          const headers = new Headers(init?.headers);
+          headers.delete("if-none-match");
+          headers.delete("if-modified-since");
+          const response = await bounded(url, { ...init, headers });
+          // No prior body exists to reconstruct a complete snapshot. Retry once;
+          // a repeated 304 remains a failure and cannot authorize replacement.
+          return response.status === 304 ? bounded(url, { ...init, headers }) : response;
+        }
+      : bounded;
   const authorized = makeAuthorizedFetch(feed, base, env, Date.now, opts.grants);
   // A bulk fetch keeps to the feed's stated rate here; a cell read is paced
   // by the on-demand request budget instead. A followed URL is not the
@@ -1268,7 +1288,16 @@ async function fetchRole(
       }
       const sources = opts.eachSource.map((buffer, i) => ({ buffer, url: sourceUrls[i]! }));
       return fanoutResult(
-        await fetchWalk(each.links, sources, opts.kept, at, fetchFn, init, redact, tolerant),
+        await fetchWalk(
+          each.links,
+          sources,
+          feed.rawRetention === "none" ? undefined : opts.kept,
+          at,
+          fetchFn,
+          init,
+          redact,
+          tolerant,
+        ),
       );
     }
     const { items, refused } = eachItems(each, opts.eachSource);
@@ -1276,7 +1305,7 @@ async function fetchRole(
       console.warn(`[ingest] ${feed.id}: ${role}: ${refused} items refused (not a plain path)`);
     }
     const urls = items.map((item) => resolveEachUrl(feed, role, item, env, at));
-    if (each.keepSec === undefined) {
+    if (each.keepSec === undefined || feed.rawRetention === "none") {
       return fanoutResult(await fetchEach(urls, fetchFn, init, redact, tolerant));
     }
     const keepMs = each.keepSec * 1000;
@@ -1421,14 +1450,22 @@ async function fetchRole(
   const provisional: FetchState = {
     conditional: new Map(
       urls.flatMap((url) => {
-        const prior = state.conditional.get(cacheKey(url));
+        const prior =
+          feed.rawRetention === "none" ? undefined : state.conditional.get(cacheKey(url));
         return prior ? [[url, prior] as const] : [];
       }),
     ),
     sourceConfig: state.sourceConfig,
     pacers: state.pacers,
   };
-  const results = await fetchAllBounded(urls, fetchFn, init, provisional, urls.length > 1, redact);
+  const results = await fetchAllBounded(
+    urls,
+    fetchFn,
+    init,
+    feed.rawRetention === "none" ? undefined : provisional,
+    urls.length > 1,
+    redact,
+  );
 
   if (results.every((r) => !r.changed)) {
     return { status: "not-modified", validatedAtNetwork: true };
@@ -1436,6 +1473,7 @@ async function fetchRole(
   return {
     status: "fetched",
     accept: () => {
+      if (feed.rawRetention === "none") return;
       // A URL the endpoint no longer names (yesterday's dated URL, a dropped
       // expand item) is never asked again: its validators go.
       for (const key of state.conditional.keys()) {

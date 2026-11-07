@@ -1,11 +1,18 @@
+import { parkregAcquisitionHash } from "@openconditions/parking";
+import { repoFeed } from "../helpers/catalog.js";
 import type { SkipExemptions, SkipSamples } from "./sample.js";
+
+const national = repoFeed("no-vegvesen-parking");
 
 const json = (value: unknown) => JSON.stringify(value);
 
 export const SAMPLES: SkipSamples = {
   "parking/vegvesen-parkreg": {
     reason: "unknown_value",
-    feed: { parkreg: { qualified: true } },
+    feed: {
+      ...national,
+      parkreg: { qualified: true, acquisitionSha256: parkregAcquisitionHash(national) },
+    },
     payloads: {
       inventory: json([{ id: 1 }]),
       main: json([

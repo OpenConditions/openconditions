@@ -1,10 +1,13 @@
 import { expect, test } from "vitest";
-import { parseVegvesenParkreg } from "../formats/vegvesen-parkreg.js";
+import { parkregAcquisitionHash, parseVegvesenParkreg } from "../formats/vegvesen-parkreg.js";
 import { catalogFeed, fixture, parseContext } from "./helpers/parking-feed.js";
 import { sealFailures } from "./helpers/seal.js";
 
 const rows = () => JSON.parse(fixture("vegvesen-parkreg.json").toString());
-const feed = () => ({ ...catalogFeed("no-vegvesen-parking"), parkreg: { qualified: true } });
+const feed = () => {
+  const base = catalogFeed("no-vegvesen-parking");
+  return { ...base, parkreg: { qualified: true, acquisitionSha256: parkregAcquisitionHash(base) } };
+};
 const parse = (records = rows(), map = records) =>
   parseVegvesenParkreg(
     feed(),
@@ -123,4 +126,34 @@ test("EV and disabled subsets overlap rather than adding spaces, with a per-subs
   });
   r[0].aktivVersjon.antallLadeplasser = 11;
   expect(() => parse(r)).toThrow(/subset/);
+});
+
+test("equal-ID organization subsets and substituted national acquisition cannot authorize replacement", () => {
+  for (const change of ["&orgnr=998472156", "&extra=1", "&datafelter=kart", "/historikk"]) {
+    const scoped = feed();
+    for (const endpoint of Object.values(scoped.endpoints)) endpoint.url += change;
+    scoped.parkreg.acquisitionSha256 = parkregAcquisitionHash(scoped);
+    expect(() =>
+      parseVegvesenParkreg(
+        scoped,
+        {
+          main: [Buffer.from(JSON.stringify(rows().slice(0, 1)))],
+          inventory: [Buffer.from(JSON.stringify([{ id: rows()[0].id }]))],
+        },
+        parseContext("2026-11-07T12:00:00Z"),
+      ),
+    ).toThrow(/national acquisition/);
+  }
+});
+
+test("qualification is invalidated when a reviewed acquisition budget changes", () => {
+  const changed = feed();
+  changed.endpoints["main"]!.budget!.maxBytes++;
+  expect(() =>
+    parseVegvesenParkreg(
+      changed,
+      { main: [Buffer.from("[]")], inventory: [Buffer.from("[]")] },
+      parseContext("2026-11-07T12:00:00Z"),
+    ),
+  ).toThrow(/national acquisition/);
 });

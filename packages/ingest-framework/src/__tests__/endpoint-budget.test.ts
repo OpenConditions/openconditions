@@ -72,3 +72,33 @@ test("budget applies to the selected impersonation transport too", async () => {
     ),
   ).rejects.toThrow(/budget/);
 });
+
+test("declared overrun rejects promptly even when transport cancellation never settles", async () => {
+  let aborted: AbortSignal | undefined;
+  let cancelled = false;
+  const request = budgetFetch(
+    async (_url, init) => {
+      aborted = init?.signal ?? undefined;
+      return new Response(
+        new ReadableStream({
+          cancel() {
+            cancelled = true;
+            return new Promise(() => {});
+          },
+        }),
+        { headers: { "content-length": "5" } },
+      );
+    },
+    { maxBytes: 4, deadlineSec: 0.01 },
+  )("https://example.test");
+  const result = await Promise.race([
+    request.then(
+      () => "resolved",
+      (error) => String(error),
+    ),
+    new Promise<string>((resolve) => setTimeout(() => resolve("hung"), 100)),
+  ]);
+  expect(result).toMatch(/byte budget exceeded/);
+  expect(cancelled).toBe(true);
+  expect(aborted?.aborted).toBe(true);
+});
