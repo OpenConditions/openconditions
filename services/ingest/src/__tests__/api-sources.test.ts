@@ -4,7 +4,7 @@ import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { registerApiRoutes } from "../api/routes.js";
 import { registerScope } from "../api/scope.js";
-import { testFeed } from "./helpers/catalog.js";
+import { repoFeed, testFeed } from "./helpers/catalog.js";
 
 const TOKEN = "t".repeat(32);
 
@@ -275,4 +275,28 @@ describe("GET /sources without an operator token configured", () => {
     const body = (await open.inject({ method: "GET", url: "/sources" })).json() as Body;
     expect(body.crowd).toBeUndefined();
   });
+});
+
+it("publishes MIMIT licence and credit when its activation gate is cleared", async () => {
+  const mimit = { ...repoFeed("it-mimit-fuel"), disabled: undefined };
+  const api = Fastify();
+  registerScope(api, TOKEN);
+  registerApiRoutes(api, {} as postgres.Sql, {
+    registry: productionRegistry(),
+    catalog: { sources: [mimit] },
+  });
+  try {
+    const response = await api.inject({ method: "GET", url: "/sources" });
+    expect(response.statusCode).toBe(200);
+    expect(response.json().sources).toEqual([
+      expect.objectContaining({
+        id: "it-mimit-fuel",
+        license: "LicenseRef-IODL-2.0",
+        attribution: "Ministero delle Imprese e del Made in Italy, Osservaprezzi carburanti",
+        restricted: false,
+      }),
+    ]);
+  } finally {
+    await api.close();
+  }
 });

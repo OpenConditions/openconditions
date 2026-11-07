@@ -28,6 +28,8 @@ const HOUR = 3600;
  * Spanish stations sell as their biodiesel.
  */
 export const FUEL_GRADES = [
+  // Petrol with no declared octane or ethanol blend (MIMIT Benzina).
+  "petrol",
   "e5",
   "e10",
   "sp98",

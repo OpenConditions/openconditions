@@ -1466,13 +1466,18 @@ async function finishFeaturePoll(
   skipped: SkipCounts,
 ): Promise<RunResult> {
   const { src, deps } = poll;
-  if (heldPayload && parse.features.length === 0) {
+  if (parse.featureSnapshot && (!poll.statesComplete || poll.warning))
+    return fail(poll, "failed", "dated feature snapshot requires all roles freshly validated");
+  if (heldPayload && parse.features.length === 0 && !(parse.featureSnapshot && !parse.rejected)) {
     const error =
       "features feed produced zero features from a non-empty payload — skipping the write to keep the last good publication";
     console.warn(`[ingest] ${src.id}: ${error}`);
     return fail(poll, "failed", error);
   }
-  const shrunk = await shrinkTripped(deps.sql, src.id, parse.features.length, deps.now());
+  const shrunk =
+    (parse.featureSnapshot?.complete ?? true)
+      ? await shrinkTripped(deps.sql, src.id, parse.features.length, deps.now())
+      : undefined;
   if (shrunk) return failShrunk(poll, "features", "features", parse.features.length, shrunk);
 
   const stampOne = attributionStamp(src, new Date(poll.attempt.at));
@@ -1492,7 +1497,10 @@ async function finishFeaturePoll(
       durationMs: Date.now() - poll.start,
       now: deps.now(),
       model: writeModel(deps.model),
-      statesComplete: poll.statesComplete,
+      statesComplete:
+        poll.statesComplete &&
+        (parse.featureSnapshot?.statesComplete ?? parse.featureSnapshot?.complete ?? true),
+      ...(parse.featureSnapshot ? { featureSnapshot: parse.featureSnapshot } : {}),
       ...(poll.warning ? { warning: poll.warning } : {}),
     });
     poll.attempt.closed = true;

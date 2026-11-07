@@ -13,7 +13,14 @@ import { type FuelGrade, type FuelUnit, GRADE_UNIT } from "./grades.js";
 /** What a fuel record takes from its feed. */
 export type FuelFeed = Pick<
   CatalogFeed,
-  "id" | "format" | "attribution" | "license" | "licenseUrl" | "accessMode" | "onDemand"
+  | "id"
+  | "format"
+  | "attribution"
+  | "license"
+  | "licenseUrl"
+  | "accessMode"
+  | "onDemand"
+  | "snapshot"
 >;
 
 /** One product a station sells: a grade, and how it is priced when a source tells several apart. */

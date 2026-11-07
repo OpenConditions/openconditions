@@ -6,6 +6,7 @@ import {
   type IngestDomain,
 } from "@openconditions/ingest-framework";
 import { parseEcontrol } from "./formats/econtrol.js";
+import { parseMimit } from "./formats/mimit.js";
 import { parseMinetur } from "./formats/minetur.js";
 import { parseOverpassFuel } from "./formats/overpass.js";
 import { parsePrixCarburants } from "./formats/prix-carburants.js";
@@ -46,6 +47,14 @@ function stations(
 }
 
 const FORMATS: FeedFormat[] = [
+  {
+    id: "mimit",
+    kind: "features",
+    products: FUEL_PRODUCTS,
+    produces: { kinds: ["fuel_station"], properties: ["fuel.price"] },
+    endpoints: { registry: { required: true }, prices: { required: true } },
+    parse: parseMimit,
+  },
   stations("minetur", parseMinetur),
   stations("prix-carburants", parsePrixCarburants),
   stations("tankerkoenig", parseTankerkoenig, PRODUCES_OPEN_STATUS),

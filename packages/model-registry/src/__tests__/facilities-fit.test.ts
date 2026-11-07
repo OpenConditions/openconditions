@@ -37,7 +37,7 @@ const fitFormats: RegistryModule = {
   entries: [
     extendVocabulary({
       vocabulary: "source_format",
-      values: ["autobahn-parking", "mimit"],
+      values: ["autobahn-parking"],
     }),
   ],
 };

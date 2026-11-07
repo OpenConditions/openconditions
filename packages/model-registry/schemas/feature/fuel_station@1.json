@@ -641,6 +641,7 @@
               "grade": {
                 "type": "string",
                 "enum": [
+                  "petrol",
                   "e5",
                   "e10",
                   "sp98",
@@ -2421,6 +2422,7 @@
             "econtrol",
             "prix-carburants",
             "minetur",
+            "mimit",
             "cbp-bwt",
             "cbsa-bwt",
             "cap",
