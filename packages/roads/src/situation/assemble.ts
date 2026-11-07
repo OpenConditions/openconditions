@@ -603,7 +603,9 @@ export function situationDrafts(
         effects,
         ...(split ? { groupId: group.situationId } : {}),
         details,
-        ...(externalIds.length > 0 ? { externalIds } : {}),
+        ...([...externalIds, ...(hints?.externalIds ?? [])].length > 0
+          ? { externalIds: [...externalIds, ...(hints?.externalIds ?? [])] }
+          : {}),
         location,
         ...(relations.length > 0 ? { relations } : {}),
         provenance: {

@@ -548,6 +548,20 @@ async function fetchPaginated(
         xml: pg.xmlLists === true,
         firstPage: page === 0,
       });
+      // ArcGIS can return a short page while still reporting truncation. Such
+      // a page cannot prove completeness; offset advancement would skip rows.
+      if (!pg.xmlLists) {
+        const doc = JSON.parse(buffer.toString("utf8"));
+        if (doc?.error) throw new Error(`pagination: ${feedId} provider returned an error page`);
+        if (recordsPath === "features" && doc?.type !== "FeatureCollection") {
+          throw new Error(`pagination: ${feedId} expected a GeoJSON FeatureCollection`);
+        }
+        const limited =
+          doc?.exceededTransferLimit === true || doc?.properties?.exceededTransferLimit === true;
+        if (limited && count < pg.pageSize) {
+          throw new Error(`pagination: ${feedId} short page exceeded transfer limit`);
+        }
+      }
       if (count > 0) {
         out.push(buffer);
         urls.push(url);

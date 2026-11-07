@@ -31,6 +31,7 @@ import {
 import { parseTrafikverket } from "./trafikverket.js";
 import type { SourceDescriptor } from "./types.js";
 import { parseVicDisruptions } from "./vic-disruptions.js";
+import { parseWaWebeoc, parseWaWebeocSnapshot } from "./wa-webeoc.js";
 import { parseWzdx } from "./wzdx.js";
 
 /** What a roads feed is parsed as: the catalogue fields its parser reads. */
@@ -55,6 +56,7 @@ const SITUATION_PARSERS = {
   digitraffic: parseDigitraffic,
   "ohgo-events": parseOhgoEvents as SituationParser,
   "vic-disruptions": parseVicDisruptions as SituationParser,
+  "wa-webeoc": parseWaWebeoc,
 } satisfies Record<string, SituationParser>;
 
 /** Every situation format; the wire formats `SITUATION_PARSERS` reads. */
@@ -83,6 +85,7 @@ const SNAPSHOT_REPORTERS: Record<
   digitraffic: parseDigitrafficSnapshot,
   datex2: parseDatexSnapshot,
   cars: parseCarsSnapshot,
+  "wa-webeoc": parseWaWebeocSnapshot,
 };
 
 /**
@@ -104,7 +107,8 @@ export function parseEvents(
   );
   const at = opts.fetchedAt !== undefined ? { fetchedAt: opts.fetchedAt } : {};
   const reporter =
-    feed.snapshot?.completeness === "complete" && Object.hasOwn(SNAPSHOT_REPORTERS, feed.format)
+    (feed.snapshot?.completeness === "complete" || feed.format === "wa-webeoc") &&
+    Object.hasOwn(SNAPSHOT_REPORTERS, feed.format)
       ? SNAPSHOT_REPORTERS[feed.format]
       : undefined;
   const out = emptyParseOutput();
