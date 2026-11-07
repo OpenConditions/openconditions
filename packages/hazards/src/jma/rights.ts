@@ -1,5 +1,5 @@
-import { XMLParser } from "fast-xml-parser";
 import type { JmaReport } from "./report.js";
+import { parseJmaXml } from "./xml.js";
 
 /** Reviewed 2026-11-07 against JMA terms and the retained official samples.
  * JMA's CC BY 4.0 alternative does not clear participating non-JMA authorities.
@@ -13,11 +13,6 @@ const ELEMENTS = new Set(
   ),
 );
 const reviewed = new WeakMap<JmaReport, string>();
-const parser = new XMLParser({
-  ignoreAttributes: false,
-  parseTagValue: false,
-  processEntities: false,
-});
 const restricted =
   /転載禁止|無断転載|再配布禁止|利用禁止|第三者|著作権|出典|提供元|情報提供|資料提供|出所|共同発表|copyright|all rights reserved|not for redistribution|provided by|courtesy|attribution|©|credit|licen[cs]e/i;
 function office(value: unknown): void {
@@ -52,6 +47,6 @@ export function assertJmaRights(report: JmaReport): void {
       visit(child, key);
     }
   };
-  visit(parser.parse(report.nativeXml));
+  visit(parseJmaXml(report.nativeXml));
   reviewed.set(report, report.nativeXml);
 }

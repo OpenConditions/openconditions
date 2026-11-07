@@ -1,4 +1,4 @@
-import { XMLParser, XMLValidator } from "fast-xml-parser";
+import { parseJmaXml } from "./xml.js";
 
 const NS = "http://xml.kishou.go.jp/jmaxml1/";
 export const JMA_FAMILIES = [
@@ -41,6 +41,7 @@ export interface JmaReport {
   operational: boolean;
   earthquake?: {
     originAt?: string;
+    originPresent?: boolean;
     position?: [number, number];
     depthM?: number;
     magnitude?: number;
@@ -165,12 +166,41 @@ function validateNamespaces(
         ].includes(value)
       )
         throw new Error("JMA: unknown namespace declaration");
+      const supported: Record<string, string> = {
+        jmx: NS,
+        jmx_eb: `${NS}elementBasis1/`,
+        jmx_add: `${NS}addition1/`,
+        xsi: "http://www.w3.org/2001/XMLSchema-instance",
+      };
+      if (prefix && supported[prefix] !== value)
+        throw new Error("JMA: unsupported namespace prefix or binding");
       scope[prefix] = value;
     }
   }
   if (scope[""] !== expected) throw new Error("JMA: nested namespace substitution");
+  const nil = element["@_xsi:nil"];
+  if (nil !== undefined) {
+    if (!["true", "false", "0", "1"].includes(String(nil)))
+      throw new Error("JMA: invalid nil attribute");
+    if (
+      (nil === "true" || nil === "1") &&
+      Object.entries(element).some(
+        ([key, value]) => !key.startsWith("@_") && (key !== "#text" || text(value).length > 0),
+      )
+    )
+      throw new Error("JMA: contradictory nil element");
+  }
   for (const [key, value] of Object.entries(element)) {
-    if (key.startsWith("@_") || key === "#text") continue;
+    if (key.startsWith("@_xmlns") || key === "#text") continue;
+    if (key.startsWith("@_")) {
+      const attribute = key.slice(2);
+      if (
+        attribute.includes(":") &&
+        (attribute !== "xsi:nil" || scope["xsi"] !== "http://www.w3.org/2001/XMLSchema-instance")
+      )
+        throw new Error("JMA: unsupported namespaced attribute");
+      continue;
+    }
     const parts = key.split(":");
     const ns = parts.length === 2 ? scope[parts[0]!] : scope[""];
     if (!ns) throw new Error("JMA: undeclared namespace prefix");
@@ -217,13 +247,6 @@ function shakingAreas(
   walk(observation, "Pref", "地震情報／都道府県等");
   return areas;
 }
-const parser = new XMLParser({
-  ignoreAttributes: false,
-  parseTagValue: false,
-  parseAttributeValue: false,
-  trimValues: false,
-  processEntities: false,
-});
 const node = (value: unknown): Node => {
   if (!value || typeof value !== "object" || Array.isArray(value))
     throw new Error("JMA: expected element");
@@ -283,9 +306,7 @@ export function jmaCoordinate(
 export function readJmaReport(body: Buffer, family: JmaFamily): JmaReport {
   if (!JMA_FAMILIES.includes(family)) throw new Error("JMA: unsupported family");
   const xml = new TextDecoder("utf-8", { fatal: true }).decode(body);
-  if (/<!DOCTYPE|<!ENTITY/i.test(xml) || XMLValidator.validate(xml) !== true)
-    throw new Error("JMA: invalid XML");
-  const doc = node(parser.parse(xml));
+  const doc = node(parseJmaXml(xml));
   const r = node(doc["Report"]),
     c = node(r["Control"]),
     h = node(r["Head"]),
@@ -355,6 +376,7 @@ export function readJmaReport(body: Buffer, family: JmaFamily): JmaReport {
       result.earthquake.shakingAreas = shakingAreas(observation);
     }
     if (eq) {
+      result.earthquake.originPresent = Object.hasOwn(eq, "OriginTime");
       const originAt = instant(eq["OriginTime"], true);
       if (originAt) result.earthquake.originAt = originAt;
       const area = node(node(eq["Hypocenter"])["Area"]);

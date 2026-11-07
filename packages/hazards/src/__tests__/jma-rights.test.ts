@@ -38,3 +38,29 @@ test.each([
 ])("refuses unknown authorities, embedded credits and explicit restrictions", (xml) => {
   expect(() => assertJmaRights(readJmaReport(Buffer.from(xml), "VXSE52"))).toThrow();
 });
+
+test.each([
+  "<Text>&#x8ee2;&#x8f09;&#x7981;&#x6b62;</Text>",
+  "<Text>&#169; Partner</Text>",
+  '<Text description="&#67;opyright Partner">native</Text>',
+  "<!-- Copyright Partner; all rights reserved -->",
+  "<![CDATA[Copyright Partner]]>",
+  "<?credit Copyright Partner?>",
+])("withholds semantic restrictions and uninspected native forms: %s", (extra) => {
+  const xml = clean.replace("</Body>", extra + "</Body>");
+  expect(() => assertJmaRights(readJmaReport(Buffer.from(xml), "VXSE52"))).toThrow();
+});
+test("predefined and numeric references have XML semantics while original bytes remain intact", () => {
+  const xml = clean.replace(
+    "</Body>",
+    "<Text>A &amp; B &lt; C &quot;D&quot; &apos;E&apos; &#65; &#x42;</Text></Body>",
+  );
+  const report = readJmaReport(Buffer.from(xml), "VXSE52");
+  expect(() => assertJmaRights(report)).not.toThrow();
+  expect(report.nativeXml).toBe(xml);
+});
+
+test("XML declaration cannot conceal uninspected native credits", () => {
+  const xml = clean.replace('encoding="UTF-8"', 'encoding="UTF-8" credit="Copyright Partner"');
+  expect(() => assertJmaRights(readJmaReport(Buffer.from(xml), "VXSE52"))).toThrow();
+});

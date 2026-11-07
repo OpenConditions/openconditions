@@ -81,3 +81,53 @@ test("explicit native unknowns replace older numeric values without losing shaki
   expect(draft?.["details"]).not.toHaveProperty("magnitude");
   expect(draft?.["details"]).toMatchObject({ jma: { intensity: "3" } });
 });
+
+test.each([
+  "<OriginTime/>",
+  '<OriginTime xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>',
+  "",
+])("origin unknown versus absent survives order and restart: %s", (origin) => {
+  const oldXml = readFileSync(
+    new URL("./fixtures/jma/32-35_01_02_240613_VXSE52.xml", import.meta.url),
+    "utf8",
+  );
+  const newXml = readFileSync(
+    new URL("./fixtures/jma/32-35_01_03_240613_VXSE53.xml", import.meta.url),
+    "utf8",
+  ).replace(/<OriginTime>[^<]+<\/OriginTime>/, origin);
+  const older = {
+    ...readJmaReport(Buffer.from(oldXml), "VXSE52"),
+    operational: true,
+    messageUrl: url,
+    controlAt: "2012-02-14T12:00:00Z",
+  };
+  const newer = {
+    ...readJmaReport(Buffer.from(newXml), "VXSE53"),
+    operational: true,
+    eventId: older.eventId,
+    messageUrl: url.replace("52", "53"),
+    controlAt: "2012-02-14T12:02:00Z",
+  };
+  for (const sequence of [
+    [older, newer],
+    [newer, older],
+  ]) {
+    const state = JSON.parse(
+      JSON.stringify(applyJmaAreaReports({ products: {}, areas: {} }, sequence)),
+    );
+    const [draft] = jmaSituations(feed, state, "2012-02-14T13:00:00Z");
+    if (origin) expect(draft?.["validity"]).not.toHaveProperty("start");
+    else expect(draft?.["validity"]).toMatchObject({ start: "2009-10-01T13:45:00+09:00" });
+    const cancelled = { ...newer, cancelled: true, controlAt: "2012-02-14T12:04:00Z" };
+    const afterCancel = applyJmaAreaReports(state, [cancelled]);
+    expect(jmaSituations(feed, afterCancel, "2012-02-14T13:00:00Z")[0]?.["validity"]).toMatchObject(
+      { start: "2009-10-01T13:45:00+09:00" },
+    );
+    const restored = applyJmaAreaReports(JSON.parse(JSON.stringify(afterCancel)), [
+      { ...newer, controlAt: "2012-02-14T12:06:00Z" },
+    ]);
+    const final = jmaSituations(feed, restored, "2012-02-14T13:00:00Z")[0];
+    if (origin) expect(final?.["validity"]).not.toHaveProperty("start");
+    else expect(final?.["validity"]).toMatchObject({ start: "2009-10-01T13:45:00+09:00" });
+  }
+});

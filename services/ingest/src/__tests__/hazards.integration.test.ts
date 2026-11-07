@@ -894,9 +894,14 @@ describe("JMA durable worker publication", () => {
     expect(unknown52?.["details"]).toMatchObject({ jma: { intensity: "5-" } });
     const unknown53 = await native("32-35_01_03_240613_VXSE53", "VXSE53", 4, (xml) =>
       xml
+        .replace(
+          /<OriginTime>[^<]+<\/OriginTime>/,
+          '<OriginTime xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>',
+        )
         .replace(/(<jmx_eb:Magnitude[^>]*>)[^<]+/, "$1NaN")
         .replace(/(<jmx_eb:Coordinate[^>]*>)[^<]+/, "$1"),
     );
+    expect(unknown53?.["validity"]).not.toHaveProperty("start");
     expect(unknown53?.["details"]).not.toHaveProperty("magnitude");
     expect(unknown53?.["details"]).not.toHaveProperty("depth");
     expect(unknown53?.["location"]).toMatchObject({ geometry: null });
@@ -904,11 +909,21 @@ describe("JMA durable worker publication", () => {
     expect(without53?.["details"]).toMatchObject({
       jma: { intensity: "6-" },
     });
+    expect(without53?.["validity"]).toMatchObject({ start: "2012-02-14T21:40:00+09:00" });
     expect(without53?.["details"]).not.toHaveProperty("magnitude");
     const without52 = await native("32-35_06_02_100915_VXSE52", "VXSE52", 6);
     expect(without52?.["details"]).not.toHaveProperty("magnitude");
     expect(without52?.["location"]).toMatchObject({ geometry: null });
     expect(((without52?.["details"] ?? {}) as Rec)["jma"]).toMatchObject({ family: "VXSE51" });
+    const restored = await native("32-35_01_03_240613_VXSE53", "VXSE53", 7, (xml) =>
+      xml.replace(/<OriginTime>[^<]+<\/OriginTime>/, "<OriginTime/>"),
+    );
+    expect(restored?.["validity"]).not.toHaveProperty("start");
+    expect(JSON.stringify(restored?.["details"])).toContain("<OriginTime/>");
+    const omitted = await native("32-35_01_02_240613_VXSE52", "VXSE52", 8, (xml) =>
+      xml.replace(/<OriginTime>[^<]+<\/OriginTime>/, ""),
+    );
+    expect(omitted?.["validity"]).not.toHaveProperty("start");
     await quakeApp.close();
   });
   it("publishes each warning family under an explicit incomplete contract and retains empty-index state", async () => {
@@ -1151,6 +1166,30 @@ describe("JMA durable worker publication", () => {
     const exported = await readOutbox(sql, { limit: 500, now: clock });
     expect(JSON.stringify(exported.orderedItems)).toContain(feed.id);
     const mutations = [
+      clean.replace('encoding="UTF-8"', 'encoding="UTF-8" credit="Copyright Partner"'),
+      ...[
+        "<Text>&#x8ee2;&#x8f09;&#x7981;&#x6b62;</Text>",
+        "<Text>&#169; Partner</Text>",
+        '<Text description="&#67;opyright Partner">native</Text>',
+        "<!-- Copyright Partner; all rights reserved -->",
+        "<![CDATA[Copyright Partner]]>",
+        "<?credit Copyright Partner?>",
+      ].flatMap((extra) =>
+        ["発表", "取消"].map((kind) =>
+          clean
+            .replace("<InfoType>発表</InfoType>", "<InfoType>" + kind + "</InfoType>")
+            .replace("</Body>", extra + "</Body>"),
+        ),
+      ),
+      clean.replace(
+        'xmlns:jmx_eb="http://xml.kishou.go.jp/jmaxml1/elementBasis1/"',
+        'xmlns:jmx_eb="http://xml.kishou.go.jp/jmaxml1/body/meteorology1/"',
+      ),
+      clean.replace(
+        "<OriginTime>",
+        '<OriginTime xmlns:nilx="http://www.w3.org/2001/XMLSchema-instance" nilx:nil="true">',
+      ),
+
       clean.replace(
         "<PublishingOffice>気象庁</PublishingOffice>",
         "<PublishingOffice>uncleared</PublishingOffice>",
@@ -1188,9 +1227,7 @@ describe("JMA durable worker publication", () => {
           previous["records"] ?? previous["features"] ?? previous,
         );
       }
-      expect((await readOutbox(sql, { limit: 500, now: clock })).orderedItems).toEqual(
-        exported.orderedItems,
-      );
+      expect(await readOutbox(sql, { limit: 500, now: clock })).toEqual(exported);
       const [attempt] =
         await sql`SELECT outcome FROM conditions.source_poll_attempt WHERE source=${feed.id} ORDER BY id DESC LIMIT 1`;
       expect(attempt!.outcome).toBe("failed");

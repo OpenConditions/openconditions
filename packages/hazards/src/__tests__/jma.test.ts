@@ -251,3 +251,57 @@ test("supported empty/nil origins and coordinates remain unknown; alternative da
   );
   expect(() => readJmaReport(Buffer.from(contradictory), "VXSE52")).toThrow("nil");
 });
+
+test("known prefixes require their supported namespace and attributes reject aliases", () => {
+  const xml = fixture("33_12_01_240613_VXSE52").toString();
+  for (const variant of [
+    xml.replace(
+      'xmlns:jmx_eb="http://xml.kishou.go.jp/jmaxml1/elementBasis1/"',
+      'xmlns:jmx_eb="http://xml.kishou.go.jp/jmaxml1/body/meteorology1/"',
+    ),
+    xml.replace(
+      "<Hypocenter>",
+      '<Hypocenter xmlns:jmx_eb="http://xml.kishou.go.jp/jmaxml1/body/meteorology1/">',
+    ),
+    xml.replace(
+      "<OriginTime>",
+      '<OriginTime xmlns:nilx="http://www.w3.org/2001/XMLSchema-instance" nilx:nil="true">',
+    ),
+    xml.replace("<OriginTime>", '<OriginTime xsi:nil="true">'),
+    xml.replace(
+      "<OriginTime>",
+      '<OriginTime xmlns:xsi="http://xml.kishou.go.jp/jmaxml1/" xsi:nil="true">',
+    ),
+  ])
+    expect(() => readJmaReport(Buffer.from(variant), "VXSE52")).toThrow();
+});
+test.each([
+  "",
+  "<OriginTime/>",
+  '<OriginTime xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>',
+])("origin presence survives decoding: %s", (origin) => {
+  const xml = fixture("33_12_01_240613_VXSE52")
+    .toString()
+    .replace(/<OriginTime>[^<]+<\/OriginTime>/, origin);
+  const eq = readJmaReport(Buffer.from(xml), "VXSE52").earthquake;
+  expect(eq?.originPresent).toBe(Boolean(origin));
+  expect(eq?.originAt).toBeUndefined();
+});
+
+test.each(["&partner;", "&#0;", "&#xD800;", "&#x110000;", "&#xFFFE;"])(
+  "invalid or custom XML references are refused: %s",
+  (reference) => {
+    const xml = fixture("33_12_01_240613_VXSE52")
+      .toString()
+      .replace("</Body>", "<Text>" + reference + "</Text></Body>");
+    expect(() => readJmaReport(Buffer.from(xml), "VXSE52")).toThrow();
+  },
+);
+test("semantic references decode once into selected text, never markup", () => {
+  const xml = fixture("33_12_01_240613_VXSE52")
+    .toString()
+    .replace(/<Text>[^<]*<\/Text>/, "<Text>A &amp; B &lt;Text&gt; &#65; &#x42; &amp;#169;</Text>");
+  const r = readJmaReport(Buffer.from(xml), "VXSE52");
+  expect(r.headline).toBe("A & B <Text> A B &#169;");
+  expect(r.nativeXml).toBe(xml);
+});

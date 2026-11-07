@@ -130,11 +130,12 @@ export function jmaSituations(
       (a, b) =>
         Date.parse(a.controlAt) - Date.parse(b.controlAt) || a.family.localeCompare(b.family),
     );
-    // Undefined fields never erase complementary information from an uncancelled family.
+    // Absent fields preserve complementary information from an uncancelled family.
     const earthquake: NonNullable<JmaReport["earthquake"]> = {};
     for (const r of reports) {
       details(r); // Every contributing native publication must pass the same rights gate.
       // A present native field with an unknown value supersedes older precision.
+      if (r.earthquake?.originPresent) delete earthquake.originAt;
       if (r.earthquake?.magnitudeDescription !== undefined) delete earthquake.magnitude;
       if (r.earthquake?.coordinateRaw !== undefined) {
         delete earthquake.position;
