@@ -662,6 +662,17 @@
                 "type": "string",
                 "const": "complete"
               },
+              "roleEvidence": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "additionalProperties": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
               "recordsPath": {
                 "type": "string",
                 "minLength": 1

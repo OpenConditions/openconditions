@@ -424,6 +424,8 @@ export const feedBaseShape = {
   snapshot: z
     .object({
       completeness: z.literal("complete"),
+      /** Reviewed provider continuity evidence for each independently authoritative role. */
+      roleEvidence: z.record(z.string().min(1), z.string().trim().min(1)).optional(),
       recordsPath: z.string().min(1).optional(),
       rootElement: z.string().min(1).optional(),
       publicationElement: z.string().min(1).optional(),

@@ -4,7 +4,7 @@ import {
   type ParseContext,
   recordSkipped,
 } from "@openconditions/ingest-framework";
-import { zonedWallClockToInstant } from "@openconditions/model";
+import { localDateInZone, localTimeInZone, zonedWallClockToInstant } from "@openconditions/model";
 import type { FuelGrade } from "../grades.js";
 import {
   type FuelFeed,
@@ -33,7 +33,7 @@ function csv(payloads: FeedPayloads, role: keyof typeof HEADERS) {
   const buffers = payloads[role];
   if (buffers?.length !== 1) throw new Error(`MIMIT: exactly one ${role} transfer required`);
   const text = new TextDecoder("utf-8", { fatal: true }).decode(buffers[0]);
-  // A complete final record must be terminated. HTTP framing is additionally checked by acquisition.
+  // Record framing is syntax only; neither this nor HTTP framing proves inventory completeness.
   if (!text.endsWith("\n")) throw new Error("MIMIT: unterminated transfer");
   const [preamble, header, ...body] = text.replaceAll("\r\n", "\n").split("\n");
   const date = /^Estrazione del (\d{4}-\d{2}-\d{2})$/.exec(preamble ?? "")?.[1];
@@ -55,9 +55,19 @@ function csv(payloads: FeedPayloads, role: keyof typeof HEADERS) {
 
 function communication(raw: string): string {
   const m = /^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2}):(\d{2})$/.exec(raw);
-  const at =
-    m && zonedWallClockToInstant("Europe/Rome", `${m[3]}-${m[2]}-${m[1]}T${m[4]}:${m[5]}:${m[6]}`);
-  if (!at) throw new Error("MIMIT: invalid communication time");
+  if (!m || Number(m[4]) > 23 || Number(m[5]) > 59 || Number(m[6]) > 59)
+    throw new Error("MIMIT: invalid communication time");
+  const wall = `${m[3]}-${m[2]}-${m[1]}T${m[4]}:${m[5]}:${m[6]}`;
+  const at = zonedWallClockToInstant("Europe/Rome", wall);
+  const matches = (date: Date) =>
+    `${localDateInZone(date, "Europe/Rome")}T${localTimeInZone(date, "Europe/Rome")}` === wall;
+  // Rome folds repeat an hour. No provider policy authorizes choosing either instant.
+  if (
+    !at ||
+    !matches(at) ||
+    [-3600000, 3600000].some((delta) => matches(new Date(at.getTime() + delta)))
+  )
+    throw new Error("MIMIT: invalid or ambiguous communication time");
   return utcInstant(at);
 }
 
@@ -151,6 +161,11 @@ export function parseMimit(feed: FuelFeed, payloads: FeedPayloads, ctx: ParseCon
       out.observations.push(draft);
     }
   }
-  out.featureSnapshot = { at, complete: !out.rejected };
+  const evidence = feed.snapshot?.roleEvidence;
+  out.featureSnapshot = {
+    at,
+    complete: !out.rejected && !!evidence?.["registry"]?.trim(),
+    statesComplete: !out.rejected && !!evidence?.["prices"]?.trim(),
+  };
   return out;
 }

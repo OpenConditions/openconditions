@@ -73,12 +73,12 @@ test("rejects missing, mismatched, obsolete, future, malformed and truncated pub
   ).toThrow();
 });
 
-test("permits qualified empty snapshots and same-date corrections", () => {
+test("retains unqualified empty snapshots and permits same-date corrections", () => {
   const empty = (name: string) =>
     Buffer.from(fixture(name).toString().split("\n").slice(0, 2).join("\n") + "\n");
   expect(parse(empty("mimit-registry.csv"), empty("mimit-prices.csv"))).toMatchObject({
     features: [],
-    featureSnapshot: { complete: true, at: "2026-11-06T07:00:00Z" },
+    featureSnapshot: { complete: false, at: "2026-11-06T07:00:00Z" },
   });
   expect(
     parse(undefined, Buffer.from(fixture("mimit-prices.csv").toString().replace("1.799", "1.899")))
@@ -171,4 +171,45 @@ test("reads the repository's historical September station/price excerpt with a h
     phenomenonTime: { instant: "2026-09-21T06:00:00Z" },
     result: { currency: "EUR" },
   });
+});
+
+test.each([
+  "05/11/2026 24:00:00",
+  "05/11/2026 14:60:00",
+  "05/11/2026 14:20:60",
+  "31/02/2026 14:20:00",
+  "00/11/2026 14:20:00",
+  "05/13/2026 14:20:00",
+  "29/03/2026 02:30:00",
+  "25/10/2026 02:30:00",
+])("rejects invalid or ambiguous communication %s", (raw) => {
+  const prices = Buffer.from(
+    fixture("mimit-prices.csv").toString().replaceAll("05/11/2026 14:20:00", raw),
+  );
+  expect(() => parse(undefined, prices)).toThrow("communication");
+});
+test("syntax-valid row-boundary partial prices do not grant either withdrawal authority", () => {
+  const prices = Buffer.from(
+    fixture("mimit-prices.csv").toString().split("\n").slice(0, 5).join("\n") + "\n",
+  );
+  expect(parse(undefined, prices)).toMatchObject({
+    featureSnapshot: { complete: false, statesComplete: false },
+  });
+});
+
+test.each([
+  [{ registry: "synthetic registry contract" }, true, false],
+  [{ prices: "synthetic prices contract" }, false, true],
+  [{ registry: "synthetic registry contract", prices: "synthetic prices contract" }, true, true],
+] as const)("qualifies roles independently: %j", (roleEvidence, complete, statesComplete) => {
+  const feed = { ...mimitFeed(), snapshot: { completeness: "complete" as const, roleEvidence } };
+  const empty = (name: string) =>
+    Buffer.from(`${fixture(name).toString().split("\n").slice(0, 2).join("\n")}\n`);
+  expect(
+    fuelDomain.formats["mimit"]!.parse(
+      feed,
+      { registry: [empty("mimit-registry.csv")], prices: [empty("mimit-prices.csv")] },
+      parseContext("2026-11-07T10:00:00Z"),
+    ),
+  ).toMatchObject({ featureSnapshot: { complete, statesComplete } });
 });

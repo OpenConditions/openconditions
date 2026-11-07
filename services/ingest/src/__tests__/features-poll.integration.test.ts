@@ -1276,6 +1276,57 @@ describe("status-only polls", () => {
 });
 
 describe("MIMIT coordinated dated snapshot pipeline", () => {
+  it("retains a newline-aligned registry loss smaller than half without qualification", async () => {
+    const feed = {
+      ...repoFeed("it-mimit-fuel"),
+      disabled: undefined,
+      id: "it-mimit-registry-test-fuel",
+    };
+    await syncSources(sql, [feed]);
+    const fixture = (name: string) =>
+      readFileSync(
+        new URL(
+          `../../../../packages/fuel/src/__tests__/fixtures/mimit-${name}.csv`,
+          import.meta.url,
+        ),
+        "utf8",
+      );
+    const sites = fixture("registry");
+    const prices = fixture("prices");
+    const extraSite = sites
+      .split("\n")
+      .find((line) => line.startsWith("002|"))!
+      .replace("002|", "003|");
+    const extraPrice = prices
+      .split("\n")
+      .find((line) => line.startsWith("002|"))!
+      .replace("002|", "003|");
+    await ensureObservationPartitions(sql, {
+      classes: retentionClasses(registry),
+      now: new Date("2026-11-07T10:00:00Z"),
+    });
+    const poll = (registryBody: string, priceBody: string) =>
+      runSource(feed, {
+        sql,
+        fetch: (async (url: string | URL | Request) =>
+          new Response(
+            String(url).includes("anagrafica") ? registryBody : priceBody,
+          )) as typeof fetch,
+        now: () => "2026-11-07T10:00:00Z",
+        lookup: fakeLookup,
+        model: { registry, instanceId: "test.local" },
+      });
+    expect(
+      (await poll(sites + extraSite + "\n", prices + extraPrice + "\n")).error,
+    ).toBeUndefined();
+    expect((await poll(sites, prices)).error).toBeUndefined();
+    expect(
+      await sql`SELECT id FROM conditions.feature WHERE source_id = ${feed.id} AND tombstoned_at IS NULL`,
+    ).toHaveLength(3);
+    expect(
+      await sql`SELECT series_id FROM conditions.observation_latest WHERE source_id = ${feed.id} AND NOT (reading ? 'validUntil')`,
+    ).toHaveLength(6);
+  });
   it("persists corrections, preserves failures/replays, controls withdrawal and excludes source-expired API prices", async () => {
     const feed = { ...repoFeed("it-mimit-fuel"), disabled: undefined };
     await syncSources(sql, [feed]);
@@ -1305,6 +1356,8 @@ describe("MIMIT coordinated dated snapshot pipeline", () => {
         lookup: fakeLookup,
         model: { registry, instanceId: "test.local" },
       });
+    const activeSeries = () =>
+      sql`SELECT series_id FROM conditions.observation_latest WHERE source_id = ${feed.id} AND NOT (reading ? 'validUntil')`;
     const live = () =>
       sql`SELECT id FROM conditions.feature WHERE source_id = ${feed.id} AND tombstoned_at IS NULL`;
     const api = async (at: string) =>
@@ -1330,6 +1383,7 @@ describe("MIMIT coordinated dated snapshot pipeline", () => {
     expect((await poll()).error).toBeUndefined();
     expect(await live()).toHaveLength(2);
     expect((await api(now)).records).toHaveLength(5);
+    expect(await activeSeries()).toHaveLength(5);
     const http = Fastify();
     let readAt = now;
     registerScope(http, "mimit-test-token-012345678901234567890123");
@@ -1410,7 +1464,11 @@ describe("MIMIT coordinated dated snapshot pipeline", () => {
     // Validated transfer, but one unplaceable registry row must not withdraw its old station.
     expect((await poll(registryBody.replace("41.9|12.5", "0|0"))).error).toBeUndefined();
     expect(await live()).toHaveLength(2);
-    // A complete subset can withdraw a missing station.
+    const shortPrices = pricesBody.split("\n").slice(0, 5).join("\n") + "\n";
+    expect((await poll(registryBody, shortPrices)).error).toBeUndefined();
+    expect((await api(now)).records).toHaveLength(5);
+    expect(await activeSeries()).toHaveLength(5);
+    // Unqualified syntax-valid subsets must retain missing stations and series.
     const subset = registryBody
       .split("\n")
       .filter((l) => !l.startsWith("002|"))
@@ -1419,6 +1477,47 @@ describe("MIMIT coordinated dated snapshot pipeline", () => {
       .split("\n")
       .filter((l) => !l.startsWith("002|"))
       .join("\n");
+    expect((await poll(subset, subsetPrices)).error).toBeUndefined();
+    expect(await live()).toHaveLength(2);
+    expect((await api(now)).records).toHaveLength(5);
+    expect(await activeSeries()).toHaveLength(5);
+    for (const clock of ["2026-11-07T10:05:00Z", "2026-11-07T10:16:00Z"]) {
+      now = clock;
+      await poll(initialEmpty(registryBody), initialEmpty(pricesBody));
+    }
+    expect(await live()).toHaveLength(2);
+    expect((await api(now)).records).toHaveLength(5);
+    expect(await activeSeries()).toHaveLength(5);
+    // These are synthetic test qualifications, never live provider evidence.
+    Object.assign(feed, {
+      snapshot: {
+        completeness: "complete",
+        roleEvidence: { registry: "synthetic registry contract" },
+      },
+    });
+    expect((await poll(registryBody, shortPrices)).error).toBeUndefined();
+    expect((await api(now)).records).toHaveLength(5);
+    expect(await activeSeries()).toHaveLength(5);
+    Object.assign(feed, {
+      snapshot: { completeness: "complete", roleEvidence: { prices: "synthetic price contract" } },
+    });
+    expect((await poll(registryBody, shortPrices)).error).toBeUndefined();
+    expect(await activeSeries()).toHaveLength(3);
+    expect((await poll()).error).toBeUndefined();
+    expect((await api(now)).records).toHaveLength(5);
+    expect(await activeSeries()).toHaveLength(5);
+    expect((await poll(subset, subsetPrices)).error).toBeUndefined();
+    expect(await live()).toHaveLength(2);
+    expect(await activeSeries()).toHaveLength(4);
+    Object.assign(feed, {
+      snapshot: {
+        completeness: "complete",
+        roleEvidence: {
+          registry: "synthetic registry contract",
+          prices: "synthetic price contract",
+        },
+      },
+    });
     expect((await poll(subset, subsetPrices)).error).toBeUndefined();
     expect(await live()).toHaveLength(1);
     // A newer publication advances the durable watermark, including through empty output.
@@ -1435,6 +1534,11 @@ describe("MIMIT coordinated dated snapshot pipeline", () => {
     now = "2026-11-07T11:11:00Z";
     expect((await poll(empty(subset), empty(subsetPrices))).error).toBeUndefined();
     expect(await live()).toHaveLength(0);
+    now = "2026-11-07T11:16:00Z";
+    expect((await poll(empty(subset), empty(subsetPrices))).error).toBeUndefined();
+    now = "2026-11-07T11:22:00Z";
+    expect((await poll(empty(subset), empty(subsetPrices))).error).toBeUndefined();
+    expect(await activeSeries()).toHaveLength(0);
     expect((await poll(subset, subsetPrices)).error).toBeDefined();
   }, 60000);
 });
