@@ -1,4 +1,5 @@
 import type { RecordDraft } from "@openconditions/ingest-framework";
+import { sha256Hex } from "@openconditions/model";
 import {
   freshness,
   type HazardsFeed,
@@ -67,7 +68,7 @@ export function jmaSituations(
           ? "coastal"
           : "geophysical";
     return {
-      id: situationId(feed, key),
+      id: situationId(feed, w ? sha256Hex(key) : key),
       class: "situation",
       kind,
       type,
@@ -89,12 +90,14 @@ export function jmaSituations(
           ? pointLocation(r.earthquake.position, "extent_unknown")
           : UNLOCATED,
       provenance: provenance(feed, key, r.controlAt),
-      freshness: freshness(fetchedAt, r.validAt),
+      freshness: freshness(r.acquiredAt ?? fetchedAt, r.validAt),
       planned: false,
       certainty: quake ? "observed" : "unknown",
       severity: { label: "unknown" },
       headline: [{ lang: "ja", text: r.title }],
-      ...(r.headline ? { description: [{ lang: "ja", text: r.headline }] } : {}),
+      ...(r.headline || w?.name
+        ? { description: [{ lang: "ja", text: [w?.name, r.headline].filter(Boolean).join("\n") }] }
+        : {}),
       validity: {
         status: "active",
         ...(r.earthquake?.originAt ? { start: r.earthquake.originAt } : {}),
@@ -115,14 +118,43 @@ export function jmaSituations(
     };
   };
   // Families are independent publications: a cancellation does not erase another family's event information.
-  const events = new Map<string, JmaReport>();
+  const events = new Map<string, JmaReport[]>();
   for (const r of Object.values(state.products)) {
     if (!r.family.startsWith("VXSE") || r.cancelled || !r.operational) continue;
     if (Date.parse(r.controlAt) < Date.parse(fetchedAt) - 30 * 86_400_000) continue;
-    const held = events.get(r.eventId);
-    if (!held || Date.parse(r.controlAt) > Date.parse(held.controlAt)) events.set(r.eventId, r);
+    const held = events.get(r.eventId) ?? [];
+    held.push(r);
+    events.set(r.eventId, held);
   }
-  for (const [id, r] of events) drafts.push(draft(id, r));
+  for (const [id, reports] of events) {
+    reports.sort(
+      (a, b) =>
+        Date.parse(a.controlAt) - Date.parse(b.controlAt) || a.family.localeCompare(b.family),
+    );
+    // Undefined fields never erase complementary information from an uncancelled family.
+    const earthquake: NonNullable<JmaReport["earthquake"]> = {};
+    for (const r of reports) {
+      details(r); // Every contributing native publication must pass the same rights gate.
+      // A present native field with an unknown value supersedes older precision.
+      if (r.earthquake?.magnitudeDescription !== undefined) delete earthquake.magnitude;
+      if (r.earthquake?.coordinateRaw !== undefined) {
+        delete earthquake.position;
+        delete earthquake.depthM;
+      }
+      for (const [k, v] of Object.entries(r.earthquake ?? {}))
+        if (v !== undefined) Object.assign(earthquake, { [k]: v });
+    }
+    const latest = reports[reports.length - 1]!;
+    const d = draft(id, { ...latest, earthquake });
+    const native = (d["details"] as Record<string, unknown>)["jma"] as Record<string, unknown>;
+    native["contributingReports"] = reports.map((r) => ({
+      family: r.family,
+      messageUrl: r.messageUrl,
+      controlAt: r.controlAt,
+      nativeXml: r.nativeXml,
+    }));
+    drafts.push(d);
+  }
   for (const [id, area] of Object.entries(state.areas)) {
     if (
       area.ended ||

@@ -15,6 +15,17 @@ export const JmaDetails = z.strictObject({
   publishingOffice: z.string().min(1),
   editorialOffice: z.string().min(1),
   nativeXml: z.string().min(1),
+  contributingReports: z
+    .array(
+      z.strictObject({
+        family: z.enum(["VXSE51", "VXSE52", "VXSE53"]),
+        messageUrl: z.url(),
+        controlAt: Iso8601,
+        nativeXml: z.string().min(1),
+      }),
+    )
+    .max(3)
+    .optional(),
   areaSystem: z.string().min(1).optional(),
   areaCode: z.string().min(1).optional(),
   warningCode: z.string().min(1).optional(),

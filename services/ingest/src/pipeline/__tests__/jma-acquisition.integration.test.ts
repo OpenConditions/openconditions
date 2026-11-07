@@ -226,3 +226,32 @@ test("quake retention floor prevents replay after tombstone cleanup", async () =
     },
   );
 });
+
+test("cache-only index polls do not validate the network or change payload acquisition time", async () => {
+  const index = `https://www.data.jma.go.jp/developer/xml/feed/eqvol.xml`;
+  await db.sql`DELETE FROM conditions.jma_download WHERE url=${index}`;
+  let now = at();
+  const transport = (async () =>
+    new Response(
+      `<feed xmlns="http://www.w3.org/2005/Atom"><updated>2026-11-07T01:00:00Z</updated><entry><id>${url}</id><link href="${url}"/></entry></feed>`,
+    )) as typeof fetch;
+  const first = await new JmaAcquisition(
+    jmaDownloadStore(db.sql),
+    "freshness",
+    () => now,
+    transport,
+    lookup,
+  ).poll("eqvol", ["VXSE52"], now, signal());
+  expect(first.networkValidated).toBe(true);
+  expect(first.reports[0]!.report.acquiredAt).toBe("2026-11-07T01:00:00.000Z");
+  now += 1000;
+  const cached = await new JmaAcquisition(
+    jmaDownloadStore(db.sql),
+    "freshness",
+    () => now,
+    transport,
+    lookup,
+  ).poll("eqvol", ["VXSE52"], now, signal());
+  expect(cached.networkValidated).toBe(false);
+  expect(cached.reports[0]!.report.acquiredAt).toBe(first.reports[0]!.report.acquiredAt);
+});

@@ -23,6 +23,7 @@ export interface JmaWarning {
 }
 export interface JmaReport {
   messageUrl?: string;
+  acquiredAt?: string;
   family: JmaFamily;
   controlAt: string;
   reportAt: string;
@@ -165,6 +166,12 @@ const required = (v: unknown): string => {
 };
 const instant = (v: unknown, optional = false): string | undefined => {
   const s = text(v);
+  if (v && typeof v === "object") {
+    const nil = node(v)["@_xsi:nil"];
+    if (nil !== undefined && !["true", "false", "0", "1"].includes(String(nil)))
+      throw new Error("JMA: invalid nil date");
+    if ((nil === "true" || nil === "1") && s) throw new Error("JMA: contradictory nil date");
+  }
   if (!s && optional) return undefined;
   if (
     !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?(?:Z|[+-]\d\d:\d\d)$/.test(s) ||
@@ -177,7 +184,7 @@ export function jmaCoordinate(
   raw: string,
   unit: "degree" | "degree-minute",
 ): [number, number] | undefined {
-  if (!raw || raw.includes("NaN")) return undefined;
+  if (!raw) return undefined;
   const m = /^([+-]\d+(?:\.\d+)?)([+-]\d+(?:\.\d+)?)(?:[+-]\d+(?:\.\d+)?)?\/$/.exec(raw);
   if (!m) throw new Error("JMA: invalid coordinate");
   const convert = (v: string) => {
@@ -273,7 +280,17 @@ export function readJmaReport(body: Buffer, family: JmaFamily): JmaReport {
       const originAt = instant(eq["OriginTime"], true);
       if (originAt) result.earthquake.originAt = originAt;
       const area = node(node(eq["Hypocenter"])["Area"]);
-      const coordinate = list(area["jmx_eb:Coordinate"])[0];
+      const coordinates = list(area["jmx_eb:Coordinate"]);
+      if (coordinates.length !== 1)
+        throw new Error("JMA: ambiguous or missing hypocentre coordinate");
+      const coordinate = coordinates[0];
+      if (coordinate && typeof coordinate === "object") {
+        const metadata = node(coordinate);
+        if (metadata["@_type"] !== undefined && metadata["@_type"] !== "震源位置（度）")
+          throw new Error("JMA: unqualified hypocentre datum or unit");
+        if (metadata["@_unit"] !== undefined && metadata["@_unit"] !== "度")
+          throw new Error("JMA: unqualified hypocentre unit");
+      }
       const raw = text(coordinate);
       const description =
         coordinate && typeof coordinate === "object" ? text(node(coordinate)["@_description"]) : "";
@@ -282,7 +299,7 @@ export function readJmaReport(body: Buffer, family: JmaFamily): JmaReport {
       const position = jmaCoordinate(raw, "degree");
       if (position) result.earthquake.position = position;
       const depth = /[+-]\d+(?:\.\d+)?[+-]\d+(?:\.\d+)?([+-]\d+(?:\.\d+)?)\/$/.exec(raw);
-      if (depth && position && !/ごく浅い|以上|以浅|不明/.test(description))
+      if (depth && position && !/ごく浅い|以上|以浅|不明/.test(description.replace(/\s/g, "")))
         result.earthquake.depthM = -Number(depth[1]);
       const mag = node(eq["jmx_eb:Magnitude"]);
       if (mag["@_type"] !== "Mj") throw new Error("JMA: unsupported magnitude scale");

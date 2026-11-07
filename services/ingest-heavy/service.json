@@ -109,6 +109,13 @@
         "default": "",
         "x-openmapx-secret": false
       },
+      "OPENCONDITIONS_JMA_WARNING_COVERAGE": {
+        "type": "string",
+        "title": "JMA warning coverage contract",
+        "description": "Set to incomplete only after accepting observed-report-only warning coverage. Empty: warning ingestion refuses execution. This never qualifies authoritative bootstrap or all-clear coverage.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
       "OPENCONDITIONS_JMA_EGRESS_ID": {
         "type": "string",
         "title": "JMA shared egress identity",

@@ -15,14 +15,18 @@ export async function runJma(
   attempt: { id: number; at: string; closed: boolean },
 ): Promise<RunResult> {
   const start = Date.now();
+  if (deps.raw)
+    throw new Error(
+      "JMA: raw archive capture is unsupported pending upstream-rights qualification",
+    );
   const egress = (deps.env ?? process.env)["OPENCONDITIONS_JMA_EGRESS_ID"];
   if (!egress?.trim())
     throw new Error(
       "JMA: OPENCONDITIONS_JMA_EGRESS_ID must identify the shared provider-visible IP and database",
     );
-  // There is no qualified authoritative bootstrap in this implementation. Neither
-  // a catalogue edit nor an environment switch can turn a rolling index into one.
-  if (src.product !== "quakes")
+  const warnings = src.product === "alerts";
+  if (src.product !== "quakes" && !warnings) throw new Error("JMA: unsupported product");
+  if (warnings && (deps.env ?? process.env)["OPENCONDITIONS_JMA_WARNING_COVERAGE"] !== "incomplete")
     throw new Error(
       "JMA: warning activation requires authoritative bootstrap qualification; coverage incomplete",
     );
@@ -37,12 +41,25 @@ export async function runJma(
     deps.fetch,
     deps.lookup,
   );
+  const signal = AbortSignal.timeout(120_000);
   const result = await acquisition.poll(
-    "eqvol",
-    JMA_FAMILIES.filter((f) => f.startsWith("VXSE")),
+    warnings ? "extra" : "eqvol",
+    JMA_FAMILIES.filter((f) => (warnings ? f.startsWith("VPWW") : f.startsWith("VXSE"))),
     held ? unpackJmaState(held.value).lastSuccess : undefined,
-    AbortSignal.timeout(120_000),
+    signal,
   );
+  if (warnings) {
+    const volcanic = await acquisition.poll(
+      "eqvol",
+      ["VFVO50"],
+      held ? unpackJmaState(held.value).lastSuccess : undefined,
+      signal,
+    );
+    result.reports.push(...volcanic.reports);
+    result.gap ||= volcanic.gap;
+    result.networkValidated &&= volcanic.networkValidated;
+    result.payloadHashes.push(...volcanic.payloadHashes);
+  }
   if (result.reports.some(({ report }) => Date.parse(report.controlAt) > at + 60_000))
     throw new Error("JMA: future report revision clock");
   const summary = await reconcileJmaIn(
@@ -73,7 +90,8 @@ export async function runJma(
         attemptId: attempt.id,
         attemptAt: attempt.at,
         outcome: "partial",
-        networkValidated: true,
+        networkValidated: result.networkValidated,
+        payloadHashes: result.payloadHashes,
         error: "JMA rolling-index coverage incomplete",
         publication: {
           activeEvents: drafts.length,
@@ -86,6 +104,15 @@ export async function runJma(
       });
       return summary;
     },
+    warnings
+      ? {
+          source: src.id,
+          at: new Date(at).toISOString(),
+          coverage: "incomplete",
+          method: "rolling-index-observed-reports",
+          payloadHashes: result.payloadHashes,
+        }
+      : undefined,
   );
   attempt.closed = true;
   const c = summary.counts.situation;

@@ -19,6 +19,7 @@ export function unpackJmaState(value: JmaPersistentState | PackedState): JmaPers
     lastSuccess: value.lastSuccess,
     coverage: value.coverage,
     gap: value.gap,
+    initialization: value.initialization,
     native: {
       products: Object.fromEntries(
         Object.entries(value.products).map(([k, id]) => [k, report(id)]),
@@ -41,6 +42,7 @@ function pack(state: JmaPersistentState): PackedState {
     lastSuccess: state.lastSuccess,
     coverage: state.coverage,
     gap: state.gap,
+    initialization: state.initialization,
     reports,
     products: Object.fromEntries(
       Object.entries(state.native.products).map(([k, r]) => [k, ref(r)]),
@@ -57,7 +59,15 @@ function pack(state: JmaPersistentState): PackedState {
     throw new Error("JMA: lifecycle state bound exceeded; retaining last good publication");
   return packed;
 }
+export interface JmaInitializationReceipt {
+  source: string;
+  at: string;
+  coverage: "incomplete";
+  method: "rolling-index-observed-reports";
+  payloadHashes: string[];
+}
 export interface JmaPersistentState {
+  initialization?: JmaInitializationReceipt;
   native: JmaAreaState;
   lastSuccess: number;
   /** A rolling index cannot establish authoritative active-warning coverage. */
@@ -75,6 +85,7 @@ export async function reconcileJmaIn<T>(
   at: number,
   gap: boolean,
   publish: (tx: postgres.TransactionSql, state: JmaPersistentState) => Promise<T>,
+  initialization?: JmaInitializationReceipt,
 ): Promise<T> {
   return sql.begin(async (tx) => {
     await tx`SELECT pg_advisory_xact_lock(hashtext(${source}))`;
@@ -95,9 +106,19 @@ export async function reconcileJmaIn<T>(
     const eligible = reports.filter(
       (r) => !r.family.startsWith("VXSE") || Date.parse(r.controlAt) >= floor,
     );
+    if (
+      initialization &&
+      (initialization.source !== source ||
+        initialization.at !== new Date(at).toISOString() ||
+        initialization.coverage !== "incomplete" ||
+        initialization.method !== "rolling-index-observed-reports" ||
+        initialization.payloadHashes.some((h) => !/^[a-f0-9]{64}$/.test(h)))
+    )
+      throw new Error("JMA: invalid initialization receipt");
     const native = applyJmaAreaReports(base, eligible);
     const next: JmaPersistentState = {
       native,
+      initialization: previous?.initialization ?? initialization,
       lastSuccess: at,
       coverage: "incomplete",
       gap: gap || (previous?.gap ?? false),

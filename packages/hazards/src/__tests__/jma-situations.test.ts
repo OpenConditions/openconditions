@@ -43,3 +43,41 @@ test("unreviewed offices fail closed", () => {
   ]);
   expect(() => jmaSituations(feed, state, "2012-02-14T01:00:00Z")).toThrow("office");
 });
+
+test("folds complementary fields from uncancelled earthquake families", () => {
+  const older = {
+    ...report,
+    messageUrl: url,
+    controlAt: "2012-02-14T12:40:00Z",
+    earthquake: { ...report.earthquake, intensity: "5+" },
+  };
+  const newer = {
+    ...report,
+    family: "VXSE53" as const,
+    messageUrl: url.replace("VXSE52", "VXSE53"),
+    controlAt: "2012-02-14T12:43:00Z",
+    earthquake: { magnitude: 6.1 },
+  };
+  const state = applyJmaAreaReports({ products: {}, areas: {} }, [older, newer]);
+  const [draft] = jmaSituations(feed, state, "2012-02-14T13:00:00Z");
+  expect(draft?.["details"]).toMatchObject({ jma: { intensity: "5+" }, magnitude: { value: 6.1 } });
+  expect(draft?.["location"]).toMatchObject({ geometry: { coordinates: [136.6, 35.6] } });
+});
+
+test("explicit native unknowns replace older numeric values without losing shaking", () => {
+  const known = {
+    ...report,
+    messageUrl: url,
+    family: "VXSE53" as const,
+    controlAt: "2012-02-14T12:40:00Z",
+    earthquake: { ...report.earthquake, magnitude: 6, intensity: "3" },
+  };
+  const unknown = { ...report, messageUrl: url, controlAt: "2012-02-14T12:43:00Z" };
+  const [draft] = jmaSituations(
+    feed,
+    applyJmaAreaReports({ products: {}, areas: {} }, [known, unknown]),
+    "2012-02-14T13:00:00Z",
+  );
+  expect(draft?.["details"]).not.toHaveProperty("magnitude");
+  expect(draft?.["details"]).toMatchObject({ jma: { intensity: "3" } });
+});

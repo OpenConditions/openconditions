@@ -208,6 +208,12 @@ export const SERVICE_FIELDS: Readonly<Record<string, ServiceField>> = {
       "URL of the OpenLR map-match resolver service. Empty: observations that carry only OpenLR (no coordinates) are dropped rather than resolved.",
     default: "",
   },
+  OPENCONDITIONS_JMA_WARNING_COVERAGE: {
+    title: "JMA warning coverage contract",
+    description:
+      "Set to incomplete only after accepting observed-report-only warning coverage. Empty: warning ingestion refuses execution. This never qualifies authoritative bootstrap or all-clear coverage.",
+    default: "",
+  },
   OPENCONDITIONS_JMA_EGRESS_ID: {
     title: "JMA shared egress identity",
     description:

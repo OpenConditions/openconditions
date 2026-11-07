@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import {
   type JmaFamily,
   type JmaReport,
@@ -12,6 +13,7 @@ export interface JmaDownload {
   etag?: string;
   modified?: string;
   checkedAt: number;
+  acquiredAt?: number;
 }
 export interface JmaDownloadStore {
   /** Serializes a URL across workers; commits cache independently of canonical publication. */
@@ -51,6 +53,12 @@ export class JmaAcquisition {
     );
   }
   async read(url: string, signal: AbortSignal): Promise<Buffer> {
+    return (await this.readDocument(url, signal)).body;
+  }
+  private async readDocument(
+    url: string,
+    signal: AbortSignal,
+  ): Promise<{ body: Buffer; acquiredAt: number; networkValidated: boolean }> {
     // One retry for transient transport/5xx failures, inside the caller's deadline.
     // Each attempt owns a fresh reservation; an uncertain failure is never refunded.
     for (let attempt = 0; ; attempt++) {
@@ -81,7 +89,10 @@ export class JmaAcquisition {
       }
     }
   }
-  private async readOnce(url: string, signal: AbortSignal): Promise<Buffer> {
+  private async readOnce(
+    url: string,
+    signal: AbortSignal,
+  ): Promise<{ body: Buffer; acquiredAt: number; networkValidated: boolean }> {
     if (!INDEXES.has(url)) jmaDataUrl(url);
     return this.store.withUrl(url, async (held, save) => {
       signal.throwIfAborted();
@@ -97,7 +108,11 @@ export class JmaAcquisition {
       }
       const interval = url.endsWith("_l.xml") ? 3_600_000 : 60_000;
       if (held && (!index || at - held.checkedAt < interval))
-        return Buffer.from(held.body, "base64");
+        return {
+          body: Buffer.from(held.body, "base64"),
+          acquiredAt: held.acquiredAt ?? held.checkedAt,
+          networkValidated: false,
+        };
       const headers = new Headers();
       if (held?.etag) headers.set("If-None-Match", held.etag);
       if (held?.modified) headers.set("If-Modified-Since", held.modified);
@@ -111,8 +126,12 @@ export class JmaAcquisition {
         if (response.status === 304) {
           complete = true;
           if (!held) throw new Error("JMA: cold 304");
-          await save({ ...held, checkedAt: at });
-          return Buffer.from(held.body, "base64");
+          await save({ ...held, acquiredAt: held.acquiredAt ?? held.checkedAt, checkedAt: at });
+          return {
+            body: Buffer.from(held.body, "base64"),
+            acquiredAt: held.acquiredAt ?? held.checkedAt,
+            networkValidated: true,
+          };
         }
         if (response.status !== 200) {
           await response.body?.cancel();
@@ -144,12 +163,13 @@ export class JmaAcquisition {
         await save({
           body: body.toString("base64"),
           checkedAt: at,
+          acquiredAt: at,
           ...(response.headers.get("etag") ? { etag: response.headers.get("etag")! } : {}),
           ...(response.headers.get("last-modified")
             ? { modified: response.headers.get("last-modified")! }
             : {}),
         });
-        return body;
+        return { body, acquiredAt: at, networkValidated: true };
       } finally {
         // A transport/guard failure can hide bytes it consumed internally. Keep that
         // reservation outstanding, rather than inventing a zero-byte successful refund.
@@ -162,16 +182,22 @@ export class JmaAcquisition {
     families: readonly JmaFamily[],
     lastSuccess: number | undefined,
     signal: AbortSignal,
-  ): Promise<{ reports: { url: string; report: JmaReport }[]; gap: boolean }> {
+  ): Promise<{
+    reports: { url: string; report: JmaReport }[];
+    gap: boolean;
+    networkValidated: boolean;
+    payloadHashes: string[];
+  }> {
     const deadline = AbortSignal.any([signal, AbortSignal.timeout(120_000)]);
     const at = this.now();
     const gap = lastSuccess === undefined || at - lastSuccess > 600_000;
     const urls = new Set<string>();
+    let networkValidated = true;
+    const payloadHashes: string[] = [];
     for (const suffix of gap ? ["_l", ""] : [""]) {
-      const index = readJmaIndex(
-        await this.read(`${BASE}${channel}${suffix}.xml`, deadline),
-        families,
-      );
+      const document = await this.readDocument(`${BASE}${channel}${suffix}.xml`, deadline);
+      networkValidated &&= document.networkValidated;
+      const index = readJmaIndex(document.body, families);
       if (
         Date.parse(index.updated) > at + 60_000 ||
         at - Date.parse(index.updated) > (suffix ? 7_200_000 : 600_000)
@@ -183,12 +209,17 @@ export class JmaAcquisition {
     const reports: { url: string; report: JmaReport }[] = [];
     // Serial downloads bound concurrency and stop the entire poll on any unusable selected document.
     for (const url of [...urls].sort()) {
-      const body = await this.read(url, deadline);
+      const { body, acquiredAt } = await this.readDocument(url, deadline);
+      payloadHashes.push(createHash("sha256").update(body).digest("hex"));
       reports.push({
         url,
-        report: { ...readJmaReport(body, jmaDataUrl(url).family as JmaFamily), messageUrl: url },
+        report: {
+          ...readJmaReport(body, jmaDataUrl(url).family as JmaFamily),
+          messageUrl: url,
+          acquiredAt: new Date(acquiredAt).toISOString(),
+        },
       });
     }
-    return { reports, gap };
+    return { reports, gap, networkValidated, payloadHashes };
   }
 }

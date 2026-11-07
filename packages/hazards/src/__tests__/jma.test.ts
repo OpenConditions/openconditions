@@ -112,3 +112,27 @@ test("observed volcanic downgrade is a warning release, not message cancellation
   });
   expect(r.earthquake).toBeUndefined();
 });
+
+test("malformed unknown coordinates and contradictory nil dates fail closed", () => {
+  expect(() => jmaCoordinate("garbageNaN/", "degree")).toThrow();
+  const xml = fixture("33_12_01_240613_VXSE52").toString();
+  expect(() =>
+    readJmaReport(
+      Buffer.from(
+        xml.replace(
+          "<OriginTime>",
+          '<OriginTime xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true">',
+        ),
+      ),
+      "VXSE52",
+    ),
+  ).toThrow();
+});
+
+test("qualitative shallow depth remains unknown across native line breaks", () => {
+  const xml = fixture("33_12_01_240613_VXSE52")
+    .toString()
+    .replace("深さ　１０ｋｍ", "ごく\n浅い")
+    .replace("-10000/", "+0/");
+  expect(readJmaReport(Buffer.from(xml), "VXSE52").earthquake?.depthM).toBeUndefined();
+});
