@@ -76,6 +76,10 @@ test("the domain renders its catalogue JSON Schema", () => {
 test("a format without a payload parses to nothing, and a situations format says so in its accounting", () => {
   const ctx = { fetchedAt: "2026-10-08T22:00:00Z", cadenceSec: 300, reference: {} };
   for (const format of Object.values(hazardsDomain.formats)) {
+    if (format.id === "jma-xml") {
+      expect(() => format.parse(dwdFeed(), {}, ctx)).toThrow("durable worker reconciliation");
+      continue;
+    }
     const out = format.parse(dwdFeed(), {}, ctx);
     expect(out.situations).toEqual([]);
     expect(out.features).toEqual([]);

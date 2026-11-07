@@ -22,6 +22,7 @@ export interface JmaWarning {
   status: string;
 }
 export interface JmaReport {
+  messageUrl?: string;
   family: JmaFamily;
   controlAt: string;
   reportAt: string;

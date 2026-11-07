@@ -61,3 +61,12 @@ test("batch recovery applies older area deltas before later partial reports", ()
   ]);
   expect(applyJmaAreaReports({ areas: {}, products: {} }, [changed, rain])).toEqual(expected);
 });
+
+test("JSONB key ordering does not turn a duplicate into a same-clock conflict", () => {
+  const original = report;
+  const reordered = Object.fromEntries(
+    Object.entries(original).reverse(),
+  ) as unknown as typeof original;
+  const held = applyJmaAreaReports({ products: {}, areas: {} }, [original]);
+  expect(() => applyJmaAreaReports(held, [reordered])).not.toThrow();
+});

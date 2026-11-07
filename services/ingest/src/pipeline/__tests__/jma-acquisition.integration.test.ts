@@ -101,7 +101,7 @@ import { readJmaReport } from "@openconditions/hazards";
 import { reconcileJmaIn } from "../jma-state-store.js";
 
 test("lifecycle state, tombstones and cursors roll back with the publication callback", async () => {
-  const report = readJmaReport(body, "VXSE52");
+  const report = { ...readJmaReport(body, "VXSE52"), controlAt: "2026-11-07T00:59:00Z" };
   await reconcileJmaIn(db.sql, "state-test", [report], at(), false, async () => {});
   const [before] = await db.sql`SELECT value FROM conditions.jma_state WHERE source = 'state-test'`;
   await expect(
@@ -184,4 +184,45 @@ test("uncertain transport failures keep reservations separate from received byte
     await db.sql`SELECT used, reserved FROM conditions.jma_budget WHERE egress = 'uncertain'`;
   expect(Number(row!.used)).toBe(0);
   expect(Number(row!.reserved)).toBe(8_000_000);
+});
+
+test("transient retry charges uncertain first attempt and only received bytes on success", async () => {
+  let calls = 0;
+  const transport = vi.fn<typeof fetch>(async () => {
+    if (++calls === 1) throw new TypeError("network unavailable");
+    return new Response(body);
+  });
+  const freshUrl = url.replace("20261106104333", "20261106104334");
+  await new JmaAcquisition(jmaDownloadStore(db.sql), "retry-test", at, transport, lookup).read(
+    freshUrl,
+    signal(),
+  );
+  expect(calls).toBe(2);
+  const [budget] =
+    await db.sql`SELECT used,reserved FROM conditions.jma_budget WHERE egress='retry-test'`;
+  expect(Number(budget!.reserved)).toBe(8_000_000);
+  expect(Number(budget!.used)).toBe(body.length);
+});
+
+test("quake retention floor prevents replay after tombstone cleanup", async () => {
+  const report = { ...readJmaReport(body, "VXSE52"), controlAt: "2026-11-07T00:00:00Z" };
+  await reconcileJmaIn(db.sql, "retention-test", [report], at(), false, async () => {});
+  await reconcileJmaIn(
+    db.sql,
+    "retention-test",
+    [{ ...report, cancelled: true, controlAt: "2026-11-07T01:00:00Z" }],
+    at() + 1,
+    false,
+    async () => {},
+  );
+  await reconcileJmaIn(
+    db.sql,
+    "retention-test",
+    [report],
+    at() + 31 * 86_400_000,
+    false,
+    async (_tx, state) => {
+      expect(state.native.products).toEqual({});
+    },
+  );
 });

@@ -112,6 +112,13 @@
         "default": "",
         "x-openmapx-secret": false
       },
+      "OPENCONDITIONS_JMA_EGRESS_ID": {
+        "type": "string",
+        "title": "JMA shared egress identity",
+        "description": "Use one explicit identity and one database for all JMA workers sharing the provider-visible IP. Empty: JMA ingestion refuses execution.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
       "OPENCONDITIONS_FETCH_TIMEOUT_MS": {
         "type": "string",
         "title": "Feed fetch timeout (ms)",

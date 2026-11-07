@@ -51,11 +51,50 @@ export class JmaAcquisition {
     );
   }
   async read(url: string, signal: AbortSignal): Promise<Buffer> {
+    // One retry for transient transport/5xx failures, inside the caller's deadline.
+    // Each attempt owns a fresh reservation; an uncertain failure is never refunded.
+    for (let attempt = 0; ; attempt++) {
+      try {
+        return await this.readOnce(url, signal);
+      } catch (error) {
+        if (
+          attempt >= 1 ||
+          signal.aborted ||
+          !(
+            error instanceof TypeError ||
+            (error instanceof Error && /^JMA: HTTP 5\d\d$/.test(error.message))
+          )
+        )
+          throw error;
+        await new Promise<void>((resolve, reject) => {
+          const abort = () => {
+            clearTimeout(timer);
+            reject(signal.reason);
+          };
+          const timer = setTimeout(() => {
+            signal.removeEventListener("abort", abort);
+            resolve();
+          }, 250);
+          signal.addEventListener("abort", abort, { once: true });
+          if (signal.aborted) abort();
+        });
+      }
+    }
+  }
+  private async readOnce(url: string, signal: AbortSignal): Promise<Buffer> {
     if (!INDEXES.has(url)) jmaDataUrl(url);
     return this.store.withUrl(url, async (held, save) => {
       signal.throwIfAborted();
       const index = INDEXES.has(url);
       const at = this.now();
+      if (!index) {
+        const stamp = /\/(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})_/.exec(url)!;
+        const published = Date.parse(
+          `${stamp[1]}-${stamp[2]}-${stamp[3]}T${stamp[4]}:${stamp[5]}:${stamp[6]}Z`,
+        );
+        if (!Number.isFinite(published) || published < at - 45 * 86_400_000)
+          throw new Error("JMA: message outside bounded download horizon");
+      }
       const interval = url.endsWith("_l.xml") ? 3_600_000 : 60_000;
       if (held && (!index || at - held.checkedAt < interval))
         return Buffer.from(held.body, "base64");
@@ -145,7 +184,10 @@ export class JmaAcquisition {
     // Serial downloads bound concurrency and stop the entire poll on any unusable selected document.
     for (const url of [...urls].sort()) {
       const body = await this.read(url, deadline);
-      reports.push({ url, report: readJmaReport(body, jmaDataUrl(url).family as JmaFamily) });
+      reports.push({
+        url,
+        report: { ...readJmaReport(body, jmaDataUrl(url).family as JmaFamily), messageUrl: url },
+      });
     }
     return { reports, gap };
   }

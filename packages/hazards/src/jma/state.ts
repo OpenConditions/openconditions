@@ -1,4 +1,16 @@
 import type { JmaReport } from "./report.js";
+
+// PostgreSQL jsonb reorders object keys. Equality must survive durable round trips.
+function canonical(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
+  if (value !== null && typeof value === "object")
+    return `{${Object.entries(value)
+      .filter(([, v]) => v !== undefined)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([k, v]) => `${JSON.stringify(k)}:${canonical(v)}`)
+      .join(",")}}`;
+  return JSON.stringify(value);
+}
 export type JmaState = Record<string, JmaReport>;
 /** Product identity follows the manual's independent information unit, never Serial. */
 export function jmaUnit(r: JmaReport): string {
@@ -17,8 +29,7 @@ export function applyJmaReports(previous: JmaState, reports: readonly JmaReport[
       held = next[key];
     if (held && Date.parse(held.controlAt) > Date.parse(r.controlAt)) continue;
     if (held && Date.parse(held.controlAt) === Date.parse(r.controlAt)) {
-      if (JSON.stringify(held) !== JSON.stringify(r))
-        throw new Error("JMA: conflicting same-clock report");
+      if (canonical(held) !== canonical(r)) throw new Error("JMA: conflicting same-clock report");
       continue;
     }
     next[key] = structuredClone(r);
@@ -61,6 +72,7 @@ export function applyJmaAreaReports(
     if (!latest || Date.parse(latest.controlAt) > Date.parse(report.controlAt)) continue;
     if (report.cancelled)
       throw new Error("JMA: warning cancellation requires native product-specific reconciliation");
+    const areaReport = structuredClone(report);
     for (const warning of report.warnings) {
       const key = jmaAreaUnit(report, warning);
       const held = next.areas[key];
@@ -73,11 +85,11 @@ export function applyJmaAreaReports(
       if (
         held &&
         held.report.controlAt === report.controlAt &&
-        JSON.stringify(held.warning) !== JSON.stringify(warning)
+        canonical(held.warning) !== canonical(warning)
       )
         throw new Error("JMA: conflicting area in one revision");
       next.areas[key] = {
-        report: structuredClone(report),
+        report: areaReport,
         warning: structuredClone(warning),
         ended,
       };

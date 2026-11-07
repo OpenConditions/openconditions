@@ -208,6 +208,12 @@ export const SERVICE_FIELDS: Readonly<Record<string, ServiceField>> = {
       "URL of the OpenLR map-match resolver service. Empty: observations that carry only OpenLR (no coordinates) are dropped rather than resolved.",
     default: "",
   },
+  OPENCONDITIONS_JMA_EGRESS_ID: {
+    title: "JMA shared egress identity",
+    description:
+      "Use one explicit identity and one database for all JMA workers sharing the provider-visible IP. Empty: JMA ingestion refuses execution.",
+    default: "",
+  },
   OPENCONDITIONS_FETCH_TIMEOUT_MS: {
     title: "Feed fetch timeout (ms)",
     description: "Timeout of every feed fetch. Empty: 60000.",

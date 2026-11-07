@@ -730,3 +730,89 @@ describe("hazards feeds in the catalogue", () => {
     expect(credit("eu-effis-fires")).toMatch(/modified/);
   });
 });
+
+describe("JMA durable worker publication", () => {
+  it("dispatches native reports, commits status and serves public API projections without CAP", async () => {
+    const feed = { ...repoFeed("jp-jma-quakes"), disabled: undefined };
+    await syncSources(sql, [feed]);
+    const jmaApp = Fastify();
+    registerScope(jmaApp, TOKEN);
+    registerApiRoutes(jmaApp, sql, {
+      registry,
+      now: () => new Date(clock),
+      catalog: {
+        ...REPO_CATALOG,
+        sources: [...REPO_CATALOG.sources, feed],
+      },
+    });
+    await jmaApp.ready();
+    const getJma = async (url: string) => {
+      const response = await jmaApp.inject({ url });
+      expect(response.statusCode).toBe(200);
+      return response.json() as Rec;
+    };
+    clock = "2012-02-14T12:43:00Z";
+    const message =
+      "https://www.data.jma.go.jp/developer/xml/data/20120214124253_0_VXSE52_010000.xml";
+    let index = `<feed xmlns="http://www.w3.org/2005/Atom"><updated>${clock}</updated><entry><id>${message}</id><link href="${message}"/></entry></feed>`;
+    let payload = fixture("jma/33_12_01_240613_VXSE52.xml");
+    const requested: string[] = [];
+    const deps = {
+      sql,
+      now: () => clock,
+      lookup: fakeLookup,
+      model: { registry, instanceId: "test.local" },
+      env: { OPENCONDITIONS_JMA_EGRESS_ID: "jma-api-test" },
+      fetch: (async (input) => {
+        requested.push(String(input));
+        return new Response(String(input).includes("/data/") ? payload : index);
+      }) as typeof fetch,
+    };
+    expect((await runSource(feed, deps)).count).toBe(1);
+    const records = (await getJma("/situations?domain=hazards&type=earthquake"))[
+      "records"
+    ] as Rec[];
+    const record = records.find((r) => (r["provenance"] as Rec)["sourceId"] === feed.id)!;
+    expect(record).toBeDefined();
+    expect(record["details"]).toMatchObject({
+      jma: { messageUrl: message, infoKindVersion: "1.0_1" },
+    });
+    expect(record["details"]).not.toHaveProperty("cap");
+    expect(record["details"]).not.toHaveProperty("magnitude");
+    expect(
+      (await jmaApp.inject({ url: `/situations/${encodeURIComponent(String(record["id"]))}` }))
+        .statusCode,
+    ).toBe(200);
+    const geo = await getJma("/situations.geojson?domain=hazards&type=earthquake");
+    expect((geo["features"] as Rec[]).length).toBeGreaterThan(0);
+    expect((await getJma("/sources"))["sources"]).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: feed.id })]),
+    );
+    const [status] =
+      await sql`SELECT last_outcome, active_event_count FROM conditions.source_status WHERE source=${feed.id}`;
+    expect(status).toMatchObject({ last_outcome: "partial", active_event_count: 1 });
+    expect((await runSource(feed, deps)).count).toBe(0);
+    expect(requested.filter((u) => u === message)).toHaveLength(1);
+    const [before] = await sql`SELECT value FROM conditions.jma_state WHERE source=${feed.id}`;
+    clock = "2012-02-14T12:45:00Z";
+    const uncleared = message.replace("20120214124253", "20120214124453");
+    index = `<feed xmlns="http://www.w3.org/2005/Atom"><updated>${clock}</updated><entry><id>${uncleared}</id><link href="${uncleared}"/></entry></feed>`;
+    payload = Buffer.from(
+      payload
+        .toString()
+        .replace(
+          "<PublishingOffice>気象庁</PublishingOffice>",
+          "<PublishingOffice>uncleared</PublishingOffice>",
+        )
+        .replace("2012-02-14T12:42:53Z", "2012-02-14T12:44:53Z"),
+    );
+    await expect(runSource(feed, deps)).rejects.toThrow("office");
+    const [after] = await sql`SELECT value FROM conditions.jma_state WHERE source=${feed.id}`;
+    expect(after!.value).toEqual(before!.value);
+    expect((await getJma("/situations?domain=hazards&type=earthquake"))["records"]).toHaveLength(1);
+    await expect(
+      runSource({ ...repoFeed("jp-jma-alerts"), disabled: undefined }, deps),
+    ).rejects.toThrow("bootstrap");
+    await jmaApp.close();
+  });
+});

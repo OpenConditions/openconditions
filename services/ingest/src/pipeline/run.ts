@@ -47,6 +47,7 @@ import { rawTierFor } from "../raw/tiers.js";
 import { loadBaselineMap } from "./baseline-store.js";
 import { bindRecords } from "./bind-records.js";
 import { bodyStreamFrom } from "./body-stream.js";
+import { runJma } from "./jma-run.js";
 import { streamFeed } from "./measured-data.js";
 import { type ParseGate, payloadBytes } from "./parse-gate.js";
 import { type ParseProcess, ParseProcessError } from "./parse-process.js";
@@ -440,7 +441,9 @@ export async function runSource(src: CatalogFeed, deps: RunDeps): Promise<RunRes
     closed: false,
   };
   try {
-    return await runAttempt(src, deps, attempt, due);
+    return src.format === "jma-xml"
+      ? await runJma(src, deps, attempt)
+      : await runAttempt(src, deps, attempt, due);
   } catch (err) {
     if (!attempt.closed) {
       await upsertSourceStatus(deps.sql, src.id, {
