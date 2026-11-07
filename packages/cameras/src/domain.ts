@@ -20,6 +20,7 @@ import { parseIbi511 } from "./formats/ibi511.js";
 import { CAMERAS_LAYOUT_FORMATS, parseLayout } from "./formats/layout.js";
 import { parseNps } from "./formats/nps.js";
 import { parseOverpassCameras } from "./formats/overpass.js";
+import { parseQuebecCameras } from "./formats/quebec-cameras.js";
 import { parseTdxCameras } from "./formats/tdx.js";
 import { parseTfl } from "./formats/tfl.js";
 import { parseTrafikverketCameras } from "./formats/trafikverket.js";
@@ -86,7 +87,8 @@ function cameras(
     id,
     kind: "features",
     products: CAMERAS_PRODUCTS,
-    produces: PRODUCES,
+    produces:
+      id === "quebec-cameras" ? { kinds: ["camera", "camera_view"], properties: [] } : PRODUCES,
     endpoints,
     parse: distinctCameras(parse),
     ...(parseStatus === undefined ? {} : { parseStatus }),
@@ -121,6 +123,7 @@ const FORMATS: FeedFormat<CamerasCatalogFeed>[] = [
   cameras("nps", parseNps),
   cameras("tripcheck", parseTripcheck),
   cameras("cars-cctv", parseCarsCctv),
+  cameras("quebec-cameras", parseQuebecCameras),
 ];
 
 const LAYOUTS: ReadonlySet<string> = new Set(CAMERAS_LAYOUT_FORMATS);
@@ -137,6 +140,28 @@ const EVERY_FORMAT_READS: ReadonlySet<string> = new Set(["imageRedistribution"])
  */
 function lintFeed(feed: FeedDefinition): string[] {
   const own = feed as FeedDefinition & CamerasFeedExtension;
+  if (feed.format === "quebec-cameras") {
+    const endpoint = own.endpoints["main"];
+    const url = endpoint?.url === undefined ? undefined : new URL(endpoint.url);
+    return [
+      ...(own.cameras?.imageHosts === undefined && own.cameras?.imageRedistribution === "unknown"
+        ? []
+        : [
+            "Québec inventory must remain metadata-only with unknown image rights and no imageHosts",
+          ]),
+      ...(url?.searchParams.get("srsname") === "EPSG:4326"
+        ? []
+        : ["Québec inventory requires explicit EPSG:4326 acquisition"]),
+      ...(own.snapshot?.completeness === "complete" &&
+      own.snapshot.recordsPath === "features" &&
+      own.snapshot.totalCountPath === "numberMatched"
+        ? []
+        : ["Québec inventory requires whole-collection count agreement"]),
+      ...(endpoint?.cadenceSec !== undefined && endpoint.cadenceSec >= 86400
+        ? []
+        : ["Québec inventory polls at most daily"]),
+    ];
+  }
   if (!LAYOUTS.has(feed.format)) {
     const mappingFields = CAMERAS_MAPPING_FIELDS.filter(
       (key) =>
