@@ -1,5 +1,8 @@
 import { spawn } from "node:child_process";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, expect, test } from "vitest";
 
@@ -43,7 +46,6 @@ type Fixture = {
   issue: ReturnType<typeof baseIssue> & { pull_request?: object };
   event: {
     action: string;
-    number: number | string;
     repository: typeof repo;
     sender: { id: number | null };
     issue: ReturnType<typeof baseIssue> & { pull_request?: object };
@@ -74,7 +76,6 @@ function fixture(action = "opened"): Fixture {
     issue,
     event: {
       action,
-      number: 7,
       repository: repo,
       sender: { id: 99 },
       issue: structuredClone(issue),
@@ -85,7 +86,7 @@ function fixture(action = "opened"): Fixture {
   };
 }
 
-async function run(f: Fixture, mode = "lifecycle", readOnly = false) {
+async function run(f: Fixture, mode = "lifecycle", readOnly = false, cli = false) {
   const server = createServer(async (req, res) => {
     let text = "";
     for await (const chunk of req) text += chunk;
@@ -169,10 +170,43 @@ let text='';for await(const chunk of process.stdin) text+=chunk;
 const x=JSON.parse(text);try{const api=createApi('fixture-token',{origin:x.origin,readOnly:x.readOnly});
 const result=await(x.mode==='drift'?driftReport({api}):lifecycle({api,event:x.event,now:()=>x.now}));
 process.stdout.write(JSON.stringify(result));}catch(e){process.stderr.write(e.message);process.exitCode=1;}`;
-  const child = spawn(process.execPath, ["--input-type=module", "-e", script], {
+  let args = ["--input-type=module", "-e", script];
+  let env: Record<string, string> = {};
+  if (cli) {
+    const dir = await mkdtemp(join(tmpdir(), "issue-lifecycle-"));
+    cleanups.push(() => rm(dir, { recursive: true, force: true }));
+    const eventPath = join(dir, "event.json");
+    const preloadPath = join(dir, "loopback.mjs");
+    await writeFile(eventPath, JSON.stringify(f.event));
+    // Exercise the actual CLI without adding a production API-origin or clock setting.
+    await writeFile(
+      preloadPath,
+      `
+const fetch = globalThis.fetch;
+Date.now = () => ${input.now};
+globalThis.fetch = (url, options) => {
+  const target = new URL(url);
+  if (target.origin !== 'https://api.github.com') throw new Error('unexpected test origin');
+  return fetch(${JSON.stringify(input.origin)} + target.pathname + target.search, options);
+};`,
+    );
+    args = ["--import", preloadPath, fileURLToPath(moduleUrl), "lifecycle"];
+    env = {
+      GITHUB_REPOSITORY: repo.full_name,
+      GITHUB_REPOSITORY_ID: String(repo.id),
+      GITHUB_REF: "refs/heads/main",
+      GITHUB_WORKFLOW_REF: `${repo.full_name}/.github/workflows/issue-label-lifecycle.yml@refs/heads/main`,
+      GITHUB_WORKFLOW_SHA: "a".repeat(40),
+      GITHUB_EVENT_NAME: "issues",
+      GITHUB_EVENT_PATH: eventPath,
+      ISSUE_TRIAGE_LIFECYCLE_ENABLED: "true",
+      GITHUB_TOKEN: "fixture-token",
+    };
+  }
+  const child = spawn(process.execPath, args, {
     cwd: fileURLToPath(new URL("../..", import.meta.url)),
     stdio: ["pipe", "pipe", "pipe"],
-    env: {},
+    env,
   });
   let stdout = "";
   let stderr = "";
@@ -235,7 +269,7 @@ test.each(["repository", "number", "database ID", "sender", "action", "timestamp
   async (kind) => {
     const f = fixture();
     if (kind === "repository") f.event.repository = { ...repo, id: 1 };
-    if (kind === "number") f.event.number = "7; echo bad";
+    if (kind === "number") Object.assign(f.event.issue, { number: "7; echo bad" });
     if (kind === "database ID") f.event.issue.id = 1;
     if (kind === "sender") f.event.sender = { id: null };
     if (kind === "action") f.event.action = "edited";
@@ -563,4 +597,66 @@ test("a previously unseen old bot event cannot confirm the current write", async
   expect(out.code).toBe(1);
   expect(out.stderr).toMatch(/uncertain|history/);
   expect(writes(f)).toHaveLength(1);
+});
+
+// GitHub issues payloads carry issue.number, without a top-level number.
+test.each(["opened", "reopened", "closed"])(
+  "workflow-shaped %s file reaches CLI and HTTP",
+  async (action) => {
+    const f = fixture(action);
+    if (action === "closed") f.issue.labels.push(label("needs-triage"));
+    expect(f.event).not.toHaveProperty("number");
+    const out = await run(f, "lifecycle", false, true);
+    expect(out.stderr).toBe("");
+    expect(out.code).toBe(0);
+    expect(out.result).toEqual({ status: "applied", issue: 7, operations: 1 });
+    expect(writes(f)).toHaveLength(1);
+    expect(writes(f)[0].method).toBe(action === "closed" ? "DELETE" : "POST");
+  },
+);
+
+test.each([0, -1, 1.5, null, undefined, "7"])(
+  "rejects invalid nested issue number %s before HTTP",
+  async (number) => {
+    const f = fixture();
+    Object.assign(f.event.issue, { number });
+    const out = await run(f);
+    expect(out.code).toBe(1);
+    expect(f.requests).toHaveLength(0);
+  },
+);
+
+test.each(["node_id", "number", "created_at"])(
+  "rejects current issue %s mismatch",
+  async (field) => {
+    const f = fixture();
+    if (field === "node_id") f.issue.node_id = "I_other";
+    if (field === "number") f.issue.number = 8;
+    if (field === "created_at") f.issue.created_at = old;
+    expect((await run(f)).stderr).toBe("issue binding changed");
+    expect(writes(f)).toHaveLength(0);
+  },
+);
+
+test("opened timestamp mismatch remains rejected before HTTP", async () => {
+  const f = fixture();
+  f.event.issue.updated_at = later;
+  expect((await run(f)).stderr).toBe("opened event timestamp mismatch");
+  expect(f.requests).toHaveLength(0);
+});
+
+test("opened payload cannot override a subsequent API update or close", async () => {
+  for (const closed of [false, true]) {
+    const f = fixture();
+    f.issue.updated_at = later;
+    if (closed) {
+      f.issue.state = "closed";
+      f.issue.closed_at = later;
+      f.events.push({ id: 21, event: "closed", created_at: later, actor: { id: 99 } });
+    }
+    const out = await run(f);
+    expect(out.code).toBe(0);
+    expect(out.result.status).toBe(closed ? "stale" : "preserved");
+    expect(writes(f)).toHaveLength(0);
+  }
 });

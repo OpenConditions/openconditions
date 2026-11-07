@@ -167,10 +167,7 @@ export async function lifecycle({ api, event, now = Date.now }) {
     "wrong event repository",
   );
   assert(
-    actions.has(event.action) &&
-      positive(event.number) &&
-      event.number === event.issue?.number &&
-      positive(event.sender?.id),
+    actions.has(event.action) && positive(event.issue?.number) && positive(event.sender?.id),
     "invalid event action, issue number or sender",
   );
   if (event.issue.pull_request) return { status: "excluded-PR" };
