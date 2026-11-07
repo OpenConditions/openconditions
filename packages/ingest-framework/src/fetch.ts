@@ -23,6 +23,7 @@ import { getPath } from "./layouts/row.js";
 import { nextLinkTarget } from "./link-header.js";
 import type { OAuthGrants } from "./oauth-grant.js";
 import { digestPayload, type PayloadDigest } from "./payload.js";
+import { acquirePun, PUN_ROOT, punHostFetch } from "./pun.js";
 import { feedSecretValues, redactSecrets, redactUrl } from "./redact.js";
 import { unzipEntries } from "./zip.js";
 
@@ -1182,6 +1183,19 @@ export async function fetchEndpoint(
   baseFetch: FetchFn,
   opts: FetchOptions = {},
 ): Promise<FetchResult> {
+  if (
+    Object.values(feed.endpoints).some((endpoint) =>
+      [endpoint.url, ...(endpoint.urls ?? [])].some((url) =>
+        url?.startsWith("https://cruscotto-italia.dati.gov.it/"),
+      ),
+    )
+  )
+    baseFetch = punHostFetch(baseFetch);
+  if (feed.format === "pun") {
+    if (role !== "main" || feedEndpoint(feed, role).url !== `${PUN_ROOT}manifest.json`)
+      throw new Error("PUN requires the public mirror manifest");
+    return acquirePun(baseFetch, opts.state ?? sharedFetchState);
+  }
   const unzip = feedEndpoint(feed, role).unzip;
   const result = await fetchRole(feed, role, baseFetch, opts);
   return unzip ? unzipped(result, unzip) : result;

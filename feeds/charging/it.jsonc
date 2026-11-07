@@ -1,0 +1,32 @@
+{
+  "$schema": "../schema/charging.schema.json",
+  "feeds": [
+    {
+      "operator": "agid",
+      "qualifier": "pun",
+      "product": "charging",
+      "name": "GSE/MASE PUN charging inventory via Cruscotto Italia (AgID)",
+      "homepage": "https://cruscotto-italia.dati.gov.it/api.html",
+      "privacyUrl": "https://www.agid.gov.it/it/privacy-policy",
+      "tier": "aggregator",
+      "format": "pun",
+      "endpoints": {
+        "main": {
+          "url": "https://cruscotto-italia.dati.gov.it/data/manifest.json",
+          "cadenceSec": 86400,
+        },
+      },
+      "freshnessWindowSec": 172800,
+      "coverage": { "countries": ["IT"] },
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "GSE/MASE — PUN; Cruscotto Italia (AgID), CC BY 4.0. Normalized and deduplicated by OpenConditions; representative connector only.",
+      "extrasAllow": ["pun"],
+      "terms": {
+        "url": "https://cruscotto-italia.dati.gov.it/api.html#condizioni",
+        "reviewedAt": "2026-11-07",
+        "note": "Public factual EVSE/location/CPO/representative connector inventory only. AgID's PUN-specific CC BY 4.0 distribution identifies GSE as holder; accepted with CAD Article 52 and AgID guidelines. Excludes media, personal contacts, availability, tariffs and payment claims. Mirror municipal coverage is not a complete national census. CRS is undeclared; geographic coordinate interpretation needs operator qualification. Use one acquiring worker per egress IP: one connection and one request per second including retries. A complete pass takes roughly 94 minutes plus transfer/backoff; no national runtime qualification has been performed.",
+      },
+    },
+  ],
+}
