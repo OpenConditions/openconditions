@@ -270,3 +270,11 @@ describe("fusion", () => {
     });
   });
 });
+
+it("rejects a source-expired bulk bulletin despite healthy polling", () => {
+  const candidate = feed("available", "2026-10-01T09:00:00Z");
+  candidate.observation.freshness.expiresAt = "2026-10-01T10:00:00Z";
+  expect(
+    fuse(crowdRegistry, "charging.evse_status", [candidate], "2026-10-01T10:00:00Z"),
+  ).toBeUndefined();
+});

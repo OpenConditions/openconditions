@@ -1,5 +1,6 @@
 export * from "./domain.js";
 export * from "./formats/econtrol.js";
+export * from "./formats/mimit.js";
 export * from "./formats/minetur.js";
 export * from "./formats/overpass.js";
 export * from "./formats/prix-carburants.js";

@@ -41,6 +41,12 @@ const open = (
 });
 
 export const LICENSES: readonly LicenseInfo[] = [
+  open({
+    id: "LicenseRef-IODL-2.0",
+    name: "Italian Open Data License 2.0",
+    url: "https://www.dati.gov.it/content/italian-open-data-license-v20",
+    changeNotice: false,
+  }),
   {
     id: "NOASSERTION",
     name: "Rights not verified",

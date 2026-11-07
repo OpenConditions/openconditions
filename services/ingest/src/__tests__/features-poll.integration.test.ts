@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { listLatestObservations } from "@openconditions/core";
+import { fuelDomain } from "@openconditions/fuel";
 import {
   type CatalogFeed,
   defineIngestDomain,
@@ -23,14 +26,20 @@ import {
 import { productionModules } from "@openconditions/model-registry";
 import {
   ensureObservationPartitions,
+  refreshFused,
   retentionClasses,
   sweepRecords,
+  syncSources,
 } from "@openconditions/storage";
 import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
+import Fastify from "fastify";
 import type postgres from "postgres";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { registerApiRoutes } from "../api/routes.js";
+import { registerScope } from "../api/scope.js";
 import { createRoleState, runSource } from "../pipeline/run.js";
 import { ORPHAN_MAX_AGE_SEC, orphanMaxAges } from "../record-jobs.js";
+import { repoFeed } from "./helpers/catalog.js";
 
 type Rec = Record<string, unknown>;
 
@@ -218,6 +227,7 @@ const testDomain: IngestDomain = defineIngestDomain({
   products: ["fuel"],
   feedShape: {},
   formats: {
+    mimit: fuelDomain.formats["mimit"]!,
     [FORMAT]: {
       id: FORMAT,
       kind: "features",
@@ -1263,4 +1273,168 @@ describe("status-only polls", () => {
     expect(sitesSeen.length).toBe(sites!.bytes);
     expect(await h.records("feature")).toHaveLength(2);
   }, 60_000);
+});
+
+describe("MIMIT coordinated dated snapshot pipeline", () => {
+  it("persists corrections, preserves failures/replays, controls withdrawal and excludes source-expired API prices", async () => {
+    const feed = { ...repoFeed("it-mimit-fuel"), disabled: undefined };
+    await syncSources(sql, [feed]);
+    const fixture = (name: string) =>
+      readFileSync(
+        new URL(
+          `../../../../packages/fuel/src/__tests__/fixtures/mimit-${name}.csv`,
+          import.meta.url,
+        ),
+        "utf8",
+      );
+    const registryBody = fixture("registry");
+    const pricesBody = fixture("prices");
+    let now = "2026-11-07T10:00:00Z";
+    await ensureObservationPartitions(sql, {
+      classes: retentionClasses(registry),
+      now: new Date(now),
+    });
+    const poll = (sites = registryBody, prices = pricesBody, failure = false) =>
+      runSource(feed, {
+        sql,
+        fetch: (async (url: string | URL | Request) => {
+          if (String(url).includes("anagrafica")) return new Response(sites);
+          return failure ? new Response("error", { status: 503 }) : new Response(prices);
+        }) as typeof fetch,
+        now: () => now,
+        lookup: fakeLookup,
+        model: { registry, instanceId: "test.local" },
+      });
+    const live = () =>
+      sql`SELECT id FROM conditions.feature WHERE source_id = ${feed.id} AND tombstoned_at IS NULL`;
+    const api = async (at: string) =>
+      listLatestObservations(
+        {
+          execute: <T>(q: string, p?: unknown[]) =>
+            sql.unsafe(q, p as never) as unknown as Promise<T>,
+        },
+        registry,
+        {
+          scope: "public",
+          sources: [feed.id],
+          properties: ["fuel.price"],
+          limit: 100,
+          at: new Date(at),
+        },
+      );
+    const initialEmpty = (s: string) => `${s.split("\n").slice(0, 2).join("\n")}\n`;
+    expect(
+      (await poll(initialEmpty(registryBody), initialEmpty(pricesBody))).error,
+    ).toBeUndefined();
+    expect(await live()).toHaveLength(0);
+    expect((await poll()).error).toBeUndefined();
+    expect(await live()).toHaveLength(2);
+    expect((await api(now)).records).toHaveLength(5);
+    const http = Fastify();
+    let readAt = now;
+    registerScope(http, "mimit-test-token-012345678901234567890123");
+    registerApiRoutes(http, sql, {
+      registry,
+      now: () => new Date(readAt),
+      catalog: { sources: [feed] },
+    });
+    try {
+      const response = await http.inject({
+        method: "GET",
+        url: "/features?source=it-mimit-fuel&expand=components,latest",
+      });
+      expect(response.statusCode).toBe(200);
+      const body = response.json();
+      expect(body.records).toHaveLength(2);
+      expect(body.latest["oc:feature:it-mimit-fuel:001"]).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            componentKey: "petrol:self",
+            result: { type: "money", amount: "1.799", currency: "EUR", per: "L" },
+            phenomenonTime: { instant: "2026-11-06T07:00:00Z" },
+          }),
+        ]),
+      );
+      readAt = "2026-11-08T07:00:00Z";
+      const expired = (
+        await http.inject({
+          method: "GET",
+          url: "/features?source=it-mimit-fuel&expand=components,latest",
+        })
+      ).json();
+      expect(Object.values(expired.latest).flat()).toEqual([]);
+    } finally {
+      await http.close();
+    }
+
+    const canonicalApi = (at: string) =>
+      listLatestObservations(
+        {
+          execute: <T>(q: string, p?: unknown[]) =>
+            sql.unsafe(q, p as never) as unknown as Promise<T>,
+        },
+        registry,
+        {
+          scope: "public",
+          canonical: true,
+          bbox: [9, 45, 9.3, 45.5],
+          properties: ["fuel.price"],
+          limit: 100,
+          at: new Date(at),
+        },
+      );
+    expect((await canonicalApi(now)).records).toHaveLength(4);
+    expect((await canonicalApi("2026-11-08T07:00:00Z")).records).toHaveLength(0);
+    await sql.begin((tx) =>
+      refreshFused(tx, registry, [{ featureId: "oc:feature:it-mimit-fuel:001" }], {
+        now: "2026-11-08T07:00:00Z",
+        instanceId: "test.local",
+      }),
+    );
+    const fused =
+      await sql`SELECT series_id FROM conditions.observation_latest WHERE source_id IN ('@fused','@fused-public') AND feature_id IN (SELECT canonical_id FROM conditions.feature WHERE source_id = ${feed.id})`;
+    expect(fused).toHaveLength(0);
+
+    expect((await api(now)).records[0]).toMatchObject({ validUntil: "2026-11-08T07:00:00.000Z" });
+    expect((await poll(registryBody, pricesBody.replace("1.799", "1.899"))).error).toBeUndefined();
+    expect((await api(now)).records.some((r) => (r["result"] as Rec)["amount"] === "1.899")).toBe(
+      true,
+    );
+    expect((await poll(registryBody, pricesBody, true)).error).toBeDefined();
+    expect(await live()).toHaveLength(2);
+    expect(
+      (await poll(registryBody, pricesBody.replace("2026-11-06", "2026-11-05"))).error,
+    ).toBeDefined();
+    expect((await poll(registryBody, pricesBody.slice(0, -2))).error).toBeDefined();
+    expect(await live()).toHaveLength(2);
+    // Validated transfer, but one unplaceable registry row must not withdraw its old station.
+    expect((await poll(registryBody.replace("41.9|12.5", "0|0"))).error).toBeUndefined();
+    expect(await live()).toHaveLength(2);
+    // A complete subset can withdraw a missing station.
+    const subset = registryBody
+      .split("\n")
+      .filter((l) => !l.startsWith("002|"))
+      .join("\n");
+    const subsetPrices = pricesBody
+      .split("\n")
+      .filter((l) => !l.startsWith("002|"))
+      .join("\n");
+    expect((await poll(subset, subsetPrices)).error).toBeUndefined();
+    expect(await live()).toHaveLength(1);
+    // A newer publication advances the durable watermark, including through empty output.
+    now = "2026-11-07T11:00:00Z";
+    const newer = (s: string) => s.replace("2026-11-06", "2026-11-07");
+    expect((await poll(newer(subset), newer(subsetPrices))).error).toBeUndefined();
+    expect((await poll(subset, subsetPrices)).error).toBeDefined();
+    expect((await api("2026-11-09T07:00:00Z")).records).toEqual([]);
+    const empty = (s: string) => `${newer(s).split("\n").slice(0, 2).join("\n")}\n`;
+    // Retain the existing shrink tripwire: three complete polls over at least ten minutes.
+    expect((await poll(empty(subset), empty(subsetPrices))).error).toBeDefined();
+    now = "2026-11-07T11:05:00Z";
+    await poll(empty(subset), empty(subsetPrices));
+    now = "2026-11-07T11:11:00Z";
+    expect((await poll(empty(subset), empty(subsetPrices))).error).toBeUndefined();
+    expect(await live()).toHaveLength(0);
+    expect((await poll(subset, subsetPrices)).error).toBeDefined();
+  }, 60000);
 });

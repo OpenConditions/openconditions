@@ -37,6 +37,7 @@ import { bytea, conditionsSchema, geometry, geometryPoint, xid8 } from "./column
  * source as gone stale.
  */
 export const sourceStatus = conditionsSchema.table("source_status", {
+  publicationAt: timestamp("publication_at", { withTimezone: true }),
   source: text("source").primaryKey(),
   lastAttemptAt: timestamp("last_attempt_at", { withTimezone: true }),
   lastSuccessAt: timestamp("last_success_at", { withTimezone: true }),
