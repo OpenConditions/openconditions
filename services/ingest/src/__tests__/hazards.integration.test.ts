@@ -730,3 +730,100 @@ describe("hazards feeds in the catalogue", () => {
     expect(credit("eu-effis-fires")).toMatch(/modified/);
   });
 });
+
+describe("NSW RFS current incidents qualification", () => {
+  it("enforces the real worker gate, then exercises constructed qualification, retention, rights and source-clock expiry", async () => {
+    const T = "2026-11-07T17:13:00Z";
+    await syncSources(sql, [{ ...repoFeed("au-nsw-rfs-alerts") }]);
+    let body = fixtureText("nsw-rfs-current.xml");
+    let unchanged = false;
+    const requests: RequestInit[] = [];
+    const rfs = harness("au-nsw-rfs-alerts", (_url, init) => {
+      requests.push({ headers: Object.fromEntries(new Headers(init?.headers).entries()) });
+      return unchanged
+        ? new Response(null, { status: 304 })
+        : new Response(body, { headers: { etag: '"rfs-fixture"' } });
+    });
+    // The disabled catalogue entry is deliberately polled here to prove that an operator
+    // removing only disabled cannot bypass the independent publication gate.
+    const refused = await rfs.poll(T);
+    expect(refused.outcome).toBe("failed");
+    expect(refused.error).toMatch(/not qualified/);
+    expect(await rfs.live()).toEqual([]);
+    Object.assign(rfs.feed, { rfsCurrentSnapshotQualified: true });
+    // This qualification flag is constructed test evidence, never live acceptance.
+    delete rfs.roles.lastFetchedAt["alerts"];
+    const first = await rfs.poll(later(T, 1));
+    expect(first.error).toBeUndefined();
+    const live = await rfs.live();
+    expect(live.length).toBeGreaterThan(0);
+    const result = await get(
+      "/situations?domain=hazards&kind=alert&bbox=140,-38,154,-28&limit=100",
+    );
+    const records = (result["records"] as Rec[]).filter((r) =>
+      String(r["id"]).includes("au-nsw-rfs-alerts"),
+    );
+    expect(records.length).toBe(live.length);
+    expect(records[0]).toMatchObject({
+      effects: [],
+      location: { fuzziness: "extent_unknown", geometry: { type: "Point" } },
+    });
+    expect(JSON.stringify(records)).toContain("Stay up to date");
+    expect(JSON.stringify(records)).toContain(
+      "© State of New South Wales (NSW Rural Fire Service). For current information go to www.rfs.nsw.gov.au.",
+    );
+    expect(JSON.stringify(records)).toContain("CC-BY-3.0-AU");
+    const geo = await get("/situations.geojson?domain=hazards&bbox=140,-38,154,-28&limit=100");
+    expect(JSON.stringify(geo)).toContain("Stay up to date");
+    const sources = await get("/sources");
+    expect(JSON.stringify(sources)).toContain("CC-BY-3.0-AU");
+    // Valid bytes with a subset are still forbidden when the independent gate is false.
+    Object.assign(rfs.feed, { rfsCurrentSnapshotQualified: false });
+    body = body.replace(/<contentObject>[\s\S]*?<\/contentObject>/, "");
+    expect((await rfs.poll(later(T, 1801))).outcome).toBe("failed");
+    expect(await rfs.live()).toEqual(live);
+    Object.assign(rfs.feed, { rfsCurrentSnapshotQualified: true });
+    body = "<html>upstream error</html>";
+    delete rfs.roles.lastFetchedAt["alerts"];
+    expect((await rfs.poll(later(T, 1802))).error).toBeDefined();
+    expect(await rfs.live()).toEqual(live);
+    body = fixtureText("nsw-rfs-current.xml");
+    delete rfs.roles.lastFetchedAt["alerts"];
+    expect((await rfs.poll(later(T, 1803))).error).toBeUndefined();
+    // Constructed reissuance and withdrawal exercise the qualified storage contract.
+    body = body.replaceAll("2026-11-07T20:51:00.0000000:", "2026-11-07T21:51:00.0000000:");
+    delete rfs.roles.lastFetchedAt["alerts"];
+    expect((await rfs.poll(later(T, 1804))).error).toBeUndefined();
+    const revised = await get("/situations?domain=hazards&bbox=140,-38,154,-28&limit=100");
+    const revisedRfs = (revised["records"] as Rec[]).filter((r) =>
+      String(r["id"]).includes("au-nsw-rfs-alerts"),
+    );
+    expect(revisedRfs.map((r) => r["groupId"]).sort()).toEqual(
+      records.map((r) => r["groupId"]).sort(),
+    );
+    body = body.replace(/<contentObject>[\s\S]*?<\/contentObject>/g, "");
+    delete rfs.roles.lastFetchedAt["alerts"];
+    expect((await rfs.poll(later(T, 1805))).error).toBeUndefined();
+    expect(await rfs.live()).toEqual([]);
+    body = fixtureText("nsw-rfs-current.xml");
+    delete rfs.roles.lastFetchedAt["alerts"];
+    expect((await rfs.poll(later(T, 1806))).error).toBeUndefined();
+    // A 304 cannot renew source time or prolong message freshness.
+    unchanged = true;
+    const stale = await rfs.poll(later(T, 3607));
+    expect(stale.error).toBeDefined();
+    expect(stale.error).toMatch(/fresh/);
+    expect(JSON.stringify(requests)).toContain("rfs-fixture");
+    await sweepRecords(sql, {
+      now: clock,
+      registry,
+      instanceId: "test.local",
+      maxAgeSec: 3600,
+      historyDays: 90,
+    });
+    const after = await get("/situations?domain=hazards&bbox=140,-38,154,-28&limit=100");
+    expect(
+      (after["records"] as Rec[]).filter((r) => String(r["id"]).includes("au-nsw-rfs-alerts")),
+    ).toEqual([]);
+  });
+});

@@ -404,3 +404,9 @@ export const SAME_CLASSES: Readonly<Record<string, string | null>> = {
   "SAME:WSA": "alert.snow_ice.winter_storm",
   "SAME:SQW": "alert.snow_ice.snow_squall",
 };
+
+/** CAP-AU event codes used by NSW RFS Current Incidents. */
+export const CAP_AU_CLASSES: Readonly<Record<string, string | null>> = {
+  "CAP-AU:bushFire": "alert.fire.wildfire",
+  "CAP-AU:grassFire": "alert.fire.wildfire",
+};

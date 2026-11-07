@@ -1,0 +1,36 @@
+{
+  "$schema": "../schema/hazards.schema.json",
+  "feeds": [
+    {
+      "subdivision": "nsw",
+      "operator": "rfs",
+      "product": "alerts",
+      "name": "NSW RFS Current Incidents",
+      "tier": "authoritative",
+      "format": "nsw-rfs",
+      "endpoints": {
+        "alerts": {
+          "url": "https://www.rfs.nsw.gov.au/feeds/majorIncidentsCAP.xml",
+          "cadenceSec": 1800,
+        },
+      },
+      "rfsCurrentSnapshotQualified": false,
+      "disabled": {
+        "reason": "Complete current snapshot and empty/withdrawal behavior require independent provider qualification; worker publication gate remains enforced",
+        "since": "2026-11-07",
+      },
+      "freshnessWindowSec": 3600,
+      "coverage": { "countries": ["AU"], "bbox": [140.9, -37.6, 153.7, -28.1] },
+      "license": "CC-BY-3.0-AU",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/au/",
+      "attribution": "© State of New South Wales (NSW Rural Fire Service). For current information go to www.rfs.nsw.gov.au. Current Incidents, https://www.rfs.nsw.gov.au/fire-information/fires-near-me; CC BY 3.0 AU, https://creativecommons.org/licenses/by/3.0/au/. Modified by OpenConditions: CAP conversion, fire filtering and incident anchors; polygons omitted. No endorsement implied.",
+      "homepage": "https://www.rfs.nsw.gov.au/fire-information/fires-near-me",
+      "privacyUrl": "https://www.rfs.nsw.gov.au/about-us/privacy",
+      "terms": {
+        "url": "https://www.rfs.nsw.gov.au/fire-information/fires-near-me",
+        "reviewedAt": "2026-11-07",
+        "note": "Accepted exact-product interpretation: Current Incidents expressly licenses reuse under CC BY 3.0 AU; Data.NSW corroborates the exact CAP product. This product licence prevails over contradictory generic unaltered-copying/commercial-distribution wording; the feed-page distribution reservation remains relevant to access, without revoking compliant licensed reuse. Preserve notices and modification credit. Branding, BOM products and expressly restricted third-party content are excluded. ControlAuthority identifies operational responsibility, not copyright ownership.",
+      },
+    },
+  ],
+}
