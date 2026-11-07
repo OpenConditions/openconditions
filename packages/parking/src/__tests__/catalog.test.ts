@@ -49,6 +49,7 @@ describe("feeds/parking", () => {
       "lu-cita-parking",
       "nl-ndw-truck-parking",
       "nl-rdw-parking",
+      "no-vegvesen-parking",
       "osm-parking",
       "sg-hdb-parking",
     ]);
@@ -62,6 +63,7 @@ describe("feeds/parking", () => {
       "de-hb-bremen-parking",
       "de-ni-braunschweig-parking",
       "de-nw-apag-parking",
+      "no-vegvesen-parking",
     ]);
   });
 

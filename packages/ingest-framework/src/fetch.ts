@@ -17,6 +17,7 @@ import {
 } from "./catalog/templates.js";
 import type { CatalogFeed, FeedEndpoint, FetchFn } from "./catalog/types.js";
 import { boundedGunzip, maxFeedBytes } from "./egress.js";
+import { budgetFetch } from "./endpoint-budget.js";
 import { decodedFromGzip, type HeldPayload, heldBuffer, holdPayload } from "./held.js";
 import { guardedImpersonatingFetch, type ImpersonationOptions } from "./impersonate.js";
 import { getPath } from "./layouts/row.js";
@@ -1182,7 +1183,7 @@ export async function fetchEndpoint(
   baseFetch: FetchFn,
   opts: FetchOptions = {},
 ): Promise<FetchResult> {
-  const unzip = feedEndpoint(feed, role).unzip;
+  const { unzip } = feedEndpoint(feed, role);
   const result = await fetchRole(feed, role, baseFetch, opts);
   return unzip ? unzipped(result, unzip) : result;
 }
@@ -1213,7 +1214,10 @@ async function fetchRole(
   if (endpoint.impersonate && feed.auth?.kind === "mtls") {
     throw new Error("impersonate cannot be combined with mtls auth");
   }
-  const base = endpoint.impersonate ? guardedImpersonatingFetch(opts.impersonation) : baseFetch;
+  const transport = endpoint.impersonate
+    ? guardedImpersonatingFetch(opts.impersonation)
+    : baseFetch;
+  const base = endpoint.budget ? budgetFetch(transport, endpoint.budget) : transport;
   const authorized = makeAuthorizedFetch(feed, base, env, Date.now, opts.grants);
   // A bulk fetch keeps to the feed's stated rate here; a cell read is paced
   // by the on-demand request budget instead. A followed URL is not the

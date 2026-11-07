@@ -71,6 +71,8 @@ export interface ParseOutput {
   statusIndex?: StatusIndex;
   /** The publisher cut its answer at a result cap: records past it are missing. */
   truncated?: boolean;
+  /** The format independently qualified the entire feature snapshot, including an empty one. */
+  featureSnapshotComplete?: true;
 }
 
 /** What a status-only poll parsed into: readings, and the status records it could not use. */

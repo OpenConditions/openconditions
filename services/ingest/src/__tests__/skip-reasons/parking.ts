@@ -3,6 +3,32 @@ import type { SkipExemptions, SkipSamples } from "./sample.js";
 const json = (value: unknown) => JSON.stringify(value);
 
 export const SAMPLES: SkipSamples = {
+  "parking/vegvesen-parkreg": {
+    reason: "unknown_value",
+    feed: { parkreg: { qualified: true } },
+    payloads: {
+      inventory: json([{ id: 1 }]),
+      main: json([
+        {
+          id: 1,
+          breddegrad: 59.9,
+          lengdegrad: 10.7,
+          deaktivert: null,
+          aktivVersjon: {
+            versjonsnummer: 1,
+            aktiveringstidspunkt: "2026-01-01T00:00:00Z",
+            sluttidspunkt: null,
+            antallAvgiftsbelagtePlasser: 7,
+            antallAvgiftsfriePlasser: 3,
+            antallForflytningshemmede: 0,
+            antallLadeplasser: 0,
+            typeParkeringsomrade: "LANGS_KJOREBANE",
+            innfartsparkering: "NEW",
+          },
+        },
+      ]),
+    },
+  },
   // A facility whose address carries no location.
   "parking/db-bahnpark": {
     reason: "no_geometry",

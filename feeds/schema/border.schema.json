@@ -308,6 +308,26 @@
                   "exclusiveMinimum": 0,
                   "maximum": 9007199254740991
                 },
+                "budget": {
+                  "type": "object",
+                  "properties": {
+                    "maxBytes": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 536870912
+                    },
+                    "deadlineSec": {
+                      "type": "number",
+                      "exclusiveMinimum": 0,
+                      "maximum": 900
+                    }
+                  },
+                  "required": [
+                    "maxBytes",
+                    "deadlineSec"
+                  ],
+                  "additionalProperties": false
+                },
                 "timeoutSec": {
                   "type": "integer",
                   "exclusiveMinimum": 0,
@@ -779,7 +799,8 @@
             "enum": [
               "situation",
               "observation",
-              "reference"
+              "reference",
+              "none"
             ]
           },
           "license": {

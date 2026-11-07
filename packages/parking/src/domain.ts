@@ -21,6 +21,7 @@ import { parseRdw } from "./formats/rdw.js";
 import { parseSbb } from "./formats/sbb.js";
 import { parseTfnsw } from "./formats/tfnsw.js";
 import { parseUtmc } from "./formats/utmc.js";
+import { parseVegvesenParkreg } from "./formats/vegvesen-parkreg.js";
 
 /** What a parking feed publishes: parking sites, their occupancy and their rates. */
 export const PARKING_PRODUCTS = ["parking"] as const;
@@ -78,6 +79,10 @@ const FORMATS: FeedFormat<ParkingCatalogFeed>[] = [
   sites("hdb", parseHdb, LIVE_SITES),
   sites("utmc", parseUtmc, LIVE_SITES),
   sites("tfnsw", parseTfnsw),
+  sites("vegvesen-parkreg", parseVegvesenParkreg, {
+    main: { required: true },
+    inventory: { required: true },
+  }),
 ];
 
 const LAYOUTS: ReadonlySet<string> = new Set(PARKING_LAYOUT_FORMATS);
