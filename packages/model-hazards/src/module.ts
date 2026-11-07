@@ -49,6 +49,7 @@ export const HAZARDS_SOURCE_FORMATS = [
   "effis",
   "hms",
   "usgs",
+  "geonet",
   "eonet",
   "gdacs",
 ] as const;
@@ -75,6 +76,7 @@ export const hazardsModule: RegistryModule = {
         "irwin",
         "nwcg:unique_fire_id",
         "usgs:event",
+        "geonet:event",
         "gdacs:event",
         "glide",
         // The Smithsonian Global Volcanism Program's volcano number (`357070`).

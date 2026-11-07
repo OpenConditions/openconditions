@@ -41,6 +41,12 @@ const open = (
 });
 
 export const LICENSES: readonly LicenseInfo[] = [
+  open({
+    id: "LicenseRef-CC-BY-3.0-NZ",
+    name: "Creative Commons Attribution 3.0 New Zealand",
+    url: "https://creativecommons.org/licenses/by/3.0/nz/",
+    changeNotice: true,
+  }),
   {
     id: "NOASSERTION",
     name: "Rights not verified",

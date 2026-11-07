@@ -47,6 +47,7 @@ import { rawTierFor } from "../raw/tiers.js";
 import { loadBaselineMap } from "./baseline-store.js";
 import { bindRecords } from "./bind-records.js";
 import { bodyStreamFrom } from "./body-stream.js";
+import { runGeonet } from "./geonet.js";
 import { streamFeed } from "./measured-data.js";
 import { type ParseGate, payloadBytes } from "./parse-gate.js";
 import { type ParseProcess, ParseProcessError } from "./parse-process.js";
@@ -215,6 +216,8 @@ export interface RunResult {
 }
 
 export interface RunDeps {
+  /** Enables only deterministic contract qualification; no runtime environment override. */
+  geonetQualification?: "contract-test";
   sql: Sql;
   fetch: typeof fetch;
   now: () => string;
@@ -431,6 +434,16 @@ export function createOpenlrClient(): MapMatchClient | null {
  * closes it as an error on the way out, so no attempt stays `running`.
  */
 export async function runSource(src: CatalogFeed, deps: RunDeps): Promise<RunResult> {
+  if (src.format === "geonet") {
+    if (deps.geonetQualification !== "contract-test")
+      throw new Error("GeoNet activation awaits reconciliation qualification");
+    return runGeonet(src, {
+      sql: deps.sql,
+      fetch: feedFetch(src, deps),
+      now: deps.now,
+      model: writeModel(deps.model),
+    });
+  }
   const attemptAt = deps.now();
   const due = rolesDue(src, deps.roles, Date.parse(attemptAt));
   if (due.length === 0) return { count: 0, durationMs: 0, notDue: true };

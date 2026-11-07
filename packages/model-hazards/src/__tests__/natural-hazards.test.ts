@@ -251,6 +251,7 @@ describe("natural hazards", () => {
       "effis",
       "hms",
       "usgs",
+      "geonet",
       "eonet",
       "gdacs",
     ]);
