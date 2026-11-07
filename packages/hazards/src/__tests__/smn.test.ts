@@ -128,3 +128,22 @@ it("admits the selected CAP licence and denies unknown, NC and share-alike own/u
     ).toBe(false);
   }
 });
+
+it("refuses a malformed secondary hazard while generic CAP stays tolerant", () => {
+  const text = body.toString();
+  const info = text.match(/<info>.*<\/info>/s)![0]!;
+  const mixed = Buffer.from(
+    text.replace(
+      "</alert>",
+      info.replace("<severity>Moderate</severity>", "<severity>INVALID</severity>") + "</alert>",
+    ),
+  );
+  const feed = catalogFeed("ar-smn-alerts");
+  const ctx = parseContext("2026-11-07T15:48:00Z");
+  expect(() => parseCap(feed, { alerts: [mixed] }, ctx)).toThrow("unusable");
+  const generic = {
+    ...feed,
+    endpoints: { alerts: { url: "https://example.org/cap", cadenceSec: 180 } },
+  };
+  expect(parseCap(generic, { alerts: [mixed] }, ctx).situations).toHaveLength(1);
+});

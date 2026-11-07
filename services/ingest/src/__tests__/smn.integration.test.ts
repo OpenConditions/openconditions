@@ -4,7 +4,7 @@ import { productionModules } from "@openconditions/model-registry";
 import { syncSources } from "@openconditions/storage";
 import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import Fastify from "fastify";
-import { afterAll, beforeAll, expect, it } from "vitest";
+import { afterAll, beforeAll, expect, it, vi } from "vitest";
 import { registerApiRoutes } from "../api/routes.js";
 import { registerScope } from "../api/scope.js";
 import { createParseProcess } from "../pipeline/parse-process.js";
@@ -155,4 +155,69 @@ it("refuses a stale durable window after another worker commits", async () => {
   await expect(db.sql.begin((tx) => checkSmnWindow(tx, source.id, stale, now))).rejects.toThrow(
     "concurrent bulletin changed",
   );
+});
+
+it("retains both hazards, exact durable bytes and validators after a malformed secondary hazard", async () => {
+  const conditionals: (string | null)[] = [];
+  const source = { ...feed, id: "ar-smn-partial-alerts", requestLimits: undefined };
+  const info = cap.match(/<info>.*<\/info>/s)![0]!;
+  const original = cap.replace(
+    "</alert>",
+    info.replace("<severity>Moderate</severity>", "<severity>Severe</severity>") + "</alert>",
+  );
+  let body = original;
+  let version = "v1";
+  let elapsedClock: number | undefined;
+  const fetch = (async (input: string | URL | Request, init?: RequestInit) => {
+    conditionals.push(new Headers(init?.headers).get("if-none-match"));
+    if (elapsedClock !== undefined)
+      elapsedClock += String(input).endsWith("AR.php") ? 59000 : 62000;
+    return new Response(
+      String(input).endsWith("AR.php")
+        ? `<rss version="2.0"><channel><lastBuildDate>Sat, 07 Nov 2026 15:48:00 GMT</lastBuildDate><copyright>Licencia CC BY 4.0</copyright><item><link>${url}</link></item></channel></rss>`
+        : body,
+      { headers: { etag: version } },
+    );
+  }) as typeof globalThis.fetch;
+  const tick = () =>
+    runSource(source, {
+      sql: db.sql,
+      fetch,
+      now: () => "2026-11-07T15:48:00Z",
+      lookup: async () => [{ address: "93.184.216.34", family: 4 }],
+      model: { registry, instanceId: "test.local" },
+      roles: createRoleState(),
+      parseProcess: parser,
+    });
+  const live = () =>
+    db.sql`SELECT id, record FROM conditions.situation WHERE source_id=${source.id} AND tombstoned_at IS NULL ORDER BY id`;
+  const durable = () =>
+    db.sql`SELECT identifier, body FROM conditions.smn_cap_message WHERE source_id=${source.id} ORDER BY identifier`;
+  expect((await tick()).error).toBeUndefined();
+  expect(parser.running).toBe(true);
+  const before = await live();
+  expect(before).toHaveLength(2);
+  const originals = await durable();
+  expect(originals[0]!.body).toEqual(Buffer.from(original));
+  expect(conditionals).toEqual([null, null]);
+  body = original.replace("<severity>Severe</severity>", "<severity>INVALID</severity>");
+  version = "v2";
+  expect((await tick()).error).toBeDefined();
+  expect(await live()).toEqual(before);
+  expect(await durable()).toEqual(originals);
+  expect((await tick()).error).toBeDefined();
+  expect(conditionals).toEqual([null, null, "v1", "v1", "v1", "v1"]);
+  body = original;
+  elapsedClock = Date.parse("2026-11-07T15:48:00Z");
+  const spy = vi.spyOn(Date, "now").mockImplementation(() => elapsedClock!);
+  try {
+    expect((await tick()).error).toContain("time budget");
+  } finally {
+    spy.mockRestore();
+    elapsedClock = undefined;
+  }
+  expect(await live()).toEqual(before);
+  expect(await durable()).toEqual(originals);
+  expect((await tick()).error).toBeUndefined();
+  expect(conditionals.slice(-4)).toEqual(["v1", "v1", "v1", "v1"]);
 });

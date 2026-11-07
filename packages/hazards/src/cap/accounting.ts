@@ -16,6 +16,7 @@ import type { CapAlert } from "./types.js";
 export type CapOutputOptions = Omit<CapSituationOptions, "groupId"> & {
   /** Validation probes do not report the same records twice. */
   reportSkips?: boolean;
+  rejectMalformed?: boolean;
   /**
    * Payloads or entries that did not decode into a message, by the reason
    * each is skipped: input records, each one message.
@@ -95,7 +96,7 @@ export function capOutput(
   feed: HazardsFeed,
   opts: CapOutputOptions,
 ): ParseOutput {
-  const { undecoded = {}, reportSkips = true, ...situationOpts } = opts;
+  const { undecoded = {}, reportSkips = true, rejectMalformed = false, ...situationOpts } = opts;
   const out = emptyParseOutput();
   let skipped: SkipCounts = { ...undecoded };
   const skip = (reason: SkipReason, count = 1) => {
@@ -144,6 +145,8 @@ export function capOutput(
     out.situations.push(...drafts.drafts);
     skipped = addSkips(skipped, drafts.skipped);
   }
+  if (rejectMalformed && (skipped.malformed ?? 0) > 0)
+    throw new Error("SMN: unusable CAP hazard refuses the bulletin");
   for (const [reason, count] of Object.entries(skipped) as [SkipReason, number][]) {
     if (reportSkips) recordSkipped(feed.id, reason, count);
   }

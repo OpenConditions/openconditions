@@ -139,7 +139,11 @@ export function parseCap(
         throw new Error("SMN: malformed CAP XML");
       const alert = readCapXml(body, Boolean(feed.endpoints?.["alerts"]?.smnRss));
       if (feed.endpoints?.["alerts"]?.smnRss) {
-        const one = capOutput([alert], feed, { fetchedAt: ctx.fetchedAt, reportSkips: false });
+        const one = capOutput([alert], feed, {
+          fetchedAt: ctx.fetchedAt,
+          reportSkips: false,
+          rejectMalformed: true,
+        });
         if ((one.records?.accepted ?? 0) === 0 && one.records?.terminal !== 1)
           throw new Error("SMN: unusable CAP message refuses the bulletin");
         if (alert.restriction || (alert.info ?? []).some((i) => (i.resource ?? []).length > 0))

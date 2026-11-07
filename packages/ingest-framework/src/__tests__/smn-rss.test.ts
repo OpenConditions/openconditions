@@ -108,3 +108,149 @@ it("returns an accounted ACP zero without requesting the sentinel HTML target", 
   expect(result.partitions).toEqual({ succeeded: 1, failed: 0, total: 1 });
   expect(calls).toEqual([feed.endpoints["alerts"]!.url]);
 });
+
+it("refuses a final child that overruns the shared deadline", async () => {
+  const { vi } = await import("vitest");
+  const { fetchEndpoint, createFetchState } = await import("../fetch.js");
+  const { catalogFeed } = await import("./helpers/catalog-feed.js");
+  const state = createFetchState();
+  const feed = catalogFeed({
+    domain: "hazards",
+    format: "cap",
+    endpoints: {
+      alerts: { url: "https://ssl.smn.gob.ar/CAP/AR.php", smnRss: "ar", cadenceSec: 180 },
+    },
+  });
+  let clock = at;
+  const spy = vi.spyOn(Date, "now").mockImplementation(() => clock);
+  const signals: (AbortSignal | null | undefined)[] = [];
+  try {
+    await expect(
+      fetchEndpoint(
+        feed,
+        "alerts",
+        (async (input, init) => {
+          signals.push(init?.signal);
+          clock += 59000;
+          return new Response(
+            String(input).endsWith("AR.php")
+              ? `<rss version="2.0"><channel><lastBuildDate>${new Date(at).toUTCString()}</lastBuildDate><copyright>Licencia CC BY 4.0</copyright>${[1, 2].map((n) => `<item><link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_${n}.xml</link></item>`).join("")}</channel></rss>`
+              : "CAP",
+            { headers: { etag: "late" } },
+          );
+        }) as typeof fetch,
+        { state, at },
+      ),
+    ).rejects.toThrow("time budget");
+    expect(signals).toHaveLength(3);
+    expect(signals.every((s) => s instanceof AbortSignal)).toBe(true);
+    expect(state.conditional.size).toBe(0);
+  } finally {
+    spy.mockRestore();
+  }
+});
+
+for (const stalled of ["index", "child", "body"] as const) {
+  it(`aborts an in-flight ${stalled} at the shared deadline without accepting validators`, async () => {
+    const { vi } = await import("vitest");
+    const { fetchEndpoint, createFetchState } = await import("../fetch.js");
+    const { catalogFeed } = await import("./helpers/catalog-feed.js");
+    vi.useFakeTimers();
+    vi.setSystemTime(at);
+    const state = createFetchState();
+    const feed = catalogFeed({
+      domain: "hazards",
+      format: "cap",
+      endpoints: {
+        alerts: { url: "https://ssl.smn.gob.ar/CAP/AR.php", smnRss: "ar", cadenceSec: 180 },
+      },
+    });
+    const child = "https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_test.xml";
+    const index = `<rss version="2.0"><channel><lastBuildDate>${new Date(at).toUTCString()}</lastBuildDate><copyright>Licencia CC BY 4.0</copyright><item><link>${child}</link></item></channel></rss>`;
+    const signals: AbortSignal[] = [];
+    let cancelled = false;
+    try {
+      const pending = fetchEndpoint(
+        feed,
+        "alerts",
+        (async (input, init) => {
+          const signal = init!.signal!;
+          signals.push(signal);
+          const isIndex = String(input).endsWith("AR.php");
+          if (stalled === "index" || (!isIndex && stalled === "child"))
+            return new Promise<Response>((_resolve, reject) =>
+              signal.addEventListener("abort", () => reject(signal.reason), { once: true }),
+            );
+          if (!isIndex)
+            return new Response(
+              new ReadableStream({
+                cancel() {
+                  cancelled = true;
+                },
+              }),
+            );
+          return new Response(index, { headers: { etag: "unaccepted" } });
+        }) as typeof fetch,
+        { state, at },
+      ).catch((error: unknown) => error);
+      await vi.advanceTimersByTimeAsync(120000);
+      expect(await pending).toBeInstanceOf(Error);
+      expect(String(await pending)).toContain("time budget");
+      expect(signals.every((s) => s.aborted)).toBe(true);
+      if (stalled === "body") expect(cancelled).toBe(true);
+      expect(state.conditional.size).toBe(0);
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+}
+
+it("cancels pacing waits and queued turns without late requests or poisoning the next poll", async () => {
+  const { vi } = await import("vitest");
+  const { fetchEndpoint, createFetchState } = await import("../fetch.js");
+  const { catalogFeed } = await import("./helpers/catalog-feed.js");
+  vi.useFakeTimers();
+  vi.setSystemTime(at);
+  const state = createFetchState();
+  const feed = catalogFeed({
+    domain: "hazards",
+    format: "cap",
+    requestLimits: { perMinute: 1 },
+    endpoints: {
+      alerts: { url: "https://ssl.smn.gob.ar/CAP/AR.php", smnRss: "ar", cadenceSec: 180 },
+    },
+  });
+  const links = [1, 2, 3].map((n) => `https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_${n}.xml`);
+  const index = () =>
+    `<rss version="2.0"><channel><lastBuildDate>${new Date(Date.now()).toUTCString()}</lastBuildDate><copyright>Licencia CC BY 4.0</copyright>${links.map((link) => `<item><link>${link}</link></item>`).join("")}</channel></rss>`;
+  const calls: string[] = [];
+  const fetch = (async (input) => {
+    calls.push(String(input));
+    return new Response(String(input).endsWith("AR.php") ? index() : "CAP", {
+      headers: { etag: "unaccepted" },
+    });
+  }) as typeof globalThis.fetch;
+  try {
+    const first = fetchEndpoint(feed, "alerts", fetch, { state, at }).catch((e: unknown) => e);
+    await vi.advanceTimersByTimeAsync(1000);
+    const queued = fetchEndpoint(feed, "alerts", fetch, { state, at }).catch((e: unknown) => e);
+    await vi.advanceTimersByTimeAsync(121000);
+    expect(String(await first)).toContain("time budget");
+    expect(String(await queued)).toContain("time budget");
+    const count = calls.length;
+    await vi.advanceTimersByTimeAsync(180000);
+    expect(calls).toHaveLength(count);
+    expect(state.conditional.size).toBe(0);
+    expect(vi.getTimerCount()).toBe(0);
+    // The same pacer must still be usable after its cancelled queue drains.
+    links.splice(1);
+    const next = fetchEndpoint(feed, "alerts", fetch, { state, at: Date.now() });
+    await vi.advanceTimersByTimeAsync(60000);
+    const result = await next;
+    expect(result.status).toBe("fetched");
+    expect(vi.getTimerCount()).toBe(0);
+  } finally {
+    vi.useRealTimers();
+  }
+});
