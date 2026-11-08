@@ -574,10 +574,11 @@ async function runAttempt(
     ...(warning ? { warning } : {}),
     statesComplete: !leftOut,
   });
-  const finish = (parse: ParseOutput): Promise<RunResult> => {
+  const finish = (parse: ParseOutput, dwdStationPayloads?: FeedPayloads): Promise<RunResult> => {
     const poll = pollContext();
     const skipped = drainSkipped(src.id);
-    if (format.kind === "features") return finishFeaturePoll(poll, parse, heldPayload, skipped);
+    if (format.kind === "features")
+      return finishFeaturePoll(poll, parse, heldPayload, skipped, dwdStationPayloads);
     return format.kind === "measurements"
       ? finishFlowPoll(
           poll,
@@ -1115,7 +1116,11 @@ async function runAttempt(
       if ("failed" in latest) return latest.failed;
       steps.lap("parse");
       const { parsed } = latest;
-      const result = await finish(parsed);
+      const dwdStationPayloads =
+        src.format === "dwd-cdc-10min"
+          ? await payloadsOf(roles.filter((role) => role.endsWith("_stations")))
+          : undefined;
+      const result = await finish(parsed, dwdStationPayloads);
       if (keepPayloads && live.length > 0 && result.error === undefined && parsed.statusIndex) {
         deps.roles!.statusIndex = parsed.statusIndex;
       }
@@ -1469,6 +1474,7 @@ async function finishFeaturePoll(
   parse: ParseOutput,
   heldPayload: boolean,
   skipped: SkipCounts,
+  dwdStationPayloads?: FeedPayloads,
 ): Promise<RunResult> {
   const { src, deps } = poll;
   if (heldPayload && parse.features.length === 0) {
@@ -1492,6 +1498,7 @@ async function finishFeaturePoll(
   try {
     published = await publishFeatures(deps.sql, src, {
       output,
+      ...(dwdStationPayloads ? { dwdStationPayloads } : {}),
       rejected: (parse.rejected ?? 0) + skippedRecords(skipped),
       poll: poll.identity,
       durationMs: Date.now() - poll.start,

@@ -65,6 +65,7 @@ let restricted = false;
 let missingTu = false;
 let badZip = false;
 let overflow = false;
+let metadataMode = "normal";
 const fetch = (async (input: unknown, init?: RequestInit) => {
   const url = String(input);
   calls.push(url);
@@ -83,11 +84,21 @@ const fetch = (async (input: unknown, init?: RequestInit) => {
     const code = { tu: "TU", rr: "nieder", ff: "wind", fx: "extrema_wind" }[role];
     return new Response(
       `<a href="10minutenwerte_${code}_${id}_now.zip">file</a> 07-Nov-2026 22:50:00 100\n`,
-      { headers: { etag: overflow ? "overflow" : "good" } },
+      {
+        headers: {
+          etag: overflow ? "overflow" : metadataMode !== "normal" ? "transition" : "good",
+        },
+      },
     );
   }
   if (url.endsWith(".txt")) {
-    const bytes = fixture(`${role}-stations.txt`);
+    let bytes = fixture(`${role}-stations.txt`);
+    if (role === "tu" && metadataMode !== "normal") {
+      let text = bytes.toString("latin1");
+      if (metadataMode === "absent") text = text.replace(/^00044[^\n]*\n/m, "");
+      if (metadataMode === "ended") text = text.replace(/^(00044 \d{8} )\d{8}/m, "$120260101");
+      bytes = Buffer.from(text, "latin1");
+    }
     return new Response(
       restricted
         ? Buffer.from(
@@ -135,7 +146,9 @@ const fetch = (async (input: unknown, init?: RequestInit) => {
       },
     ]);
   }
-  return new Response(new Uint8Array(body), { headers: { etag: overflow ? "overflow" : "good" } });
+  return new Response(new Uint8Array(body), {
+    headers: { etag: overflow ? "overflow" : metadataMode !== "normal" ? "transition" : "good" },
+  });
 }) as typeof globalThis.fetch;
 const tick = () =>
   runSource(feed, {
@@ -243,6 +256,7 @@ const publicStations = async () =>
   (await app.inject({ url: "/features?kind=weather_station&expand=components" })).json().records;
 async function resetPublication() {
   qualified = true;
+  metadataMode = "normal";
   correction = failing = missingWind = restricted = missingTu = badZip = overflow = false;
   roles = createRoleState();
   now = "2026-11-07T23:05:00Z";
@@ -354,3 +368,74 @@ test("overflow rejects the whole generation before publication or provisional va
   expect(validators.at(-1)).toBe("good");
   expect(validators.at(-2)).toBe("good");
 });
+
+test.each(["absent", "ended", "restricted"])(
+  "rejects incoherent %s metadata with retained TU through worker and recovers atomically",
+  async (mode) => {
+    await resetPublication();
+    const air = await publicAir();
+    const stations = await publicStations();
+    const rows =
+      await db.sql`SELECT * FROM conditions.observation_latest WHERE source_id=${feed.id} ORDER BY series_id`;
+    const state =
+      await db.sql`SELECT publication_revision,last_network_success_at FROM conditions.source_status WHERE source=${feed.id}`;
+    const individualUrl = `/features/${encodeURIComponent(air[0].subject.featureId)}?expand=components,latest`;
+    const individual = await app.inject({ url: individualUrl });
+    expect(individual.statusCode).toBe(200);
+    metadataMode = mode;
+    restricted = mode === "restricted";
+    missingTu = true;
+    // Reload current metadata, including across role-state loss.
+    roles = createRoleState();
+    now = "2026-11-07T23:07:00Z";
+    const result = await tick();
+    expect(result.error).toMatch(/DWD incoherent retained observation/);
+    expect(await publicAir()).toEqual(air);
+    expect(await publicStations()).toEqual(stations);
+    expect((await app.inject({ url: individualUrl })).json()).toEqual(individual.json());
+    expect(
+      await db.sql`SELECT * FROM conditions.observation_latest WHERE source_id=${feed.id} ORDER BY series_id`,
+    ).toEqual(rows);
+    expect(
+      await db.sql`SELECT publication_revision,last_network_success_at FROM conditions.source_status WHERE source=${feed.id}`,
+    ).toEqual(state);
+    const station = stations.find((s: { id: string }) => s.id === air[0].subject.featureId);
+    expect(station.components.map((c: { key: string }) => c.key)).toContain(
+      air[0].subject.componentKey,
+    );
+    // The failed generation's accepted listing validator must not replace "good".
+    now = "2026-11-07T23:08:00Z";
+    expect((await tick()).error).toMatch(/DWD incoherent retained observation/);
+    expect(validators.at(-1)).toBe("good");
+    if (mode === "restricted") {
+      missingTu = false;
+      roles = createRoleState();
+      now = "2026-11-07T23:08:30Z";
+      expect((await tick()).error).toBeUndefined();
+      expect(await publicAir()).toEqual([]);
+      expect((await publicStations()).map((s: { id: string }) => s.id)).not.toContain(
+        air[0].subject.featureId,
+      );
+      expect((await app.inject({ url: individualUrl })).statusCode).toBe(404);
+      const restrictedRows =
+        await db.sql`SELECT conditions.observation_record(template,reading) AS record FROM conditions.observation_latest WHERE source_id=${feed.id} AND property='weather.air_temperature'`;
+      expect(restrictedRows[0]?.record.provenance.upstream[0].attribution).toBe("Abgabe: Gesperrt");
+      expect(restrictedRows[0]?.record.phenomenonTime).toEqual(air[0].phenomenonTime);
+      expect(restrictedRows[0]?.record.freshness.expiresAt).toBe(air[0].freshness.expiresAt);
+    }
+    metadataMode = "normal";
+    restricted = false;
+    missingTu = false;
+    roles = createRoleState();
+    now = "2026-11-07T23:09:00Z";
+    expect((await tick()).error).toBeUndefined();
+    const recovered = await publicAir();
+    expect(recovered[0].id).toBe(air[0].id);
+    expect(recovered[0].phenomenonTime).toEqual(air[0].phenomenonTime);
+    expect(recovered[0].freshness.expiresAt).toBe(air[0].freshness.expiresAt);
+    expect(recovered[0].provenance).toEqual(air[0].provenance);
+    expect(JSON.stringify(recovered)).toContain("Quelle: Deutscher Wetterdienst");
+    now = "2026-11-07T23:20:00Z";
+    expect(await publicAir()).toEqual([]);
+  },
+);

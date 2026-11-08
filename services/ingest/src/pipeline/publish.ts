@@ -1,5 +1,10 @@
 import { resolveInstanceId } from "@openconditions/core/server";
-import type { CatalogFeed, ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
+import type {
+  CatalogFeed,
+  FeedPayloads,
+  ParseOutput,
+  RecordDraft,
+} from "@openconditions/ingest-framework";
 import {
   captureLicensing,
   permissionsOf,
@@ -21,6 +26,7 @@ import {
   writeSnapshotIn,
 } from "@openconditions/storage";
 import type postgres from "postgres";
+import { checkDwdRetained } from "./dwd-retained.js";
 import { upsertSourceStatus } from "./source-status.js";
 
 type Sql = postgres.Sql;
@@ -426,6 +432,8 @@ export async function publishFeatures(
   input: {
     output: Pick<ParseOutput, "features" | "observations" | "offers">;
     featuresComplete?: boolean;
+    /** Current DWD metadata, checked against retained readings under the publication lock. */
+    dwdStationPayloads?: FeedPayloads;
     rejected: number;
     poll: PollIdentity;
     durationMs: number;
@@ -441,6 +449,9 @@ export async function publishFeatures(
   const published = sql.begin(async (tx) => {
     await tx`SELECT pg_advisory_xact_lock(hashtext(${src.id}))`;
     const { output } = input;
+    if (input.dwdStationPayloads) {
+      await checkDwdRetained(tx, src.id, input.dwdStationPayloads, output, input.now);
+    }
     const summary = await writeSnapshotIn(
       tx,
       src.id,
