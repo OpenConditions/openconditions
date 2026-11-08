@@ -650,6 +650,17 @@
                 "type": "string",
                 "const": "complete"
               },
+              "roleEvidence": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "additionalProperties": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
               "recordsPath": {
                 "type": "string",
                 "minLength": 1
@@ -786,6 +797,7 @@
             "type": "string",
             "minLength": 1,
             "enum": [
+              "LicenseRef-IODL-2.0",
               "NOASSERTION",
               "CC0-1.0",
               "CC-BY-4.0",

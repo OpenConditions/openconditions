@@ -59,6 +59,13 @@ export type StatusIndex = ReadonlyMap<string, readonly StatusSubject[]>;
 
 /** What one poll of a feed parsed into, per record class. */
 export interface ParseOutput {
+  /** Validated dated feature snapshot. Incomplete placement forbids withdrawal; older publications are rejected atomically. */
+  featureSnapshot?: {
+    at: string;
+    complete: boolean;
+    /** Independent authority to end missing reading series; defaults to feature completeness for older parsers. */
+    statesComplete?: boolean;
+  };
   situations: RecordDraft[];
   features: RecordDraft[];
   observations: RecordDraft[];

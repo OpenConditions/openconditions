@@ -8,6 +8,7 @@ export type FuelUnit = (typeof FUEL_UNITS)[number];
  * ammonia), everything else, LPG included, by the litre.
  */
 export const GRADE_UNIT: Readonly<Record<FuelGrade, FuelUnit>> = {
+  petrol: "L",
   e5: "L",
   e10: "L",
   sp98: "L",

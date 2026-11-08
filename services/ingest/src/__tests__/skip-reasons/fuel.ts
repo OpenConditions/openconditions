@@ -1,6 +1,15 @@
 import type { SkipExemptions, SkipSamples } from "./sample.js";
 
 export const SAMPLES: SkipSamples = {
+  "fuel/mimit": {
+    reason: "unknown_value",
+    payloads: {
+      registry:
+        "Estrazione del 2026-07-31\nidImpianto|Gestore|Bandiera|Tipo Impianto|Nome Impianto|Indirizzo|Comune|Provincia|Latitudine|Longitudine\n001|Gestore|Brand|Stradale|Stazione|Via A|Milano|MI|45.4|9.2\n",
+      prices:
+        "Estrazione del 2026-07-31\nidImpianto|descCarburante|prezzo|isSelf|dtComu\n001|Marketing Premium|1.999|1|30/07/2026 14:20:00\n",
+    },
+  },
   // A station the ministry publishes at 0,0: it has not located it.
   "fuel/minetur": {
     reason: "no_geometry",

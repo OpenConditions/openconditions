@@ -242,3 +242,15 @@ describe("catalogue schema", () => {
     expect(credentialsFileSchema.safeParse({ credentials: { Bad_Group: {} } }).success).toBe(false);
   });
 });
+
+test("snapshot role qualification retains independent durable evidence and rejects blank references", () => {
+  const schema = z.object(feedBaseShape).strict();
+  const snapshot = {
+    completeness: "complete",
+    roleEvidence: { registry: "docs/qualified-registry.md" },
+  };
+  expect(schema.parse({ ...feed, snapshot }).snapshot).toEqual(snapshot);
+  expect(
+    schema.safeParse({ ...feed, snapshot: { ...snapshot, roleEvidence: { prices: " " } } }).success,
+  ).toBe(false);
+});
