@@ -286,7 +286,10 @@ test.each([
   "ambiguous same-second transition",
 ])("preserves decisions for %s", async (kind) => {
   const f = fixture("reopened");
-  if (kind === "expired") f.event.issue.updated_at = "2026-10-27T04:00:00Z";
+  if (kind === "expired") {
+    f.event.issue.created_at = "2026-10-27T03:59:00Z";
+    f.event.issue.updated_at = "2026-10-27T04:00:00Z";
+  }
   if (kind === "human label removal")
     f.events.push({
       id: 21,
@@ -638,10 +641,66 @@ test.each(["node_id", "number", "created_at"])(
   },
 );
 
-test("opened timestamp mismatch remains rejected before HTTP", async () => {
+test.each([false, true])("opened creation/update skew reaches HTTP (CLI=%s)", async (cli) => {
   const f = fixture();
+  f.issue.updated_at = later;
   f.event.issue.updated_at = later;
-  expect((await run(f)).stderr).toBe("opened event timestamp mismatch");
+  const out = await run(f, "lifecycle", false, cli);
+  expect(out.stderr).toBe("");
+  expect(out.code).toBe(0);
+  expect(out.result).toEqual({ status: "applied", issue: 7, operations: 1 });
+  expect(writes(f)).toHaveLength(1);
+});
+
+test.each(["labeled", "unlabeled"])(
+  "opened preserves a human %s decision between creation and payload update",
+  async (event) => {
+    const f = fixture();
+    f.issue.updated_at = later;
+    f.event.issue.updated_at = later;
+    f.events.push({
+      id: 20,
+      event,
+      created_at: "2026-10-27T05:00:01Z",
+      actor: { id: 99 },
+      label: { name: "needs-info" },
+    });
+    if (event === "labeled") f.issue.labels.push(label("needs-info"));
+    const out = await run(f);
+    expect(out.code).toBe(0);
+    expect(out.result).toEqual({
+      status: "preserved",
+      reason: "workflow-label decision after event",
+    });
+    expect(writes(f)).toHaveLength(0);
+  },
+);
+
+test("a recent update cannot refresh an old opened event", async () => {
+  const f = fixture();
+  f.issue.created_at = f.event.issue.created_at = "2026-10-27T04:49:00Z";
+  f.issue.updated_at = f.event.issue.updated_at = later;
+  const out = await run(f);
+  expect(out.code).toBe(0);
+  expect(out.result.status).toBe("stale");
+  expect(f.requests).toHaveLength(0);
+});
+
+test("opened rejects an update before creation", async () => {
+  const f = fixture();
+  f.event.issue.updated_at = old;
+  const out = await run(f);
+  expect(out.code).toBe(1);
+  expect(out.stderr).toBe("issue update predates creation");
+  expect(f.requests).toHaveLength(0);
+});
+
+test("opened with a future update remains stale", async () => {
+  const f = fixture();
+  f.event.issue.updated_at = "2026-10-27T05:00:03Z";
+  const out = await run(f);
+  expect(out.code).toBe(0);
+  expect(out.result.status).toBe("stale");
   expect(f.requests).toHaveLength(0);
 });
 
