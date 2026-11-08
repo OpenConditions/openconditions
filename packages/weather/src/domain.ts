@@ -14,6 +14,7 @@ export const WEATHER_PRODUCTS = ["weather"] as const;
 const FORMATS: FeedFormat<WeatherCatalogFeed>[] = [
   {
     id: "fmi-weather",
+    transactionalRoles: true,
     kind: "features",
     products: WEATHER_PRODUCTS,
     acquisitionBlocked:

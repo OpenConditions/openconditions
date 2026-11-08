@@ -204,3 +204,114 @@ test("FMI accepts millisecond worker clocks while retaining strict source UTC an
   p.status = [Buffer.from(p.status[0]!.toString().replace('name="t2m"', 'name="t2m_quality"'))];
   expect(() => parse(p)).toThrow(/unknown field/);
 });
+
+const attacks: Record<string, (s: string) => string> = {
+  "duplicate station": (s) =>
+    s
+      .replace(">100971</gml:identifier>", ">101004</gml:identifier>")
+      .replaceAll("1.4 0.7 95.0", "NaN 0.7 95.0"),
+  "duplicate identifier": (s) =>
+    s.replace(
+      "</gml:identifier>",
+      '</gml:identifier><gml:identifier codeSpace="http://xml.fmi.fi/namespace/stationcode/fmisid">999999</gml:identifier>',
+    ),
+  "duplicate point": (s) =>
+    s.replace("</gml:Point>", '</gml:Point><gml:Point gml:id="point-100971"/>'),
+  "nested namespace": (s) =>
+    s.replace("<swe:DataRecord>", "<swe:DataRecord xmlns:swe='urn:wrong'>"),
+  "out of scope namespace": (s) =>
+    s
+      .replace('xmlns:swe="http://www.opengis.net/swe/2.0"', "")
+      .replace("<swe:field ", '<swe:field xmlns:swe="http://www.opengis.net/swe/2.0" '),
+  "hex epoch": (s) => s.replace("1794009600", "0x6aee6800"),
+  "exponent epoch": (s) => s.replace("1794009600", "1.7940096e9"),
+  "hex coordinate": (s) => s.replaceAll("60.17523", "0x3c"),
+  "coverage axes": (s) =>
+    s.replace("<gmlcov:SimpleMultiPoint ", '<gmlcov:SimpleMultiPoint axisLabels="time Lat Long" '),
+};
+test.each(Object.entries(attacks))("FMI refuses %s", (_name, change) => {
+  const p = payloads();
+  p.status = [Buffer.from(change(p.status[0]!.toString()))];
+  expect(() => parse(p)).toThrow(/FMI/);
+});
+test("FMI accepts single quotes and namespace aliases", () => {
+  const p = payloads();
+  p.status = [
+    Buffer.from(
+      p.status[0]!.toString()
+        .replaceAll("swe:", "sensor:")
+        .replaceAll("xmlns:swe=", "xmlns:sensor=")
+        .replace(/="([^"]*)"/g, "='$1'"),
+    ),
+  ];
+  expect(parse(p).observations).toHaveLength(14);
+});
+test("FMI rejects conflicting identity across bodies and conflicting same-time tuples in either order", () => {
+  const p = payloads();
+  const raw = p.status[0]!.toString();
+  for (const changed of [
+    raw.replaceAll("24.96131", "24.96231"),
+    raw.replace("1.4 0.7 95.0", "1.9 0.7 95.0"),
+  ]) {
+    for (const status of [
+      [raw, changed],
+      [changed, raw],
+    ])
+      expect(() => parse({ ...p, status: status.map((s) => Buffer.from(s)) })).toThrow(/FMI/);
+  }
+});
+
+test("FMI metadata identity conflicts and observation cross-joins refuse in either body order", () => {
+  const p = payloads();
+  const changed = Buffer.from(
+    p.sites[0]!.toString().replace("60.203071 24.961305", "60.303071 24.961305"),
+  );
+  for (const sites of [
+    [...p.sites, changed],
+    [changed, ...p.sites],
+  ])
+    expect(() => parse({ ...p, sites })).toThrow(/conflicting metadata/);
+  expect(() => parse({ ...p, sites: [changed] })).toThrow(/position conflict/);
+  expect(parse({ ...p, status: [...p.status, ...p.status] }).observations).toEqual(
+    parse(p).observations,
+  );
+});
+test.each([
+  (s: string) => s.replace('xmlns:swe="http://www.opengis.net/swe/2.0"', ""),
+  (s: string) => s.replace("<swe:DataRecord>", '<swe:DataRecord xmlns:swe="">'),
+  (s: string) =>
+    s.replace(
+      "<swe:DataRecord>",
+      '<swe:DataRecord><a-b:useLimitation xmlns:a-b="urn:rights">restricted</a-b:useLimitation>',
+    ),
+  (s: string) => s.replace("<swe:DataRecord>", '<swe:DataRecord xmlns:xml="urn:wrong">'),
+])("FMI rejects invalid namespace scope and aliased rights statements", (change) => {
+  const p = payloads();
+  expect(() => parse({ ...p, status: [Buffer.from(change(p.status[0]!.toString()))] })).toThrow(
+    /FMI/,
+  );
+});
+test("FMI accepts decimal exponent coordinate wire forms", () => {
+  const p = payloads();
+  p.status = [
+    Buffer.from(
+      p.status[0]!.toString()
+        .replaceAll("60.20307", "+6.020307e1")
+        .replaceAll("24.96131", "2.496131E1"),
+    ),
+  ];
+  expect(parse(p).observations).toHaveLength(14);
+});
+
+test("FMI refuses whitespace-altered namespace URIs", () => {
+  const p = payloads();
+  p.status = [
+    Buffer.from(
+      p.status[0]!.toString().replace(
+        'xmlns:swe="http://www.opengis.net/swe/2.0"',
+        'xmlns:swe=" http://www.opengis.net/swe/2.0 "',
+      ),
+    ),
+  ];
+  expect(() => parse(p)).toThrow(/namespace/);
+});

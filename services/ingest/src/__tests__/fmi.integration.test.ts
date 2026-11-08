@@ -11,7 +11,7 @@ import Fastify from "fastify";
 import { afterAll, beforeAll, expect, test } from "vitest";
 import { registerApiRoutes } from "../api/routes.js";
 import { formatOf } from "../domains.js";
-import { runSource } from "../pipeline/run.js";
+import { createRoleState, runSource } from "../pipeline/run.js";
 import { repoFeed } from "./helpers/catalog.js";
 
 const fixture = (name: string) =>
@@ -138,3 +138,139 @@ test("FMI gate prevents worker requests even with catalogue disablement removed;
     format.acquisitionBlocked = gate;
   }
 });
+
+test.each(["identity", "namespace", "epoch", "axes", "rights", "storage"])(
+  "FMI rejected %s generation preserves accepted roles and API, then recovers full and status cadence",
+  async (kind) => {
+    const format = formatOf(feed),
+      gate = format.acquisitionBlocked;
+    delete format.acquisitionBlocked;
+    const roles = createRoleState();
+    const originalSites = feed.endpoints.sites;
+    if (kind === "rights" || kind === "storage")
+      feed.endpoints.sites = {
+        urls: [
+          "https://opendata.fmi.fi/fixture/stations-a",
+          "https://opendata.fmi.fi/fixture/stations-b",
+        ],
+        cadenceSec: 86400,
+      };
+    let reuseSites = false;
+    clock = "2026-11-07T01:05:00Z";
+    metadata = fixture("station-101004.xml");
+    observations = fixture("observations.xml");
+    const urls: string[] = [];
+    const validators: (string | null)[] = [];
+    let etag = "accepted-v1";
+    const scheduled = () =>
+      runSource(feed, {
+        sql: db.sql,
+        roles,
+        now: () => clock,
+        fetch: (async (input, init) => {
+          urls.push(String(input));
+          validators.push(new Headers(init?.headers).get("if-none-match"));
+          if (reuseSites && String(input).includes("/stations"))
+            return new Response(null, { status: 304 });
+          return new Response(
+            String(input).includes("/stations") ? metadata.toString() : observations.toString(),
+            { headers: { etag } },
+          );
+        }) as typeof fetch,
+        lookup: async () => [{ address: "93.184.216.34", family: 4 }],
+        model: { registry, instanceId: "test.local" },
+      });
+    try {
+      expect((await scheduled()).error).toBeUndefined();
+      roles.lastFetchedAt.sites = 0;
+      roles.failing.sites = true;
+      const accepted = JSON.stringify(roles);
+      const acceptedIndex = roles.statusIndex;
+      const acceptedIndexValues = JSON.stringify([...roles.statusIndex!]);
+      etag = "rejected-v2";
+      const before = (await get("/observations/latest?source=fi-fmi-weather")).records;
+      const features = (await get("/features?source=fi-fmi-weather")).records;
+      const raw = observations.toString();
+      if (kind === "identity")
+        observations = Buffer.from(
+          raw
+            .replace(">100971</gml:identifier>", ">101004</gml:identifier>")
+            .replace(
+              /(<gml:doubleOrNilReasonTupleList>)([\s\S]*?)(<\/gml:doubleOrNilReasonTupleList>)/,
+              (_, start: string, text: string, end: string) => {
+                const values = text.trim().split(/\s+/);
+                for (let i = 49; i < values.length; i += 7) values[i] = "NaN";
+                return start + values.join(" ") + end;
+              },
+            ),
+        );
+      if (kind === "namespace")
+        observations = Buffer.from(
+          raw.replace("<swe:DataRecord>", "<swe:DataRecord xmlns:swe='urn:wrong'>"),
+        );
+      if (kind === "epoch") observations = Buffer.from(raw.replace("1794009600", "0x6aee6800"));
+      if (kind === "axes")
+        observations = Buffer.from(
+          raw.replace(
+            "<gmlcov:SimpleMultiPoint ",
+            '<gmlcov:SimpleMultiPoint axisLabels="time Lat Long" ',
+          ),
+        );
+      if (kind === "rights")
+        metadata = Buffer.from(
+          metadata
+            .toString()
+            .replace(
+              "<ef:mobile>",
+              "<ef:accessConstraints>restricted</ef:accessConstraints><ef:mobile>",
+            ),
+        );
+      if (kind === "storage") {
+        await db.sql.unsafe(
+          "CREATE FUNCTION conditions.fmi_reject() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'forced canonical failure'; END $$",
+        );
+        await db.sql.unsafe(
+          "CREATE TRIGGER fmi_reject BEFORE INSERT OR UPDATE ON conditions.feature FOR EACH ROW EXECUTE FUNCTION conditions.fmi_reject()",
+        );
+        metadata = Buffer.from(metadata.toString().replace("Helsinki Kumpula", "Rejected name"));
+      }
+      clock = "2026-11-07T01:16:00Z";
+      expect((await scheduled()).error).toBeDefined();
+      expect(JSON.stringify(roles)).toBe(accepted);
+      expect(roles.statusIndex).toBe(acceptedIndex);
+      expect(JSON.stringify([...roles.statusIndex!])).toBe(acceptedIndexValues);
+      expect((await get("/observations/latest?source=fi-fmi-weather")).records).toEqual(before);
+      expect((await get("/features?source=fi-fmi-weather")).records).toEqual(features);
+      if (kind === "storage") {
+        await db.sql.unsafe("DROP TRIGGER fmi_reject ON conditions.feature");
+        await db.sql.unsafe("DROP FUNCTION conditions.fmi_reject()");
+      }
+      metadata = fixture("station-101004.xml");
+      observations = fixture("observations.xml");
+      clock = "2026-11-07T01:27:00Z";
+      urls.length = 0;
+      validators.length = 0;
+      etag = "recovered-v3";
+      reuseSites = true;
+      expect((await scheduled()).error).toBeUndefined();
+      expect(validators).toEqual(
+        Array(kind === "rights" || kind === "storage" ? 3 : 2).fill("accepted-v1"),
+      );
+      expect(urls.some((u) => u.includes("/stations"))).toBe(true);
+      clock = "2026-11-07T01:38:00Z";
+      urls.length = 0;
+      observations = Buffer.from(observations.toString().replace("1.4 0.7 95.0", "1.9 0.7 95.0"));
+      expect((await scheduled()).error).toBeUndefined();
+      expect(urls).toEqual(["https://opendata.fmi.fi/fixture/observations"]);
+      const temp = (await get("/observations/latest?source=fi-fmi-weather")).records.find(
+        (o: { property: string; subject: { featureId: string } }) =>
+          o.property === "weather.air_temperature" && o.subject.featureId.endsWith(":101004"),
+      );
+      expect(temp.result.value).toBe(1.9);
+      expect(temp.provenance.attribution.license).toBe("CC-BY-4.0");
+    } finally {
+      format.acquisitionBlocked = gate;
+      feed.endpoints.sites = originalSites;
+    }
+  },
+);

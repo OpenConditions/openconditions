@@ -92,6 +92,7 @@ const namespaces: Record<string, string> = {
 const parser = new XMLParser({
   ignoreAttributes: false,
   parseTagValue: false,
+  trimValues: false,
   parseAttributeValue: false,
 });
 type Node = Record<string, unknown>;
@@ -119,6 +120,81 @@ function text(n: unknown, key: string): string {
 const fail = (why: string): never => {
   throw new Error(`FMI: ${why}`);
 };
+// Resolve names against each element's own scope, including declarations on that element.
+function bindings(n: Node, inherited: Record<string, string>): Record<string, string> {
+  const scope = { ...inherited };
+  for (const [key, value] of Object.entries(n)) {
+    if (key !== "@_xmlns" && !key.startsWith("@_xmlns:")) continue;
+    const prefix = key === "@_xmlns" ? "" : key.slice(8);
+    const uri = str(value);
+    if (
+      typeof value !== "string" ||
+      value !== uri ||
+      /\s/.test(uri) ||
+      (prefix && !/^[A-Za-z_][\w.-]*$/.test(prefix))
+    )
+      fail("invalid namespace declaration");
+    if (
+      prefix === "xmlns" ||
+      (prefix === "xml" && uri !== "http://www.w3.org/XML/1998/namespace") ||
+      (prefix && !uri) ||
+      uri === "http://www.w3.org/2000/xmlns/" ||
+      (prefix !== "xml" && uri === "http://www.w3.org/XML/1998/namespace")
+    )
+      fail("invalid namespace declaration");
+    scope[prefix] = uri;
+  }
+  return scope;
+}
+function expanded(name: string, scope: Record<string, string>, attribute = false): string {
+  const parts = name.split(":");
+  if (parts.length > 2 || parts.some((p) => !/^[A-Za-z_][\w.-]*$/.test(p)))
+    return fail("invalid XML name");
+  const local = parts.at(-1)!;
+  if (/^(accessConstraints|useLimitation|otherConstraints)$/i.test(local))
+    fail("upstream rights require review");
+  const prefix = parts.length === 2 ? parts[0]! : "";
+  const uri = prefix || !attribute ? scope[prefix] : "";
+  if (prefix && !uri) return fail("undeclared namespace");
+  if (prefix in namespaces && uri !== namespaces[prefix]) return fail("invalid namespace");
+  const canonical = Object.entries(namespaces).find(([, u]) => u === uri)?.[0];
+  return canonical ? `${canonical}:${local}` : uri ? `{${uri}}${local}` : local;
+}
+function normalizeXml(n: Node, inherited: Record<string, string>): Node {
+  const scope = bindings(n, inherited);
+  const result: Node = {};
+  for (const [key, value] of Object.entries(n)) {
+    if (key === "@_xmlns" || key.startsWith("@_xmlns:") || key.startsWith("?")) continue;
+    if (key === "#text") {
+      result[key] = value;
+      continue;
+    }
+    if (key.startsWith("@_")) {
+      const name = "@_" + expanded(key.slice(2), scope, true);
+      if (name in result) fail("duplicate expanded attribute");
+      result[name] = value;
+      continue;
+    }
+    for (const child of Array.isArray(value) ? value : [value]) {
+      const own = isRecord(child) ? bindings(child, scope) : scope;
+      const name = expanded(key, own);
+      const normalized = isRecord(child) ? normalizeXml(child, scope) : child;
+      if (name in result)
+        result[name] = [
+          ...((Array.isArray(result[name]) ? result[name] : [result[name]]) as unknown[]),
+          normalized,
+        ];
+      else result[name] = normalized;
+    }
+  }
+  return result;
+}
+const decimal = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/;
+function coordinate(token: string): number {
+  if (!decimal.test(token) || !Number.isFinite(Number(token)))
+    return fail("invalid coordinate token");
+  return Number(token);
+}
 function collection(body: Buffer): Node[] {
   const raw = body.toString("utf8");
   if (
@@ -127,19 +203,17 @@ function collection(body: Buffer): Node[] {
     XMLValidator.validate(raw) !== true
   )
     return fail("invalid or oversized XML");
-  for (const [prefix, uri] of Object.entries(namespaces))
-    for (const match of raw.matchAll(new RegExp(`xmlns:${prefix}="([^"]*)"`, "g")))
-      if (match[1] !== uri) fail("invalid namespace");
-  for (const [prefix, uri] of Object.entries(namespaces)) {
-    if (raw.includes(`<${prefix}:`) && !raw.includes(`xmlns:${prefix}="${uri}"`))
-      fail("undeclared namespace");
-  }
-  if (!raw.includes(`xmlns:wfs="${namespaces.wfs}"`)) return fail("missing WFS namespace");
-  // Restrictive/unknown source statements require review; never overwrite last-good rights with a catalogue grant.
-  if (/<(?:\w+:)?(?:accessConstraints|useLimitation|otherConstraints)\b/i.test(raw))
-    return fail("upstream rights require review");
-  const root = parser.parse(raw)["wfs:FeatureCollection"] as unknown;
+  const root = normalizeXml(parser.parse(raw), { xml: "http://www.w3.org/XML/1998/namespace" })[
+    "wfs:FeatureCollection"
+  ];
   if (!isRecord(root)) return fail("not a FeatureCollection");
+  const references = new Set(
+    all(root, "target:representativePoint").map((p) => attr(p, "xlink:href")),
+  );
+  const pointIds = all(root, "gml:Point")
+    .map((p) => attr(p, "gml:id"))
+    .filter((id) => references.has(`#${id}`));
+  if (new Set(pointIds).size !== pointIds.length) fail("ambiguous point IDs");
   const members = nodes(root["wfs:member"]);
   const returned = attr(root, "numberReturned"),
     matched = attr(root, "numberMatched");
@@ -155,7 +229,7 @@ function point(n: Node, finnish = true): [number, number] {
     (attr(n, "axisLabels") && attr(n, "axisLabels") !== "Lat Long")
   )
     return fail("unsupported point CRS or axes");
-  const xy = text(n, "gml:pos").split(/\s+/).map(Number);
+  const xy = text(n, "gml:pos").split(/\s+/).map(coordinate);
   if (
     xy.length !== 2 ||
     !xy.every(Number.isFinite) ||
@@ -169,8 +243,9 @@ function point(n: Node, finnish = true): [number, number] {
 }
 const FMISID = "http://xml.fmi.fi/namespace/stationcode/fmisid";
 function id(n: Node): string {
-  const v = all(n, "gml:identifier").find((x) => attr(x, "codeSpace") === FMISID);
-  const s = str(v);
+  const identifiers = all(n, "gml:identifier").filter((x) => attr(x, "codeSpace") === FMISID);
+  if (identifiers.length !== 1) return fail("ambiguous FMISID");
+  const s = str(identifiers[0]);
   if (!/^\d+$/.test(s)) return fail("missing FMISID");
   return s;
 }
@@ -254,7 +329,11 @@ function observations(
   bodies: readonly Buffer[],
   ctx: ParseContext,
   index: ReadonlyMap<string, Station>,
+  geometry = new Map<string, [number, number]>(),
 ) {
+  const identity = new Map<string, string>();
+  const identitiesAt = new Map<string, string>();
+  const tuples = new Map<string, string>();
   const latest = new Map<string, { epoch: number; draft: Record<string, unknown> }>();
   const at = instant(ctx.fetchedAt.replace(/\.000Z$/, "Z"));
   for (const body of bodies)
@@ -267,6 +346,7 @@ function observations(
       const d = domain[0]!;
       if (
         attr(d, "srsDimension") !== "3" ||
+        (attr(d, "axisLabels") !== "" && attr(d, "axisLabels") !== "Lat Long time") ||
         !/^http:\/\/xml.fmi.fi\/gml\/crs\/compoundCRS.php\?crs=(4258|4326)&time=unixtime$/.test(
           attr(d, "srsName"),
         )
@@ -283,18 +363,38 @@ function observations(
         )
       )
         fail("unknown field or QC semantics");
-      const positions = text(d, "gmlcov:positions").split(/\s+/).map(Number);
+      const tokens = text(d, "gmlcov:positions").split(/\s+/);
+      const positions = tokens.map((token, i) => {
+        if (i % 3 !== 2) return coordinate(token);
+        if (!/^\d+$/.test(token)) return fail("invalid epoch token");
+        return Number(token);
+      });
       const values = text(c, "gml:doubleOrNilReasonTupleList").split(/\s+/);
       if (positions.length % 3 || values.length !== (positions.length / 3) * fields.length)
         return fail("tuple cardinality");
       const points = new Map<string, string>();
       const pointNodes = all(member, "gml:Point");
       for (const loc of all(member, "target:Location")) {
-        const ref = attr(nodes(loc["target:representativePoint"])[0] ?? {}, "xlink:href");
-        const p = pointNodes.find((x) => `#${attr(x, "gml:id")}` === ref);
-        if (!p) return fail("unresolved representativePoint");
+        const references = nodes(loc["target:representativePoint"]);
+        if (references.length !== 1) return fail("ambiguous representativePoint");
+        const ref = attr(references[0]!, "xlink:href");
+        const matches = pointNodes.filter((x) => `#${attr(x, "gml:id")}` === ref);
+        const p = matches[0];
+        if (matches.length !== 1 || !ref.startsWith("#") || !p)
+          return fail("unresolved representativePoint");
         const xy = point(p);
         const key = xy.join(",");
+        const stationId = id(loc);
+        if (identity.has(stationId) && identity.get(stationId) !== key)
+          fail("conflicting station position");
+        if (identitiesAt.has(key) && identitiesAt.get(key) !== stationId)
+          fail("ambiguous generation position join");
+        identitiesAt.set(key, stationId);
+        identity.set(stationId, key);
+        geometry.set(stationId, xy);
+        const metadata = index.get(stationId);
+        if (metadata && metadata.point.some((v, i) => Math.abs(v - xy[i]!) > 0.000011))
+          fail("metadata observation position conflict");
         if (points.has(key) && points.get(key) !== id(loc)) return fail("ambiguous position join");
         points.set(key, id(loc));
       }
@@ -317,9 +417,14 @@ function observations(
         const stationId = points.get([lon, lat].join(","));
         if (!stationId) return fail("unjoined position");
         const station = index.get(stationId);
-        if (!station || station.lifecycle !== "operational") continue;
-        if (time > at || at - time > 3600_000) continue;
         fields.forEach((field, j) => {
+          const tupleKey = `${stationId}:${epoch}:${field}`;
+          const tuple = values[(i / 3) * fields.length + j]!;
+          if (tuples.has(tupleKey) && tuples.get(tupleKey) !== tuple)
+            fail("conflicting duplicate tuple");
+          tuples.set(tupleKey, tuple);
+          if (!station || station.lifecycle !== "operational" || time > at || at - time > 3600_000)
+            return;
           const param = FMI_PARAMETERS.find((x) => x.key === field);
           if (!param) return;
           const raw = values[(i / 3) * fields.length + j]!;
@@ -357,16 +462,13 @@ export function parseFmiWeather(
   out.featuresComplete = false;
   if (!payloads.sites?.length) return out;
   const index = stations(feed, payloads.sites, instant(ctx.fetchedAt.replace(/\.000Z$/, "Z")));
-  // Observation point precision is the source's measurement geometry; metadata uses more digits.
-  for (const body of payloads.status ?? [])
-    for (const member of collection(body))
-      for (const loc of all(member, "target:Location")) {
-        const s = index.get(id(loc));
-        if (!s) continue;
-        const ref = attr(nodes(loc["target:representativePoint"])[0] ?? {}, "xlink:href");
-        const p = all(member, "gml:Point").find((x) => `#${attr(x, "gml:id")}` === ref);
-        if (p) s.point = point(p);
-      }
+  const geometry = new Map<string, [number, number]>();
+  out.observations = observations(feed, payloads.status ?? [], ctx, index, geometry);
+  // Source observation geometry rounds metadata coordinates to five decimal places.
+  for (const [stationId, xy] of geometry) {
+    const station = index.get(stationId);
+    if (station) station.point = xy;
+  }
   out.features = [...index.values()].map((s) =>
     stationDraft(feed, ctx.fetchedAt, {
       ...s,
@@ -377,7 +479,6 @@ export function parseFmiWeather(
       channels: FMI_PARAMETERS.map((p) => ({ key: p.key, property: p.property })),
     }),
   );
-  out.observations = observations(feed, payloads.status ?? [], ctx, index);
   out.statusIndex = new Map([...index].map(([key, s]) => [key, [s]]));
   return out;
 }
