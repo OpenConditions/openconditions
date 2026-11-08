@@ -261,6 +261,48 @@
         }
       ]
     },
+    "fuel/it": {
+      "$schema": "../schema/fuel.schema.json",
+      "feeds": [
+        {
+          "operator": "mimit",
+          "product": "fuel",
+          "name": "MIMIT Osservaprezzi daily reported fuel prices (Italy)",
+          "format": "mimit",
+          "tier": "authoritative",
+          "endpoints": {
+            "registry": {
+              "url": "https://www.mimit.gov.it/images/exportCSV/anagrafica_impianti_attivi.csv",
+              "cadenceSec": 86400,
+              "maxPayloadAgeSec": 86400
+            },
+            "prices": {
+              "url": "https://www.mimit.gov.it/images/exportCSV/prezzo_alle_8.csv",
+              "cadenceSec": 86400,
+              "maxPayloadAgeSec": 86400
+            }
+          },
+          "freshnessWindowSec": 172800,
+          "extrasAllow": [
+            "mimitExtraction",
+            "mimitCommunication"
+          ],
+          "license": "LicenseRef-IODL-2.0",
+          "licenseUrl": "https://www.dati.gov.it/content/italian-open-data-license-v20",
+          "attribution": "Ministero delle Imprese e del Made in Italy, Osservaprezzi carburanti",
+          "terms": {
+            "url": "https://www.mimit.gov.it/it/open-data/elenco-dataset/carburanti-prezzi-praticati-e-anagrafica-degli-impianti",
+            "reviewedAt": "2026-11-07",
+            "note": "IODL 2.0. Credit the ministry and licence; no endorsement or official status is implied. Dated reported prices at extraction-day 08:00, not guaranteed current pump prices. Disabled pending matched complete raw CSV capture, byte/encoding, Europe/Rome and CRS qualification from the acquisition network. No relay substitution. See docs/feeds/mimit.md."
+          },
+          "privacyUrl": "https://www.mimit.gov.it/it/privacy-sito",
+          "disabled": {
+            "reason": "Pending paired raw CSV capture and timezone/CRS qualification; see docs/feeds/mimit.md",
+            "since": "2026-11-07"
+          }
+        }
+      ]
+    },
     "credentials": {
       "credentials": {
         "overpass": {
@@ -663,6 +705,78 @@
       },
       "restricted": true,
       "cadenceSec": 3600
+    },
+    {
+      "operator": "mimit",
+      "product": "fuel",
+      "name": "MIMIT Osservaprezzi daily reported fuel prices (Italy)",
+      "format": "mimit",
+      "tier": "authoritative",
+      "endpoints": {
+        "registry": {
+          "url": "https://www.mimit.gov.it/images/exportCSV/anagrafica_impianti_attivi.csv",
+          "cadenceSec": 86400,
+          "maxPayloadAgeSec": 86400
+        },
+        "prices": {
+          "url": "https://www.mimit.gov.it/images/exportCSV/prezzo_alle_8.csv",
+          "cadenceSec": 86400,
+          "maxPayloadAgeSec": 86400
+        }
+      },
+      "freshnessWindowSec": 172800,
+      "extrasAllow": [
+        "mimitExtraction",
+        "mimitCommunication"
+      ],
+      "license": "LicenseRef-IODL-2.0",
+      "licenseUrl": "https://www.dati.gov.it/content/italian-open-data-license-v20",
+      "attribution": "Ministero delle Imprese e del Made in Italy, Osservaprezzi carburanti",
+      "terms": {
+        "url": "https://www.mimit.gov.it/it/open-data/elenco-dataset/carburanti-prezzi-praticati-e-anagrafica-degli-impianti",
+        "reviewedAt": "2026-11-07",
+        "note": "IODL 2.0. Credit the ministry and licence; no endorsement or official status is implied. Dated reported prices at extraction-day 08:00, not guaranteed current pump prices. Disabled pending matched complete raw CSV capture, byte/encoding, Europe/Rome and CRS qualification from the acquisition network. No relay substitution. See docs/feeds/mimit.md."
+      },
+      "privacyUrl": "https://www.mimit.gov.it/it/privacy-sito",
+      "disabled": {
+        "reason": "Pending paired raw CSV capture and timezone/CRS qualification; see docs/feeds/mimit.md",
+        "since": "2026-11-07"
+      },
+      "homepage": "https://www.mimit.gov.it",
+      "id": "it-mimit-fuel",
+      "domain": "fuel",
+      "region": "it",
+      "file": "feeds/fuel/it.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": true,
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "changeNotice": false,
+        "retention": true,
+        "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://www.mimit.gov.it/it/open-data/elenco-dataset/carburanti-prezzi-praticati-e-anagrafica-degli-impianti",
+        "reviewedAt": "2026-11-07"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "IT"
+        ]
+      },
+      "cadenceSec": 86400,
+      "country": "IT"
     }
   ]
 }

@@ -24,6 +24,7 @@ export const FUEL_SOURCE_FORMATS = [
   "econtrol",
   "prix-carburants",
   "minetur",
+  "mimit",
 ] as const;
 
 const fuelKinds = withFeatureCrosswalks(

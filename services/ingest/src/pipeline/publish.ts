@@ -425,6 +425,7 @@ export async function publishFeatures(
   src: Pick<CatalogFeed, "id" | "freshnessWindowSec">,
   input: {
     output: Pick<ParseOutput, "features" | "observations" | "offers">;
+    featureSnapshot?: ParseOutput["featureSnapshot"];
     rejected: number;
     poll: PollIdentity;
     durationMs: number;
@@ -440,13 +441,23 @@ export async function publishFeatures(
   const published = sql.begin(async (tx) => {
     await tx`SELECT pg_advisory_xact_lock(hashtext(${src.id}))`;
     const { output } = input;
+    if (input.featureSnapshot) {
+      const [held] = await tx<
+        { publication_at: Date | null }[]
+      >`SELECT publication_at FROM conditions.source_status WHERE source = ${src.id} FOR UPDATE`;
+      if (
+        held?.publication_at &&
+        held.publication_at.getTime() > Date.parse(input.featureSnapshot.at)
+      )
+        throw new Error("dated feature snapshot replayed an older publication");
+    }
     const summary = await writeSnapshotIn(
       tx,
       src.id,
       { features: output.features, observations: output.observations, offers: output.offers },
       {
         ...writeContext(input),
-        complete: { feature: true, offer: true },
+        complete: { feature: input.featureSnapshot?.complete ?? true, offer: true },
         statesComplete: input.statesComplete === true,
         latestCache: cache,
       },
@@ -477,6 +488,8 @@ export async function publishFeatures(
       ...(input.warning ? { error: input.warning } : {}),
       publication: counts,
     });
+    if (input.featureSnapshot)
+      await tx`UPDATE conditions.source_status SET publication_at = ${input.featureSnapshot.at}::timestamptz WHERE source = ${src.id}`;
     return { summary, counts };
   }) as Promise<{ summary: WriteSummary; counts: PublicationCounts }>;
   return withCache(cache, published);

@@ -125,3 +125,26 @@ test("nested captured upstream source permissions cannot be hidden by a public f
     } as EgressRecord),
   ).toBe(false);
 });
+
+test("reviewed IODL 2.0 allows public and derived redistribution without share-alike", () => {
+  expect(isPublicLicense("LicenseRef-IODL-2.0")).toBe(true);
+  expect(isPublicRecord({ provenance: { attribution: { license: "LicenseRef-IODL-2.0" } } })).toBe(
+    true,
+  );
+  expect(LICENSES.find((l) => l.id === "LicenseRef-IODL-2.0")).toMatchObject({
+    redistribution: true,
+    derivedRedistribution: true,
+    commercialUse: true,
+    retention: true,
+    attributionRequired: true,
+    shareAlike: false,
+  });
+  expect(
+    isPublicRecord({
+      provenance: {
+        attribution: { license: "LicenseRef-IODL-2.0" },
+        upstream: [{ license: "NOASSERTION" }],
+      },
+    }),
+  ).toBe(false);
+});

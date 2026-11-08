@@ -138,3 +138,11 @@ describe("withPolledValidity", () => {
     expect(db.calls).toEqual([]);
   });
 });
+
+it("caps healthy polling validity at source expiry", async () => {
+  const record = reading({ freshness: { expiresAt: "2026-10-07T11:00:00Z" } });
+  const [out] = await withPolledValidity(runner({ "fr-irve": "2026-10-08T12:00:00Z" }), registry, [
+    record,
+  ]);
+  expect(out?.["validUntil"]).toBe("2026-10-07T11:00:00.000Z");
+});
