@@ -247,7 +247,8 @@ test.each(["identity", "namespace", "epoch", "axes", "rights", "storage"])(
         metadata = Buffer.from(
           fixture("station-101004.xml")
             .toString()
-            .replace("Helsinki Kumpula", "Hel\u0001sinki Kumpula"),
+            .replace("<gml:name ", '<gml:name probe="x<![CDATA[&bogus;]]>" ')
+            .replace("Helsinki Kumpula", "Malformed accepted"),
         );
         observations = fixture("observations.xml");
         expect((await scheduled()).error).toMatch(/XML/);

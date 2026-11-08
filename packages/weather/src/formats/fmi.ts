@@ -198,6 +198,51 @@ function coordinate(token: string): number {
 // The parser's validator accepts forbidden characters and leaves numeric references unresolved.
 // Validate XML 1.0 references before parsing, then express numeric references as safe XML text.
 // Comments, CDATA and processing instructions do not expand references.
+function xmlSections(raw: string): string[] {
+  const parts: string[] = [];
+  let start = 0;
+  let i = 0;
+  while (i < raw.length) {
+    if (raw[i] !== "<") {
+      i++;
+      continue;
+    }
+    const close = raw.startsWith("<!--", i)
+      ? "-->"
+      : raw.startsWith("<![CDATA[", i)
+        ? "]]>"
+        : raw.startsWith("<?", i)
+          ? "?>"
+          : undefined;
+    if (close !== undefined) {
+      const end = raw.indexOf(close, i + 2);
+      if (end < 0) return fail("unterminated XML section");
+      parts.push(raw.slice(start, i), raw.slice(i, end + close.length));
+      i = end + close.length;
+      start = i;
+      continue;
+    }
+    // A normal tag is scanned as a whole. Special-section markers inside an
+    // attribute are forbidden literal markup, not comments, CDATA or PIs.
+    let quote: string | undefined;
+    let closed = false;
+    for (i++; i < raw.length; i++) {
+      const ch = raw[i];
+      if (ch === "<") return fail("invalid XML attribute or tag markup");
+      if (quote !== undefined) {
+        if (ch === quote) quote = undefined;
+      } else if (ch === '"' || ch === "'") quote = ch;
+      else if (ch === ">") {
+        i++;
+        closed = true;
+        break;
+      }
+    }
+    if (!closed) return fail("unterminated XML tag");
+  }
+  parts.push(raw.slice(start));
+  return parts;
+}
 function xmlText(body: Buffer): string {
   if (body.length > 8_000_000) return fail("oversized XML");
   let raw: string;
@@ -209,8 +254,7 @@ function xmlText(body: Buffer): string {
   if (/[^\t\n\r\u0020-\uD7FF\uE000-\uFFFD\u{10000}-\u{10FFFF}]/u.test(raw))
     return fail("invalid XML character");
   if (XMLValidator.validate(raw) !== true) return fail("invalid XML syntax");
-  return raw
-    .split(/(<!--[\s\S]*?-->|<!\[CDATA\[[\s\S]*?\]\]>|<\?[\s\S]*?\?>)/)
+  return xmlSections(raw)
     .map((part) => {
       if (part.startsWith("<!--") || part.startsWith("<![CDATA[")) return part;
       if (part.startsWith("<?")) {
@@ -219,10 +263,6 @@ function xmlText(body: Buffer): string {
         return part;
       }
       if (part.includes("]]>")) fail("invalid XML text");
-      for (const tag of part.matchAll(/<(?:[^"'<>]|"[^"]*"|'[^']*')*>/g)) {
-        for (const quoted of tag[0].matchAll(/"([^"]*)"|'([^']*)'/g))
-          if ((quoted[1] ?? quoted[2]!).includes("<")) fail("invalid XML attribute");
-      }
       return part.replace(/&([^&;<\s]*);|&/g, (reference, name: string | undefined) => {
         if (name !== undefined && /^(amp|lt|gt|quot|apos)$/.test(name)) return reference;
         if (name === undefined || !/^#(?:[0-9]+|x[0-9a-fA-F]+)$/.test(name))

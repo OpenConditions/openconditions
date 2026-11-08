@@ -354,3 +354,16 @@ test.each([
   p.status = [Buffer.from(change(p.status[0]!.toString()))];
   expect(() => parse(p)).toThrow(/XML/);
 });
+
+test.each(["<![CDATA[&bogus;]]>", "<!-- &bogus; -->", "<?probe &bogus;?>"])(
+  "FMI rejects special-section markers inside quoted attributes: %s",
+  (marker) => {
+    for (const quote of ['"', "'"]) {
+      const p = payloads();
+      p.sites[0] = Buffer.from(
+        p.sites[0]!.toString().replace("<gml:name ", `<gml:name probe=${quote}x${marker}${quote} `),
+      );
+      expect(() => parse(p)).toThrow(/XML/);
+    }
+  },
+);
