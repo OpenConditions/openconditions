@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { deserialize, serialize } from "node:v8";
+import { readOutbox } from "@openconditions/federation";
 import {
   type EgressRecord,
   publicRecords,
@@ -281,4 +282,205 @@ test("acquisition aborts an oversized response and restores held state", async (
   });
   expect(result.error).toMatch(/exceeded|exceeds/);
   expect(state).toEqual(createRoleState());
+});
+
+test.each([false, true])(
+  "durable correction suppression and ranking, reverse=%s",
+  async (reverse) => {
+    const isolated = { ...feed, id: `ca-eccc-revisions-${reverse}-weather` };
+    await syncSources(db.sql, [isolated]);
+    let state = createRoleState();
+    currentSites = sites;
+    currentStatus = structuredClone(status);
+    at = "2026-11-08T01:10:00Z";
+    const run = () =>
+      runSource(isolated, {
+        sql: db.sql,
+        fetch: upstream,
+        lookup: async () => [{ address: "93.184.216.34", family: 4 as const }],
+        now: () => at,
+        roles: state,
+        model: { registry: productionRegistry(), instanceId: "test.local" },
+      });
+    const latest = async () =>
+      (await app.inject({ url: `/observations/latest?source=${isolated.id}` })).json().records;
+    const temp = async () =>
+      (await latest()).filter(
+        (r: Record<string, unknown>) => r["property"] === "weather.air_temperature",
+      );
+    expect((await run()).error).toBeUndefined();
+    const [initial] =
+      await db.sql`SELECT series_id FROM conditions.observation_latest WHERE source_id=${isolated.id} AND property='weather.air_temperature'`;
+    const correction = structuredClone(status.features[0]);
+    correction.id = correction.properties.id = "suppressed.xml";
+    Object.assign(correction.properties, {
+      "air_temp-qa": -10,
+      "cor-value": "CCA",
+      processed_date_tm: "2026-11-08T01:15:00Z",
+    });
+    // A previous acceptable measurement must not become the fallback either.
+    const older = structuredClone(status.features[0]);
+    older.id = older.properties.id = "older.xml";
+    Object.assign(older.properties, {
+      "date_tm-value": "2026-11-08T00:55:00Z",
+      obs_date_tm: "2026-11-08T00:55:00Z",
+    });
+    const rows = [older, status.features[0], correction];
+    currentStatus = {
+      ...status,
+      features: reverse ? rows.reverse() : rows,
+      numberMatched: 3,
+      numberReturned: 3,
+    };
+    at = "2026-11-08T01:20:00Z";
+    expect((await run()).error).toBeUndefined();
+    expect(await temp()).toHaveLength(0);
+    expect(await latest()).toHaveLength(4);
+    const page = await readOutbox(db.sql, { now: at, limit: 500 });
+    expect(page.orderedItems.every((e) => !JSON.stringify(e).includes("NOASSERTION"))).toBe(true);
+    // The correction journals expiry of the earlier public reading for peers.
+    const journal = await db.sql`SELECT snapshot FROM conditions.federation_outbox
+    WHERE snapshot #>> '{provenance,sourceId}'=${isolated.id} AND property='weather.air_temperature' ORDER BY seq DESC LIMIT 1`;
+    expect(Date.parse(journal[0]!.snapshot.freshness.expiresAt)).toBe(Date.parse(at));
+    const stored =
+      await db.sql`SELECT conditions.observation_record(template, reading) AS record FROM conditions.observation_latest WHERE source_id=${isolated.id}`;
+    expect(
+      publishedRecords(
+        "observation",
+        stored.map((r) => r.record as ArchivableRecord),
+        at,
+      ),
+    ).toHaveLength(4);
+    const expanded = await app.inject({ url: `/features?source=${isolated.id}&expand=latest` });
+    expect(expanded.body).not.toContain('"value":1.8');
+    // Restart the worker state and replay an older revision from a new acquisition.
+    state = createRoleState();
+    currentStatus = structuredClone(status);
+    at = "2026-11-08T01:25:00Z";
+    expect((await run()).error).toBeUndefined();
+    expect(await temp()).toHaveLength(0);
+    // A higher correction restores exact zero on the same stable series.
+    currentStatus = structuredClone(status);
+    Object.assign(currentStatus.features[0].properties, {
+      air_temp: 0,
+      "cor-value": "CCB",
+      processed_date_tm: "2026-11-08T01:26:00Z",
+    });
+    at = "2026-11-08T01:30:00Z";
+    expect((await run()).error).toBeUndefined();
+    expect((await temp())[0].result.value).toBe(0);
+    const [restored] =
+      await db.sql`SELECT series_id FROM conditions.observation_latest WHERE source_id=${isolated.id} AND property='weather.air_temperature'`;
+    expect(restored!.series_id).toBe(initial!.series_id);
+    currentStatus = structuredClone(status);
+    at = "2026-11-08T01:40:00Z";
+    expect((await run()).error).toBeUndefined();
+    expect((await temp())[0].result.value).toBe(0);
+    // Equal rank conflict is refused atomically across polls.
+    Object.assign(currentStatus.features[0].properties, {
+      air_temp: 9,
+      "cor-value": "CCB",
+      processed_date_tm: "2026-11-08T01:26:00Z",
+    });
+    const before = deserialize(serialize(state));
+    at = "2026-11-08T01:45:00Z";
+    expect((await run()).error).toContain("ambiguous");
+    expect(state).toEqual(before);
+    expect((await temp())[0].result.value).toBe(0);
+    // New measurement outranks an old clock's higher correction; absent humidity is retained.
+    currentStatus = structuredClone(status);
+    Object.assign(currentStatus.features[0].properties, {
+      air_temp: 3,
+      "date_tm-value": "2026-11-08T01:40:00Z",
+      obs_date_tm: "2026-11-08T01:40:00Z",
+      processed_date_tm: "2026-11-08T01:41:00Z",
+    });
+    delete currentStatus.features[0].properties.rel_hum;
+    delete currentStatus.features[0].properties["rel_hum-qa"];
+    at = "2026-11-08T01:50:00Z";
+    expect((await run()).error).toBeUndefined();
+    expect((await temp())[0].result.value).toBe(3);
+    expect(await latest()).toHaveLength(5);
+  },
+);
+
+test("rights-changing retained features refuse the whole generation and all public surfaces stay coherent", async () => {
+  const isolated = { ...feed, id: "ca-eccc-rights-weather" };
+  await syncSources(db.sql, [isolated]);
+  const state = createRoleState();
+  currentSites = sites;
+  currentStatus = status;
+  at = "2026-11-08T01:10:00Z";
+  const run = () =>
+    runSource(isolated, {
+      sql: db.sql,
+      fetch: upstream,
+      lookup: async () => [{ address: "93.184.216.34", family: 4 as const }],
+      now: () => at,
+      roles: state,
+      model: { registry: productionRegistry(), instanceId: "test.local" },
+    });
+  expect((await run()).error).toBeUndefined();
+  state.lastFetchedAt["sites"] = 0;
+  const before = deserialize(serialize(state));
+  const snapshot =
+    async () => db.sql`SELECT (SELECT jsonb_agg(record ORDER BY id) FROM conditions.feature WHERE source_id=${isolated.id}) AS features,
+    (SELECT jsonb_agg(reading ORDER BY series_id) FROM conditions.observation_latest WHERE source_id=${isolated.id}) AS readings,
+    (SELECT jsonb_agg(to_jsonb(r) ORDER BY property) FROM conditions.observation_revision r WHERE source_id=${isolated.id}) AS authority,
+    (SELECT count(*) FROM conditions.federation_outbox) AS journal`;
+  const held = await snapshot();
+  const format = weatherDomain.formats["eccc-swob"]!;
+  const parse = format.parse;
+  const spy = vi.spyOn(format, "parse").mockImplementation((...args) => {
+    const out = parse(...args);
+    out.observations = [];
+    for (const f of out.features)
+      (f["provenance"] as Record<string, unknown>)["upstream"] = [
+        { publisher: "uncleared", license: "NOASSERTION" },
+      ];
+    return out;
+  });
+  at = "2026-11-08T01:20:00Z";
+  try {
+    expect((await run()).error).toContain("retained reading rights");
+  } finally {
+    spy.mockRestore();
+  }
+  expect(state).toEqual(before);
+  expect(await snapshot()).toEqual(held);
+  const featureResponse = await app.inject({
+    url: `/features?source=${isolated.id}&expand=latest`,
+  });
+  expect(featureResponse.json().records).toHaveLength(2);
+  expect(featureResponse.body).not.toContain("NOASSERTION");
+  // Status-only drafts must agree with the retained feature rights as well.
+  state.lastFetchedAt["sites"] = Date.parse(at);
+  const statusBefore = deserialize(serialize(state));
+  const parseStatus = format.parseStatus!;
+  const statusSpy = vi.spyOn(format, "parseStatus").mockImplementation((...args) => {
+    const out = parseStatus(...args);
+    for (const r of out.observations)
+      (r["provenance"] as Record<string, unknown>)["upstream"] = [
+        { publisher: "uncleared", license: "NOASSERTION" },
+      ];
+    return out;
+  });
+  at = "2026-11-08T01:30:00Z";
+  try {
+    expect((await run()).error).toContain("reading and feature rights differ");
+  } finally {
+    statusSpy.mockRestore();
+  }
+  expect(state).toEqual(statusBefore);
+  expect(await snapshot()).toEqual(held);
+  const response = await app.inject({ url: `/observations/latest?source=${isolated.id}` });
+  expect(response.json().records).toHaveLength(5);
+  expect(response.body).not.toContain("NOASSERTION");
+  const records = (
+    await db.sql`SELECT record FROM conditions.feature WHERE source_id=${isolated.id}`
+  ).map((r) => r.record as ArchivableRecord);
+  const bytes = recordArchiveBuffer("feature", records, at);
+  expect(
+    JSON.stringify(await parquetReadObjects({ file: bytes.buffer as ArrayBuffer })),
+  ).not.toContain("NOASSERTION");
 });

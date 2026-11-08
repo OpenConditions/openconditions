@@ -57,11 +57,22 @@ export interface StatusSubject {
  */
 export type StatusIndex = ReadonlyMap<string, readonly StatusSubject[]>;
 
+/** Explicit provider revision authority; absence of a channel carries no withdrawal authority. */
+export interface ObservationRevision {
+  featureId: string;
+  property: string;
+  measuredAt: string;
+  rank: string;
+  signature: string;
+  suppressed: boolean;
+}
+
 /** What one poll of a feed parsed into, per record class. */
 export interface ParseOutput {
   situations: RecordDraft[];
   features: RecordDraft[];
   observations: RecordDraft[];
+  observationRevisions?: ObservationRevision[];
   offers: RecordDraft[];
   /** A complete-snapshot source's record accounting. */
   records?: SnapshotAccounting;
@@ -76,6 +87,7 @@ export interface ParseOutput {
 /** What a status-only poll parsed into: readings, and the status records it could not use. */
 export interface StatusOutput {
   observations: RecordDraft[];
+  observationRevisions?: ObservationRevision[];
   /** Status records not used: unplaced, or holding a value the format cannot read. */
   rejected: number;
   /** Of `rejected`, those the index does not place, where the format tells the two apart. */

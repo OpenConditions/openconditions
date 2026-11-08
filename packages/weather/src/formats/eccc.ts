@@ -1,6 +1,7 @@
 import {
   emptyParseOutput,
   type FeedPayloads,
+  type ObservationRevision,
   type ParseContext,
   type ParseOutput,
   recordSkipped,
@@ -8,7 +9,7 @@ import {
   type StatusOutput,
 } from "@openconditions/ingest-framework";
 import type { WeatherCatalogFeed } from "../feed-schema.js";
-import { instantOf, isRecord, jsonOf, lonLat, utcInstant } from "../records.js";
+import { instantOf, isRecord, jsonOf, lonLat, stationFeatureId, utcInstant } from "../records.js";
 import { reading, stationDraft } from "../station.js";
 
 const DATASET = "msc-observation-atmospheric-surface_weather-ca-1.1-ascii";
@@ -158,6 +159,7 @@ export function parseEcccStatus(
       candidates.set(key, { rank, signature, props: p, filename: filename! });
   }
   const latest = new Map<string, Record<string, unknown>>();
+  const revisions = new Map<string, ObservationRevision>();
   // Stable order also makes equal-time results independent of HTTP response order.
   for (const [key, candidate] of [...candidates].sort(([a], [b]) => a.localeCompare(b))) {
     const p = candidate.props;
@@ -167,6 +169,18 @@ export function parseEcccStatus(
     const measuredAt = instantOf(text(p["date_tm-value"]))!;
     for (const spec of ECCC_MEASUREMENTS) {
       const value = p[spec.field];
+      if (!Object.hasOwn(p, spec.field) && !Object.hasOwn(p, `${spec.field}-qa`)) continue;
+      const channel = `${stationId}/${spec.property}`;
+      latest.delete(channel);
+      const authority: ObservationRevision = {
+        featureId: stationFeatureId(feed, stationId),
+        property: spec.property,
+        measuredAt,
+        rank: candidate.rank,
+        signature: candidate.signature,
+        suppressed: true,
+      };
+      revisions.set(channel, authority);
       // Guide sections 4.5–4.7: QA100 alone, no derived/estimate/incomplete/trace flags.
       // Trace is not silently turned into a precise zero. Unknown flag forms also fail closed.
       if (
@@ -179,6 +193,7 @@ export function parseEcccStatus(
         value > spec.max
       )
         continue;
+      authority.suppressed = false;
       const windowSec = "windowSec" in spec ? spec.windowSec : undefined;
       const draft = reading(feed, ctx.fetchedAt, {
         stationId,
@@ -216,7 +231,11 @@ export function parseEcccStatus(
     }
     void key;
   }
-  return { observations: [...latest.values()], rejected };
+  return {
+    observations: [...latest.values()],
+    observationRevisions: [...revisions.values()],
+    rejected,
+  };
 }
 
 export function parseEccc(
@@ -259,6 +278,7 @@ export function parseEccc(
   out.statusIndex = index;
   const status = parseEcccStatus(feed, payloads, ctx, index);
   out.observations = status.observations;
+  out.observationRevisions = status.observationRevisions;
   out.rejected = status.rejected;
   return out;
 }

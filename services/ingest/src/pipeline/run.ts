@@ -1521,6 +1521,7 @@ async function finishFeaturePoll(
       model: writeModel(deps.model),
       statesComplete: poll.statesComplete,
       atomicCandidate: poll.atomicCandidate,
+      observationRevisions: parse.observationRevisions,
       ...(poll.warning ? { warning: poll.warning } : {}),
     });
     poll.attempt.closed = true;
@@ -1576,6 +1577,7 @@ async function finishStatusPoll(
     published = await publishReadings(deps.sql, src, {
       observations,
       atomicCandidate: poll.atomicCandidate,
+      observationRevisions: output.observationRevisions,
       rejected: output.rejected + skippedRecords(skipped),
       poll: poll.identity,
       durationMs: Date.now() - poll.start,

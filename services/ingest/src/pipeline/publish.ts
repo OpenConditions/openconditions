@@ -435,6 +435,7 @@ export async function publishFeatures(
     /** Every role's states are in the output: a polled series it does not state has ended. */
     statesComplete?: boolean;
     atomicCandidate?: boolean;
+    observationRevisions?: import("@openconditions/ingest-framework").ObservationRevision[];
   },
 ): Promise<{ summary: WriteSummary; counts: PublicationCounts }> {
   const cache = latestCache.begin(src.id);
@@ -449,6 +450,7 @@ export async function publishFeatures(
         ...writeContext(input),
         complete: { feature: true, offer: true },
         atomicCandidate: input.atomicCandidate === true,
+        observationRevisions: input.observationRevisions,
         statesComplete: input.statesComplete === true,
         latestCache: cache,
       },
@@ -497,6 +499,7 @@ export async function publishReadings(
   input: {
     observations: readonly RecordDraft[];
     atomicCandidate?: boolean;
+    observationRevisions?: import("@openconditions/ingest-framework").ObservationRevision[];
     rejected: number;
     poll: PollIdentity;
     durationMs: number;
@@ -518,6 +521,7 @@ export async function publishReadings(
         complete: false,
         latestCache: cache,
         atomicCandidate: input.atomicCandidate === true,
+        observationRevisions: input.observationRevisions,
       },
     );
     const [{ live }] = await tx<{ live: number }[]>`

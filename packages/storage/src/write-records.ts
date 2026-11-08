@@ -12,6 +12,7 @@ import { type ColumnSpec, insertRows, type Sql, upsertClause } from "./bulk.js";
 import { updateCanonicalView } from "./canonical-view.js";
 import { capRows, maxObservationsPerPollFromEnv } from "./caps.js";
 import type { LatestCacheWrite } from "./latest-cache.js";
+import { applyObservationRevisions, guardRetainedRights } from "./observation-revisions.js";
 import { pause, RECORDS_PER_TURN } from "./pause.js";
 import { componentRows, effectRows, expiryOf, relationRows, rowOf } from "./record-rows.js";
 import { stepTimer } from "./steps.js";
@@ -52,6 +53,7 @@ export interface WriteContext extends PollRef {
   complete: boolean | Readonly<Partial<Record<RevisionedClass, boolean>>>;
   /** A required canonical rejection aborts the entire candidate within its transaction. */
   atomicCandidate?: boolean;
+  observationRevisions?: readonly import("@openconditions/ingest-framework").ObservationRevision[];
   /**
    * The snapshot states every change-only reading its source publishes now
    * (a full parse with every role answered): a polled change-only series it
@@ -272,6 +274,9 @@ export async function writeSnapshotIn(
       }
     }
   }
+  if (ctx.atomicCandidate) await guardRetainedRights(tx, sourceId, drafts);
+  const authority = await applyObservationRevisions(tx, sourceId, drafts.observations ?? [], ctx);
+  drafts = { ...drafts, observations: authority.observations };
   const summary: WriteSummary = {
     counts: { situation: emptyCounts(), feature: emptyCounts(), offer: emptyCounts() },
     observations: {
@@ -327,6 +332,7 @@ export async function writeSnapshotIn(
     ? await endUnstatedSeries(tx, sourceId, drafts.observations ?? [], ctx)
     : { ended: [], withheld: 0 };
   const ended = [
+    ...authority.ended,
     ...unstated.ended,
     ...(ctx.restatesTransient
       ? await endUnrestatedTransient(tx, sourceId, drafts.observations ?? [], ctx)

@@ -125,3 +125,30 @@ describe("MSC/CA SWOB", () => {
     expect(out.observations.some((r) => r["property"] === "weather.air_temperature")).toBe(false);
   });
 });
+
+test("suppression is explicit authority while an absent channel is not", () => {
+  const d = JSON.parse(status({ "air_temp-qa": -10 }).toString());
+  delete d.features[0].properties.rel_hum;
+  delete d.features[0].properties["rel_hum-qa"];
+  const out = parse(Buffer.from(JSON.stringify(d)));
+  expect(
+    out.observationRevisions?.find((r) => r.property === "weather.air_temperature")?.suppressed,
+  ).toBe(true);
+  expect(out.observationRevisions?.some((r) => r.property === "weather.humidity")).toBe(false);
+});
+
+test("the catalogue projection retains available wind and precipitation flags only", () => {
+  const fields = new URL(feed().endpoints["status"]!.url!).searchParams
+    .get("properties")!
+    .split(",");
+  for (const field of ["avg_wnd_spd_10m_pst10mts", "avg_wnd_dir_10m_pst10mts", "pcpn_amt_pst1hr"]) {
+    expect(fields).toContain(`${field}-data_flag-value`);
+    const d = JSON.parse(status({ [`${field}-data_flag-value`]: 2 }).toString());
+    d.features[0].properties = Object.fromEntries(
+      Object.entries(d.features[0].properties).filter(([k]) => fields.includes(k)),
+    );
+    expect(parse(Buffer.from(JSON.stringify(d))).observations).toHaveLength(4);
+  }
+  expect(fields).not.toContain("air_temp-data_flag-value");
+  expect(fields).not.toContain("rel_hum-data_flag-value");
+});
