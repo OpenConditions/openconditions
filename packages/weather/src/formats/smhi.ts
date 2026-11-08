@@ -176,7 +176,7 @@ function readings(
           typeof v["value"] !== "string" ||
           !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(v["value"]) ||
           !Number.isFinite(Number(v["value"])) ||
-          !["G", "Y"].includes(String(v["quality"]))
+          (v["quality"] !== "G" && v["quality"] !== "Y")
         ) {
           reject();
           continue;

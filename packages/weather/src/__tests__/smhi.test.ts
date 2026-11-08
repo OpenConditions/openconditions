@@ -47,7 +47,7 @@ function change(
       measuringStations: string;
       latitude: number;
       longitude: number;
-      value: { date: unknown; value: unknown; quality: string }[];
+      value: { date: unknown; value: unknown; quality: unknown }[];
     }[];
     parameter: { unit: string; key: string };
     period: { key: string };
@@ -176,12 +176,14 @@ describe("synthetic edge mutations of captured envelopes", () => {
       expect(drainSkipped(feed().id)).toEqual({ unknown_value: 1 });
     },
   );
-  test.each(["R", "X"])("rejects and counts QC %s", (quality) => {
+  test.each(["R", "X", ["G"], ["Y"], {}, null])("rejects and counts QC %s", (quality) => {
     const p = synthetic();
     change(p, "status", (d) => {
       d.station[0]!.value[0]!.quality = quality;
     });
-    expect(parseSmhi(feed(), p, ctx)).toMatchObject({ rejected: 0 });
+    const out = parseSmhi(feed(), p, ctx);
+    expect(out.rejected).toBe(0);
+    expect(out.observations).toHaveLength(7);
     expect(drainSkipped(feed().id)).toEqual({ unknown_value: 1 });
   });
   test.each([1794096000, 1794096000000.5, "2026-02-30", 1794099600000, 1e100])(

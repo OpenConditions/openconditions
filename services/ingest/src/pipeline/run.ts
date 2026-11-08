@@ -1139,22 +1139,6 @@ async function runAttempt(
       if ("failed" in latest) return latest.failed;
       steps.lap("parse");
       const { parsed } = latest;
-      if (src.format === "smhi-metobs") {
-        const previous = await deps.sql<{ record: Record<string, unknown> }[]>`
-          SELECT record FROM conditions.feature WHERE source_id = ${src.id} AND tombstoned_at IS NULL`;
-        const candidates = new Map(parsed.features.map((f) => [f["id"], f]));
-        for (const { record } of previous) {
-          const candidate = candidates.get(record["id"]);
-          const channels = (candidate?.["components"] ?? []) as { key: string }[];
-          const removed = ((record["components"] ?? []) as { key: string }[]).some(
-            (c) => !channels.some((n) => n.key === c.key),
-          );
-          if (!candidate || removed)
-            return failParse(
-              new Error("SMHI membership shrink requires coherent retirement of retained readings"),
-            );
-        }
-      }
       const result = await finish(parsed);
       if (keepPayloads && live.length > 0 && result.error === undefined && parsed.statusIndex) {
         deps.roles!.statusIndex = parsed.statusIndex;
@@ -1538,6 +1522,7 @@ async function finishFeaturePoll(
       now: deps.now(),
       model: writeModel(deps.model),
       statesComplete: poll.statesComplete,
+      atomicCoherence: src.format === "smhi-metobs",
       ...(poll.warning ? { warning: poll.warning } : {}),
     });
     poll.attempt.closed = true;
@@ -1592,6 +1577,7 @@ async function finishStatusPoll(
   try {
     published = await publishReadings(deps.sql, src, {
       observations,
+      atomicCoherence: src.format === "smhi-metobs",
       rejected: output.rejected + skippedRecords(skipped),
       poll: poll.identity,
       durationMs: Date.now() - poll.start,

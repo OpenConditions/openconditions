@@ -6,10 +6,13 @@ import {
   syncSources,
 } from "@openconditions/storage";
 import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
+import { weatherDomain } from "@openconditions/weather";
 import Fastify, { type FastifyInstance } from "fastify";
 import { afterAll, beforeAll, expect, test } from "vitest";
 import { registerApiRoutes } from "../api/routes.js";
 import { registerScope } from "../api/scope.js";
+import { createParseProcess } from "../pipeline/parse-process.js";
+import { attributionStamp, publishFeatures } from "../pipeline/publish.js";
 import { createRoleState, runSource } from "../pipeline/run.js";
 import { REPO_CATALOG, repoFeed } from "./helpers/catalog.js";
 import { registry } from "./helpers/situations.js";
@@ -17,12 +20,16 @@ import { registry } from "./helpers/situations.js";
 const dir = join(import.meta.dirname, "../../../../packages/weather/src/__tests__/fixtures/smhi");
 const feed = structuredClone(repoFeed("se-smhi-weather"));
 const roles = createRoleState();
+const parser = createParseProcess({ minBytes: 0 });
 let db: TestDatabase;
 let app: FastifyInstance;
 let clock = "2026-11-08T00:30:00Z";
 let failure = "";
 let revision = false;
 let shrink = false;
+let wholeAbsent = false;
+let invalidName = false;
+let missing = false;
 const requested: { url: string; validator: string | null }[] = [];
 const upstream = (async (url: string | URL | Request, init?: RequestInit) => {
   const u = new URL(String(url));
@@ -35,10 +42,23 @@ const upstream = (async (url: string | URL | Request, init?: RequestInit) => {
   const raw = readFileSync(join(dir, `${parameter}-${role}.json.raw`));
   const doc = JSON.parse(raw.toString());
   if (revision && role === "status" && parameter === "1") doc.station[0].value[0].value = "9.7";
+  if (invalidName) {
+    if (role === "sites") for (const station of doc.station) station.name = "";
+    for (const station of doc.station) if (station.key === "188790") station.longitude += 0.01;
+  }
+  if (missing && role === "status" && parameter === "1") doc.station[0].value = null;
   if (shrink && role === "sites" && parameter === "1") doc.station = [];
+  if (wholeAbsent)
+    doc.station = doc.station.filter((station: { key: string }) => station.key !== "188790");
   return new Response(JSON.stringify(doc), {
     headers: {
-      etag: revision ? '"revision"' : '"captured"',
+      etag: invalidName
+        ? '"invalid-candidate"'
+        : missing
+          ? '"missing-candidate"'
+          : revision
+            ? '"revision"'
+            : '"captured"',
       "cache-control": role === "status" ? "max-age=600" : "max-age=60",
     },
   });
@@ -48,6 +68,7 @@ const poll = () =>
     sql: db.sql,
     fetch: upstream,
     roles,
+    parseProcess: parser,
     now: () => clock,
     lookup: async () => [{ address: "93.184.216.34", family: 4 }],
     model: { registry, instanceId: "test.local" },
@@ -75,6 +96,7 @@ beforeAll(async () => {
   await app.ready();
 }, 180000);
 afterAll(async () => {
+  await parser.close();
   await app?.close();
   await db?.close();
 });
@@ -134,6 +156,96 @@ test("real worker/API publication, correction, acquisition rollback, membership 
   expect(before.find((r) => r.series_id === abiskoReading!.series_id)!.reading.result.value).toBe(
     3.7,
   );
+  clock = "2026-11-08T00:50:00Z";
+  const stored = async () => ({
+    features:
+      await db.sql`SELECT * FROM conditions.feature WHERE source_id = ${feed.id} ORDER BY id`,
+    latest:
+      await db.sql`SELECT * FROM conditions.observation_latest WHERE source_id = ${feed.id} ORDER BY series_id`,
+    publicFeatures: await get(`/features?source=${feed.id}&expand=components,latest&limit=1000`),
+    publicReadings: await get(`/observations/latest?source=${feed.id}&limit=1000`),
+  });
+  delete roles.lastFetchedAt.sites;
+  delete roles.lastFetchedAt.status;
+  const baseline = await stored();
+  const roleSnapshot = () =>
+    JSON.stringify(roles, (_key, value) => (value instanceof Map ? [...value] : value));
+  const previousRoles = roleSnapshot();
+  invalidName = true;
+  expect((await poll()).error).toMatch(/SMHI.*reject/);
+  expect(await stored()).toEqual(baseline);
+  expect(roleSnapshot()).toEqual(previousRoles);
+  invalidName = false;
+  const payloads = Object.fromEntries(
+    ["sites", "status"].map((role) => [
+      role,
+      ["1", "39", "6", "12", "3", "4", "21", "7"].map((key) =>
+        readFileSync(join(dir, `${key}-${role}.json.raw`)),
+      ),
+    ]),
+  );
+  const parsed = weatherDomain.formats["smhi-metobs"]!.parse(feed, payloads, {
+    fetchedAt: clock,
+    cadenceSec: 600,
+    reference: {},
+  });
+  const [attempt] =
+    await db.sql`SELECT id FROM conditions.source_poll_attempt WHERE source = ${feed.id} ORDER BY id DESC LIMIT 1`;
+  for (const invalid of ["component", "observation"]) {
+    const stamp = attributionStamp(feed, new Date(clock));
+    const output = {
+      features: structuredClone(parsed.features).map(stamp),
+      observations: structuredClone(parsed.observations).map(stamp),
+      offers: [],
+    };
+    if (invalid === "component")
+      (output.features[0]!["components"] as { kind: string }[])[0]!.kind = "";
+    else output.observations[0]!["result"] = { type: "quantity", unit: "invalid", value: 1 };
+    await expect(
+      publishFeatures(db.sql, feed, {
+        output,
+        atomicCoherence: true,
+        rejected: 0,
+        poll: { id: Number(attempt!.id), at: clock },
+        durationMs: 0,
+        now: clock,
+        model: { registry, instanceId: "test.local" },
+      }),
+    ).rejects.toThrow(/SMHI.*reject/);
+    expect(await stored()).toEqual(baseline);
+  }
+  revision = false;
+  missing = true;
+  feed.license = "ODbL-1.0";
+  await syncSources(db.sql, [feed]);
+  expect((await poll()).error).toMatch(/SMHI.*rights/);
+  expect(requested.slice(-16).every((r) => r.validator !== '"invalid-candidate"')).toBe(true);
+  expect(await stored()).toEqual(baseline);
+  expect(roleSnapshot()).toEqual(previousRoles);
+  // A status-only transition must also refuse an inconsistent publication.
+  roles.lastFetchedAt.sites = Date.parse(clock);
+  const statusRoles = roleSnapshot();
+  expect((await poll()).error).toMatch(/SMHI.*rights/);
+  expect(await stored()).toEqual(baseline);
+  expect(roleSnapshot()).toEqual(statusRoles);
+  expect(requested.slice(-8).every((r) => r.validator !== '"missing-candidate"')).toBe(true);
+  // A complete restatement can coherently change rights, then recover.
+  missing = false;
+  delete roles.lastFetchedAt.sites;
+  expect((await poll()).error).toBeUndefined();
+  expect((await get(`/observations/latest?source=${feed.id}&limit=1000`)).records).toHaveLength(0);
+  expect(
+    (await get(`/features?source=${feed.id}&expand=components,latest&limit=1000`)).records,
+  ).toHaveLength(0);
+  feed.license = "CC-BY-4.0";
+  await syncSources(db.sql, [feed]);
+  delete roles.lastFetchedAt.sites;
+  delete roles.lastFetchedAt.status;
+  expect((await poll()).error).toBeUndefined();
+  expect(
+    (await get(`/observations/latest?source=${feed.id}&limit=1000`)).records.length,
+  ).toBeGreaterThan(0);
+  delete roles.lastFetchedAt.status;
   const held = { ...roles.payloads };
   const fetchedAt = { ...roles.lastFetchedAt };
   clock = "2026-11-08T00:50:00Z";
@@ -155,7 +267,11 @@ test("real worker/API publication, correction, acquisition rollback, membership 
   const oldLicense = feed.license;
   feed.license = "ODbL-1.0";
   expect((await poll()).error).toMatch(/membership shrink/);
+  shrink = false;
+  wholeAbsent = true;
+  expect((await poll()).error).toMatch(/membership shrink/);
   feed.license = oldLicense;
+  expect((await poll()).error).toMatch(/membership shrink/);
   clock = "2026-11-08T01:01:00Z";
   expect((await get(`/observations/latest?source=${feed.id}&limit=1000`)).records).toHaveLength(0);
   clock = "2026-11-08T00:50:00Z";

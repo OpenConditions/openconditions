@@ -411,6 +411,27 @@ export async function publishFlows(
   return withCache(cache, published);
 }
 
+/** Check the resulting stored publication, including readings omitted by this poll.
+ * The caller holds the source lock and has not committed its writes yet.
+ */
+async function assertCoherentReadings(
+  tx: postgres.TransactionSql,
+  sourceId: string,
+): Promise<void> {
+  const conflicts = await tx`
+    SELECT 1 FROM conditions.observation_latest o
+    LEFT JOIN conditions.feature f ON f.id = o.feature_id AND f.source_id = o.source_id
+    WHERE o.source_id = ${sourceId} AND (
+      f.id IS NULL OR f.tombstoned_at IS NOT NULL OR
+      o.template #> '{provenance,attribution}' IS DISTINCT FROM f.record #> '{provenance,attribution}' OR
+      o.template #> '{provenance,upstream}' IS DISTINCT FROM f.record #> '{provenance,upstream}'
+    ) LIMIT 1`;
+  if (conflicts.length > 0)
+    throw new Error(
+      "SMHI rights incoherence: retained readings require a coherent full restatement",
+    );
+}
+
 /**
  * Writes one poll of a features feed and closes its attempt, in one
  * transaction under the source's lock: its features, their readings and its
@@ -425,6 +446,8 @@ export async function publishFeatures(
   src: Pick<CatalogFeed, "id" | "freshnessWindowSec">,
   input: {
     output: Pick<ParseOutput, "features" | "observations" | "offers">;
+    /** SMHI requires all stored records and retained reading rights to agree before commit. */
+    atomicCoherence?: boolean;
     rejected: number;
     poll: PollIdentity;
     durationMs: number;
@@ -440,6 +463,24 @@ export async function publishFeatures(
   const published = sql.begin(async (tx) => {
     await tx`SELECT pg_advisory_xact_lock(hashtext(${src.id}))`;
     const { output } = input;
+    if (input.atomicCoherence) {
+      const previous = await tx<{ record: RecordDraft }[]>`
+        SELECT record FROM conditions.feature WHERE source_id = ${src.id} AND tombstoned_at IS NULL`;
+      const candidates = new Map(output.features.map((f) => [f["id"], f]));
+      for (const { record } of previous) {
+        const candidate = candidates.get(record["id"]);
+        const channels = (candidate?.["components"] ?? []) as { key: string }[];
+        if (
+          !candidate ||
+          ((record["components"] ?? []) as { key: string }[]).some(
+            (c) => !channels.some((n) => n.key === c.key),
+          )
+        )
+          throw new Error(
+            "SMHI membership shrink requires coherent retirement of retained readings",
+          );
+      }
+    }
     const summary = await writeSnapshotIn(
       tx,
       src.id,
@@ -451,6 +492,13 @@ export async function publishFeatures(
         latestCache: cache,
       },
     );
+    if (input.atomicCoherence) {
+      if (summary.rejected.length > 0 || summary.observations.withheld !== undefined)
+        throw new Error(
+          "SMHI publication rejected: storage did not accept the complete generation",
+        );
+      await assertCoherentReadings(tx, src.id);
+    }
     const [{ live }] = await tx<{ live: number }[]>`
       SELECT count(*)::int AS live FROM conditions.feature
        WHERE source_id = ${src.id} AND tombstoned_at IS NULL`;
@@ -494,6 +542,8 @@ export async function publishReadings(
   src: Pick<CatalogFeed, "id" | "freshnessWindowSec">,
   input: {
     observations: readonly RecordDraft[];
+    /** SMHI requires all stored records and retained reading rights to agree before commit. */
+    atomicCoherence?: boolean;
     rejected: number;
     poll: PollIdentity;
     durationMs: number;
@@ -512,6 +562,13 @@ export async function publishReadings(
       { observations: input.observations },
       { ...writeContext(input), complete: false, latestCache: cache },
     );
+    if (input.atomicCoherence) {
+      if (summary.rejected.length > 0 || summary.observations.withheld !== undefined)
+        throw new Error(
+          "SMHI publication rejected: storage did not accept the complete generation",
+        );
+      await assertCoherentReadings(tx, src.id);
+    }
     const [{ live }] = await tx<{ live: number }[]>`
       SELECT count(*)::int AS live FROM conditions.feature
        WHERE source_id = ${src.id} AND tombstoned_at IS NULL`;
