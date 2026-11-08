@@ -109,6 +109,12 @@ export interface FeedFormat<F extends CatalogFeed = CatalogFeed> {
    * ended, such as the place a vehicle has since moved on from.
    */
   restatesTransient?: true;
+  /**
+   * Buffered single-role feature formats can keep cadence and failure recovery
+   * tied to publication, alongside HTTP validators. Canonical rejection refuses
+   * the whole candidate. Multi-role and per-item acquisition are not supported.
+   */
+  publicationCadence?: true;
   endpoints: Readonly<Record<string, EndpointRole>>;
   /** One poll's payloads as record drafts; throws when a payload cannot be read. */
   parse(feed: F, payloads: FeedPayloads, ctx: ParseContext): ParseOutput;

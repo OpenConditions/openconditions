@@ -435,6 +435,41 @@ function harness(name: string) {
 }
 
 describe("features poll", () => {
+  it("formats without publication cadence keep acquisition scheduling after parse failure", async () => {
+    const source = feedNamed("acquisition-cadence");
+    const roles = createRoleState();
+    let now = "2026-10-03T10:00:00Z";
+    let body = stations("a", "b");
+    const requested: Headers[] = [];
+    const options = {
+      sql,
+      roles,
+      now: () => now,
+      lookup: fakeLookup,
+      model: { registry, instanceId: "test.local" },
+      fetch: (async (_url, init) => {
+        requested.push(new Headers(init?.headers));
+        return new Response(body, {
+          headers: { ETag: body.startsWith("[") ? '\"good\"' : '\"bad\"' },
+        });
+      }) as typeof fetch,
+    };
+    expect((await runSource(source, options)).outcome).toBe("changed");
+    now = "2026-10-03T10:06:00Z";
+    body = "invalid JSON";
+    roles.failing.main = true;
+    expect((await runSource(source, options)).error).toBeDefined();
+    expect(roles.lastFetchedAt.main).toBe(Date.parse(now));
+    expect(roles.failing.main).toBeUndefined();
+    now = "2026-10-03T10:06:01Z";
+    expect((await runSource(source, options)).notDue).toBe(true);
+    expect(requested).toHaveLength(2);
+    now = "2026-10-03T10:12:00Z";
+    body = stations("a", "b");
+    expect((await runSource(source, options)).outcome).toBe("changed");
+    expect(requested.at(-1)?.get("if-none-match")).toBe('"good"');
+  });
+
   it("a features poll publishes features, readings and offers and withdraws a vanished feature", async () => {
     const h = harness("publish");
     const first = await h.poll(stations("a", "b", "c"));

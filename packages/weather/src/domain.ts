@@ -14,6 +14,7 @@ export const WEATHER_PRODUCTS = ["weather"] as const;
 const FORMATS: FeedFormat<WeatherCatalogFeed>[] = [
   {
     id: "cwa-weather",
+    publicationCadence: true,
     kind: "features",
     products: WEATHER_PRODUCTS,
     produces: {

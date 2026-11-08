@@ -426,6 +426,8 @@ export async function publishFeatures(
   input: {
     output: Pick<ParseOutput, "features" | "observations" | "offers" | "featuresComplete">;
     rejected: number;
+    /** Reject the whole candidate instead of publishing a partly invalid generation. */
+    requireValid?: boolean;
     poll: PollIdentity;
     durationMs: number;
     now: string;
@@ -454,6 +456,9 @@ export async function publishFeatures(
         latestCache: cache,
       },
     );
+    if (input.requireValid && summary.rejected.length > 0) {
+      throw new Error(`canonical publication rejected ${summary.rejected.length} record(s)`);
+    }
     const [{ live }] = await tx<{ live: number }[]>`
       SELECT count(*)::int AS live FROM conditions.feature
        WHERE source_id = ${src.id} AND tombstoned_at IS NULL`;
