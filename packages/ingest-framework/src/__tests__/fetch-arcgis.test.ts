@@ -116,3 +116,39 @@ test("rejects continuation after the cycle deadline", async () => {
     clock.mockRestore();
   }
 });
+
+test.each([429, 503])(
+  "delayed HTTP %i honors numeric Retry-After from response receipt",
+  async (status) => {
+    let now = 1000000;
+    let calls = 0;
+    const clock = vi.spyOn(Date, "now").mockImplementation(() => now);
+    const state = createFetchState();
+    const fetchFn = (async () => {
+      calls++;
+      now += 30000;
+      return new Response("busy", { status, headers: { "Retry-After": "600" } });
+    }) as typeof fetch;
+    try {
+      await expect(fetchEndpoint(feed, "main", fetchFn, { state, at: now })).rejects.toThrow(
+        /HTTP/,
+      );
+      now = 1610000;
+      await expect(fetchEndpoint(feed, "main", fetchFn, { state, at: now })).rejects.toThrow(
+        /backoff/,
+      );
+      now = 1629999;
+      await expect(fetchEndpoint(feed, "main", fetchFn, { state, at: now })).rejects.toThrow(
+        /backoff/,
+      );
+      expect(calls).toBe(1);
+      now = 1630000;
+      await expect(fetchEndpoint(feed, "main", fetchFn, { state, at: now })).rejects.toThrow(
+        /HTTP/,
+      );
+      expect(calls).toBe(2);
+    } finally {
+      clock.mockRestore();
+    }
+  },
+);

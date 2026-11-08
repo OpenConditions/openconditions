@@ -1400,7 +1400,7 @@ async function fetchRole(
             const seconds = /^\d+$/.test(retry) ? Number(retry) : undefined;
             retryAt = Math.max(
               retryAt,
-              seconds === undefined ? Date.parse(retry) || 0 : at + seconds * 1000,
+              seconds === undefined ? Date.parse(retry) || 0 : Date.now() + seconds * 1000,
             );
           }
           return response;
