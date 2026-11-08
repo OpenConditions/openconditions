@@ -61,6 +61,8 @@ export type StatusIndex = ReadonlyMap<string, readonly StatusSubject[]>;
 export interface ParseOutput {
   situations: RecordDraft[];
   features: RecordDraft[];
+  /** False for a partial feature generation: absence never authorizes withdrawal. */
+  featuresComplete?: boolean;
   observations: RecordDraft[];
   offers: RecordDraft[];
   /** A complete-snapshot source's record accounting. */

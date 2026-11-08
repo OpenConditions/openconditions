@@ -179,6 +179,7 @@ async function checkFeed(
   let format: ReturnType<typeof formatOf>;
   try {
     format = formatOf(feed);
+    if (format.acquisitionBlocked) throw new Error(format.acquisitionBlocked);
   } catch (err) {
     return result("error", errorText(err));
   }

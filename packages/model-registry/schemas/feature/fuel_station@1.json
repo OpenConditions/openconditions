@@ -2395,6 +2395,7 @@
             "tripcheck",
             "cars-cctv",
             "digitraffic-weather",
+            "fmi-weather",
             "parkapi-v3",
             "datex2-light",
             "db-bahnpark",

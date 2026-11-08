@@ -6,11 +6,26 @@ import {
 import { type WeatherCatalogFeed, weatherFeedShape } from "./feed-schema.js";
 import { parseDigitrafficWeather, parseDigitrafficWeatherStatus } from "./formats/digitraffic.js";
 import { DIGITRAFFIC_SENSORS } from "./formats/digitraffic-sensors.js";
+import { FMI_PARAMETERS, parseFmiWeather, parseFmiWeatherStatus } from "./formats/fmi.js";
 
 /** What a weather feed publishes: weather stations and what they measure now. */
 export const WEATHER_PRODUCTS = ["weather"] as const;
 
 const FORMATS: FeedFormat<WeatherCatalogFeed>[] = [
+  {
+    id: "fmi-weather",
+    kind: "features",
+    products: WEATHER_PRODUCTS,
+    acquisitionBlocked:
+      "FMI national coverage, body bounds and metadata membership require qualification before acquisition",
+    produces: {
+      kinds: ["weather_station", "sensor_channel"],
+      properties: FMI_PARAMETERS.map((p) => p.property),
+    },
+    endpoints: { sites: { required: true }, status: { required: true, status: true } },
+    parse: parseFmiWeather,
+    parseStatus: parseFmiWeatherStatus,
+  },
   {
     id: "digitraffic-weather",
     kind: "features",

@@ -1,0 +1,32 @@
+[
+  {
+    "file": "observations.xml",
+    "url": "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=GetFeature&storedquery_id=fmi::observations::weather::multipointcoverage&fmisid=101004,100971&starttime=2026-11-07T00:00:00Z&endtime=2026-11-07T01:00:00Z&timestep=10&parameters=t2m,td,rh,ws_10min,wg_10min,wd_10min,vis&crs=EPSG::4326",
+    "retrievedAt": "2026-11-08T03:21:17.889771+00:00",
+    "status": 200,
+    "bytes": 9295
+  },
+  {
+    "url": "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=GetFeature&storedquery_id=fmi::ef::stations&fmisid=101004,100971",
+    "error": "HTTP Error 400: Bad Request"
+  },
+  {
+    "file": "properties.xml",
+    "url": "https://opendata.fmi.fi/meta?observableProperty=observation&param=t2m,td,rh,ws_10min,wg_10min,wd_10min,ri_10min,r_1h,vis&language=eng",
+    "retrievedAt": "2026-11-08T03:21:18.232918+00:00",
+    "status": 200,
+    "bytes": 4891
+  },
+  {
+    "file": "station-101004.xml",
+    "url": "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=GetFeature&storedquery_id=fmi::ef::stations&fmisid=101004",
+    "retrievedAt": "2026-11-08T03:21:27.639250+00:00",
+    "bytes": 4213
+  },
+  {
+    "file": "station-100971.xml",
+    "url": "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=GetFeature&storedquery_id=fmi::ef::stations&fmisid=100971",
+    "retrievedAt": "2026-11-08T03:21:27.795014+00:00",
+    "bytes": 3290
+  }
+]

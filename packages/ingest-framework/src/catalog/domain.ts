@@ -91,6 +91,8 @@ export interface StreamingParse<F extends CatalogFeed = CatalogFeed> {
 /** How a domain reads one feed format. */
 export interface FeedFormat<F extends CatalogFeed = CatalogFeed> {
   id: string;
+  /** Source qualification gate, enforced before any worker or live checker acquisition. */
+  acquisitionBlocked?: string;
   kind: "situations" | "measurements" | "features";
   /** The products a feed of this format may carry. */
   products: readonly string[];

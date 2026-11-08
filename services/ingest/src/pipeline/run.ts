@@ -504,6 +504,7 @@ async function runAttempt(
   const env = deps.env ?? process.env;
   const fetchFor = (role: string) => feedFetch(src, { ...deps, env }, role);
   const format = formatOf(src);
+  if (format.acquisitionBlocked) throw new Error(format.acquisitionBlocked);
   const teeFor = (c: ReturnType<typeof capture>): StreamTeeFactory =>
     c ? archivingTee(c.archive, c.meta) : digestOnlyTee;
 
@@ -1478,6 +1479,7 @@ async function finishFeaturePoll(
   const stampOne = attributionStamp(src, new Date(poll.attempt.at));
   const stamp = (drafts: readonly RecordDraft[]) => drafts.map((d) => stampOne(d));
   const output = {
+    featuresComplete: parse.featuresComplete,
     features: stamp(parse.features),
     observations: stamp(parse.observations),
     offers: stamp(parse.offers),
