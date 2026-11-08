@@ -97,6 +97,7 @@ service's volume beside its raw and nightly archives.
 | UDOT Traffic cameras (Utah) | `us-ut-511-cameras` | `US_UT_511_CAMERAS_API_KEY` | NOASSERTION | [Register for API access](https://udottraffic.utah.gov/developers/doc) |
 | 511LA cameras (Louisiana) | `us-la-511-cameras` | `US_LA_511_CAMERAS_API_KEY` | NOASSERTION | [Register for API access](https://www.511la.org/developers/doc) |
 | ODOT TripCheck cameras (Oregon) | `us-or-tripcheck-cameras` | `US_OR_TRIPCHECK_CAMERAS_API_KEY` | LicenseRef-ODOT-TripCheck | [ODOT API portal: TripCheck Data](https://apiportal.odot.state.or.us/product#product=tripcheck-api-data) |
+| CWA O-A0003-001 氣象觀測站-10分鐘綜觀氣象資料 (disabled) | `tw-cwa-weather` | `TW_CWA_WEATHER_API_KEY` | OGDL-Taiwan-1.0 |  |
 
 ## Settings
 

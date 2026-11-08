@@ -27,6 +27,7 @@ import {
   heldBytes,
   holdPayload,
   makeAuthorizedFetch,
+  missingCredentials,
   recordSkipped,
   redactSecrets,
   redactUrl,
@@ -440,6 +441,19 @@ export async function runSource(src: CatalogFeed, deps: RunDeps): Promise<RunRes
     closed: false,
   };
   try {
+    const missing = missingCredentials(src, deps.env ?? process.env);
+    if (missing.length > 0) {
+      await upsertSourceStatus(deps.sql, src.id, {
+        freshnessWindowSec: src.freshnessWindowSec,
+        outcome: "missing_configuration",
+        attemptAt,
+        attemptId: attempt.id,
+        networkValidated: false,
+        error: `missing required configuration: ${missing.join(", ")}`,
+      });
+      attempt.closed = true;
+      return { count: 0, durationMs: 0, outcome: "missing_configuration" };
+    }
     return await runAttempt(src, deps, attempt, due);
   } catch (err) {
     if (!attempt.closed) {
@@ -1478,6 +1492,7 @@ async function finishFeaturePoll(
   const stampOne = attributionStamp(src, new Date(poll.attempt.at));
   const stamp = (drafts: readonly RecordDraft[]) => drafts.map((d) => stampOne(d));
   const output = {
+    featuresComplete: parse.featuresComplete,
     features: stamp(parse.features),
     observations: stamp(parse.observations),
     offers: stamp(parse.offers),

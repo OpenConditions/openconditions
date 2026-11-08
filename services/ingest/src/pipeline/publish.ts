@@ -424,7 +424,7 @@ export async function publishFeatures(
   sql: Sql,
   src: Pick<CatalogFeed, "id" | "freshnessWindowSec">,
   input: {
-    output: Pick<ParseOutput, "features" | "observations" | "offers">;
+    output: Pick<ParseOutput, "features" | "observations" | "offers" | "featuresComplete">;
     rejected: number;
     poll: PollIdentity;
     durationMs: number;
@@ -446,7 +446,10 @@ export async function publishFeatures(
       { features: output.features, observations: output.observations, offers: output.offers },
       {
         ...writeContext(input),
-        complete: { feature: true, offer: true },
+        complete: {
+          feature: output.featuresComplete !== false,
+          offer: output.featuresComplete !== false,
+        },
         statesComplete: input.statesComplete === true,
         latestCache: cache,
       },

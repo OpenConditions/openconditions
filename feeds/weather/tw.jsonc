@@ -1,0 +1,41 @@
+{
+  "$schema": "../schema/weather.schema.json",
+  "feeds": [
+    {
+      "operator": "cwa",
+      "product": "weather",
+      "name": "CWA O-A0003-001 氣象觀測站-10分鐘綜觀氣象資料",
+      "tier": "authoritative",
+      "format": "cwa-weather",
+      "credentials": {
+        "api_key": {
+          "title": "CWA authorization code",
+          "description": "Operator-supplied authorization code from CWA membership. Sent raw in the Authorization header.",
+        },
+      },
+      "auth": { "kind": "header-key", "header": "Authorization", "credential": "api_key" },
+      "endpoints": {
+        "main": {
+          "url": "https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0003-001?format=JSON",
+          "cadenceSec": 600,
+        },
+      },
+      "freshnessWindowSec": 3600,
+      "license": "OGDL-Taiwan-1.0",
+      "licenseUrl": "https://data.gov.tw/license",
+      "attribution": "Central Weather Administration / 交通部中央氣象署 — O-A0003-001 氣象觀測站-10分鐘綜觀氣象資料. 此開放資料依政府資料開放授權條款 (Open Government Data License), 第1版, 進行公眾釋出，使用者於遵守本條款各項規定之前提下，得利用之。 https://data.gov.tw/license",
+      "terms": {
+        "url": "https://opendata.cwa.gov.tw/about/rules",
+        "reviewedAt": "2026-11-08",
+        "notice": "Central Weather Administration / 交通部中央氣象署 — O-A0003-001 氣象觀測站-10分鐘綜觀氣象資料. 此開放資料依政府資料開放授權條款 (Open Government Data License), 第1版, 進行公眾釋出，使用者於遵守本條款各項規定之前提下，得利用之。 https://data.gov.tw/license",
+        "note": "Exact dataset https://data.gov.tw/dataset/9178 assigns OGDL-Taiwan-1.0. CWA rules repeat the grant and require provider/dataset credit, OGDL statement and link. No rights override or scope beyond this product. Account integrity and abusive-use termination conditions apply.",
+      },
+      "homepage": "https://opendata.cwa.gov.tw/dataset/observation/O-A0003-001",
+      "privacyUrl": "https://opendata.cwa.gov.tw/about/privacy-policy",
+      "disabled": {
+        "since": "2026-11-08",
+        "reason": "Pending operator-authorized full REST capture: freshness, response size, station completeness/pagination, quota and cache qualification. 600-second polling is conservative design, not a provider quota. Daily precipitation is withheld pending confirmed Taiwan local-day reset semantics. No preview fallback or anonymous full-feed qualification.",
+      },
+    },
+  ],
+}
