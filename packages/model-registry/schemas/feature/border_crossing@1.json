@@ -698,6 +698,61 @@
                   "abnormal_load"
                 ]
               },
+              "eligibility": {
+                "type": "object",
+                "properties": {
+                  "maximumPermissibleGrossMass": {
+                    "type": "object",
+                    "properties": {
+                      "operator": {
+                        "type": "string",
+                        "enum": [
+                          "lt",
+                          "lte",
+                          "eq",
+                          "gte",
+                          "gt"
+                        ]
+                      },
+                      "value": {
+                        "type": "object",
+                        "properties": {
+                          "value": {
+                            "type": "number",
+                            "minimum": 0
+                          },
+                          "unit": {
+                            "type": "string",
+                            "const": "kg"
+                          },
+                          "accuracy": {
+                            "type": "number",
+                            "minimum": 0
+                          }
+                        },
+                        "required": [
+                          "value",
+                          "unit"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "operator",
+                      "value"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "sourceWording": {
+                    "$ref": "#/$defs/Text"
+                  }
+                },
+                "required": [
+                  "maximumPermissibleGrossMass",
+                  "sourceWording"
+                ],
+                "additionalProperties": false
+              },
               "lanesTotal": {
                 "type": "integer",
                 "exclusiveMinimum": 0,
@@ -2447,6 +2502,7 @@
             "minetur",
             "cbp-bwt",
             "cbsa-bwt",
+            "granica-html",
             "cap",
             "nws",
             "meteoalarm",

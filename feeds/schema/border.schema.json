@@ -59,7 +59,8 @@
             "minLength": 1,
             "enum": [
               "cbp-bwt",
-              "cbsa-bwt"
+              "cbsa-bwt",
+              "granica-html"
             ]
           },
           "tier": {

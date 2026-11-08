@@ -88,8 +88,8 @@ const startOf = (o: FusableObservation) => {
 
 /**
  * Picks the value a canonical subject shows for one property: among rows in
- * effect now (started, not past their `validUntil`, and for a crowd report not
- * past its `freshness.expiresAt`) whose tier the
+ * effect now (started, not past their `validUntil`, and bulk/crowd rows not past
+ * explicit `freshness.expiresAt`) whose tier the
  * property fuses, a fresh row beats a stale one, then the higher tier wins,
  * then the later reading, then the smaller id. So a crowd report never
  * overrides a fresh authoritative status, and surfaces when the feed is stale
@@ -113,9 +113,12 @@ export function fuse(
       const rank = tier === undefined ? -1 : order.indexOf(tier);
       if (rank < 0 || startOf(o) > nowMs) return [];
       if (o.validUntil !== undefined && Date.parse(o.validUntil) <= nowMs) return [];
-      // A crowd report's life is its expiry, which its evidence may not have caught up with
-      // yet (a peer's report is never re-evaluated here).
-      const expiresAt = o.provenance.origin === "crowd" ? o.freshness.expiresAt : undefined;
+      // Bulk source deadlines remain authoritative even after a healthy poll.
+      // On-demand candidate handling is unchanged; its stored expiry gates reads.
+      const expiresAt =
+        o.provenance.origin === "crowd" || o.provenance.accessMode === "bulk"
+          ? o.freshness.expiresAt
+          : undefined;
       if (expiresAt !== undefined && Date.parse(expiresAt) <= nowMs) return [];
       return [{ c, rank }];
     })
@@ -184,7 +187,8 @@ export interface FusedSubject {
  * the canonical subject, its contributors in `derivedFrom` and
  * `mergedSources`, credited to the winner's publisher with the most
  * restrictive rights of all contributors. A value derived from an on-demand
- * source stays on demand and expires with the earliest such contributor, so
+ * source stays on demand. Every explicit source deadline is retained, using
+ * the earliest contributing deadline, so
  * fusing never turns a read-through answer into history. The public fusion,
  * over the public contributors only, is the same row under
  * `@fused-public`.
@@ -197,7 +201,7 @@ export function fusedObservation(
   const w = fusion.winner.observation;
   const contributors = fusion.contributors.map((c) => c.observation);
   const onDemand = contributors.filter((o) => o.provenance.accessMode === "on_demand");
-  const expiries = onDemand.flatMap((o) =>
+  const expiries = contributors.flatMap((o) =>
     o.freshness.expiresAt === undefined ? [] : [Date.parse(o.freshness.expiresAt)],
   );
   const rights = mostRestrictiveRights(contributors.map((o) => o.provenance.attribution));
