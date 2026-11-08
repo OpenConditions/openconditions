@@ -434,6 +434,7 @@ export async function publishFeatures(
     warning?: string;
     /** Every role's states are in the output: a polled series it does not state has ended. */
     statesComplete?: boolean;
+    atomicCandidate?: boolean;
   },
 ): Promise<{ summary: WriteSummary; counts: PublicationCounts }> {
   const cache = latestCache.begin(src.id);
@@ -447,6 +448,7 @@ export async function publishFeatures(
       {
         ...writeContext(input),
         complete: { feature: true, offer: true },
+        atomicCandidate: input.atomicCandidate === true,
         statesComplete: input.statesComplete === true,
         latestCache: cache,
       },
@@ -494,6 +496,7 @@ export async function publishReadings(
   src: Pick<CatalogFeed, "id" | "freshnessWindowSec">,
   input: {
     observations: readonly RecordDraft[];
+    atomicCandidate?: boolean;
     rejected: number;
     poll: PollIdentity;
     durationMs: number;
@@ -510,7 +513,12 @@ export async function publishReadings(
       tx,
       src.id,
       { observations: input.observations },
-      { ...writeContext(input), complete: false, latestCache: cache },
+      {
+        ...writeContext(input),
+        complete: false,
+        latestCache: cache,
+        atomicCandidate: input.atomicCandidate === true,
+      },
     );
     const [{ live }] = await tx<{ live: number }[]>`
       SELECT count(*)::int AS live FROM conditions.feature

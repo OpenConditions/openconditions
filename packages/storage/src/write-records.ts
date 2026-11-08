@@ -50,6 +50,8 @@ export interface WriteContext extends PollRef {
    * (see `statesComplete`).
    */
   complete: boolean | Readonly<Partial<Record<RevisionedClass, boolean>>>;
+  /** A required canonical rejection aborts the entire candidate within its transaction. */
+  atomicCandidate?: boolean;
   /**
    * The snapshot states every change-only reading its source publishes now
    * (a full parse with every role answered): a polled change-only series it
@@ -255,6 +257,21 @@ export async function writeSnapshotIn(
   drafts: SnapshotDrafts,
   ctx: WriteContext,
 ): Promise<WriteSummary> {
+  if (ctx.atomicCandidate) {
+    for (const entries of Object.values(drafts)) {
+      for (const draft of entries ?? []) {
+        const result = sealRecord(ctx.registry, draft, {
+          instanceId: ctx.instanceId,
+          revision: 1,
+          recordedAt: ctx.now,
+        });
+        if (!result.ok)
+          throw new Error(
+            `atomic candidate rejected ${String(draft["id"])}: ${JSON.stringify(result.issues)}`,
+          );
+      }
+    }
+  }
   const summary: WriteSummary = {
     counts: { situation: emptyCounts(), feature: emptyCounts(), offer: emptyCounts() },
     observations: {
@@ -284,6 +301,17 @@ export async function writeSnapshotIn(
     await writeClass(tx, cls, sourceId, classDrafts, ctx, summary);
     lap(DRAFTS_OF[cls]);
   }
+  if (ctx.atomicCandidate && completeFor(ctx, "feature")) {
+    // Retained readings may survive a missing value, but never their source feature's withdrawal.
+    await tx`UPDATE conditions.observation_latest l
+      SET expires_at = ${ctx.now}::timestamptz,
+          reading = jsonb_set(l.reading, '{freshness,expiresAt}', to_jsonb(${ctx.now}::text)),
+          updated_at = ${ctx.now}::timestamptz
+      WHERE l.source_id = ${sourceId} AND l.feature_id IS NOT NULL
+        AND (l.expires_at IS NULL OR l.expires_at > ${ctx.now}::timestamptz)
+        AND NOT EXISTS (SELECT 1 FROM conditions.feature f
+          WHERE f.id = l.feature_id AND f.source_id = ${sourceId} AND f.tombstoned_at IS NULL)`;
+  }
   const changedFeatures = new Set(
     summary.changed.filter((c) => c.class === "feature").map((c) => c.id),
   );
@@ -307,6 +335,8 @@ export async function writeSnapshotIn(
   summary.observations.ended = ended.length;
   if (unstated.withheld > 0) summary.observations.withheld = unstated.withheld;
   if (ctx.statesComplete || ctx.restatesTransient) lap("ended");
+  if (ctx.atomicCandidate && summary.rejected.length > 0)
+    throw new Error("atomic candidate rejected by storage");
   await updateCanonicalView(
     tx,
     ctx.registry,
