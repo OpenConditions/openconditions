@@ -172,13 +172,14 @@ export async function lifecycle({ api, event, now = Date.now }) {
   );
   if (event.issue.pull_request) return { status: "excluded-PR" };
   const source = issue(event.issue);
-  const time = timestamp(source.updated_at);
+  const updated = timestamp(source.updated_at);
+  const created = timestamp(source.created_at);
+  assert(created <= updated, "issue update predates creation");
+  // An opened payload can already include updates. Creation anchors its age and
+  // subsequent human decisions; updated_at still binds the current API snapshot.
+  const time = event.action === "opened" ? created : updated;
   assert((event.action === "closed") === (source.state === "closed"), "event state mismatch");
-  assert(
-    event.action !== "opened" || source.created_at === source.updated_at,
-    "opened event timestamp mismatch",
-  );
-  if (time > now() || now() - time > 10 * 60_000)
+  if (updated > now() || now() - time > 10 * 60_000)
     return { status: "stale", reason: "event outside ten-minute freshness bound" };
   const available = await repoAndLabels(api);
   const missing = targets.filter((name) => !available.some((x) => x.name === name));
