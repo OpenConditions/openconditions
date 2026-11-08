@@ -91,6 +91,7 @@ export function parseGranica(
   const d = dates[0]!;
   const date = `${d[1]}-${d[2]!.padStart(2, "0")}-${d[3]!.padStart(2, "0")}`;
   const rows = elements(table, "tr");
+  if (rows.length !== 6) return fail("unexpected table row structure");
   const headerRows = rows.filter((r) =>
     cells(r).some((c) => GRANICA_CROSSINGS.some((x) => x.aliases.includes(text(c)))),
   );
@@ -120,13 +121,23 @@ export function parseGranica(
   let updated: Element[] | undefined;
   for (const row of rows) {
     const cs = cells(row);
-    if (!cs.length) continue;
+    if (!cs.length) return fail("empty table row");
+    if (row === rows[0] || row === headerRows[0]) continue;
     if (text(cs[0]!).startsWith("Godzina aktualizacji:")) {
       if (updated) return fail("duplicate update row");
+      if (attr(cs[0]!, "colspan") !== "2" || ![undefined, "1"].includes(attr(cs[0]!, "rowspan")))
+        return fail("ambiguous update label span");
       updated = cs.slice(1);
+      continue;
     }
     const images = elements(cs[0]!, "img");
-    if (!images.length || !text(cs[0]!).includes("Szacunkowy czas oczekiwania")) continue;
+    if (
+      images.length !== 1 ||
+      text(cs[0]!) !== "Szacunkowy czas oczekiwania na rozpoczęcie odprawy [h]"
+    )
+      return fail("unsupported class description or duration unit");
+    if (attr(cs[0]!, "colspan") !== "2" || ![undefined, "1"].includes(attr(cs[0]!, "rowspan")))
+      return fail("ambiguous class label span");
     const label = attr(images[0]!, "alt");
     const kind =
       label === "obrazek  samochody CIĘŻAROWE"
@@ -145,6 +156,7 @@ export function parseGranica(
     !unspanned(updated) ||
     !classRows.has("passenger") ||
     !classRows.has("commercial") ||
+    !classRows.has("bus") ||
     [...classRows.values()].some((cs) => cs.length !== headers.length || !unspanned(cs))
   )
     return fail("partial table");

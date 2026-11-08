@@ -153,3 +153,20 @@ it("uses crossing-specific minutes independently and retains gray-cell suspensio
     .replace('class="dane1" >ruch zawieszony', 'class="dane1" bgcolor="#CCCCCC">ruch zawieszony');
   expect(read(gray).observations[0]).toMatchObject({ result: { value: { status: "closed" } } });
 });
+
+it.each([
+  (s: string) => s.replaceAll("[h]", "[min]"),
+  (s: string) => s.replaceAll("[h]", ""),
+  (s: string) => s.replaceAll("[h]", "[h] [h]"),
+  (s: string) =>
+    s.replace(/<tr><td class="p-3" colspan="2"><img src="\/images\/autokar.png"[\s\S]*?<\/tr>/, ""),
+  (s: string) =>
+    s.replace("</table>", '<tr><td><img alt="VANS"/>estimated wait</td><td>1:00</td></tr></table>'),
+  (s: string) =>
+    s.replace(
+      '<td class="p-3" colspan="2"><img src="/images/osobowy.png"',
+      '<td class="p-3" colspan="3"><img src="/images/osobowy.png"',
+    ),
+])("refuses changed units and incomplete or ambiguous class structure", (change) => {
+  expect(() => read(change(html()))).toThrow(/granica/);
+});
