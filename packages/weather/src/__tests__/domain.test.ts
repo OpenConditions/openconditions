@@ -45,7 +45,9 @@ test("every format is a source format the weather model contributes, producing t
       if (property === "device.status") continue;
       expect(registry.property(property)?.domain, property).toBe("weather");
     }
-    expect(format.produces?.properties).toContain("device.status");
+    if (id === "digitraffic-weather")
+      expect(format.produces?.properties).toContain("device.status");
+    else expect(format.produces?.properties).not.toContain("device.status");
   }
 });
 
@@ -72,7 +74,7 @@ test("the feed shape is the base shape alone", () => {
 });
 
 test("the Digitraffic feed polls the v2 API with the user and compression headers", () => {
-  expect([...weatherCatalogue().keys()]).toEqual(["fi-digitraffic-weather"]);
+  expect([...weatherCatalogue().keys()]).toEqual(["fi-digitraffic-weather", "se-smhi-weather"]);
   const feed = catalogFeed("fi-digitraffic-weather");
   expect(feed).toMatchObject({
     domain: "weather",
@@ -102,6 +104,10 @@ test("the domain renders its catalogue JSON Schema", () => {
 test("a format without a payload parses to nothing", () => {
   const ctx = parseContext("2026-10-14T23:25:19Z");
   for (const format of Object.values(weatherDomain.formats)) {
+    if (format.id === "smhi-metobs") {
+      expect(() => format.parse(catalogFeed("se-smhi-weather"), {}, ctx)).toThrow(/eight/);
+      continue;
+    }
     const out = format.parse(catalogFeed("fi-digitraffic-weather"), {}, ctx);
     expect(out.situations).toEqual([]);
     expect(out.features).toEqual([]);
