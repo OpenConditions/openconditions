@@ -111,6 +111,7 @@ export const ROADS_SOURCE_FORMATS = [
   "trafikverket",
   "trafikverket-flow",
   "vic-disruptions",
+  "wa-webeoc",
   "webtris",
   "webtris-sites",
   "wzdx",

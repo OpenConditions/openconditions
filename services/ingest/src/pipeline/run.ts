@@ -1294,6 +1294,7 @@ async function finishEventPoll(
   try {
     summary = await publishSituations(deps.sql, src, {
       situations,
+      situationsComplete: parse.situationsComplete ?? true,
       ...(unlocatableSituations
         ? {
             unlocatable: unlocatableSituations,
