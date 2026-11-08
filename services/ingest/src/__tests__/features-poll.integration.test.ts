@@ -1437,6 +1437,9 @@ describe("MIMIT coordinated dated snapshot pipeline", () => {
           at: new Date(at),
         },
       );
+    const persistedFused = () =>
+      sql`SELECT series_id FROM conditions.observation_latest WHERE source_id IN ('@fused','@fused-public') AND feature_id IN (SELECT c.canonical_feature_id FROM conditions.feature_canonical c WHERE EXISTS (SELECT 1 FROM conditions.feature f WHERE f.source_id = ${feed.id} AND f.id = ANY(c.member_ids)))`;
+    expect((await persistedFused()).length).toBeGreaterThan(0);
     expect((await canonicalApi(now)).records).toHaveLength(4);
     now = "2026-11-07T06:59:59Z";
     expect((await poll()).error).toBeUndefined();
@@ -1449,14 +1452,20 @@ describe("MIMIT coordinated dated snapshot pipeline", () => {
     now = "2026-11-06T10:00:00Z";
     expect((await canonicalApi("2026-11-07T07:00:00Z")).records).toHaveLength(0);
     await sql.begin((tx) =>
-      refreshFused(tx, registry, [{ featureId: "oc:feature:it-mimit-fuel:001" }], {
-        now: "2026-11-07T07:00:00Z",
-        instanceId: "test.local",
-      }),
+      refreshFused(
+        tx,
+        registry,
+        [
+          { featureId: "oc:feature:it-mimit-fuel:001" },
+          { featureId: "oc:feature:it-mimit-fuel:002" },
+        ],
+        {
+          now: "2026-11-07T07:00:00Z",
+          instanceId: "test.local",
+        },
+      ),
     );
-    const fused =
-      await sql`SELECT series_id FROM conditions.observation_latest WHERE source_id IN ('@fused','@fused-public') AND feature_id IN (SELECT canonical_id FROM conditions.feature WHERE source_id = ${feed.id})`;
-    expect(fused).toHaveLength(0);
+    expect(await persistedFused()).toHaveLength(0);
 
     expect((await api(now)).records[0]).toMatchObject({ validUntil: "2026-11-07T07:00:00.000Z" });
     expect((await poll(registryBody, pricesBody.replace("1.799", "1.899"))).error).toBeUndefined();
