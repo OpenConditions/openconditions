@@ -45,6 +45,8 @@ const feed = toCatalogFeed(file.feeds[0]!, {
   maintainers: file.maintainers,
 });
 delete feed.disabled;
+// These local bytes do not consume provider capacity; pacing has separate framework tests.
+delete feed.requestLimits;
 // Compress hourly cadence to one minute only in this bounded fixture clock.
 for (const [role, endpoint] of Object.entries(feed.endpoints)) {
   if (!role.endsWith("_stations")) endpoint.cadenceSec = 60;
@@ -55,11 +57,15 @@ let app: ReturnType<typeof Fastify>;
 let now = "2026-11-07T23:05:00Z";
 let roles = createRoleState();
 const calls: string[] = [];
+const validators: (string | null)[] = [];
 let correction = false;
 let failing = false;
 let missingWind = false;
 let restricted = false;
-const fetch = (async (input: unknown) => {
+let missingTu = false;
+let badZip = false;
+let overflow = false;
+const fetch = (async (input: unknown, init?: RequestInit) => {
   const url = String(input);
   calls.push(url);
   if (failing) return new Response("unavailable", { status: 503 });
@@ -71,10 +77,13 @@ const fetch = (async (input: unknown) => {
         ? "rr"
         : "ff";
   if (url.endsWith("/")) {
-    const id = role === "tu" || role === "rr" ? "00044" : "00011";
+    if (role === "tu") validators.push(new Headers(init?.headers).get("if-none-match"));
+    const id =
+      role === "tu" && missingTu ? "99999" : role === "tu" || role === "rr" ? "00044" : "00011";
     const code = { tu: "TU", rr: "nieder", ff: "wind", fx: "extrema_wind" }[role];
     return new Response(
       `<a href="10minutenwerte_${code}_${id}_now.zip">file</a> 07-Nov-2026 22:50:00 100\n`,
+      { headers: { etag: overflow ? "overflow" : "good" } },
     );
   }
   if (url.endsWith(".txt")) {
@@ -98,6 +107,25 @@ const fetch = (async (input: unknown) => {
     rows[rows.length - 1] = last.join(";");
     body = buildZip([{ name: e.name, data: rows.join("\n") }]);
   }
+  if (badZip && role === "tu") return new Response("bad ZIP");
+  if (overflow && role === "tu") {
+    const e = unzipEntries(body, { maxEntries: 8, maxBytes: 2_000_000 })[0]!;
+    const rows = e.data.toString("latin1").trim().split(/\r?\n/);
+    const header = rows[0]!.split(";").map((s) => s.trim());
+    const cells = rows[rows.length - 1]!.split(";");
+    cells[header.indexOf("TT_10")] = "9".repeat(400);
+    rows[rows.length - 1] = cells.join(";");
+    body = buildZip([{ name: e.name, data: rows.join("\n") }]);
+  }
+  if (missingTu && role === "tu") {
+    const e = unzipEntries(body, { maxEntries: 8, maxBytes: 2_000_000 })[0]!;
+    body = buildZip([
+      {
+        name: e.name.replace("00044", "99999"),
+        data: e.data.toString("latin1").replace(/\b44;/g, "99999;"),
+      },
+    ]);
+  }
   if (missingWind && (role === "ff" || role === "fx")) {
     const e = unzipEntries(body, { maxEntries: 8, maxBytes: 2_000_000 })[0]!;
     body = buildZip([
@@ -107,7 +135,7 @@ const fetch = (async (input: unknown) => {
       },
     ]);
   }
-  return new Response(new Uint8Array(body));
+  return new Response(new Uint8Array(body), { headers: { etag: overflow ? "overflow" : "good" } });
 }) as typeof globalThis.fetch;
 const tick = () =>
   runSource(feed, {
@@ -206,4 +234,123 @@ test("real worker publishes public station channels, canonical units and credit,
   expect(
     await db.sql`SELECT id,tombstoned_at FROM conditions.feature WHERE source_id=${feed.id}`,
   ).toEqual(featuresBefore);
+});
+
+const publicAir = async () =>
+  (await app.inject({ url: "/observations/latest?property=weather.air_temperature" })).json()
+    .records;
+const publicStations = async () =>
+  (await app.inject({ url: "/features?kind=weather_station&expand=components" })).json().records;
+async function resetPublication() {
+  qualified = true;
+  correction = failing = missingWind = restricted = missingTu = badZip = overflow = false;
+  roles = createRoleState();
+  now = "2026-11-07T23:05:00Z";
+  expect((await tick()).error).toBeUndefined();
+}
+
+test("mixed TU absence retains the metadata-supported components without refreshing missing readings", async () => {
+  await resetPublication();
+  const station = (await publicStations()).find(
+    (s: { id: string }) => s.id === "oc:feature:de-dwd-cdc-weather:00044",
+  );
+  const air = await publicAir();
+  const series =
+    await db.sql`SELECT property,series_id,effective_from FROM conditions.observation_latest WHERE source_id=${feed.id} ORDER BY series_id`;
+  missingTu = true;
+  roles = createRoleState();
+  now = "2026-11-07T23:07:00Z";
+  expect((await tick()).error).toBeUndefined();
+  const retained = (await publicStations()).find(
+    (s: { id: string }) => s.id === "oc:feature:de-dwd-cdc-weather:00044",
+  );
+  expect(retained.components).toEqual(station.components);
+  expect(retained.components.map((c: { key: string }) => c.key)).toEqual([
+    "TT_10",
+    "TD_10",
+    "RF_10",
+    "RWS_10",
+  ]);
+  expect(retained.details.measuredProperties).toEqual([
+    "weather.air_temperature",
+    "weather.dew_point",
+    "weather.humidity",
+    "weather.precipitation_amount",
+  ]);
+  expect(await publicAir()).toEqual(air);
+  expect(
+    await db.sql`SELECT property,series_id,effective_from FROM conditions.observation_latest WHERE source_id=${feed.id} ORDER BY series_id`,
+  ).toEqual(series);
+  expect(air[0].subject).toEqual({
+    kind: "feature",
+    featureId: "oc:feature:de-dwd-cdc-weather:00044",
+    componentKey: "TT_10",
+  });
+  expect(air[0].id).toBe(
+    "oc:observation:de-dwd-cdc-weather:41deaa822ed71bb79bc5177ea408a369cef53663002d636af7978fa0cf510d6c",
+  );
+  now = "2026-11-07T23:20:00Z";
+  expect(await publicAir()).toEqual([]);
+});
+
+test.each(["no poll", "failed poll", "failed ZIP", "role restart"])(
+  "source expiry survives %s and same-clock corrections",
+  async (mode) => {
+    await resetPublication();
+    correction = true;
+    now = "2026-11-07T23:06:00Z";
+    expect((await tick()).error).toBeUndefined();
+    // A held response cannot extend the source expiry either.
+    now = "2026-11-07T23:06:30Z";
+    expect((await tick()).error).toBeUndefined();
+    now = "2026-11-07T23:19:59Z";
+    const air = await publicAir();
+    expect(air).toHaveLength(1);
+    expect(air[0].result).toEqual({ type: "quantity", unit: "Cel", value: 7.7 });
+    expect(air[0].phenomenonTime).toEqual({
+      start: "2026-11-07T22:10:00Z",
+      end: "2026-11-07T22:20:00Z",
+    });
+    expect(air[0].freshness).toEqual({
+      fetchedAt: "2026-11-07T23:06:00Z",
+      expiresAt: "2026-11-07T23:20:00Z",
+    });
+    if (mode !== "no poll") {
+      if (mode === "role restart") roles = createRoleState();
+      if (mode === "failed ZIP") badZip = true;
+      else failing = true;
+      await tick();
+    }
+    now = "2026-11-07T23:20:00Z";
+    expect(await publicAir()).toEqual([]);
+    expect((await publicStations()).map((s: { id: string }) => s.id).sort()).toEqual([
+      "oc:feature:de-dwd-cdc-weather:00011",
+      "oc:feature:de-dwd-cdc-weather:00044",
+    ]);
+  },
+);
+
+test("overflow rejects the whole generation before publication or provisional validator/state acceptance", async () => {
+  await resetPublication();
+  const before =
+    await db.sql`SELECT * FROM conditions.observation_latest WHERE source_id=${feed.id} ORDER BY series_id`;
+  const stations = await publicStations();
+  const state =
+    await db.sql`SELECT publication_revision,last_network_success_at FROM conditions.source_status WHERE source=${feed.id}`;
+  overflow = true;
+  now = "2026-11-07T23:06:00Z";
+  const result = await tick();
+  expect(result.error).toMatch(/non-finite/);
+  expect(
+    await db.sql`SELECT * FROM conditions.observation_latest WHERE source_id=${feed.id} ORDER BY series_id`,
+  ).toEqual(before);
+  expect(await publicStations()).toEqual(stations);
+  expect(
+    await db.sql`SELECT publication_revision,last_network_success_at FROM conditions.source_status WHERE source=${feed.id}`,
+  ).toEqual(state);
+  overflow = false;
+  now = "2026-11-07T23:07:00Z";
+  expect((await tick()).error).toBeUndefined();
+  expect(validators.at(-1)).toBe("good");
+  expect(validators.at(-2)).toBe("good");
 });

@@ -83,7 +83,7 @@ test("latest usable channel value, QN, sentinel and zero stay independent", () =
       s.split(/\r?\n/)[0] +
       "\n44;202611072200;1;-999;5;-999;90;2;eor\n44;202611072210;unknown;-999;-999;-999;0;3;eor\n",
   );
-  const out = parseDwd(feed(), p, parseContext("2026-11-07T23:00:00Z"));
+  const out = parseDwd(feed(), p, parseContext("2026-11-07T22:59:59Z"));
   const obs = out.observations.filter((o) =>
     (o.subject as { featureId: string }).featureId.endsWith(":00044"),
   );
@@ -186,4 +186,95 @@ test("real September ZIP-only sentinel leftovers do not become current", () => {
   expect(JSON.stringify(out)).not.toContain(":02362");
   expect(JSON.stringify(out)).not.toContain(":02254");
   expect(out.observations).toHaveLength(7);
+});
+
+test.each([
+  ["tu", "TT_10"],
+  ["tu", "TD_10"],
+  ["tu", "RF_10"],
+  ["ff", "FF_10"],
+  ["ff", "DD_10"],
+  ["fx", "FX_10"],
+  ["rr", "RWS_10"],
+])("rejects converted overflow in %s/%s before sample selection", (role, field) => {
+  const p = altered(role, (text) => {
+    const rows = text.trim().split(/\r?\n/);
+    const index = rows[0]!
+      .split(";")
+      .map((s) => s.trim())
+      .indexOf(field);
+    const cells = rows[1]!.split(";");
+    cells[index] = "9".repeat(400);
+    rows[1] = cells.join(";");
+    return rows.join("\n");
+  });
+  expect(() => parseDwd(feed(), p, ctx())).toThrow(/non-finite/);
+});
+
+test("DWD expiry is source end plus one hour even at the boundary", () => {
+  const out = parseDwd(feed(), payloads(), ctx());
+  for (const o of out.observations)
+    expect(o.freshness).toEqual({
+      fetchedAt: "2026-11-07T23:05:00Z",
+      expiresAt: "2026-11-07T23:20:00Z",
+    });
+  expect(parseDwd(feed(), payloads(), parseContext("2026-11-07T23:20:00Z")).observations).toEqual(
+    [],
+  );
+});
+
+test("metadata supports channels when a product archive is absent, including its rights and epoch", async () => {
+  const { isPublicRecord } = await import("@openconditions/ingest-framework");
+  const p = altered("tu", (s) => s.replace(/\b44;/g, "99999;"));
+  const e = unzipEntries(p.tu![0]!, { maxEntries: 8, maxBytes: 2_000_000 })[0]!;
+  p.tu = [buildZip([{ name: e.name.replace("00044", "99999"), data: e.data }])];
+  const station = () =>
+    parseDwd(feed(), p, ctx()).features.find(
+      (f) => f.id === "oc:feature:de-dwd-cdc-weather:00044",
+    )!;
+  expect(station().components).toEqual([
+    {
+      key: "TT_10",
+      kind: "sensor_channel",
+      details: { kind: "sensor_channel", v: 1, property: "weather.air_temperature" },
+    },
+    {
+      key: "TD_10",
+      kind: "sensor_channel",
+      details: { kind: "sensor_channel", v: 1, property: "weather.dew_point" },
+    },
+    {
+      key: "RF_10",
+      kind: "sensor_channel",
+      details: { kind: "sensor_channel", v: 1, property: "weather.humidity" },
+    },
+    {
+      key: "RWS_10",
+      kind: "sensor_channel",
+      details: { kind: "sensor_channel", v: 1, property: "weather.precipitation_amount" },
+    },
+  ]);
+  p.tu_stations = [
+    Buffer.from(
+      p.tu_stations![0]!.toString("latin1").replace(/^(00044[^\n]*?)Frei/m, "$1Gesperrt"),
+      "latin1",
+    ),
+  ];
+  expect(isPublicRecord(station() as never)).toBe(false);
+  p.tu_stations = [
+    Buffer.from(
+      p.tu_stations[0]!.toString("latin1").replace(
+        /^(00044 \d{8} )\d{8}/m,
+        (_m, prefix: string) => `${prefix}20260101`,
+      ),
+      "latin1",
+    ),
+  ];
+  expect(station().components).toEqual([
+    {
+      key: "RWS_10",
+      kind: "sensor_channel",
+      details: { kind: "sensor_channel", v: 1, property: "weather.precipitation_amount" },
+    },
+  ]);
 });

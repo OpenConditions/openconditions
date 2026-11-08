@@ -7,6 +7,7 @@ import {
   unzipEntries,
 } from "@openconditions/ingest-framework";
 import type { WeatherCatalogFeed } from "../feed-schema.js";
+import { utcInstant } from "../records.js";
 import { reading, stationDraft } from "../station.js";
 
 export const DWD_PRODUCTS = {
@@ -115,12 +116,30 @@ export function parseDwd(
     }
   >();
   let rejected = 0;
+  const archiveStations = new Set<string>();
   for (const role of DWD_ROLES) {
     const meta = payloads[`${role}_stations`];
     const archives = payloads[role];
     if (meta?.length !== 1 || !archives?.length)
       throw new Error(`DWD missing required ${role} role`);
     const sites = dwdSites(meta[0]!);
+    const fields = Object.entries(DWD_PRODUCTS[role].fields);
+    // Metadata describes supported channels; a directory omission cannot withdraw them.
+    for (const [id, site] of sites) {
+      const day = ctx.fetchedAt.slice(0, 10);
+      if (day < site.from || day > site.until) continue;
+      const prior = stations.get(id);
+      if (prior && JSON.stringify(prior.site.point) !== JSON.stringify(site.point))
+        throw new Error("DWD conflicting source-epoch geography");
+      if (prior && !site.free) {
+        prior.site.free = false;
+        prior.site.distribution = site.distribution;
+      }
+      const station = prior ?? { site, channels: new Map() };
+      stations.set(id, station);
+      for (const [field, [property, unit, aggregation]] of fields)
+        station.channels.set(field, { property: `weather.${property}`, unit, aggregation });
+    }
     const seen = new Set<string>();
     for (const zip of archives) {
       const entries = unzipEntries(zip, {
@@ -139,7 +158,6 @@ export function parseDwd(
         .shift()!
         .split(";")
         .map((s) => s.trim());
-      const fields = Object.entries(DWD_PRODUCTS[role].fields);
       if (
         new Set(header).size !== header.length ||
         ["STATIONS_ID", "MESS_DATUM", "QN", "eor", ...fields.map(([f]) => f)].some(
@@ -162,6 +180,7 @@ export function parseDwd(
           const raw = row[field]!;
           if (!/^-?\d+(?:\.\d+)?$/.test(raw)) throw new Error("DWD malformed numeric value");
           const value = Number(raw);
+          if (!Number.isFinite(value)) throw new Error("DWD non-finite numeric value");
           if (value === -999) continue;
           if (
             (property === "humidity" && (value < 0 || value > 100)) ||
@@ -173,7 +192,7 @@ export function parseDwd(
             !site ||
             time.slice(0, 10) < site.from ||
             time.slice(0, 10) > site.until ||
-            Date.parse(ctx.fetchedAt) - Date.parse(time) > 3600_000
+            Date.parse(ctx.fetchedAt) - Date.parse(time) >= 3600_000
           )
             continue;
           if (!samples.has(field) || samples.get(field)!.time < time)
@@ -184,29 +203,17 @@ export function parseDwd(
         recordSkipped(feed.id, "no_geometry");
         continue;
       }
-      const prior = stations.get(fileId);
-      if (prior && JSON.stringify(prior.site.point) !== JSON.stringify(site.point))
-        throw new Error("DWD conflicting source-epoch geography");
-      if (prior && !site.free) {
-        prior.site.free = false;
-        prior.site.distribution = site.distribution;
-      }
-      const station = prior ?? { site, channels: new Map() };
-      stations.set(fileId, station);
-      for (const [field, [property, unit, aggregation]] of fields)
-        station.channels.set(field, {
-          property: `weather.${property}`,
-          unit,
-          aggregation,
-          sample: samples.get(field),
-        });
+      archiveStations.add(fileId);
+      const station = stations.get(fileId);
+      if (station)
+        for (const [field, sample] of samples) station.channels.get(field)!.sample = sample;
     }
     rejected += [...sites.keys()].filter((id) => !seen.has(id)).length;
   }
   for (const [stationId, { site, channels }] of stations) {
     const current = [...channels].filter(([, c]) => c.sample);
     if (!current.length) {
-      rejected++;
+      if (archiveStations.has(stationId)) rejected++;
       continue;
     }
     out.features.push(
@@ -220,20 +227,24 @@ export function parseDwd(
         channels: [...channels].map(([key, c]) => ({ key, property: c.property })),
       }),
     );
-    for (const [componentKey, c] of current)
-      out.observations.push(
-        reading(feed, ctx.fetchedAt, {
-          stationId,
-          point: site.point,
-          componentKey,
-          property: c.property,
-          result: { type: "quantity", value: c.sample!.value, unit: c.unit },
-          measuredAt: c.sample!.time,
-          windowSec: 600,
-          aggregation: c.aggregation,
-          supplierCode: `QN:${c.sample!.qn}`,
-        }),
-      );
+    for (const [componentKey, c] of current) {
+      const draft = reading(feed, ctx.fetchedAt, {
+        stationId,
+        point: site.point,
+        componentKey,
+        property: c.property,
+        result: { type: "quantity", value: c.sample!.value, unit: c.unit },
+        measuredAt: c.sample!.time,
+        windowSec: 600,
+        aggregation: c.aggregation,
+        supplierCode: `QN:${c.sample!.qn}`,
+      });
+      draft.freshness = {
+        fetchedAt: ctx.fetchedAt,
+        expiresAt: utcInstant(new Date(Date.parse(c.sample!.time) + 3600_000)),
+      };
+      out.observations.push(draft);
+    }
   }
   for (const draft of [...out.features, ...out.observations]) {
     const provenance = draft.provenance as { recordId: string; upstream?: unknown[] };
