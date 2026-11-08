@@ -82,7 +82,8 @@ export function parseMimit(feed: FuelFeed, payloads: FeedPayloads, ctx: ParseCon
   if (!(age >= 0 && age < MIMIT_MAX_SOURCE_AGE_SEC * 1000))
     throw new Error("MIMIT: future or obsolete extraction");
   const at = utcInstant(cutoff);
-  const expiresAt = utcInstant(new Date(cutoff.getTime() + MIMIT_MAX_SOURCE_AGE_SEC * 1000));
+  // Delayed acquisition must not extend the global 24-hour fuel.price freshness window.
+  const expiresAt = utcInstant(new Date(cutoff.getTime() + 86400 * 1000));
   const out = emptyParseOutput();
   const sites = new Map<string, string[]>();
   for (const row of registry.rows) {

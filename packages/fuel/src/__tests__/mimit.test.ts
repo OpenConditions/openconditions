@@ -45,7 +45,7 @@ test("joins textual IDs and separates service, generic petrol, units and source 
     subject: { componentKey: "petrol:self" },
     phenomenonTime: { instant: "2026-11-06T07:00:00Z" },
     provenance: { sourceUpdatedAt: "2026-11-05T13:20:00Z" },
-    freshness: { fetchedAt: "2026-11-07T10:00:00Z", expiresAt: "2026-11-08T07:00:00Z" },
+    freshness: { fetchedAt: "2026-11-07T10:00:00Z", expiresAt: "2026-11-07T07:00:00Z" },
   });
   expect(
     out.observations.find(

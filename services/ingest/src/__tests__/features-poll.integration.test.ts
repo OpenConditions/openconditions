@@ -1340,7 +1340,7 @@ describe("MIMIT coordinated dated snapshot pipeline", () => {
       );
     const registryBody = fixture("registry");
     const pricesBody = fixture("prices");
-    let now = "2026-11-07T10:00:00Z";
+    let now = "2026-11-06T10:00:00Z";
     await ensureObservationPartitions(sql, {
       classes: retentionClasses(registry),
       now: new Date(now),
@@ -1409,7 +1409,7 @@ describe("MIMIT coordinated dated snapshot pipeline", () => {
           }),
         ]),
       );
-      readAt = "2026-11-08T07:00:00Z";
+      readAt = "2026-11-07T07:00:00Z";
       const expired = (
         await http.inject({
           method: "GET",
@@ -1438,10 +1438,19 @@ describe("MIMIT coordinated dated snapshot pipeline", () => {
         },
       );
     expect((await canonicalApi(now)).records).toHaveLength(4);
-    expect((await canonicalApi("2026-11-08T07:00:00Z")).records).toHaveLength(0);
+    now = "2026-11-07T06:59:59Z";
+    expect((await poll()).error).toBeUndefined();
+    expect((await api(now)).records).toHaveLength(5);
+    expect((await canonicalApi(now)).records).toHaveLength(4);
+    now = "2026-11-07T07:00:00Z";
+    expect((await poll()).error).toBeUndefined();
+    expect((await api(now)).records).toHaveLength(0);
+    expect(await activeSeries()).toHaveLength(5);
+    now = "2026-11-06T10:00:00Z";
+    expect((await canonicalApi("2026-11-07T07:00:00Z")).records).toHaveLength(0);
     await sql.begin((tx) =>
       refreshFused(tx, registry, [{ featureId: "oc:feature:it-mimit-fuel:001" }], {
-        now: "2026-11-08T07:00:00Z",
+        now: "2026-11-07T07:00:00Z",
         instanceId: "test.local",
       }),
     );
@@ -1449,7 +1458,7 @@ describe("MIMIT coordinated dated snapshot pipeline", () => {
       await sql`SELECT series_id FROM conditions.observation_latest WHERE source_id IN ('@fused','@fused-public') AND feature_id IN (SELECT canonical_id FROM conditions.feature WHERE source_id = ${feed.id})`;
     expect(fused).toHaveLength(0);
 
-    expect((await api(now)).records[0]).toMatchObject({ validUntil: "2026-11-08T07:00:00.000Z" });
+    expect((await api(now)).records[0]).toMatchObject({ validUntil: "2026-11-07T07:00:00.000Z" });
     expect((await poll(registryBody, pricesBody.replace("1.799", "1.899"))).error).toBeUndefined();
     expect((await api(now)).records.some((r) => (r["result"] as Rec)["amount"] === "1.899")).toBe(
       true,
@@ -1481,7 +1490,7 @@ describe("MIMIT coordinated dated snapshot pipeline", () => {
     expect(await live()).toHaveLength(2);
     expect((await api(now)).records).toHaveLength(5);
     expect(await activeSeries()).toHaveLength(5);
-    for (const clock of ["2026-11-07T10:05:00Z", "2026-11-07T10:16:00Z"]) {
+    for (const clock of ["2026-11-06T10:05:00Z", "2026-11-06T10:16:00Z"]) {
       now = clock;
       await poll(initialEmpty(registryBody), initialEmpty(pricesBody));
     }
