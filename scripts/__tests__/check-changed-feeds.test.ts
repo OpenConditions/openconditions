@@ -53,6 +53,7 @@ function fixture(change: (root: string) => void = (root) => put(root, "feeds/roa
   git(root, ["add", "."]);
   git(root, ["commit", "-qm", "base"]);
   const base = git(root, ["rev-parse", "HEAD"]);
+  git(root, ["update-ref", "refs/remotes/origin/main", base]);
   git(root, ["merge", "--no-ff", "--no-edit", "feature"]);
   const merge = git(root, ["rev-parse", "HEAD"]);
   const event = {
@@ -118,6 +119,103 @@ describe("changed-feed command with real Git histories", () => {
     });
     expect(readFileSync(f.outputPath, "utf8")).toBe("selected=true\n");
     expect(existsSync(f.receipt)).toBe(false);
+  });
+  it.each(["select", "run"])(
+    "accepts an ancestral event base in %s and excludes inherited main changes",
+    (mode) => {
+      const f = fixture();
+      f.event.pull_request.base.sha = f.initial;
+      const result = f.run(mode);
+      expect(result.status, result.output).toBe(0);
+      expect(JSON.parse(result.stdout)).toMatchObject({
+        eventBase: f.initial,
+        base: f.base,
+        baseTip: f.base,
+        head: f.head,
+        checkout: f.merge,
+        changedEntries: 1,
+        files: ["feeds/roads/nl.jsonc"],
+      });
+      if (mode === "run") {
+        expect(JSON.parse(readFileSync(f.receipt, "utf8"))).toEqual([
+          "scripts/feeds-check.ts",
+          "feeds/roads/nl.jsonc",
+        ]);
+      }
+    },
+  );
+  it.each(["missing-ref", "diverged-tip", "unrelated-tip", "rewound-tip", "shallow"])(
+    "rejects base advancement with %s before checking feeds",
+    (kind) => {
+      const f = fixture();
+      f.event.pull_request.base.sha = f.initial;
+      if (kind === "missing-ref") git(f.root, ["update-ref", "-d", "refs/remotes/origin/main"]);
+      if (kind === "diverged-tip") git(f.root, ["update-ref", "refs/remotes/origin/main", f.head]);
+      if (kind === "rewound-tip")
+        git(f.root, ["update-ref", "refs/remotes/origin/main", f.initial]);
+      if (kind === "unrelated-tip") {
+        const tree = git(f.root, ["rev-parse", `${f.base}^{tree}`]);
+        const unrelated = git(f.root, ["commit-tree", tree, "-m", "unrelated"]);
+        git(f.root, ["update-ref", "refs/remotes/origin/main", unrelated]);
+      }
+      if (kind === "shallow") put(f.root, ".git/shallow", `${f.base}\n`);
+      const result = f.run("run");
+      expect(result.status, result.output).not.toBe(0);
+      expect(result.stdout).toBe("");
+      expect(existsSync(f.receipt)).toBe(false);
+      expect(existsSync(f.outputPath)).toBe(false);
+    },
+  );
+  it("revalidates base identity before execution after a successful selection", () => {
+    const f = fixture();
+    f.event.pull_request.base.sha = f.initial;
+    expect(f.run().status).toBe(0);
+    git(f.root, ["update-ref", "refs/remotes/origin/main", f.head]);
+    const result = f.run("run");
+    expect(result.status, result.output).not.toBe(0);
+    expect(existsSync(f.receipt)).toBe(false);
+  });
+  it.each([
+    "wrong-first-parent",
+    "reversed-parents",
+    "unrelated-event-base",
+    "future-event-base",
+    "missing-head-history",
+  ])("rejects %s without executing the checker", (kind) => {
+    const f = fixture();
+    const tree = git(f.root, ["rev-parse", `${f.merge}^{tree}`]);
+    let checkout = f.merge;
+    if (kind === "wrong-first-parent") {
+      const other = git(f.root, ["commit-tree", tree, "-p", f.initial, "-m", "other"]);
+      checkout = git(f.root, ["commit-tree", tree, "-p", other, "-p", f.head, "-m", "forged"]);
+      f.event.pull_request.base.sha = f.initial;
+    }
+    if (kind === "reversed-parents")
+      checkout = git(f.root, ["commit-tree", tree, "-p", f.head, "-p", f.base, "-m", "reversed"]);
+    if (kind === "unrelated-event-base")
+      f.event.pull_request.base.sha = git(f.root, ["commit-tree", tree, "-m", "unrelated"]);
+    if (kind === "future-event-base") f.event.pull_request.base.sha = f.merge;
+    git(f.root, ["checkout", "--detach", checkout]);
+    if (kind === "missing-head-history")
+      rmSync(join(f.root, ".git/objects", f.head.slice(0, 2), f.head.slice(2)));
+    const result = f.run("run", { GITHUB_SHA: checkout });
+    expect(result.status, result.output).not.toBe(0);
+    expect(result.stdout).toBe("");
+    expect(existsSync(f.receipt)).toBe(false);
+  });
+  it("keeps the actual merge base when the fetched branch has advanced again", () => {
+    const f = fixture();
+    f.event.pull_request.base.sha = f.initial;
+    const tree = git(f.root, ["rev-parse", `${f.base}^{tree}`]);
+    const tip = git(f.root, ["commit-tree", tree, "-p", f.base, "-m", "newer main"]);
+    git(f.root, ["update-ref", "refs/remotes/origin/main", tip]);
+    const result = f.run();
+    expect(result.status, result.output).toBe(0);
+    expect(JSON.parse(result.stdout)).toMatchObject({
+      base: f.base,
+      baseTip: tip,
+      changedEntries: 1,
+    });
   });
   it.each(["empty", "credentials", "docs"])("reports %s without running the checker", (kind) => {
     const f = fixture((root) => {
@@ -195,7 +293,7 @@ describe("changed-feed command with real Git histories", () => {
   ])("fails %s instead of reporting an empty selection", (kind) => {
     const f = fixture(() => {});
     if (kind === "missing-base") f.event.pull_request.base.sha = "1".repeat(40);
-    if (kind === "wrong-base") f.event.pull_request.base.sha = f.initial;
+    if (kind === "wrong-base") f.event.pull_request.base.sha = f.head;
     if (kind === "wrong-head") f.event.pull_request.head.sha = f.base;
     if (kind === "malformed-head") f.event.pull_request.head.sha = "--help; touch sentinel";
     if (kind === "wrong-repo") f.event.repository.full_name = "OpenMapX/openmapx";
