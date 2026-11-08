@@ -102,6 +102,8 @@ export interface FeedFormat<F extends CatalogFeed = CatalogFeed> {
    * empty answer, not a failure that keeps the last publication.
    */
   mayBeEmpty?: true;
+  /** Fail the whole measurement publication on any canonical rejection. */
+  atomicMeasurements?: true;
   /**
    * A measurements format whose every poll restates each transient reading
    * still in effect (the latest position of every vehicle out): a transient

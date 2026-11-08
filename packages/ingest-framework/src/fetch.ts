@@ -98,6 +98,10 @@ function pacedFetch(pacer: Pacer, perMinute: number, fetchFn: FetchFn): FetchFn 
 }
 
 const sharedFetchState = createFetchState();
+const arcgisCycles = new WeakMap<
+  FetchState,
+  Map<string, { active: boolean; next: number; failures: number }>
+>();
 
 /** A per-item role's latest response for one item, kept between polls. */
 export interface KeptItem {
@@ -533,6 +537,14 @@ async function fetchPaginated(
   fetchFn: FetchFn,
   redact: (s: string) => string,
 ): Promise<{ buffers: Buffer[]; urls: string[]; payloads: PayloadDigest[] }> {
+  if (
+    pg.arcgis &&
+    (pg.pageSize > 500 ||
+      (pg.maxPages ?? DEFAULT_MAX_PAGES) > 10 ||
+      pg.recordsPath !== "features" ||
+      pg.mode === "page")
+  )
+    throw new Error("pagination: ArcGIS requires bounded feature offsets");
   const recordsPath = pg.recordsPath ?? "value";
   const maxPages = pg.maxPages ?? DEFAULT_MAX_PAGES;
   const out: Buffer[] = [];
@@ -540,20 +552,57 @@ async function fetchPaginated(
   const payloads: PayloadDigest[] = [];
   for (const baseUrl of baseUrls) {
     let reachedEnd = false;
+    let offset = 0;
+    let previousId = -Infinity;
+    let bytes = 0;
+    const deadline = Date.now() + 60_000;
     for (let page = 0; page < maxPages; page++) {
-      const value = pg.mode === "page" ? (pg.firstPage ?? 1) + page : page * pg.pageSize;
+      const value =
+        pg.mode === "page" ? (pg.firstPage ?? 1) + page : pg.arcgis ? offset : page * pg.pageSize;
       const url = withOffset(baseUrl, pg.skipParam, value);
-      const { buffer, payload } = await fetchOne(url, fetchFn, init, undefined, false, redact);
+      if (pg.arcgis && Date.now() >= deadline) throw new Error("pagination: deadline exceeded");
+      const pageInit = pg.arcgis
+        ? {
+            ...init,
+            signal: AbortSignal.any([
+              ...(init?.signal ? [init.signal] : []),
+              AbortSignal.timeout(Math.max(1, deadline - Date.now())),
+            ]),
+          }
+        : init;
+      const { buffer, payload } = await fetchOne(url, fetchFn, pageInit, undefined, false, redact);
+      bytes += buffer.length;
+      if (pg.arcgis && bytes > 10 * 1024 * 1024) throw new Error("pagination: byte limit exceeded");
       const count = countJsonRecords(buffer, recordsPath, {
         xml: pg.xmlLists === true,
         firstPage: page === 0,
       });
-      if (count > 0) {
+      let more: boolean | undefined;
+      if (pg.arcgis) {
+        const doc = parsePage(buffer) as Record<string, unknown>;
+        if (
+          doc["error"] !== undefined ||
+          (doc["exceededTransferLimit"] !== undefined &&
+            typeof doc["exceededTransferLimit"] !== "boolean")
+        )
+          throw new Error("pagination: invalid ArcGIS response");
+        more = doc["exceededTransferLimit"] as boolean | undefined;
+        if (count > pg.pageSize || (count === 0 && more === true))
+          throw new Error("pagination: ArcGIS made no progress");
+        for (const feature of doc[recordsPath] as { attributes?: { OBJECTID?: unknown } }[]) {
+          const id = feature?.attributes?.OBJECTID;
+          if (typeof id !== "number" || !Number.isSafeInteger(id) || id <= previousId)
+            throw new Error("pagination: nonmonotonic OBJECTID");
+          previousId = id;
+        }
+        offset += count;
+      }
+      if (count > 0 || pg.arcgis) {
         out.push(buffer);
         urls.push(url);
         payloads.push(payload);
       }
-      if (count < pg.pageSize) {
+      if (more === false || (more === undefined && count < pg.pageSize)) {
         reachedEnd = true;
         break;
       }
@@ -1330,10 +1379,56 @@ async function fetchRole(
       return { status: "no-endpoint", reason: "missing-configuration", validatedAtNetwork: false };
     }
     const init = requestInit(feed, role, env, cell, at);
-    const pages =
-      pagination.mode === "link"
-        ? await fetchLinked(baseUrls, feed.id, pagination, init, fetchFn, redact)
-        : await fetchPaginated(baseUrls, feed.id, pagination, init, fetchFn, redact);
+    let cycles = arcgisCycles.get(state);
+    if (!cycles) {
+      cycles = new Map();
+      arcgisCycles.set(state, cycles);
+    }
+    const cycleKey = `${feed.id}#${role}`;
+    const cycle =
+      pagination.mode !== "link" && pagination.arcgis
+        ? (cycles.get(cycleKey) ?? { active: false, next: 0, failures: 0 })
+        : undefined;
+    if (cycle && (cycle.active || at < cycle.next))
+      throw new Error("ArcGIS cycle backoff or active request");
+    let retryAt = 0;
+    const cycleFetch: FetchFn = cycle
+      ? async (...args) => {
+          const response = await fetchFn(...args);
+          const retry = response.headers.get("Retry-After");
+          if (retry && (response.status === 429 || response.status === 503)) {
+            const seconds = /^\d+$/.test(retry) ? Number(retry) : undefined;
+            retryAt = Math.max(
+              retryAt,
+              seconds === undefined ? Date.parse(retry) || 0 : at + seconds * 1000,
+            );
+          }
+          return response;
+        }
+      : fetchFn;
+    if (cycle) {
+      cycle.active = true;
+      cycles.set(cycleKey, cycle);
+    }
+    let pages: Awaited<ReturnType<typeof fetchPaginated>>;
+    try {
+      pages =
+        pagination.mode === "link"
+          ? await fetchLinked(baseUrls, feed.id, pagination, init, cycleFetch, redact)
+          : await fetchPaginated(baseUrls, feed.id, pagination, init, cycleFetch, redact);
+      if (cycle) cycle.failures = 0;
+    } catch (error) {
+      if (cycle) cycle.failures = Math.min(cycle.failures + 1, 6);
+      throw error;
+    } finally {
+      if (cycle) {
+        cycle.active = false;
+        cycle.next = Math.max(
+          retryAt,
+          at + Math.max(120, endpoint.cadenceSec) * 1000 * 2 ** cycle.failures,
+        );
+      }
+    }
     return {
       status: "fetched",
       accept: () => {},

@@ -183,6 +183,10 @@
                     {
                       "type": "object",
                       "properties": {
+                        "arcgis": {
+                          "type": "boolean",
+                          "const": true
+                        },
                         "skipParam": {
                           "type": "string"
                         },
