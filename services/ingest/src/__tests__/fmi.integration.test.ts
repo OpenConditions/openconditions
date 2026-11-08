@@ -241,6 +241,22 @@ test.each(["identity", "namespace", "epoch", "axes", "rights", "storage"])(
       expect(JSON.stringify([...roles.statusIndex!])).toBe(acceptedIndexValues);
       expect((await get("/observations/latest?source=fi-fmi-weather")).records).toEqual(before);
       expect((await get("/features?source=fi-fmi-weather")).records).toEqual(features);
+      if (kind === "namespace") {
+        // Reuse this accepted generation: an independent XML case would repeat its
+        // setup/recovery HTTP calls and exhaust the real shared per-feed quota.
+        metadata = Buffer.from(
+          fixture("station-101004.xml")
+            .toString()
+            .replace("Helsinki Kumpula", "Hel\u0001sinki Kumpula"),
+        );
+        observations = fixture("observations.xml");
+        expect((await scheduled()).error).toMatch(/XML/);
+        expect(JSON.stringify(roles)).toBe(accepted);
+        expect(roles.statusIndex).toBe(acceptedIndex);
+        expect(JSON.stringify([...roles.statusIndex!])).toBe(acceptedIndexValues);
+        expect((await get("/observations/latest?source=fi-fmi-weather")).records).toEqual(before);
+        expect((await get("/features?source=fi-fmi-weather")).records).toEqual(features);
+      }
       if (kind === "storage") {
         await db.sql.unsafe("DROP TRIGGER fmi_reject ON conditions.feature");
         await db.sql.unsafe("DROP FUNCTION conditions.fmi_reject()");
@@ -260,6 +276,10 @@ test.each(["identity", "namespace", "epoch", "axes", "rights", "storage"])(
       clock = "2026-11-07T01:38:00Z";
       urls.length = 0;
       observations = Buffer.from(observations.toString().replace("1.4 0.7 95.0", "1.9 0.7 95.0"));
+      if (kind === "namespace")
+        observations = Buffer.from(
+          observations.toString().replaceAll('name="t2m"', 'name="t&#50;m"'),
+        );
       expect((await scheduled()).error).toBeUndefined();
       expect(urls).toEqual(["https://opendata.fmi.fi/fixture/observations"]);
       const temp = (await get("/observations/latest?source=fi-fmi-weather")).records.find(

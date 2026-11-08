@@ -315,3 +315,42 @@ test("FMI refuses whitespace-altered namespace URIs", () => {
   ];
   expect(() => parse(p)).toThrow(/namespace/);
 });
+
+// XMLValidator alone does not enforce XML 1.0 character/reference validity.
+test.each(["\u0001", "&#0;", "&#xD800;", "&#x110000;", "&bogus;", "&bare"])(
+  "FMI refuses malformed XML text %j",
+  (value) => {
+    const p = payloads();
+    p.sites[0] = Buffer.from(
+      p.sites[0]!.toString().replace("Helsinki Kumpula", `Hel${value}sinki Kumpula`),
+    );
+    expect(() => parse(p)).toThrow(/XML/);
+  },
+);
+test("FMI resolves numeric attribute references once without changing literal CDATA", () => {
+  const p = payloads();
+  p.status = [Buffer.from(p.status[0]!.toString().replaceAll('name="t2m"', 'name="t&#50;m"'))];
+  p.sites[0] = Buffer.from(
+    p.sites[0]!.toString().replace("Helsinki Kumpula", "<![CDATA[Helsinki &bogus;]]>"),
+  );
+  const out = parse(p);
+  expect(out.observations).toHaveLength(14);
+  expect(JSON.stringify(out.features)).toContain("Helsinki &bogus;");
+});
+test("FMI accepts legal character references without recursive expansion", () => {
+  const p = payloads();
+  p.sites[0] = Buffer.from(
+    p.sites[0]!.toString().replace("Helsinki Kumpula", "Helsinki &#x1F600; &#38;bogus;"),
+  );
+  expect(JSON.stringify(parse(p).features)).toContain("Helsinki 😀 &bogus;");
+});
+
+test.each([
+  (s: string) => s.replace("<swe:DataRecord>", "<swe:Data&#82;ecord>"),
+  (s: string) => s.replace('name="t2m"', 'na&#109;e="t2m"'),
+  (s: string) => s.replace('name="t2m"', 'name="<t2m"'),
+])("FMI cannot normalize malformed names or literal attribute markup into XML", (change) => {
+  const p = payloads();
+  p.status = [Buffer.from(change(p.status[0]!.toString()))];
+  expect(() => parse(p)).toThrow(/XML/);
+});

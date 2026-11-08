@@ -195,8 +195,67 @@ function coordinate(token: string): number {
     return fail("invalid coordinate token");
   return Number(token);
 }
+// The parser's validator accepts forbidden characters and leaves numeric references unresolved.
+// Validate XML 1.0 references before parsing, then express numeric references as safe XML text.
+// Comments, CDATA and processing instructions do not expand references.
+function xmlText(body: Buffer): string {
+  if (body.length > 8_000_000) return fail("oversized XML");
+  let raw: string;
+  try {
+    raw = new TextDecoder("utf-8", { fatal: true }).decode(body);
+  } catch {
+    return fail("invalid XML UTF-8");
+  }
+  if (/[^\t\n\r\u0020-\uD7FF\uE000-\uFFFD\u{10000}-\u{10FFFF}]/u.test(raw))
+    return fail("invalid XML character");
+  if (XMLValidator.validate(raw) !== true) return fail("invalid XML syntax");
+  return raw
+    .split(/(<!--[\s\S]*?-->|<!\[CDATA\[[\s\S]*?\]\]>|<\?[\s\S]*?\?>)/)
+    .map((part) => {
+      if (part.startsWith("<!--") || part.startsWith("<![CDATA[")) return part;
+      if (part.startsWith("<?")) {
+        if (/^<\?xml\s/.test(part) && !/^<\?xml\s+version\s*=\s*(["'])1\.0\1/.test(part))
+          fail("unsupported XML version");
+        return part;
+      }
+      if (part.includes("]]>")) fail("invalid XML text");
+      for (const tag of part.matchAll(/<(?:[^"'<>]|"[^"]*"|'[^']*')*>/g)) {
+        for (const quoted of tag[0].matchAll(/"([^"]*)"|'([^']*)'/g))
+          if ((quoted[1] ?? quoted[2]!).includes("<")) fail("invalid XML attribute");
+      }
+      return part.replace(/&([^&;<\s]*);|&/g, (reference, name: string | undefined) => {
+        if (name !== undefined && /^(amp|lt|gt|quot|apos)$/.test(name)) return reference;
+        if (name === undefined || !/^#(?:[0-9]+|x[0-9a-fA-F]+)$/.test(name))
+          return fail("invalid XML reference");
+        const code = name.startsWith("#x")
+          ? Number.parseInt(name.slice(2), 16)
+          : Number(name.slice(1));
+        if (
+          !(
+            code === 9 ||
+            code === 10 ||
+            code === 13 ||
+            (code >= 0x20 && code <= 0xd7ff) ||
+            (code >= 0xe000 && code <= 0xfffd) ||
+            (code >= 0x10000 && code <= 0x10ffff)
+          )
+        )
+          return fail("invalid XML character reference");
+        const char = String.fromCodePoint(code);
+        const escaped: Record<string, string> = {
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&apos;",
+        };
+        return escaped[char] ?? char;
+      });
+    })
+    .join("");
+}
 function collection(body: Buffer): Node[] {
-  const raw = body.toString("utf8");
+  const raw = xmlText(body);
   if (
     raw.length > 8_000_000 ||
     /<!DOCTYPE|<!ENTITY/i.test(raw) ||
