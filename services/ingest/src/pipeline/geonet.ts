@@ -11,13 +11,11 @@ import {
   geonetSolutions,
 } from "@openconditions/hazards";
 import type { CatalogFeed, FeedPayloads, RecordDraft } from "@openconditions/ingest-framework";
-import { tombstoneRecords, writeSnapshotIn } from "@openconditions/storage";
 import type postgres from "postgres";
 import type { RawArchive } from "../raw/archive.js";
 import { rawTierFor } from "../raw/tiers.js";
 import type { ParseProcess } from "./parse-process.js";
-import { stampAttribution, type WriteModel } from "./publish.js";
-import { openPollAttempt, upsertSourceStatus } from "./source-status.js";
+import type { WriteModel } from "./publish.js";
 
 type Rec = Record<string, unknown>;
 const properties = (f: Rec) => f["properties"] as Rec;
@@ -239,6 +237,10 @@ export async function runGeonet(
     parseProcess?: ParseProcess;
   },
 ): Promise<{ count: number; durationMs: number; error?: string }> {
+  // Acquisition is also used by the domain-only checker, which has no storage build.
+  const { tombstoneRecords, writeSnapshotIn } = await import("@openconditions/storage");
+  const { stampAttribution } = await import("./publish.js");
+  const { openPollAttempt, upsertSourceStatus } = await import("./source-status.js");
   const started = Date.now();
   const at = deps.now();
   const attempt = await openPollAttempt(deps.sql, src.id, at);

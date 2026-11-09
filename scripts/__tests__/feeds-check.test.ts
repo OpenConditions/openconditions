@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -685,4 +686,25 @@ it("checks enabled GeoNet using full bounded reconciliation rather than capped d
   } finally {
     vi.useRealTimers();
   }
+});
+
+it("loads the checker without a compiled storage package", () => {
+  const result = spawnSync(
+    process.execPath,
+    [
+      "--import",
+      "tsx",
+      "--input-type=module",
+      "-e",
+      `import { registerHooks } from "node:module";
+       registerHooks({ resolve(specifier, context, nextResolve) {
+         if (specifier === "@openconditions/storage") throw new Error("storage build unavailable");
+         return nextResolve(specifier, context);
+       }});
+       await import("./scripts/feeds-check.ts");`,
+    ],
+    { cwd: new URL("../../", import.meta.url), encoding: "utf8" },
+  );
+  expect(result.stderr).toBe("");
+  expect(result.status).toBe(0);
 });
