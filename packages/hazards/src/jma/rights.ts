@@ -10,11 +10,12 @@ const OFFICES = new Set([
   "札幌管区気象台",
   "横浜地方気象台",
   "新潟地方気象台",
+  "大阪管区気象台",
 ]);
 // Closed inventory of retained native elements, not an XSD claim. New extension
 // elements need review before we can redistribute their unprojected native XML.
 const ELEMENTS = new Set(
-  "Appendix Area AreaName Areas ArrivalTime Base Body ChangeStatus City Code CodeDefine Comment Comments Condition Control Coordinate CriteriaClass CriteriaPeriod DateTime Duration Earthquake EditingMark EditorialOffice EventID ForecastComment FullStatus Head Headline Hypocenter InfoKind InfoKindVersion InfoType Information Int Intensity IntensityStation Item Kind LastKind Local MaxInt Name Observation Office OfficeInfo OriginTime Pref Property PublishingOffice Report ReportDateTime Sentence Serial Significancy SignificancyPart Status TargetDateTime ValidDateTime Text TidalLevelPart Time Title Type VarComment VolcanoActivity VolcanoHeadline VolcanoInfo VolcanoInfoContent VolcanoPrevention Warning jmx_eb:Coordinate jmx_eb:Magnitude jmx_eb:TidalLevel".split(
+  "Appendix Area AreaName Areas ArrivalTime Base Body ChangeStatus City Code CodeDefine Comment Comments Condition Control Coordinate CriteriaClass CriteriaPeriod DateTime Duration Earthquake EditingMark EditorialOffice EventID ForecastComment FullStatus Head Headline Hypocenter InfoKind InfoKindVersion InfoType Information Int Intensity IntensityStation Item Kind LastKind Local MaxInt Name Observation Office OfficeInfo OriginTime Pref Property PublishingOffice Report ReportDateTime Revise Sentence Serial Significancy SignificancyPart Status TargetDateTime ValidDateTime Text TidalLevelPart Time Title Type VarComment VolcanoActivity VolcanoHeadline VolcanoInfo VolcanoInfoContent VolcanoPrevention Warning jmx_eb:Coordinate jmx_eb:Magnitude jmx_eb:TidalLevel".split(
     " ",
   ),
 );

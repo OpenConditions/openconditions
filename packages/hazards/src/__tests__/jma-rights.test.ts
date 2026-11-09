@@ -77,3 +77,19 @@ test("current Niigata JMA rain is admitted while Kanagawa embedded partner mater
   );
   expect(() => assertJmaRights(partner)).toThrow("office");
 });
+
+test.each(["20261102175318_0_VXSE53_270000.xml", "20261106105615_0_VXSE53_010000.xml"])(
+  "admits reviewed Osaka and native shaking revisions without changing captured bytes: %s",
+  (name) => {
+    const bytes = readFileSync(new URL(`live-20261109/${name}`, directory));
+    const report = readJmaReport(bytes, "VXSE53");
+    expect(() => assertJmaRights(report)).not.toThrow();
+    expect(report.nativeXml).toBe(bytes.toString());
+    expect(report.earthquake?.shakingAreas?.length).toBeGreaterThan(0);
+    const restricted = {
+      ...report,
+      nativeXml: report.nativeXml.replace("</Body>", "<Text>転載禁止</Text></Body>"),
+    };
+    expect(() => assertJmaRights(restricted)).toThrow();
+  },
+);
