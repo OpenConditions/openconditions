@@ -82,6 +82,7 @@ test("camerasDomain registers its formats, each producing cameras, views and ima
     nps: main,
     tripcheck: main,
     "cars-cctv": main,
+    "quebec-cameras": main,
   });
   // Only Digitraffic reads its live image times alone.
   expect(
@@ -95,7 +96,7 @@ test("camerasDomain registers its formats, each producing cameras, views and ima
     expect(format.products).toEqual(["cameras"]);
     expect(format.produces).toEqual({
       kinds: ["camera", "camera_view"],
-      properties: ["camera.image"],
+      properties: code === "quebec-cameras" ? [] : ["camera.image"],
     });
   }
 });
@@ -287,6 +288,10 @@ test("the domain renders its catalogue JSON Schema", () => {
 test("a format without a payload parses to nothing", () => {
   const ctx = { fetchedAt: "2026-10-08T06:00:00Z", cadenceSec: 600, reference: {} };
   for (const format of Object.values(camerasDomain.formats)) {
+    if (format.id === "quebec-cameras") {
+      expect(() => format.parse({} as never, {}, ctx)).toThrow(/complete EPSG:4326/);
+      continue;
+    }
     const out = format.parse({} as never, {}, ctx);
     expect(out.features).toEqual([]);
     expect(out.observations).toEqual([]);

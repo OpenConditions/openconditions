@@ -32,5 +32,41 @@
       // link-only nor free.
       "cameras": { "imageHosts": ["511on.ca"], "imageRedistribution": "unknown" },
     },
+    {
+      "subdivision": "qc",
+      "operator": "mtmd",
+      "product": "cameras",
+      "name": "Québec MTMD camera inventory",
+      "tier": "authoritative",
+      "format": "quebec-cameras",
+      "endpoints": {
+        "main": {
+          "url": "https://ws.mapserver.transports.gouv.qc.ca/swtq?service=wfs&version=2.0.0&request=getfeature&typename=ms:infos_cameras&outfile=Camera&srsname=EPSG:4326&outputformat=geojson",
+          "cadenceSec": 86400,
+        },
+      },
+      "snapshot": {
+        "completeness": "complete",
+        "recordsPath": "features",
+        "totalCountPath": "numberMatched",
+      },
+      "freshnessWindowSec": 172800,
+      "coverage": {
+        "countries": ["CA-QC"],
+      },
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Ministère des Transports et de la Mobilité durable — Caméra de circulation, Données Québec. Normalized data (modified). https://www.donneesquebec.ca/recherche/dataset/camera-de-circulation",
+      "homepage": "https://www.donneesquebec.ca/recherche/dataset/camera-de-circulation",
+      "privacyUrl": "https://www.quebec.ca/politique-confidentialite",
+      "terms": {
+        "url": "https://www.donneesquebec.ca/licence/#cc-by",
+        "reviewedAt": "2026-11-07",
+        "note": "CC BY 4.0 covers exported inventory metadata and supplied external link values only. Linked Québec 511 player content and imagery are not licensed by this dataset. No imagery acquisition or redistribution. DateDebutDiffusion is publication-start metadata, not a frame clock. Dataset modification dates have unknown timezone. Inventory count agreement is not a permanent census or equipment availability guarantee.",
+      },
+      "cameras": {
+        "imageRedistribution": "unknown",
+      },
+    },
   ],
 }
