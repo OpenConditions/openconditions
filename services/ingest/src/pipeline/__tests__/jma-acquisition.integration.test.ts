@@ -317,13 +317,20 @@ test("lifecycle area bound refuses publication and initialization atomically", a
   ).toHaveLength(0);
 });
 
-test.each(["2026-11-06T00:00:00Z", "2026-11-08T00:00:00Z"])(
-  "aged or future index %s cannot start payload downloads",
-  async (updated) => {
+test.each([
+  {
+    updated: "2026-11-06T00:00:00Z",
+    headers: new Headers({ date: "Fri, 06 Nov 2026 00:00:00 GMT" }),
+  },
+  { updated: "2026-11-08T00:00:00Z", headers: new Headers() },
+])(
+  "stale transport or future publication cannot start payload downloads: %j",
+  async ({ updated, headers }) => {
     const transport = vi.fn<typeof fetch>(
       async () =>
         new Response(
           `<feed xmlns="http://www.w3.org/2005/Atom"><updated>${updated}</updated><entry><id>${url}</id><link href="${url}"/></entry></feed>`,
+          { headers },
         ),
     );
     const acquisition = new JmaAcquisition(

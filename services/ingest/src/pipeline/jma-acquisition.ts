@@ -107,6 +107,8 @@ export class JmaAcquisition {
           throw new Error("JMA: message outside bounded download horizon");
       }
       const interval = url.endsWith("_l.xml") ? 3_600_000 : 60_000;
+      if (held && index && (!Number.isFinite(held.checkedAt) || held.checkedAt > at + 60_000))
+        throw new Error("JMA: invalid index transport check time");
       if (held && (!index || at - held.checkedAt < interval))
         return {
           body: Buffer.from(held.body, "base64"),
@@ -123,6 +125,25 @@ export class JmaAcquisition {
       let complete = false;
       try {
         const response = await this.fetch(url, { headers, signal, redirect: "error" });
+        if (index && (response.status === 200 || response.status === 304)) {
+          // HTTP validation age describes transport freshness. Atom updated describes
+          // publication activity and can legitimately stay unchanged during quiet periods.
+          const maxAge = url.endsWith("_l.xml") ? 7_200_000 : 600_000;
+          const ageHeader = response.headers.get("age");
+          const dateHeader = response.headers.get("date");
+          const age = ageHeader === null ? 0 : Number(ageHeader) * 1000;
+          const date = dateHeader === null ? at : Date.parse(dateHeader);
+          if (
+            (ageHeader !== null && !/^\d+$/.test(ageHeader)) ||
+            !Number.isFinite(age) ||
+            !Number.isFinite(date) ||
+            date > at + 60_000 ||
+            Math.max(age, at - date) > maxAge
+          ) {
+            await response.body?.cancel();
+            throw new Error("JMA: stale or invalid index transport metadata");
+          }
+        }
         if (response.status === 304) {
           complete = true;
           if (!held) throw new Error("JMA: cold 304");
@@ -158,8 +179,15 @@ export class JmaAcquisition {
         }
         const body = Buffer.concat(chunks);
         // Cache only complete, usable documents; every selected payload is decoded before publication.
-        if (index) readJmaIndex(body, []);
-        else readJmaReport(body, jmaDataUrl(url).family as JmaFamily);
+        if (index) {
+          const updated = Date.parse(readJmaIndex(body, []).updated);
+          if (updated > at + 60_000) throw new Error("JMA: future index publication");
+          if (
+            held &&
+            updated < Date.parse(readJmaIndex(Buffer.from(held.body, "base64"), []).updated)
+          )
+            throw new Error("JMA: backward index publication");
+        } else readJmaReport(body, jmaDataUrl(url).family as JmaFamily);
         await save({
           body: body.toString("base64"),
           checkedAt: at,
@@ -198,11 +226,7 @@ export class JmaAcquisition {
       const document = await this.readDocument(`${BASE}${channel}${suffix}.xml`, deadline);
       networkValidated &&= document.networkValidated;
       const index = readJmaIndex(document.body, families);
-      if (
-        Date.parse(index.updated) > at + 60_000 ||
-        at - Date.parse(index.updated) > (suffix ? 7_200_000 : 600_000)
-      )
-        throw new Error("JMA: aged or future index");
+      if (Date.parse(index.updated) > at + 60_000) throw new Error("JMA: future index publication");
       for (const url of index.urls) urls.add(url);
     }
     if (urls.size > 1000) throw new Error("JMA: poll payload count ceiling");
