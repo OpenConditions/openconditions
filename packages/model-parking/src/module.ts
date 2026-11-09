@@ -65,6 +65,7 @@ export const PARKING_SOURCE_FORMATS = [
   "taipei",
   "utmc",
   "tfnsw",
+  "vegvesen-parkreg",
 ] as const;
 
 /**

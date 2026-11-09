@@ -13,4 +13,5 @@ export * from "./formats/sbb.js";
 export * from "./formats/taipei.js";
 export * from "./formats/tfnsw.js";
 export * from "./formats/utmc.js";
+export * from "./formats/vegvesen-parkreg.js";
 export * from "./site.js";

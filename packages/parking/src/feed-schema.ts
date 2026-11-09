@@ -140,6 +140,16 @@ export type ParkingMapping = z.infer<typeof parkingMappingSchema>;
  * record becomes a site.
  */
 const parkingFeedExtension = {
+  /** Enable only after a bounded national full-export qualification; not a rights gate. */
+  parkreg: z
+    .strictObject({
+      qualified: z.boolean(),
+      acquisitionSha256: z
+        .string()
+        .regex(/^[a-f0-9]{64}$/)
+        .optional(),
+    })
+    .optional(),
   taipei: z.strictObject({ qualifiedSnapshot: z.boolean() }).optional(),
   layout: layoutBlockSchema.optional(),
   parking: parkingMappingSchema.optional(),

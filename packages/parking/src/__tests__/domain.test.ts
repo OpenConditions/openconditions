@@ -63,6 +63,7 @@ test("parkingDomain registers every format with produces", () => {
     "taipei",
     "tfnsw",
     "utmc",
+    "vegvesen-parkreg",
   ]);
   const liveSites = { sites: { required: true }, status: { required: true } };
   const roles: Record<string, unknown> = {
@@ -76,6 +77,7 @@ test("parkingDomain registers every format with produces", () => {
       sources: { required: true },
       spots: { required: false },
     },
+    "vegvesen-parkreg": { main: { required: true }, inventory: { required: true } },
     rdw: { specs: { required: true }, areas: { required: true } },
   };
   for (const [code, format] of Object.entries(parkingDomain.formats)) {
@@ -130,6 +132,10 @@ test("a layout feed without a parking mapping is a lint issue", () => {
 test("a format without a payload parses to nothing", () => {
   const ctx = { fetchedAt: "2026-10-05T06:00:00Z", cadenceSec: 300, reference: {} };
   for (const format of Object.values(parkingDomain.formats)) {
+    if (format.id === "vegvesen-parkreg") {
+      expect(() => format.parse({} as never, {}, ctx)).toThrow(/qualified/);
+      continue;
+    }
     if (format.id === "taipei") {
       expect(() => format.parse({} as never, {}, ctx)).toThrow(/requires one sites/);
       continue;

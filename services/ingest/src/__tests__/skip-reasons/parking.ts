@@ -1,8 +1,41 @@
+import { parkregAcquisitionHash } from "@openconditions/parking";
+import { repoFeed } from "../helpers/catalog.js";
 import type { SkipExemptions, SkipSamples } from "./sample.js";
+
+const national = repoFeed("no-vegvesen-parking");
 
 const json = (value: unknown) => JSON.stringify(value);
 
 export const SAMPLES: SkipSamples = {
+  "parking/vegvesen-parkreg": {
+    reason: "unknown_value",
+    feed: {
+      ...national,
+      parkreg: { qualified: true, acquisitionSha256: parkregAcquisitionHash(national) },
+    },
+    payloads: {
+      inventory: json([{ id: 1 }]),
+      main: json([
+        {
+          id: 1,
+          breddegrad: 59.9,
+          lengdegrad: 10.7,
+          deaktivert: null,
+          aktivVersjon: {
+            versjonsnummer: 1,
+            aktiveringstidspunkt: "2026-01-01T00:00:00Z",
+            sluttidspunkt: null,
+            antallAvgiftsbelagtePlasser: 7,
+            antallAvgiftsfriePlasser: 3,
+            antallForflytningshemmede: 0,
+            antallLadeplasser: 0,
+            typeParkeringsomrade: "LANGS_KJOREBANE",
+            innfartsparkering: "NEW",
+          },
+        },
+      ]),
+    },
+  },
   "parking/taipei": {
     reason: "unknown_value",
     payloads: {
