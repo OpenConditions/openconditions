@@ -268,6 +268,7 @@ test.skipIf(!process.env.OC348_CAPTURE)(
   async () => {
     const capture = process.env.OC348_CAPTURE;
     if (!capture) return;
+    now = new Date().toISOString();
     const liveBytes = readFileSync(capture);
     const deps = { sql: db.sql, lookup, now: () => now, fetch: serve(liveBytes) };
     const result = await runSource(source, deps);

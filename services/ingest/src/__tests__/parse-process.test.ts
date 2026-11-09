@@ -46,7 +46,11 @@ describe("the parse process", { timeout: 60_000 }, () => {
     const original = repoFeed("ca-bc-drivebc-cameras");
     const main = fixture("../../../../packages/cameras/src/__tests__/fixtures/ca-bc-drivebc.csv");
     await expect(
-      child.parse({ feed: original, payloads: { main: [{ data: main, gzipped: false }] }, ctx }),
+      child.parse({
+        feed: { ...original, snapshot: { ...original.snapshot!, qualification: "pending" } },
+        payloads: { main: [{ data: main, gzipped: false }] },
+        ctx,
+      }),
     ).rejects.toThrow(/qualification pending/);
     const feed = {
       ...original,
