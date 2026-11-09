@@ -27,6 +27,7 @@ import {
   heldBytes,
   holdPayload,
   makeAuthorizedFetch,
+  missingCredentials,
   recordSkipped,
   redactSecrets,
   redactUrl,
@@ -440,6 +441,19 @@ export async function runSource(src: CatalogFeed, deps: RunDeps): Promise<RunRes
     closed: false,
   };
   try {
+    const missing = missingCredentials(src, deps.env ?? process.env);
+    if (missing.length > 0) {
+      await upsertSourceStatus(deps.sql, src.id, {
+        freshnessWindowSec: src.freshnessWindowSec,
+        outcome: "missing_configuration",
+        attemptAt,
+        attemptId: attempt.id,
+        networkValidated: false,
+        error: `missing required configuration: ${missing.join(", ")}`,
+      });
+      attempt.closed = true;
+      return { count: 0, durationMs: 0, outcome: "missing_configuration" };
+    }
     return await runAttempt(src, deps, attempt, due);
   } catch (err) {
     if (!attempt.closed) {
@@ -504,6 +518,23 @@ async function runAttempt(
   const env = deps.env ?? process.env;
   const fetchFor = (role: string) => feedFetch(src, { ...deps, env }, role);
   const format = formatOf(src);
+  const publicationCadence = format.publicationCadence === true;
+  if (publicationCadence) {
+    const roles = dataRoles(src);
+    const endpoint = src.endpoints[roles[0] ?? ""];
+    if (
+      format.kind !== "features" ||
+      format.stream ||
+      roles.length !== 1 ||
+      endpoint?.each ||
+      endpoint?.urls ||
+      endpoint?.fanout
+    ) {
+      return failFetch(
+        new Error("publicationCadence requires a buffered single-role feature endpoint"),
+      );
+    }
+  }
   const teeFor = (c: ReturnType<typeof capture>): StreamTeeFactory =>
     c ? archivingTee(c.archive, c.meta) : digestOnlyTee;
 
@@ -955,15 +986,16 @@ async function runAttempt(
           delete freshUrls[role];
         }
       }
-      // A role counts as fetched once its answer is held: a poll that fails
-      // before then leaves it due, or the next polls would parse nothing for it
-      // until its cadence came round again.
-      if (deps.roles) {
+      // Held-role formats count acquisition here. A publication-cadence format
+      // leaves its role due until the same acceptance that commits validators.
+      const acceptRoles = () => {
+        if (!deps.roles) return;
         for (const role of renewed) {
           deps.roles.lastFetchedAt[role] = polledAt;
           delete deps.roles.failing[role];
         }
-      }
+      };
+      if (!publicationCadence) acceptRoles();
       if (answered === 0 && warnings.length > 0) {
         // Every due role failed and its held payload stood in: nothing was
         // validated against the network, so the source's freshness stays as it was.
@@ -987,12 +1019,14 @@ async function runAttempt(
           durationMs: Date.now() - start,
           ...(warnings.length > 0 ? { error: warnings.join("; ") } : {}),
         });
+        if (publicationCadence) acceptRoles();
         return { count: 0, durationMs: Date.now() - start, outcome: "validated_unchanged" };
       }
       captureEvidence =
         warnings.length === 0 && dataRoles(src).every((role) => acquiredRoles.has(role));
       acceptFetch = () => {
         for (const accept of accepts) accept();
+        if (publicationCadence) acceptRoles();
       };
       if (warnings.length > 0) warning = warnings.join("; ");
     } catch (err) {
@@ -1478,6 +1512,7 @@ async function finishFeaturePoll(
   const stampOne = attributionStamp(src, new Date(poll.attempt.at));
   const stamp = (drafts: readonly RecordDraft[]) => drafts.map((d) => stampOne(d));
   const output = {
+    featuresComplete: parse.featuresComplete,
     features: stamp(parse.features),
     observations: stamp(parse.observations),
     offers: stamp(parse.offers),
@@ -1493,6 +1528,7 @@ async function finishFeaturePoll(
       now: deps.now(),
       model: writeModel(deps.model),
       statesComplete: poll.statesComplete,
+      requireValid: formatOf(src).publicationCadence === true,
       ...(poll.warning ? { warning: poll.warning } : {}),
     });
     poll.attempt.closed = true;

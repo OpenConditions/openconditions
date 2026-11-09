@@ -4,6 +4,7 @@ import {
   type IngestDomain,
 } from "@openconditions/ingest-framework";
 import { type WeatherCatalogFeed, weatherFeedShape } from "./feed-schema.js";
+import { CWA_CHANNELS, parseCwaWeather } from "./formats/cwa.js";
 import { parseDigitrafficWeather, parseDigitrafficWeatherStatus } from "./formats/digitraffic.js";
 import { DIGITRAFFIC_SENSORS } from "./formats/digitraffic-sensors.js";
 
@@ -11,6 +12,18 @@ import { DIGITRAFFIC_SENSORS } from "./formats/digitraffic-sensors.js";
 export const WEATHER_PRODUCTS = ["weather"] as const;
 
 const FORMATS: FeedFormat<WeatherCatalogFeed>[] = [
+  {
+    id: "cwa-weather",
+    publicationCadence: true,
+    kind: "features",
+    products: WEATHER_PRODUCTS,
+    produces: {
+      kinds: ["weather_station", "sensor_channel"],
+      properties: CWA_CHANNELS.map((c) => c.property),
+    },
+    endpoints: { main: { required: true } },
+    parse: parseCwaWeather,
+  },
   {
     id: "digitraffic-weather",
     kind: "features",

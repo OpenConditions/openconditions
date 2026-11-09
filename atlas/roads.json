@@ -36387,8 +36387,8 @@
       },
       "terms": {
         "url": "https://ks.carsprogram.org/carsapi_v1/api/wzdx",
-        "reviewedAt": "2026-09-11",
-        "note": "Kansas WZDx road_event_feed_info.license"
+        "note": "Kansas WZDx road_event_feed_info.license",
+        "reviewedAt": "2026-09-11"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -36431,8 +36431,8 @@
         "completeness": "complete",
         "recordsPath": "features"
       },
-      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
       "selectionState": "approved",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
       "parentSourceId": "us-wzdx-events",
       "policyIds": [
         "us-wzdx-events",
