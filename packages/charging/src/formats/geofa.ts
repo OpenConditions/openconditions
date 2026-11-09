@@ -59,7 +59,8 @@ export function parseGeofa(
   const q = feed.endpoints?.["main"]?.geofa?.qualification;
   if (q && (q.count !== features.length || q.sha256 !== geofaDigest(features)))
     throw new Error("GeoFA: unqualified publication");
-  out.qualifiedFeatureSnapshot = q !== undefined;
+  const nonWithdrawing = feed.endpoints?.["main"]?.geofa?.nonWithdrawing === true;
+  out.qualifiedFeatureSnapshot = q !== undefined && !nonWithdrawing;
   for (const body of buffers) {
     const doc = JSON.parse(body.toString("utf8"));
     const crs = doc.crs?.properties?.name;
@@ -165,6 +166,13 @@ export function parseGeofa(
         },
         ctx.fetchedAt,
       );
+      if (nonWithdrawing) {
+        const expiresAt = Math.min(Date.parse(ctx.fetchedAt) + 172800000, until ?? Infinity);
+        draft["freshness"] = {
+          fetchedAt: ctx.fetchedAt,
+          expiresAt: new Date(expiresAt).toISOString(),
+        };
+      }
       if (text(p["versions_id"]))
         (draft["provenance"] as Record<string, unknown>)["recordVersion"] = p["versions_id"];
       draft["extras"] = Object.fromEntries(

@@ -223,3 +223,28 @@ test("rejects distinct EVSE IDs that collapse to one component key", () => {
     ]),
   ).toThrow(/conflicting EVSE component key/);
 });
+
+test("non-withdrawing GeoFA inventory expires at the earlier static TTL or Copenhagen end day", () => {
+  const feed = catalogFeed("dk-geofa-charging");
+  feed.endpoints["main"]!.geofa = { nonWithdrawing: true };
+  const at = "2026-10-25T00:00:00Z";
+  const out = chargingDomain.formats["geofa"]!.parse(
+    feed,
+    {
+      main: [
+        Buffer.from(
+          JSON.stringify({
+            type: "FeatureCollection",
+            features: [row({ gyldig_til: "2026-10-25" })],
+          }),
+        ),
+      ],
+    },
+    parseContext(at),
+  );
+  expect(out.qualifiedFeatureSnapshot).toBe(false);
+  expect(out.features[0]?.["freshness"]).toEqual({
+    fetchedAt: at,
+    expiresAt: "2026-10-25T23:00:00.000Z",
+  });
+});

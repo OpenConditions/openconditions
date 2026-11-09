@@ -1466,7 +1466,9 @@ async function finishFeaturePoll(
   skipped: SkipCounts,
 ): Promise<RunResult> {
   const { src, deps } = poll;
-  if (src.format === "geofa" && !parse.qualifiedFeatureSnapshot)
+  const nonWithdrawing =
+    src.format === "geofa" && src.endpoints["main"]?.geofa?.nonWithdrawing === true;
+  if (src.format === "geofa" && !parse.qualifiedFeatureSnapshot && !nonWithdrawing)
     return fail(poll, "failed", "GeoFA: publication qualification required");
   if (
     heldPayload &&
@@ -1478,7 +1480,9 @@ async function finishFeaturePoll(
     console.warn(`[ingest] ${src.id}: ${error}`);
     return fail(poll, "failed", error);
   }
-  const shrunk = await shrinkTripped(deps.sql, src.id, parse.features.length, deps.now());
+  const shrunk = nonWithdrawing
+    ? undefined
+    : await shrinkTripped(deps.sql, src.id, parse.features.length, deps.now());
   if (shrunk) return failShrunk(poll, "features", "features", parse.features.length, shrunk);
 
   const stampOne = attributionStamp(src, new Date(poll.attempt.at));
@@ -1499,6 +1503,7 @@ async function finishFeaturePoll(
       now: deps.now(),
       model: writeModel(deps.model),
       statesComplete: poll.statesComplete,
+      featuresComplete: !nonWithdrawing,
       ...(poll.warning ? { warning: poll.warning } : {}),
     });
     poll.attempt.closed = true;

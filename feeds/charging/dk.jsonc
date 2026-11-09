@@ -11,9 +11,10 @@
         "main": {
           "url": "https://geofa.geodanmark.dk/ows/fkg/fkg?service=WFS&version=2.0.0&request=GetFeature&typeNames=fkg%3Afkg.t_5607_ladefacilitet&sortBy=objekt_id&outputFormat=application%2Fjson&srsName=EPSG%3A4326&propertyName=geometri,objekt_id,versions_id,systid_fra,systid_til,oprettet,statuskode,off_kode,ladefacilitet_type_kode,effekt_type_kode,tilgaengelighed_type_kode,internationalt_id,internationalt_id1,internationalt_id2,internationalt_id3,internationalt_id4,internationalt_id5,antal_ladepunkter,stiktype,anvendelsesgrad_kwh,driftstart_fra,planstatus_kode,gyldig_fra,gyldig_til,ejer_ladefacilitet,operatoer_ladefacilitet,vejnavn,husnr,postnr,postnr_by",
           "cadenceSec": 86400,
-          "geofa": {},
+          "geofa": { "nonWithdrawing": true, "pageSize": 2000 },
         },
       },
+      "requestLimits": { "perMinute": 60, "perDay": 100 },
       "freshnessWindowSec": 172800,
       "license": "CC-BY-4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
@@ -27,7 +28,7 @@
       },
       "disabled": {
         "since": "2026-11-07",
-        "reason": "WFS is not transaction safe. Paging/load and full publication qualification pending; acquisition refuses requests without a reviewed count and canonical digest.",
+        "reason": "2026-11-09 sorted traversal matched 35830 rows but only 35825 unique IDs; repeated page boundaries and conflicting EVSE identities fail acquisition/parser gates. Non-withdrawing operation is implemented; live publication is not qualified.",
       },
       "extrasFederate": false,
       "extrasAllow": [

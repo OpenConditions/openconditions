@@ -190,6 +190,9 @@ export const endpointSchema = z
     headers: z.record(z.string(), z.string()).optional(),
     geofa: z
       .object({
+        /** Publish observed inventory without withdrawing absent facilities. */
+        nonWithdrawing: z.literal(true).optional(),
+        pageSize: z.union([z.literal(500), z.literal(2000)]).optional(),
         qualification: z
           .object({
             count: z.number().int().nonnegative().max(49000),

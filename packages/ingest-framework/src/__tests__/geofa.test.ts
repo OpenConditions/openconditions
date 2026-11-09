@@ -106,3 +106,63 @@ test("GeoFA backs off a failed qualified generation for a day without provider t
   ).rejects.toThrow(/HTTP 503/);
   expect(fetcher).toHaveBeenCalledTimes(2);
 });
+
+test.each([false, true])(
+  "GeoFA non-withdrawing traversal checks hits and rejects count drift=%s",
+  async (drift) => {
+    const feed = qualified();
+    feed.endpoints["main"]!.geofa = { nonWithdrawing: true } as never;
+    let hits = 0;
+    const asked: string[] = [];
+    const fetcher = (async (input: RequestInfo | URL) => {
+      const u = new URL(String(input));
+      asked.push(u.toString());
+      if (u.searchParams.get("resultType") === "hits")
+        return new Response(
+          `<wfs:FeatureCollection numberMatched="${++hits === 2 && drift ? 500 : 501}"/>`,
+        );
+      return response(
+        u.searchParams.get("startIndex") === "0" ? rows.slice(0, 500) : rows.slice(500),
+      );
+    }) as typeof fetch;
+    if (drift) await expect(fetchEndpoint(feed, "main", fetcher)).rejects.toThrow(/count/);
+    else {
+      expect((await fetchEndpoint(feed, "main", fetcher)).status).toBe("fetched");
+      expect(hits).toBe(2);
+      expect(asked).toHaveLength(4);
+    }
+  },
+);
+
+test("GeoFA accepts observed Danish UUID collation and still rejects its reverse", async () => {
+  const ids = ["025fa062-f51e-11ef-a3bb-07aeb99a9881", "025aac3c-4a82-11f1-b600-37a923807e06"];
+  const data = ids.map((objekt_id) => ({ properties: { objekt_id } }));
+  expect(
+    (await fetchEndpoint(qualified(data), "main", (async () => response(data)) as typeof fetch))
+      .status,
+  ).toBe("fetched");
+  await expect(
+    fetchEndpoint(qualified(data), "main", (async () =>
+      response([...data].reverse())) as typeof fetch),
+  ).rejects.toThrow(/unordered/);
+});
+
+test("GeoFA reconciles the qualified 2000-row page size and rejects a server cap", async () => {
+  const data = Array.from({ length: 2001 }, (_, i) => ({
+    properties: { objekt_id: String(i).padStart(5, "0") },
+  }));
+  const feed = qualified(data);
+  feed.endpoints["main"]!.geofa = { ...feed.endpoints["main"]!.geofa, pageSize: 2000 } as never;
+  const asked: number[] = [];
+  const fetcher = (async (input: RequestInfo | URL) => {
+    const u = new URL(String(input));
+    const offset = Number(u.searchParams.get("startIndex"));
+    asked.push(Number(u.searchParams.get("count")));
+    return response(data.slice(offset, offset + Number(u.searchParams.get("count"))));
+  }) as typeof fetch;
+  expect((await fetchEndpoint(feed, "main", fetcher)).status).toBe("fetched");
+  expect(asked).toEqual([2000, 2000]);
+  await expect(
+    fetchEndpoint(feed, "main", (async () => response(data.slice(0, 500))) as typeof fetch),
+  ).rejects.toThrow(/incomplete/);
+});

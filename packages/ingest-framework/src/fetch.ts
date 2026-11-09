@@ -1236,7 +1236,9 @@ async function fetchRole(
     if (!endpoint.geofa) throw new Error("GeoFA: acquisition qualification policy required");
     const urls = endpointUrls();
     if (urls.length !== 1) throw new Error("GeoFA: one qualified URL required");
-    const sha256 = endpoint.geofa.qualification?.sha256;
+    const sha256 =
+      endpoint.geofa.qualification?.sha256 ??
+      (endpoint.geofa.nonWithdrawing ? "non-withdrawing" : undefined);
     const retry = state.geofaRetry?.get(feed.id);
     if (sha256 && retry?.sha256 === sha256 && at < retry.at)
       throw new Error("GeoFA: daily failure backoff active");

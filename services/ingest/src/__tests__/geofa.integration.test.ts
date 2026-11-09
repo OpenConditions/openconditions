@@ -112,7 +112,7 @@ test("GeoFA runSource publishes qualified inventory through PostGIS and public A
   expect(await active()).toBe(2);
   expect((await run(src, [], 503)).error).toMatch(/GeoFA/);
   expect(await active()).toBe(2);
-  const unqualified = { ...src, endpoints: base.endpoints };
+  const unqualified = { ...src, endpoints: { main: { ...base.endpoints["main"]!, geofa: {} } } };
   expect((await run(unqualified, [])).error).toMatch(/qualification/);
   expect(await active()).toBe(2);
   const subset = [rows[0]!];
@@ -126,4 +126,55 @@ test("GeoFA runSource publishes qualified inventory through PostGIS and public A
   minute = 10;
   expect((await run(feed([]), [])).outcome).toBe("complete_empty");
   expect(await active()).toBe(0);
+});
+
+test("GeoFA non-withdrawing inventory refresh preserves absent facilities and bounds expiry", async () => {
+  await db.sql`truncate conditions.feature cascade`;
+  const rows = [row("1"), row("2")];
+  const src: CatalogFeed = {
+    ...base,
+    disabled: undefined,
+    endpoints: { main: { ...base.endpoints["main"]!, geofa: { nonWithdrawing: true } } },
+  };
+  await syncSources(db.sql, [src]);
+  const runPartial = (data: unknown[]) =>
+    runSource(src, {
+      sql: db.sql,
+      parseProcess: child,
+      now,
+      lookup: async () => [{ address: "93.184.216.34", family: 4 }],
+      fetch: (async (input: RequestInfo | URL) =>
+        new URL(String(input)).searchParams.get("resultType") === "hits"
+          ? new Response(`<wfs:FeatureCollection numberMatched="${data.length}"/>`)
+          : new Response(
+              JSON.stringify({ type: "FeatureCollection", features: data }),
+            )) as typeof fetch,
+    });
+  expect((await runPartial(rows)).outcome).toBe("changed");
+  expect(await active()).toBe(2);
+  expect((await runPartial([rows[0]])).outcome).toBe("changed");
+  expect(await active()).toBe(2);
+  const stored = await db.sql`select record from conditions.feature where source_id=${base.id}`;
+  for (const r of stored)
+    expect(r.record.freshness.expiresAt).toBe(
+      new Date(Date.parse(now()) + 172800000).toISOString(),
+    );
+  const app = Fastify();
+  let readAt = new Date(now());
+  registerScope(app, undefined);
+  registerApiRoutes(app, db.sql, { registry: productionRegistry(), now: () => readAt });
+  try {
+    const url = "/features?bbox=11.9,54.9,12.1,55.1&kind=charging_site";
+    const live = await app.inject({ method: "GET", url });
+    expect(live.statusCode).toBe(200);
+    expect(live.json().records).toHaveLength(2);
+    readAt = new Date(Date.parse(now()) + 172800000);
+    const expired = await app.inject({ method: "GET", url });
+    expect(expired.statusCode).toBe(200);
+    expect(expired.json().records).toHaveLength(0);
+  } finally {
+    await app.close();
+  }
+  expect((await runPartial([])).error).toMatch(/GeoFA/);
+  expect(await active()).toBe(2);
 });
