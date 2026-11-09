@@ -60,4 +60,5 @@ export * from "./stations-webtris.js";
 export * from "./tmc/index.js";
 export * from "./trafikverket.js";
 export * from "./types.js";
+export * from "./wa-webeoc.js";
 export * from "./wzdx.js";

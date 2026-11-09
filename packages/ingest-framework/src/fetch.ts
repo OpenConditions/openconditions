@@ -23,6 +23,7 @@ import { getPath } from "./layouts/row.js";
 import { nextLinkTarget } from "./link-header.js";
 import type { OAuthGrants } from "./oauth-grant.js";
 import { digestPayload, type PayloadDigest } from "./payload.js";
+import { acquirePun, PUN_ROOT, punHostFetch } from "./pun.js";
 import { feedSecretValues, redactSecrets, redactUrl } from "./redact.js";
 import { unzipEntries } from "./zip.js";
 
@@ -171,6 +172,8 @@ export type FetchResult =
 
 export interface FetchOptions {
   state?: FetchState;
+  /** Cancels a bounded PUN acquisition, including queue and body waits. */
+  signal?: AbortSignal;
   /** The resolvers a catalogue parent may name: its domain's. */
   resolvers?: readonly CatalogResolver[];
   /** Where credentials are read; defaults to `process.env`. */
@@ -550,6 +553,20 @@ async function fetchPaginated(
         xml: pg.xmlLists === true,
         firstPage: page === 0,
       });
+      // ArcGIS can return a short page while still reporting truncation. Such
+      // a page cannot prove completeness; offset advancement would skip rows.
+      if (!pg.xmlLists) {
+        const doc = JSON.parse(buffer.toString("utf8"));
+        if (doc?.error) throw new Error(`pagination: ${feedId} provider returned an error page`);
+        if (recordsPath === "features" && doc?.type !== "FeatureCollection") {
+          throw new Error(`pagination: ${feedId} expected a GeoJSON FeatureCollection`);
+        }
+        const limited =
+          doc?.exceededTransferLimit === true || doc?.properties?.exceededTransferLimit === true;
+        if (limited && count < pg.pageSize) {
+          throw new Error(`pagination: ${feedId} short page exceeded transfer limit`);
+        }
+      }
       if (count > 0) {
         out.push(buffer);
         urls.push(url);
@@ -1184,6 +1201,20 @@ export async function fetchEndpoint(
   baseFetch: FetchFn,
   opts: FetchOptions = {},
 ): Promise<FetchResult> {
+  if (
+    feed.format !== "pun" &&
+    Object.values(feed.endpoints).some((endpoint) =>
+      [endpoint.url, ...(endpoint.urls ?? [])].some((url) =>
+        url?.startsWith("https://cruscotto-italia.dati.gov.it/"),
+      ),
+    )
+  )
+    baseFetch = punHostFetch(baseFetch);
+  if (feed.format === "pun") {
+    if (role !== "main" || feedEndpoint(feed, role).url !== `${PUN_ROOT}manifest.json`)
+      throw new Error("PUN requires the public mirror manifest");
+    return acquirePun(baseFetch, opts.state ?? sharedFetchState, opts.signal);
+  }
   const unzip = feedEndpoint(feed, role).unzip;
   // CMS verification has a finite lifetime even when an intermediary supplies
   // a successful response. Keep this policy local to the accepted CMS scope.

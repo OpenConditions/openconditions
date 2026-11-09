@@ -67,6 +67,7 @@ describe("roads formats", () => {
         "open511",
         "trafikverket",
         "vic-disruptions",
+        "wa-webeoc",
         "wzdx",
       ].sort(),
     );
