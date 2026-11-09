@@ -30,9 +30,6 @@
               "maxResponseBytes": 8388608
             }
           },
-          "snapshot": {
-            "completeness": "complete"
-          },
           "freshnessWindowSec": 3600,
           "requestLimits": {
             "perMinute": 6
@@ -42,7 +39,7 @@
           "attribution": "Data Source: Environment and Climate Change Canada",
           "terms": {
             "url": "https://eccc-msc.github.io/open-data/usage-policy/readme_en/",
-            "reviewedAt": "2026-11-08"
+            "reviewedAt": "2026-11-09"
           },
           "privacyUrl": "https://www.canada.ca/en/transparency/privacy.html",
           "homepage": "https://eccc-msc.github.io/open-data/msc-data/obs_station/readme_obs_insitu_en/"
@@ -138,9 +135,6 @@
           "maxResponseBytes": 8388608
         }
       },
-      "snapshot": {
-        "completeness": "complete"
-      },
       "freshnessWindowSec": 3600,
       "requestLimits": {
         "perMinute": 6
@@ -150,7 +144,7 @@
       "attribution": "Data Source: Environment and Climate Change Canada",
       "terms": {
         "url": "https://eccc-msc.github.io/open-data/usage-policy/readme_en/",
-        "reviewedAt": "2026-11-08"
+        "reviewedAt": "2026-11-09"
       },
       "privacyUrl": "https://www.canada.ca/en/transparency/privacy.html",
       "homepage": "https://eccc-msc.github.io/open-data/msc-data/obs_station/readme_obs_insitu_en/",
@@ -171,7 +165,7 @@
       },
       "evidence": {
         "url": "https://eccc-msc.github.io/open-data/usage-policy/readme_en/",
-        "reviewedAt": "2026-11-08"
+        "reviewedAt": "2026-11-09"
       },
       "permissions": {
         "display": "yes",

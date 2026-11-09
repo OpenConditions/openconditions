@@ -244,6 +244,7 @@ export function parseEccc(
   ctx: ParseContext,
 ): ParseOutput {
   const out = emptyParseOutput();
+  out.featuresComplete = false;
   const index = new Map<string, { stationId: string; point: readonly [number, number] }[]>();
   for (const f of collection(payloads["sites"])) {
     const p = f["properties"] as Record<string, unknown>;

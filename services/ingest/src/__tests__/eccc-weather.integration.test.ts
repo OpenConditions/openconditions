@@ -191,13 +191,13 @@ test("actual acquisition, status joins, public API, expiry and atomic rollback",
     await db.sql`SELECT count(*)::int AS n FROM conditions.feature WHERE source_id=${feed.id} AND tombstoned_at IS NULL`;
   expect(n!.n).toBe(2);
   broken = false;
-  // Only a complete metadata inventory can remove a feature. Status alone never does.
+  // A rolling metadata response carries no national absence authority.
   at = "2026-11-09T02:00:00Z";
   currentSites = { ...sites, features: [sites.features[0]], numberMatched: 1, numberReturned: 1 };
   expect((await poll()).error).toBeUndefined();
   const [remaining] =
     await db.sql`SELECT count(*)::int AS n FROM conditions.feature WHERE source_id=${feed.id} AND tombstoned_at IS NULL`;
-  expect(remaining!.n).toBe(1);
+  expect(remaining!.n).toBe(2);
 });
 
 // Network qualification is separate from the deterministic full gate.
@@ -235,7 +235,7 @@ test.runIf(process.env["ECCC_LIVE"] === "1")(
   120000,
 );
 
-test("complete feature absence ends retained fresh readings", async () => {
+test("bounded rolling inventory absence retains fresh readings", async () => {
   at = "2026-11-08T01:10:00Z";
   const isolated = { ...feed, id: "ca-eccc-withdraw-weather" };
   await syncSources(db.sql, [isolated]);
@@ -259,7 +259,7 @@ test("complete feature absence ends retained fresh readings", async () => {
   const response = await app.inject({
     url: "/observations/latest?source=ca-eccc-withdraw-weather",
   });
-  expect(response.json().records).toHaveLength(0);
+  expect(response.json().records).toHaveLength(5);
 });
 
 test("acquisition aborts an oversized response and restores held state", async () => {

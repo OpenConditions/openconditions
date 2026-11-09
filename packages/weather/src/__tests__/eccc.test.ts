@@ -23,6 +23,7 @@ describe("MSC/CA SWOB", () => {
   test("station-level readings have exact captured values, source times and canonical units", () => {
     const out = parse();
     expect(out.features).toHaveLength(2);
+    expect(out.featuresComplete).toBe(false);
     expect(out.features[0]).not.toHaveProperty("components");
     expect(out.observations.map((r) => r["result"])).toEqual([
       { type: "quantity", value: 1.8, unit: "Cel" },

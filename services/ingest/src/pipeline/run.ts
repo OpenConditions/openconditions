@@ -1499,7 +1499,10 @@ async function finishFeaturePoll(
     console.warn(`[ingest] ${src.id}: ${error}`);
     return fail(poll, "failed", error);
   }
-  const shrunk = await shrinkTripped(deps.sql, src.id, parse.features.length, deps.now());
+  const shrunk =
+    parse.featuresComplete === false
+      ? undefined
+      : await shrinkTripped(deps.sql, src.id, parse.features.length, deps.now());
   if (shrunk) return failShrunk(poll, "features", "features", parse.features.length, shrunk);
 
   const stampOne = attributionStamp(src, new Date(poll.attempt.at));
@@ -1522,6 +1525,7 @@ async function finishFeaturePoll(
       statesComplete: poll.statesComplete,
       atomicCandidate: poll.atomicCandidate,
       observationRevisions: parse.observationRevisions,
+      featuresComplete: parse.featuresComplete,
       ...(poll.warning ? { warning: poll.warning } : {}),
     });
     poll.attempt.closed = true;

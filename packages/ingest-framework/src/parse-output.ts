@@ -71,6 +71,8 @@ export interface ObservationRevision {
 export interface ParseOutput {
   situations: RecordDraft[];
   features: RecordDraft[];
+  /** False for bounded rolling inventories without feature absence authority. */
+  featuresComplete?: boolean;
   observations: RecordDraft[];
   observationRevisions?: ObservationRevision[];
   offers: RecordDraft[];
