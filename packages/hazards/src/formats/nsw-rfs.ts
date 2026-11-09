@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import type { FeedPayloads, ParseContext, ParseOutput } from "@openconditions/ingest-framework";
 import { capReferences } from "@openconditions/model-hazards";
 import { XMLBuilder, XMLParser, XMLValidator } from "fast-xml-parser";
@@ -267,6 +268,7 @@ export function parseNswRfs(
     offers: [],
     situationsComplete: false,
     snapshotQualified: feed.rfsCurrentSnapshotQualified === true,
+    nswRfsOrdering: { published, incidents: [] },
   };
   let terminal = 0;
   let duplicates = 0;
@@ -344,6 +346,12 @@ export function parseNswRfs(
         throw new Error(`RFS: missing/ambiguous ${key}`);
       return values[0]!.value;
     };
+    const checked = capDrafts(alert, feed, {
+      groupId: `nsw-rfs:${SENDER}:${alert.incidents}`,
+      fetchedAt: ctx.fetchedAt,
+    });
+    if (Object.values(checked.skipped).some((n) => n > 0) || checked.drafts.length !== 1)
+      throw new Error("RFS: invalid native incident disposition");
     const type = parameter("IncidentType");
     const fire = parameter("IsFire");
     if (!["Yes", "No"].includes(fire)) throw new Error("RFS: unknown IsFire");
@@ -438,6 +446,19 @@ export function parseNswRfs(
   for (const alert of currentMessages(candidates).current) {
     if (incidents.has(alert.incidents!)) throw new Error("RFS: conflicting incident revisions");
     incidents.add(alert.incidents!);
+    const semantic = structuredClone(alert);
+    // RFS changes message ids on reissue and may extend CAP expiry without
+    // changing the incident. Neither is a new safety-content revision.
+    delete (semantic as Partial<CapAlert>).identifier;
+    for (const info of semantic.info ?? []) delete info.expires;
+    const hash = (value: unknown) =>
+      createHash("sha256").update(JSON.stringify(value)).digest("hex");
+    out.nswRfsOrdering!.incidents.push({
+      id: alert.incidents!,
+      sent: alert.sent,
+      content: hash(semantic),
+      expiry: hash((alert.info ?? []).map((i) => i.expires)),
+    });
     const draft = draftsByMessage.get(alert.identifier);
     if (draft) out.situations.push(draft);
   }

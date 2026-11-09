@@ -1303,6 +1303,7 @@ async function finishEventPoll(
     summary = await publishSituations(deps.sql, src, {
       situations,
       situationsComplete: parse.situationsComplete,
+      nswRfsOrdering: parse.nswRfsOrdering,
       ...(unlocatableSituations
         ? {
             unlocatable: unlocatableSituations,

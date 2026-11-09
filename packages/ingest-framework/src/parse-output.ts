@@ -57,12 +57,19 @@ export interface StatusSubject {
  */
 export type StatusIndex = ReadonlyMap<string, readonly StatusSubject[]>;
 
+/** Trusted native RFS clocks; never populated from catalogue or payload configuration. */
+export interface NswRfsOrdering {
+  published: string;
+  incidents: { id: string; sent: string; content: string; expiry: string }[];
+}
+
 /** What one poll of a feed parsed into, per record class. */
 export interface ParseOutput {
   /** False when the provider's current-snapshot contract is not qualified; the worker must retain last-good publication. */
   snapshotQualified?: boolean;
   /** False denies absence-based withdrawal; drafts must carry finite source-bounded expiry. */
   situationsComplete?: boolean;
+  nswRfsOrdering?: NswRfsOrdering;
   situations: RecordDraft[];
   features: RecordDraft[];
   observations: RecordDraft[];

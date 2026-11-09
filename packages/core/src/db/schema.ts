@@ -812,3 +812,20 @@ export const federationSubscription = conditionsSchema.table(
     ),
   ],
 );
+
+/** RFS publisher clocks survive record expiry and bounded revision retention.
+ * No automatic pruning: forgetting an incident would permit its stale revival.
+ * Empty incident id holds the distribution high-water, not absence authority.
+ */
+export const nswRfsClock = conditionsSchema.table(
+  "nsw_rfs_clock",
+  {
+    sourceId: text("source_id").notNull(),
+    incidentId: text("incident_id").notNull(),
+    sent: text("sent").notNull(),
+    published: text("published").notNull(),
+    content: text("content").notNull(),
+    expiry: text("expiry").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.sourceId, t.incidentId] })],
+);

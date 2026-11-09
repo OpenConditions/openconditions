@@ -21,6 +21,7 @@ import {
   writeSnapshotIn,
 } from "@openconditions/storage";
 import type postgres from "postgres";
+import { checkNswRfsOrdering } from "./nsw-rfs-ordering.js";
 import { upsertSourceStatus } from "./source-status.js";
 
 type Sql = postgres.Sql;
@@ -240,6 +241,7 @@ export async function publishSituations(
   input: {
     situations: readonly RecordDraft[];
     situationsComplete?: boolean;
+    nswRfsOrdering?: ParseOutput["nswRfsOrdering"];
     unlocatable?: readonly string[];
     /** Local ids of the records behind `unlocatable`; a stored effect's id begins with its record's. */
     unlocatableRecords?: readonly string[];
@@ -254,6 +256,7 @@ export async function publishSituations(
   const ids = situations.map((d) => String(d["id"]));
   return sql.begin(async (tx) => {
     await tx`SELECT pg_advisory_xact_lock(hashtext(${src.id}))`;
+    if (input.nswRfsOrdering) await checkNswRfsOrdering(tx, src.id, input.nswRfsOrdering);
     const unlocatable = input.unlocatable ?? [];
     const records = input.unlocatableRecords ?? [];
     // A stored situation is kept when this poll drops it whole, or when it
@@ -279,6 +282,8 @@ export async function publishSituations(
       { situations },
       { ...writeContext(input), complete: { situation: input.situationsComplete ?? true } },
     );
+    if (input.nswRfsOrdering && summary.rejected.length > 0)
+      throw new Error("RFS ordering: model rejected incident; poll rolled back");
     const [{ live }] = await tx<{ live: number }[]>`
       SELECT count(*)::int AS live FROM conditions.situation
        WHERE source_id = ${src.id} AND tombstoned_at IS NULL`;
