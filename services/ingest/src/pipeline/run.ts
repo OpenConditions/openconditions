@@ -484,9 +484,14 @@ async function runAttempt(
   // every poll fact recorded after it (the raw-payload
   // identity an archived blob will be filed under).
   let payloadHashes: string[] | undefined;
+  let sourceClockNetworkValidated = false;
   const recordStatus = async (update: SourceStatusUpdate) => {
     await upsertSourceStatus(deps.sql, src.id, {
       ...update,
+      ...(format.sourceClock ? { attemptAt } : {}),
+      ...(format.sourceClock
+        ? { publicationFresh: false, networkValidated: sourceClockNetworkValidated }
+        : {}),
       attemptId,
       ...(payloadHashes ? { payloadHashes } : {}),
     });
@@ -984,7 +989,8 @@ async function runAttempt(
         });
         return { count: 0, durationMs: Date.now() - start, outcome: "failed", error };
       }
-      if (fetched.length === 0) {
+      sourceClockNetworkValidated = answered > 0 && warnings.length === 0;
+      if (fetched.length === 0 && !format.sourceClock) {
         await recordStatus({
           freshnessWindowSec: src.freshnessWindowSec,
           outcome: "validated_unchanged",
@@ -1479,6 +1485,10 @@ async function finishFeaturePoll(
     console.warn(`[ingest] ${src.id}: ${error}`);
     return fail(poll, "failed", error);
   }
+  if (parse.publication?.sourcePublishedAt !== undefined) {
+    if (!poll.statesComplete || poll.warning)
+      return fail(poll, "failed", "source-clock snapshot requires successful current roles");
+  }
   const shrunk =
     parse.featuresComplete === true && parse.features.length === 0
       ? undefined
@@ -1488,6 +1498,7 @@ async function finishFeaturePoll(
   const stampOne = attributionStamp(src, new Date(poll.attempt.at));
   const stamp = (drafts: readonly RecordDraft[]) => drafts.map((d) => stampOne(d));
   const output = {
+    ...(parse.publication ? { publication: parse.publication } : {}),
     features: stamp(parse.features),
     observations: stamp(parse.observations),
     offers: stamp(parse.offers),

@@ -70,6 +70,7 @@
               "parkapi-v3",
               "rdw",
               "sbb",
+              "taipei",
               "tfnsw",
               "utmc"
             ]
@@ -1063,6 +1064,18 @@
             "required": [
               "reason",
               "since"
+            ],
+            "additionalProperties": false
+          },
+          "taipei": {
+            "type": "object",
+            "properties": {
+              "qualifiedSnapshot": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "qualifiedSnapshot"
             ],
             "additionalProperties": false
           },
