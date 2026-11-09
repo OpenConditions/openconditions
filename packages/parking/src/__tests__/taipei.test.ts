@@ -132,12 +132,18 @@ it("keeps stable IDs across row order and tag case, and handles absent/zero/mult
     expect((location.entrances ?? []).map((e) => e.point.coordinates)).toEqual(expected);
   }
 });
-it("refuses activation without explicit qualification", () => {
+it("allows enabled partial operation without granting snapshot authority", () => {
   const f = feed();
   delete f.disabled;
-  expect(parkingDomain.lintFeed?.(f)).toContain(
-    "taipei activation requires qualifiedSnapshot after geometry/time and withdrawal qualification",
-  );
+  expect(parkingDomain.lintFeed?.(f)).toEqual([]);
+  const out = parseTaipei(f, payloads(), parseContext(now));
+  expect(out.publication).toMatchObject({
+    featuresComplete: false,
+    offersComplete: false,
+    statesComplete: false,
+  });
+  expect(out.observations.length).toBeGreaterThan(0);
+  expect(out.observations.every((r) => r["freshness"] !== undefined)).toBe(true);
 });
 
 it("interprets CST under other process timezones", () => {

@@ -90,14 +90,6 @@ const LAYOUTS: ReadonlySet<string> = new Set(PARKING_LAYOUT_FORMATS);
  * a field for some formats only.
  */
 function lintFeed(feed: FeedDefinition): string[] {
-  if (
-    feed.format === "taipei" &&
-    !feed.disabled &&
-    (feed as FeedDefinition & ParkingFeedExtension).taipei?.qualifiedSnapshot !== true
-  )
-    return [
-      "taipei activation requires qualifiedSnapshot after geometry/time and withdrawal qualification",
-    ];
   if (!LAYOUTS.has(feed.format)) return [];
   const own = feed as FeedDefinition & ParkingFeedExtension;
   return [

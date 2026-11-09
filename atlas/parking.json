@@ -1579,8 +1579,8 @@
           "attribution": "臺北市停車管理工程處 2026 臺北市停車場資訊V2／剩餘停車位數V2；依政府資料開放授權條款第1版釋出 (https://data.gov.tw/license)",
           "terms": {
             "url": "https://data.gov.tw/dataset/128435",
-            "reviewedAt": "2026-11-07",
-            "note": "Dataset-specific OGDL 1.0 redistribution grant confirmed. Activation awaits independent geometry/time and snapshot withdrawal qualification. Heavy motorcycles retained in raw XML only; five canonical categories, reserved counts overlap vehicle totals. Cadences are operator choices, not a publisher SLA or quota."
+            "reviewedAt": "2026-11-09",
+            "note": "Dataset-specific OGDL 1.0 redistribution grant confirmed. Enabled partial inventory and five-category availability with source expiry; no snapshot withdrawal authority. Heavy motorcycles retained in raw XML only; five canonical categories, reserved counts overlap vehicle totals. Cadences are operator choices, not a publisher SLA or quota."
           },
           "privacyUrl": "https://data.gov.tw/privacy",
           "homepage": "https://data.gov.tw/dataset/128435",
@@ -1588,10 +1588,6 @@
             "countries": [
               "TW-TPE"
             ]
-          },
-          "disabled": {
-            "reason": "Pending source geometry/time and snapshot withdrawal qualification; see Taipei format documentation",
-            "since": "2026-11-07"
           },
           "taipei": {
             "qualifiedSnapshot": false
@@ -4060,8 +4056,8 @@
       "attribution": "臺北市停車管理工程處 2026 臺北市停車場資訊V2／剩餘停車位數V2；依政府資料開放授權條款第1版釋出 (https://data.gov.tw/license)",
       "terms": {
         "url": "https://data.gov.tw/dataset/128435",
-        "reviewedAt": "2026-11-07",
-        "note": "Dataset-specific OGDL 1.0 redistribution grant confirmed. Activation awaits independent geometry/time and snapshot withdrawal qualification. Heavy motorcycles retained in raw XML only; five canonical categories, reserved counts overlap vehicle totals. Cadences are operator choices, not a publisher SLA or quota."
+        "reviewedAt": "2026-11-09",
+        "note": "Dataset-specific OGDL 1.0 redistribution grant confirmed. Enabled partial inventory and five-category availability with source expiry; no snapshot withdrawal authority. Heavy motorcycles retained in raw XML only; five canonical categories, reserved counts overlap vehicle totals. Cadences are operator choices, not a publisher SLA or quota."
       },
       "privacyUrl": "https://data.gov.tw/privacy",
       "homepage": "https://data.gov.tw/dataset/128435",
@@ -4069,10 +4065,6 @@
         "countries": [
           "TW-TPE"
         ]
-      },
-      "disabled": {
-        "reason": "Pending source geometry/time and snapshot withdrawal qualification; see Taipei format documentation",
-        "since": "2026-11-07"
       },
       "taipei": {
         "qualifiedSnapshot": false
@@ -4094,7 +4086,7 @@
       },
       "evidence": {
         "url": "https://data.gov.tw/dataset/128435",
-        "reviewedAt": "2026-11-07"
+        "reviewedAt": "2026-11-09"
       },
       "permissions": {
         "display": "yes",
