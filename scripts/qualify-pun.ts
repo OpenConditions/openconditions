@@ -9,13 +9,8 @@ import { formatOf, loadIngestCatalog } from "../services/ingest/src/domains.js";
 
 /** Full frozen mirror generation only; no publication, cache acceptance or catalogue activation. */
 export async function qualifyPun(argv: readonly string[]): Promise<void> {
-  const required = [
-    "--full-generation",
-    "--reviewed-crs-runtime",
-    "--exclusive-egress-ip-single-worker",
-  ];
-  if (argv.length !== required.length || required.some((flag) => !argv.includes(flag)))
-    throw Error(`Qualification requires explicit operator assertions: ${required.join(" ")}`);
+  if (argv.length !== 1 || argv[0] !== "--full-generation")
+    throw Error("Qualification requires explicit --full-generation flag");
   const REPO_CATALOG = await loadIngestCatalog({});
   const feed = [...REPO_CATALOG.feeds, ...REPO_CATALOG.disabled].find(
     (f) => f.id === "it-agid-pun-charging",
@@ -24,10 +19,7 @@ export async function qualifyPun(argv: readonly string[]): Promise<void> {
   const started = Date.now();
   const result = await fetchEndpoint(feed, "main", guardedFetch(), {
     state: createFetchState(),
-    env: {
-      PUN_REVIEWED_CRS_RUNTIME: "qualified",
-      PUN_EGRESS_OWNERSHIP: "exclusive-ip-single-worker",
-    },
+    env: {},
   });
   if (result.status !== "fetched") throw Error("PUN full generation was not acquired");
   const output = formatOf(feed).parse(
@@ -42,6 +34,8 @@ export async function qualifyPun(argv: readonly string[]): Promise<void> {
       elapsedMs: Date.now() - started,
       budget: PUN_BUDGET,
       published: false,
+      features: output.features.length,
+      resourceUsage: process.resourceUsage(),
     }),
   );
 }

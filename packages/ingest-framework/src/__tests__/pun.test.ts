@@ -4,6 +4,16 @@ import { createFetchState, fetchEndpoint } from "../fetch.js";
 import { PUN_BUDGET, punHostFetch } from "../pun.js";
 import { catalogFeed } from "./helpers/catalog-feed.js";
 
+vi.mock("../pun-coordination.js", () => ({
+  punCoordinationDirectory: () => "test-memory-coordination",
+  withPunCoordination: async (
+    _directory: string,
+    work: (budget: {
+      next: number;
+      reserveUntil: (n: number) => Promise<void>;
+    }) => Promise<unknown>,
+  ) => work({ next: 0, reserveUntil: async () => {} }),
+}));
 const shard = Buffer.from(
   JSON.stringify({
     _generated_at: "2026-11-06T07:04:56Z",
@@ -18,10 +28,7 @@ const entry = {
 };
 const manifest = (files = [entry]) =>
   JSON.stringify({ sources: { pun: { status: "ok", last_run: "2026-11-06T07:08:53Z", files } } });
-const env = {
-  PUN_REVIEWED_CRS_RUNTIME: "qualified",
-  PUN_EGRESS_OWNERSHIP: "exclusive-ip-single-worker",
-};
+const env = {};
 const feed = catalogFeed({
   id: "it-agid-pun-charging",
   format: "pun",
@@ -147,10 +154,16 @@ it("promptly defers long backoff and later polls make zero calls until the retai
   });
 });
 
-it("requires explicit runtime qualification and exclusive shared-IP ownership before provider access", async () => {
-  const fn = vi.fn(async () => new Response(manifest()));
-  await expect(fetchEndpoint(feed, "main", fn, { env: {} })).rejects.toThrow(/qualification/);
-  expect(fn).not.toHaveBeenCalled();
+it("acquires qualified PUN with default runtime settings and no assertion flags", async () => {
+  const result = await clock(() =>
+    fetchEndpoint(
+      feed,
+      "main",
+      async (input) => new Response(String(input).endsWith("manifest.json") ? manifest() : shard),
+      { state: createFetchState(), env: {} },
+    ),
+  );
+  expect(result.status).toBe("fetched");
 });
 it("aborts an active body and releases the host queue", async () => {
   await clock(async () => {
@@ -254,5 +267,53 @@ it("cancels a pacing wait without shortening the next permitted request time", a
     expect(starts).toHaveLength(1);
     await fetch(feed.endpoints.main!.url!);
     expect(starts[1]! - starts[0]!).toBeGreaterThanOrEqual(1000);
+  });
+});
+it("preserves Retry-After on 503 failures for a later acquisition", async () => {
+  await clock(async () => {
+    const fn = vi.fn(
+      async () => new Response(null, { status: 503, headers: { "Retry-After": "90000" } }),
+    );
+    await expect(run(fn)).rejects.toThrow(/later poll/);
+    const calls = fn.mock.calls.length;
+    await expect(run(fn)).rejects.toThrow(/later poll/);
+    expect(fn).toHaveBeenCalledTimes(calls);
+    await vi.advanceTimersByTimeAsync(90000000);
+  });
+});
+it("reuses a digest-matching accepted shard without spending another municipal request", async () => {
+  const state = createFetchState();
+  let shards = 0;
+  const fn: typeof fetch = async (input) => {
+    if (String(input).endsWith("manifest.json")) return new Response(manifest());
+    shards++;
+    return new Response(shard, { headers: { etag: '"stable"' } });
+  };
+  await clock(async () => {
+    const first = await fetchEndpoint(feed, "main", fn, { state, env });
+    if (first.status !== "fetched") throw Error();
+    first.accept();
+    const next = await fetchEndpoint(feed, "main", fn, { state, env });
+    expect(next.status).toBe("fetched");
+    expect(shards).toBe(1);
+  });
+});
+it("rejects repeated manifest paths before starting any municipal requests", async () => {
+  const fn = vi.fn(async () => new Response(manifest([entry, entry])));
+  await expect(clock(() => run(fn))).rejects.toThrow(/duplicate manifest paths/);
+  expect(fn).toHaveBeenCalledTimes(1);
+});
+it("also defers out-of-budget cooldown for other mirror callers using the shared host budget", async () => {
+  await clock(async () => {
+    const fn = vi.fn(
+      async () => new Response(null, { status: 429, headers: { "Retry-After": "90000" } }),
+    );
+    const started = Date.now();
+    await expect(
+      punHostFetch(fn)("https://cruscotto-italia.dati.gov.it/data/other/092090.json"),
+    ).rejects.toThrow(/later poll/);
+    expect(Date.now() - started).toBeLessThan(PUN_BUDGET.elapsedMs);
+    expect(fn).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(90000000);
   });
 });

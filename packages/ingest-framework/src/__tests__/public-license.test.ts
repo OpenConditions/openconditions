@@ -1,3 +1,4 @@
+import { contentHash } from "@openconditions/model";
 import { describe, expect, it, test } from "vitest";
 import { LICENSES } from "../catalog/licenses.js";
 import {
@@ -124,4 +125,30 @@ test("nested captured upstream source permissions cannot be hidden by a public f
       },
     } as EgressRecord),
   ).toBe(false);
+});
+test("PUN public inventory excludes raw status diagnostics while operator records retain them", () => {
+  const record = {
+    provenance: { attribution: { license: "CC-BY-4.0" }, sourceFormat: "pun" },
+    extras: {
+      pun: { status: "AVAILABLE", publicationStatus: "WAITING_VALIDATION_DATA" },
+      other: "kept",
+    },
+  };
+  expect(publicRecords([record])[0]?.extras).toEqual({ other: "kept" });
+  expect(withoutReporter(record).extras.pun.status).toBe("AVAILABLE");
+  expect(record.extras.pun.status).toBe("AVAILABLE");
+});
+
+test("redacting PUN diagnostics preserves a verifiable public content hash", () => {
+  const record = {
+    id: "test",
+    class: "feature",
+    kind: "charging_site",
+    provenance: { attribution: { license: "CC-BY-4.0" }, sourceFormat: "pun" },
+    extras: { pun: { status: "AVAILABLE" } },
+    contentHash: "",
+  };
+  record.contentHash = contentHash(record as unknown as Record<string, unknown>);
+  const [shown] = publicRecords([record]);
+  expect(shown?.contentHash).toBe(contentHash(shown as unknown as Record<string, unknown>));
 });

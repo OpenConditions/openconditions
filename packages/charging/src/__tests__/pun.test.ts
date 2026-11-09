@@ -143,3 +143,20 @@ it("preserves unknown representative connector tokens as diagnostics without los
   expect(JSON.stringify(out.features)).toContain(raw);
   expect(JSON.stringify(out.features)).toContain("UNKNOWN");
 });
+it("keeps CPO party identifiers source-qualified without asserting global ownership", () => {
+  const out = parse([
+    { ...capture, punti: [{ ...capture.punti[0], cpo: "Operator", party_id: "XYZ" }] },
+  ]);
+  expect(out.features[0]?.["operator"]).toMatchObject({
+    ids: [{ scheme: "provider", authority: "it-agid-pun-charging:party_id", id: "XYZ" }],
+  });
+});
+it.each(["1006", "2010", "049405"])(
+  "retains malformed optional postal text %s internally without inventing a public postcode",
+  (postal) => {
+    const out = parse([{ ...capture, punti: [{ ...capture.punti[0], cap: postal }] }]);
+    expect(out.features).toHaveLength(1);
+    expect(out.features[0]?.["location"]).not.toHaveProperty("address.postalCode");
+    expect(out.features[0]?.["extras"]).toMatchObject({ pun: { postalCodeRaw: postal } });
+  },
+);

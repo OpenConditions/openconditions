@@ -14,10 +14,7 @@ const rowSchema = z.object({
   lat: z.number().min(35).max(47.5),
   lon: z.number().min(6).max(19),
   indirizzo: z.string().nullable(),
-  cap: z
-    .string()
-    .regex(/^[0-9]{5}$/)
-    .nullable(),
+  cap: z.string().nullable(),
   cpo: z.string().nullable(),
   party_id: z.string().nullable(),
   stato_raw: z.string(),
@@ -98,10 +95,21 @@ export function parsePun(feed: ChargingCatalogFeed, payloads: FeedPayloads, ctx:
         lifecycle,
         address: {
           street: row.indirizzo ?? undefined,
-          postalCode: row.cap ?? undefined,
+          postalCode: row.cap !== null && /^[0-9]{5}$/.test(row.cap) ? row.cap : undefined,
           country: "IT",
         },
-        operator: row.cpo ? { name: row.cpo } : undefined,
+        operator: row.cpo
+          ? {
+              name: row.cpo,
+              ...(row.party_id
+                ? {
+                    ids: [
+                      { scheme: "provider", authority: `${feed.id}:party_id`, id: row.party_id },
+                    ],
+                  }
+                : {}),
+            }
+          : undefined,
         twentyFourSeven: row.open_24h7 === true ? true : undefined,
         upstream: [
           {
@@ -138,6 +146,7 @@ export function parsePun(feed: ChargingCatalogFeed, payloads: FeedPayloads, ctx:
         status: row.stato_raw,
         publicationStatus: row.publication_status,
         partyId: row.party_id,
+        postalCodeRaw: row.cap,
         parkingType: row.tipo_parcheggio,
         connectorCount: row.n_connettori,
         representativeStandard: row.standard_connettore,

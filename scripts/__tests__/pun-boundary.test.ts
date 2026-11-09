@@ -7,11 +7,11 @@ import { INGEST_DOMAINS } from "../../services/ingest/src/domains.js";
 import { checkFeeds } from "../feeds-check.js";
 import { qualifyPun } from "../qualify-pun.js";
 
-it("keeps unqualified PUN outside scheduler input and normal checker makes zero provider calls", async () => {
+it("keeps qualified PUN in scheduler input and normal checker makes zero provider calls", async () => {
   const baked = path.resolve("feeds");
   const catalog = await loadCatalog(INGEST_DOMAINS, { baked });
-  expect(catalog.feeds.some((f) => f.id === "it-agid-pun-charging")).toBe(false);
-  expect(catalog.disabled.some((f) => f.id === "it-agid-pun-charging")).toBe(true);
+  expect(catalog.feeds.some((f) => f.id === "it-agid-pun-charging")).toBe(true);
+  expect(catalog.disabled.some((f) => f.id === "it-agid-pun-charging")).toBe(false);
   const fetch = vi.fn(async () => {
     throw Error("provider must not be called");
   });
@@ -21,14 +21,16 @@ it("keeps unqualified PUN outside scheduler input and normal checker makes zero 
     fetch,
   });
   expect(fetch).not.toHaveBeenCalled();
-  expect(results).toEqual([expect.objectContaining({ level: "skipped", skipReason: "disabled" })]);
+  expect(results).toEqual([
+    expect.objectContaining({ level: "skipped", skipReason: "configuration" }),
+  ]);
 });
 
 it("rejects implicit qualification without loading or fetching provider data", async () => {
-  await expect(qualifyPun([])).rejects.toThrow(/explicit operator assertions/);
+  await expect(qualifyPun([])).rejects.toThrow(/explicit --full-generation/);
 });
 
-it("normal checker excludes even an operator-enabled PUN entry with runtime assertions", async () => {
+it("normal checker excludes an enabled PUN entry with default runtime settings", async () => {
   const dir = mkdtempSync(path.join(tmpdir(), "pun-check-"));
   try {
     mkdirSync(path.join(dir, "charging"));
@@ -43,10 +45,7 @@ it("normal checker excludes even an operator-enabled PUN entry with runtime asse
     const result = await checkFeeds({
       feedsDir: dir,
       fetch,
-      env: {
-        PUN_REVIEWED_CRS_RUNTIME: "qualified",
-        PUN_EGRESS_OWNERSHIP: "exclusive-ip-single-worker",
-      },
+      env: {},
     });
     expect(result).toEqual([
       expect.objectContaining({ level: "skipped", skipReason: "configuration" }),

@@ -173,8 +173,8 @@ describe("service manifests on OpenMapX's config model", () => {
   const unreached: Record<string, readonly string[]> = {
     ingest: [],
     "contributions-api": [
-      "PUN_REVIEWED_CRS_RUNTIME",
-      "PUN_EGRESS_OWNERSHIP",
+      "OPENCONDITIONS_STATE_DIR",
+      "PUN_COORDINATION_DIR",
       "OPENCONDITIONS_DOWNLOAD_MAX_BYTES",
       "OPENCONDITIONS_DOWNLOAD_TIMEOUT_MS",
       "OPENCONDITIONS_EGRESS_ALLOWED_HOSTS",
@@ -187,8 +187,8 @@ describe("service manifests on OpenMapX's config model", () => {
       "OPENCONDITIONS_ROLLUP_HOURLY_DAYS",
     ],
     federation: [
-      "PUN_REVIEWED_CRS_RUNTIME",
-      "PUN_EGRESS_OWNERSHIP",
+      "OPENCONDITIONS_STATE_DIR",
+      "PUN_COORDINATION_DIR",
       "OPENCONDITIONS_ALLOW_POLICE_CATEGORY",
       "OPENCONDITIONS_CROSS_VALIDATE_SWEEP",
       "OPENCONDITIONS_CROWD_LICENSE",

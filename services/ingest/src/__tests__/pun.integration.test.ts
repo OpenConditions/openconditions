@@ -37,10 +37,7 @@ async function poll(shards = [capture], mode = "ok", signal?: AbortSignal) {
   return runSource(feed, {
     sql: db.sql,
     ...(signal ? { signal } : {}),
-    env: {
-      PUN_REVIEWED_CRS_RUNTIME: "qualified",
-      PUN_EGRESS_OWNERSHIP: "exclusive-ip-single-worker",
-    },
+    env: {},
     fetch: async (input) => {
       const url = String(input);
       if (url.endsWith("manifest.json")) {
@@ -107,6 +104,16 @@ it("acquisition → real pipeline → PostGIS → public API; errors retain last
     expect(response.statusCode).toBe(200);
     expect(response.body).toContain("GSE/MASE");
     expect(response.body).not.toContain("charging.evse_status");
+    expect(response.body).not.toContain("publicationStatus");
+    expect(response.body).not.toContain("snapshotDate");
+    expect(response.body).toContain("CC BY 4.0 ex art. 52 c.2 D.Lgs 82/2005 (CAD)");
+    const privateResponse = await app.inject({
+      url: "/features?bbox=8,38,10,41&kind=charging_site&canonical=1",
+      headers: { authorization: "Bearer pun-test-operator-token" },
+    });
+    expect(privateResponse.statusCode).toBe(200);
+    expect(privateResponse.body).toContain("publicationStatus");
+    expect(privateResponse.headers["cache-control"]).toBe("private, no-store");
   } finally {
     await app.close();
   }

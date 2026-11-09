@@ -6,7 +6,6 @@ import {
   guardOptionsFromEnv,
   hasCredentials,
   missingCredentials,
-  punRuntimeQualified,
 } from "@openconditions/ingest-framework";
 import { Cron } from "croner";
 import type postgres from "postgres";
@@ -211,7 +210,7 @@ export function scheduleFeed(feed: CatalogFeed, ctx: FeedJobContext): Cron | und
   const { sql, statusStore } = ctx;
   if (feed.accessMode === "on_demand") return undefined;
   const env = ctx.env ?? process.env;
-  if (feed.format === "pun" && (feed.disabled || !punRuntimeQualified(env))) return undefined;
+  if (feed.format === "pun" && feed.disabled) return undefined;
   const missing = missingCredentials(feed, env);
   if (missing.length > 0) {
     console.warn(

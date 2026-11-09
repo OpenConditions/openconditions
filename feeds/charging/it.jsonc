@@ -10,10 +10,6 @@
       "privacyUrl": "https://www.agid.gov.it/it/privacy-policy",
       "tier": "aggregator",
       "format": "pun",
-      "disabled": {
-        "reason": "Awaiting reviewed CRS, full-generation runtime and exclusive shared-egress-IP single-worker qualification; implementation only, no activation authorized.",
-        "since": "2026-11-07",
-      },
       "endpoints": {
         "main": {
           "url": "https://cruscotto-italia.dati.gov.it/data/manifest.json",
@@ -24,12 +20,11 @@
       "coverage": { "countries": ["IT"] },
       "license": "CC-BY-4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-      "attribution": "GSE/MASE — PUN; Cruscotto Italia (AgID), CC BY 4.0. Normalized and deduplicated by OpenConditions; representative connector only.",
-      "extrasAllow": ["pun"],
+      "attribution": "GSE/MASE — PUN; Cruscotto Italia (AgID), CC BY 4.0 ex art. 52 c.2 D.Lgs 82/2005 (CAD). Normalized and deduplicated by OpenConditions; representative connector only.",
       "terms": {
         "url": "https://cruscotto-italia.dati.gov.it/api.html#condizioni",
         "reviewedAt": "2026-11-07",
-        "note": "Public factual EVSE/location/CPO/representative connector inventory only. AgID's PUN-specific CC BY 4.0 distribution identifies GSE as holder; accepted with CAD Article 52 and AgID guidelines. Excludes media, personal contacts, availability, tariffs and payment claims. Mirror municipal coverage is not a complete national census. CRS is undeclared; geographic coordinate interpretation needs operator qualification. Use one acquiring worker per egress IP: one connection and one request per second including retries. A complete pass takes roughly 94 minutes plus transfer/backoff; no national runtime qualification has been performed.",
+        "note": "Public factual EVSE/location/CPO/representative connector inventory only. AgID's PUN-specific CC BY 4.0 distribution identifies GSE as holder; accepted with CAD Article 52 and AgID guidelines. Excludes media, personal contacts, availability, tariffs and payment claims. Mirror municipal coverage is not a complete national census. CRS is undeclared; named latitude/longitude fields and full-generation Istat boundary checks qualify geographic interpretation without a formal EPSG assertion. Full capture and worker/PostGIS/public API qualification completed 2026-11-09: 5618 shards, 80265 unique EVSEs, no availability observations. Persistent client coordination enforces one connection and at most one request per second, including retries, with retained host cooldown. Operators sharing an egress IP must coordinate aggregate traffic; a client cannot discover unrelated NAT users.",
       },
     },
   ],

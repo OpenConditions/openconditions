@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { contentHash } from "@openconditions/model";
 import { LICENSES, type LicenseInfo, licenseInfo } from "./catalog/licenses.js";
 
 /**
@@ -31,7 +32,10 @@ export function publicLicenseClassification(
 
 /** The parts of a model record licence egress reads. */
 export interface EgressRecord {
+  extras?: Readonly<Record<string, unknown>>;
+  contentHash?: string;
   provenance: {
+    sourceFormat?: string;
     attribution: { license: string };
     upstream?: readonly { license?: string; source?: { attribution: { license: string } } }[];
     mergedSources?: readonly { attribution: { license: string } }[];
@@ -76,7 +80,17 @@ export function withoutReporter<T extends EgressRecord>(record: T): T {
  */
 export function publicRecords<T extends EgressRecord>(records: readonly T[]): T[] {
   return records.filter(isPublicRecord).map((record) => {
-    const stripped = withoutReporter(record);
+    let stripped = withoutReporter(record);
+    // PUN status and extraction metadata are internal diagnostics, never live availability.
+    if (stripped.provenance.sourceFormat === "pun" && stripped.extras?.["pun"] !== undefined) {
+      const { pun: _pun, ...extras } = stripped.extras;
+      stripped = { ...stripped, extras } as T;
+      if (stripped.contentHash !== undefined)
+        stripped = {
+          ...stripped,
+          contentHash: contentHash(stripped as unknown as Record<string, unknown>),
+        } as T;
+    }
     const merged = stripped.provenance.mergedSources;
     if (merged === undefined) return stripped;
     const clean = merged.filter((m) => isPublicLicense(m.attribution.license));
