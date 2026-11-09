@@ -261,6 +261,10 @@ test("enabled partial catalogue retains missing groups on shrink", async () => {
   const [held] =
     await db.sql`SELECT tombstone_reason FROM conditions.feature WHERE id = 'oc:feature:partial-drivebc:520'`;
   expect(held?.tombstone_reason).toBeNull();
+  const heldReadings =
+    await db.sql`SELECT reading FROM conditions.observation_latest WHERE feature_id = 'oc:feature:partial-drivebc:520'`;
+  expect(heldReadings).toHaveLength(2);
+  for (const row of heldReadings) expect(row.reading.validUntil).toBeUndefined();
 });
 
 test.skipIf(!process.env.OC348_CAPTURE)(

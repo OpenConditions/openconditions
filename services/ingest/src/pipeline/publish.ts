@@ -453,7 +453,7 @@ export async function publishFeatures(
       {
         ...writeContext(input),
         complete: src.snapshot?.completeness === "partial" ? false : { feature: true, offer: true },
-        statesComplete: input.statesComplete === true,
+        statesComplete: src.snapshot?.completeness !== "partial" && input.statesComplete === true,
         latestCache: cache,
       },
     );
