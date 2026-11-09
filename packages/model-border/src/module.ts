@@ -1,4 +1,5 @@
 import {
+  COMPARISON_OPERATORS,
   CountryCode,
   defineDomain,
   defineKind,
@@ -6,6 +7,7 @@ import {
   defineResultSchema,
   defineVocabulary,
   extendVocabulary,
+  quantityIn,
   type RegistryModule,
   VEHICLE_CLASSES,
 } from "@openconditions/model";
@@ -23,7 +25,7 @@ export const BORDER_PROGRAMS = ["standard", "fast", "trusted_traveller", "ready_
 export const BORDER_WAIT_STATUSES = ["no_delay", "delay", "closed", "unknown"] as const;
 
 /** The wire formats the border parsers read: CBP's and CBSA's wait-time publications. */
-export const BORDER_SOURCE_FORMATS = ["cbp-bwt", "cbsa-bwt"] as const;
+export const BORDER_SOURCE_FORMATS = ["cbp-bwt", "cbsa-bwt", "granica-html"] as const;
 
 export const borderWaitStatusVocabulary = defineVocabulary({
   code: "border_wait_status",
@@ -57,12 +59,22 @@ export const borderModule: RegistryModule = {
       version: V,
       description:
         "The lanes of one inspection queue: one mode, programme, direction and vehicle class.",
-      details: () => ({
+      details: (k) => ({
         mode: z.enum(BORDER_MODES),
         program: z.enum(BORDER_PROGRAMS).optional(),
         direction: directionOf,
         /** The vehicles the queue is for, where a source splits queues by vehicle rather than programme. */
         vehicleClass: z.enum(VEHICLE_CLASSES).optional(),
+        /** Legal vehicle rating (DMC), not the actual laden mass. */
+        eligibility: z
+          .strictObject({
+            maximumPermissibleGrossMass: z.strictObject({
+              operator: z.enum(COMPARISON_OPERATORS),
+              value: quantityIn("kg"),
+            }),
+            sourceWording: k.Text,
+          })
+          .optional(),
         lanesTotal: z.number().int().positive().optional(),
       }),
     }),

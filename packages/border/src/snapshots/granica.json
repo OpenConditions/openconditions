@@ -1,0 +1,65 @@
+[
+  {
+    "unit": "401030",
+    "name": "Medyka–Szeginie",
+    "aliases": [
+      "Medyka",
+      "Medyka-Szeginie"
+    ],
+    "wikidata": "Q140834461",
+    "lon": 22.947706,
+    "lat": 49.799678,
+    "countries": [
+      "PL",
+      "UA"
+    ],
+    "zone": "Europe/Warsaw",
+    "cbp": [],
+    "cbsa": [],
+    "revision": "2565475162",
+    "retrievedAt": "2026-11-08T07:23:23.688899Z",
+    "evidence": "entity-json"
+  },
+  {
+    "unit": "401060",
+    "name": "Korczowa–Krakowiec",
+    "aliases": [
+      "Korczowa",
+      "Korczowa-Krakowiec"
+    ],
+    "wikidata": "Q11828640",
+    "lon": 23.11402777777778,
+    "lat": 49.95480555555556,
+    "countries": [
+      "PL",
+      "UA"
+    ],
+    "zone": "Europe/Warsaw",
+    "cbp": [],
+    "cbsa": [],
+    "revision": "2534365161",
+    "retrievedAt": "2026-11-08",
+    "evidence": "indexed-entity-page"
+  },
+  {
+    "unit": "303020",
+    "name": "Hrebenne–Rawa Ruska",
+    "aliases": [
+      "Hrebenne",
+      "Hrebenne-Rawa Ruska"
+    ],
+    "wikidata": "Q11828626",
+    "lon": 23.5885,
+    "lat": 50.2766,
+    "countries": [
+      "PL",
+      "UA"
+    ],
+    "zone": "Europe/Warsaw",
+    "cbp": [],
+    "cbsa": [],
+    "revision": "2537047440",
+    "retrievedAt": "2026-11-08",
+    "evidence": "indexed-entity-page"
+  }
+]

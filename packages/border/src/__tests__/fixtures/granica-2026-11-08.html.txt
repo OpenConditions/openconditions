@@ -1,0 +1,417 @@
+
+<!DOCTYPE html>
+<html lang="pl-pl" dir="ltr">
+<head>
+	<title>granica.gov.pl</title>
+    <meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="generator" content="Joomla! - Open Source Content Management">
+	<title>Ukraina</title>
+	<link href="http://granica.gov.pl/index.php/pl/czasy-oczekiwania/ukraina" rel="alternate" hreflang="pl-PL">
+	<link href="http://granica.gov.pl/index.php/en/waiting-time/ukraine" rel="alternate" hreflang="en-GB">
+	<link href="/media/templates/site/cassiopeia_custom/images/favicon.ico" rel="alternate icon" type="image/vnd.microsoft.icon">
+	<link href="/media/system/images/joomla-favicon-pinned.svg" rel="mask-icon" color="#000">
+	<link href="http://granica.gov.pl/index.php/pl/component/finder/search?format=opensearch&amp;Itemid=108" rel="search" title="OpenSearch granica.gov.pl" type="application/opensearchdescription+xml">
+
+    <link href="/media/system/css/joomla-fontawesome.min.css?f5cba0" rel="lazy-stylesheet"><noscript><link href="/media/system/css/joomla-fontawesome.min.css?f5cba0" rel="stylesheet"></noscript>
+	<link href="/media/templates/site/cassiopeia/css/template.min.css?f5cba0" rel="stylesheet">
+	<link href="/media/templates/site/cassiopeia/css/global/colors_standard.min.css?f5cba0" rel="stylesheet">
+	<link href="/css/bootstrap.css?f5cba0" rel="stylesheet">
+	<link href="/css/template.css?f5cba0" rel="stylesheet">
+	<link href="/media/mod_languages/css/template.min.css?f5cba0" rel="stylesheet">
+	<link href="/media/mod_menu/css/mod-menu.min.css?a45ede" rel="stylesheet">
+	<link href="/media/templates/site/cassiopeia/css/vendor/joomla-custom-elements/joomla-alert.min.css?0.4.1" rel="stylesheet">
+	<link href="/media/templates/site/cassiopeia_custom/css/user.css?f5cba0" rel="stylesheet">
+
+	<!-- Google tag (gtag.js) -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=G-8K4EH4KPQW"></script>
+	<script>
+	  window.dataLayer = window.dataLayer || [];
+	  function gtag(){dataLayer.push(arguments);}
+	  gtag('js', new Date());
+	  gtag('config', 'G-8K4EH4KPQW');
+	</script>
+    <script src="/media/vendor/metismenujs/js/metismenujs.min.js?1.4.0" defer></script>
+	<script type="application/json" class="joomla-script-options new">{"joomla.jtext":{"MOD_FINDER_SEARCH_VALUE":"Szukaj...","ERROR":"Błąd","MESSAGE":"Wiadomość","NOTICE":"Uwaga","WARNING":"Ostrzeżenie","SUCCESS":"Success","JCLOSE":"Zamknij","JOK":"OK","JOPEN":"Otwórz"},"system.paths":{"root":"","rootFull":"http:\/\/granica.gov.pl\/","base":"","baseFull":"http:\/\/granica.gov.pl\/"},"csrf.token":"12d6d3fcd421fc9b11b7d69e4ed6e93b"}</script>
+	<script src="/media/system/js/core.min.js?a3d8f8"></script>
+	<script src="/media/templates/site/cassiopeia/js/template.min.js?f5cba0" type="module"></script>
+	<script src="/media/templates/site/cassiopeia_custom/js/user.js?f5cba0"></script>
+	<script src="/media/com_finder/js/finder.min.js?755761" type="module"></script>
+	<script src="/media/vendor/bootstrap/js/collapse.min.js?5.3.8" type="module"></script>
+	<script src="/media/templates/site/cassiopeia/js/mod_menu/menu-metismenu.min.js?f5cba0" defer></script>
+	<script src="/media/mod_menu/js/menu.min.js?5a565f" type="module"></script>
+	<script src="/media/system/js/messages.min.js?9a4811" type="module"></script>
+	<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","@id":"http://granica.gov.pl/#/schema/BreadcrumbList/17","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"http://granica.gov.pl/index.php/pl/","name":"Start"}},{"@type":"ListItem","position":2,"item":{"@id":"http://granica.gov.pl/index.php/pl/czasy-oczekiwania/ukraina","name":"Ukraina"}}]}</script>
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"http://granica.gov.pl/#/schema/Organization/base","name":"granica.gov.pl","url":"http://granica.gov.pl/"},{"@type":"WebSite","@id":"http://granica.gov.pl/#/schema/WebSite/base","url":"http://granica.gov.pl/","name":"granica.gov.pl","publisher":{"@id":"http://granica.gov.pl/#/schema/Organization/base"},"potentialAction":{"@type":"SearchAction","target":"http://granica.gov.pl/index.php/pl/component/finder/search?q={search_term_string}\u0026amp;Itemid=108","query-input":"required name=search_term_string"}},{"@type":"WebPage","@id":"http://granica.gov.pl/#/schema/WebPage/base","url":"http://granica.gov.pl/index.php/pl/czasy-oczekiwania/ukraina","name":"Ukraina","isPartOf":{"@id":"http://granica.gov.pl/#/schema/WebSite/base"},"about":{"@id":"http://granica.gov.pl/#/schema/Organization/base"},"inLanguage":"pl-PL","breadcrumb":{"@id":"http://granica.gov.pl/#/schema/BreadcrumbList/17"}},{"@type":"Article","@id":"http://granica.gov.pl/#/schema/com_content/article/208","name":"Ukraina","headline":"Ukraina","inLanguage":"pl-PL","interactionStatistic":{"@type":"InteractionCounter","userInteractionCount":18409},"isPartOf":{"@id":"http://granica.gov.pl/#/schema/WebPage/base"}}]}</script>
+	<link href="http://granica.gov.pl/index.php/pl/czasy-oczekiwania/ukraina" rel="alternate" hreflang="x-default">
+
+</head>
+
+<body class="site com_content wrapper-static view-article no-layout no-task itemid-176">
+    <header class="header container-header full-width">
+
+	  
+	<div class="grid-child container-nav">
+		<div class="col-6 col-md-2 col-xl-1"><img src="/images/godloPolski.png" alt="godło Polski"/></div>
+		<div class="col-6 col-md-2 col-xl-2 pt-2"><a href="/index.php/" title="Link do strony głównej granica.gov.pl"><h1><img src="/images/logoGranica.png" alt="logo serwisu granica.gov.pl"/></h1></a></div>
+		<div class="col-12 col-md-4 col-xl-5">
+			 			 <div class="container-search logo-display">
+				<div class="moduletable ">
+        <div class="mod-languages">
+    <p class="visually-hidden" id="language_picker_des_111">Wybierz swój język</p>
+
+
+    <ul aria-labelledby="language_picker_des_111" class="mod-languages__list lang-inline">
+
+                                            <li class="lang-active">
+                <a aria-current="true" aria-label="Polski (PL)" href="http://granica.gov.pl/index.php/pl/czasy-oczekiwania/ukraina">
+                                            PL                                    </a>
+            </li>
+                                        <li>
+                <a aria-label="English (United Kingdom)" href="/index.php/en/waiting-time/ukraine">
+                                            EN                                    </a>
+            </li>
+                </ul>
+
+</div>
+</div>
+<nav class="moduletable logo-display" aria-label="Wyszukiwanie">
+        
+<search>
+    <form class="mod-finder js-finder-searchform form-search" action="/index.php/pl/component/finder/search?Itemid=108" method="get" aria-label="search">
+        <label for="mod-finder-searchword116" class="visually-hidden finder">Szukaj</label><input type="text" name="q" id="mod-finder-searchword116" class="js-finder-search-query form-control" value="" placeholder="Szukaj...">
+                        <input type="hidden" name="Itemid" value="108">    </form>
+</search>
+</nav>
+
+			 </div>
+					</div>
+		<div class="col-1 col-md-2 col-xl-1 mt-2">
+			<a href="https://www.gov.pl/web/kas" title="Link do strony Krajowej Administracji Skarbowej, strona otwiera się w nowym oknie." target="_blank"><img src="/images/logoKAS.png" alt="logo Krajowej Administracji Skarbowej"/></a>
+		</div>
+		<div class="col-1 col-md-2 col-xl-1 mt-2">
+			<a href="https://www.strazgraniczna.pl/" title="Link do strony Straży Granicznej, strona otwiera się w nowym oknie." target="_blank"><img src="/images/logoSG.png" alt="logo Straży Granicznej"/></a>
+		</div>
+	</div>
+	
+ 		<div class="baner">
+			<div class="container banertlo">			
+				<h1><strong>PLANUJESZ PRZEKROCZENIE GRANICY?</strong></h1><p><strong>Sprawdź aktualną sytuację na przejściach granicznych<br/>oraz zasady przekraczania granicy</strong></p>			</div>
+		</div>
+	         
+        
+        <div class="grid-child container-nav">
+		                    
+<nav class="navbar navbar-expand-lg" aria-label="Main menu pl-PL">
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-bs-toggle="collapse" data-bs-target="#navbar114" aria-controls="navbar114" aria-expanded="false" aria-label="Przełącz nawigację">
+        <span class="icon-menu" aria-hidden="true"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbar114">
+        <ul class="mod-menu mod-menu_dropdown-metismenu metismenu mod-list ">
+<li class="metismenu-item item-157 level-1 deeper parent"><button title="Link do czasów oczekiwania na wyjeździe z Polski" class="mod-menu__heading nav-header mm-collapsed mm-toggler mm-toggler-nolink" aria-haspopup="true" aria-expanded="false">Czasy oczekiwania</button><ul class="mm-collapse"><li class="metismenu-item item-175 level-2"><a href="/index.php/pl/czasy-oczekiwania/białoruś" title="Link do czasów oczekiwania na granicy z Białorusią na wyjeździe z Polski">Białoruś</a></li><li class="metismenu-item item-176 level-2 current"><a href="/index.php/pl/czasy-oczekiwania/ukraina" title="Link do czasów oczekiwania na granicy z Ukrainą na wyjeździe z Polski" aria-current="page">Ukraina</a></li><li class="metismenu-item item-177 level-2"><a href="/index.php/pl/czasy-oczekiwania/rosja" title="Link do czasów oczekiwania na granicy z Rosją">Rosja</a></li></ul></li><li class="metismenu-item item-158 level-1"><a href="/index.php/pl/komunikaty" title="Link do komunikatów">Komunikaty</a></li><li class="metismenu-item item-191 level-1"><a href="/index.php/pl/jak-przekroczyć-granicę" title="Link do przewodnika gdy planujesz przyjazd do Polski lub wyjazd z Polski">Jak przekroczyć granicę</a></li><li class="metismenu-item item-172 level-1 deeper parent"><button title="Link do informacji, o których warto wiedzieć" class="mod-menu__heading nav-header mm-collapsed mm-toggler mm-toggler-nolink" aria-haspopup="true" aria-expanded="false">Warto wiedzieć</button><ul class="mm-collapse"><li class="metismenu-item item-180 level-2"><a href="/index.php/pl/warto-wiedziec/poradnik-turystyczny-2026" title="Link do poradnika dla turystów">Poradnik turystyczny 2026</a></li><li class="metismenu-item item-181 level-2"><a href="/index.php/pl/warto-wiedziec/czy-wiesz-ze" title="Link do ciekawostek">Czy wiesz, że ...</a></li><li class="metismenu-item item-121 level-2"><a href="/index.php/pl/warto-wiedziec/faq" title="Link do najczęściej zadawanych pytań">FAQ</a></li></ul></li><li class="metismenu-item item-118 level-1"><a href="/index.php/pl/przejscia" title="Link do informacji o przejściach granicznych">Przejścia</a></li><li class="metismenu-item item-119 level-1"><a href="/index.php/pl/przepisy" title="Link do przepisów dotyczących przekraczania granicy Polski">Przepisy</a></li><li class="metismenu-item item-178 level-1 deeper parent"><button title="Link do serwisu TAX FREE" class="mod-menu__heading nav-header mm-collapsed mm-toggler mm-toggler-nolink" aria-haspopup="true" aria-expanded="false">TAX FREE</button><ul class="mm-collapse"><li class="metismenu-item item-186 level-2"><a href="/index.php/pl/tax-free/informacje-o-tax-free" >Informacje o TAX FREE</a></li><li class="metismenu-item item-187 level-2"><a href="/index.php/pl/tax-free/sprawdz-status-dokumentu-tax-free" >Sprawdź status dokumentu Tax Free</a></li><li class="metismenu-item item-188 level-2"><a href="/index.php/pl/tax-free/do-pobrania" >Do pobrania</a></li><li class="metismenu-item item-190 level-2"><a href="/index.php/pl/tax-free/faq-tax-free" >FAQ - Tax Free</a></li><li class="metismenu-item item-189 level-2"><a href="/index.php/pl/tax-free/kontakt-w-sprawie-tax-free" >Kontakt w sprawie Tax Free</a></li></ul></li><li class="metismenu-item item-173 level-1 deeper parent"><button title="Link do informacji związanych z serwisem granica.gov.pl" class="mod-menu__heading nav-header mm-collapsed mm-toggler mm-toggler-nolink" aria-haspopup="true" aria-expanded="false">Pomoc</button><ul class="mm-collapse"><li class="metismenu-item item-123 level-2"><a href="/index.php/pl/pomoc/dane-teleadresowe" title="Link do danych teleadresowych Izb Administracji Skarbowych i Oddziałów Straży Granicznej">Dane teleadresowe</a></li><li class="metismenu-item item-122 level-2"><a href="/index.php/pl/pomoc/linki" title="Link do przydatnych linków">Przydatne linki</a></li><li class="metismenu-item item-120 level-2"><a href="/index.php/pl/pomoc/usługa-sieciowa" title="Link do opisu usługi sieciowej">Usługa sieciowa</a></li><li class="metismenu-item item-174 level-2"><a href="/index.php/pl/pomoc/napisz-do-nas" title="Link do formularza Napisz do nas">Napisz do nas</a></li></ul></li></ul>
+    </div>
+</nav>
+
+                    </div>
+		 <div class="grid-child container-nav">
+            <nav class="mod-breadcrumbs__wrapper" aria-label="Breadcrumbs">
+    <ol class="mod-breadcrumbs breadcrumb px-3 py-2">
+                    <li class="mod-breadcrumbs__here float-start">
+                Jesteś tutaj: &#160;
+            </li>
+        
+        <li class="mod-breadcrumbs__item breadcrumb-item"><a href="/index.php/pl/" class="pathway"><span>Start</span></a></li><li class="mod-breadcrumbs__item breadcrumb-item"><span>Czasy oczekiwania</span></li><li class="mod-breadcrumbs__item breadcrumb-item active"><span>Ukraina</span></li>    </ol>
+    </nav>
+
+        </div>
+
+    </header>
+
+    <div class="site-grid">
+        
+        
+        
+        
+        <div class="grid-child container-component">
+          
+            
+            <div id="system-message-container" aria-live="polite"></div>
+
+            <main class="container-fluid">
+                <div class="com-content-article item-page">
+    <meta itemprop="inLanguage" content="pl-PL">
+    
+    
+        <div class="page-header">
+        <h1>
+            Ukraina        </h1>
+                            </div>
+        
+        
+            <dl class="article-info text-muted">
+
+            <dt class="article-info-term">
+                        Szczegóły                    </dt>
+
+        
+        
+        
+        
+        
+    
+            
+        
+                    <dd class="hits">
+    <span class="icon-eye icon-fw" aria-hidden="true"></span>
+    <meta content="UserPageVisits:18412">
+    Odsłon: 18412</dd>
+            </dl>
+    
+    
+        
+                                                <div class="com-content-article__body">
+        <p>
+<link rel="stylesheet" href="/css/fontawesome-all.css" type="text/css" />     
+
+<link rel="stylesheet" href="/wykres/styles/kendo.common.min.css" />
+<link rel="stylesheet" href="/wykres/styles/kendo.default.min.css" />
+<link rel="stylesheet" href="/wykres/styles/kendo.default.mobile.min.css" />
+<script src="/wykres/js/jquery.min.js"></script>
+<script src="/wykres/js/kendo.all.min.js"></script>
+
+<link rel="stylesheet" type="text/css" href="/css/jquery.datetimepicker.css"/>
+<link rel="stylesheet" href="/css/styletf1.css" type="text/css" />
+	<input type="hidden" name="hdata" value="1794121200"><input type="hidden" name="hzmiana" value="0"><input type="hidden" name="v" value="pl"><input type="hidden" name="k" value="w" width='1px'><input type="hidden" name="p" value="u"><input type="hidden" name="c" value="t"><br/>
+<div class="container-fluid">
+	<div class="row">
+						<div class="col-4 row align-items-center">
+			<div class="col-4"><img src="/images/flaga_Bialorusi.png" width="60px" border="0" alt="flaga państwa Białoruś"/></div>
+			<div class="col-auto"><strong>Białoruś</strong><br/>	
+			<a href="/index.php?option=com_content&view=article&id=207&p=b&c=t&v=pl&k=w" title="link do  Czasy oczekiwania na wyjazd do Białoruś"><strong>WYJAZD Z RP</strong></a>			</div>
+		</div>
+								<div class="col-4 row align-items-center">
+			<div class="col-4"><img src="/images/flaga_Rosji.png" width="60px" border="0" alt="flaga państwa Rosja"/></div>
+			<div class="col-auto"><strong>Rosja</strong><br/>
+			<a href="/index.php?option=com_content&view=article&id=209&p=fr&c=t&v=pl&k=w" title="link do  Czasy oczekiwania na wyjazd do Rosja"><strong>WYJAZD Z RP</strong></a>			
+			</div>
+		</div>
+								<div class="col-4 row align-items-center">
+			<div class="col-4">
+				<img src="/images/flaga_Ukrainy.png" width="60px" border="0" alt="flaga państwa Ukraina"/></div>
+				<div class="col-auto"><strong>Ukraina</strong><br/>
+				<a href="/index.php?option=com_content&view=article&id=208&p=u&c=t&v=pl&k=w" title="link do  Czasy oczekiwania na wyjazd do Ukraina"><strong>WYJAZD Z RP</strong></a>				
+			</div>
+		</div>
+			</div>
+</div>
+
+
+
+<br/>
+
+<table class="border-table">
+    <tr>
+    <td colspan="2" rowspan="2">
+		<div class="row align-items-center">
+			<div class="col-4"><img src="/images/flaga_Ukrainy.png" width="60px" alt="obrazek  flaga państwa  Ukraina"/></div>
+			<div class="col-4"><strong>Ukraina</strong><br/>	
+			WYJAZD Z RP</div>
+			<div class="col-4">
+			<strong>Stan na:</strong><br/>2026-11-8			</div>
+		</div>
+	</td>
+    <td colspan="4" align="center" class="niebieski">IAS Lublin</td>
+    <td colspan="5" align="center" class="niebieski">IAS Rzeszów</td>
+    </tr>
+    <tr> 
+	   <td align="center"><strong>&nbsp;Dorohusk&nbsp;</strong></td>
+	   <td align="center"><strong>&nbsp;Zosin&nbsp;</strong></td>
+		<td align="center"><strong>&nbsp;Dołhobyczów&nbsp;</strong></td>
+		<td align="center"><strong>&nbsp;Hrebenne&nbsp;</strong></td>
+		<td align="center"><strong>&nbsp;Budomierz&nbsp;</strong></td>
+		<td align="center"><strong>&nbsp;Korczowa&nbsp;</strong></td>
+		<td align="center"><strong>&nbsp;Medyka&nbsp;</strong></td>
+		<td align="center"><strong>&nbsp;Malhowice&nbsp;</strong></td>
+		<td align="center"><strong>&nbsp;Krościenko&nbsp;</strong></td>
+	</th>
+  </tr>
+<tr><td class="p-3" colspan="2"><img src="/images/ciezarowka.png" alt="obrazek  samochody CIĘŻAROWE" width="60px"/><span align="right" class="p-3">Szacunkowy czas oczekiwania na rozpoczęcie odprawy [h]</span></td>				<td align="center" class="dane1" >&nbsp;>7,5T DMC&nbsp;<br/>36:00&nbsp;</td>
+				<td align="center" class="dane" >&nbsp;≤7,5T DMC&nbsp;<br/>0:00&nbsp;</td>
+				<td align="center" class="dane1" >&nbsp;≤7,5T DMC&nbsp;<br/>0:00&nbsp;</td>
+				<td align="center" class="dane" >&nbsp;>7,5T DMC&nbsp;<br/>25:00&nbsp;</td>
+				<td align="center" class="dane1" >&nbsp;≤7,5T DMC&nbsp;<br/>0:00&nbsp;</td>
+				<td align="center" class="dane1" >&nbsp;>7,5T DMC&nbsp;<br/>14:00&nbsp;</td>
+				<td align="center" class="dane1" >&nbsp;>7,5T DMC&nbsp;<br/>16:00&nbsp;</td>
+				<td align="center" class="dane1" bgcolor="#CCCCCC">&nbsp;</td><!--malhowice-->
+				<td align="center" class="dane1" >&nbsp;≤7,5T DMC&nbsp;<br/>0:00&nbsp;</td>				</tr><tr><td class="p-3" colspan="2"><img src="/images/autokar.png" alt="obrazek  AUTOKARY" width="60px"/><span align="right" class="p-3">Szacunkowy czas oczekiwania na rozpoczęcie odprawy [h]</span></td>				<td align="center" class="dane" >2:00&nbsp;</td>
+				<td align="center" class="dane"  >0:00&nbsp;</td>
+				<td align="center" class="dane1" >0:00&nbsp;</td>
+				<td align="center" class="dane"  >0:00&nbsp;</td>
+				<td align="center" class="dane1" >1:00&nbsp;</td>
+				<td align="center" class="dane1" >1:00&nbsp;</td>
+				<td align="center" class="dane1" >1:00&nbsp;</td>
+				<td align="center" class="dane1" >0:00&nbsp;</td>
+				<td align="center" class="dane1" >0:00&nbsp;</td>
+				
+				</tr><tr><td class="p-3" colspan="2"><img src="/images/osobowy.png" alt="obrazek  samochody OSOBOWE" width="60px"/><span align="right" class="p-3">Szacunkowy czas oczekiwania na rozpoczęcie odprawy [h]</span></td>				<td align="center" class="dane"  bgcolor="#CCCCCC">&nbsp;</td>
+				<td align="center" class="dane"  >0:00&nbsp;</td>
+				<td align="center" class="dane1" >0:00&nbsp;</td>
+				<td align="center" class="dane"  >0:00&nbsp;</td>
+				<td align="center" class="dane1" >0:00&nbsp;</td>
+				<td align="center" class="dane1" >1:00&nbsp;</td>
+				<td align="center" class="dane1" >2:00&nbsp;</td>
+				<td align="center" class="dane1" >0:00&nbsp;</td>
+				<td align="center" class="dane1" >0:00&nbsp;</td>
+				
+				</tr>								<!--	<tr><td class="opis">Szacunkowy czas oczekiwania na rozpoczęcie odprawy [h] - TaxFree&nbsp;</td>
+					<td align="center" class="dane"  bgcolor="#CCCCCC">&nbsp;</td>
+					<td align="center" class="dane"  >0:00&nbsp;</td>
+					<td align="center" class="dane"  >0:00&nbsp;</td>
+					<td align="center" class="dane"  >0:00&nbsp;</td>
+					<td align="center" class="dane1" >0:00&nbsp;</td>
+					<td align="center" class="dane1" >1:00&nbsp;</td>
+					<td align="center" class="dane1" >2:00 &nbsp;</td>
+					<td align="center" class="dane1" >0:00&nbsp;</td>
+					
+					<td align="center" class="dane1" >0:00&nbsp;</td>
+					</tr>-->
+					</tr><tr>
+<td colspan="2" align="right" class="niebieski p-2">
+Godzina aktualizacji:
+</td>
+<td align="center" class="niebieski"> 08:15</td>
+<td align="center" class="niebieski"> 08:15</td>
+<td align="center" class="niebieski"> 08:15</td>
+<td align="center" class="niebieski"> 08:15</td>
+<td align="center" class="niebieski"> 08:17</td>
+<td align="center" class="niebieski"> 08:17</td>
+<td align="center" class="niebieski"> 08:17</td>
+<td align="center" class="niebieski"> 08:18</td>
+<td align="center" class="niebieski"> 08:17</td>
+</tr>
+</table>
+<table><tr><td><INPUT class='pager-left' TYPE='button' VALUE=' ' onClick="parent.location.href='?option=com_content&view=article&id=208&p=u&v=pl&c=t&d=1794122577&z=21&k=w'"></INPUT></td>	<td>2026-11-8 początek zmiany dziennej</td> <td></td></tr></table> 
+<br/><p>
+DMC - dopuszczalna masa całkowita
+<table><tr><td bgcolor="#CCCCCC">kolor szary </td><td>- brak danych.</td></tr></table></p>
+
+
+<br/>Od dnia 27.06.2022 r. <b>w Dorohusku</b> został zawieszony ruch osobowy.
+Szacunkowe czasy oczekiwania na rozpoczęcie odprawy aktualizowane są 8 razy na dobę<br/>
+<p>
+<br/>
+</p>
+
+</p>    </div>
+
+        
+                                        </div>
+
+            </main>
+            
+        </div>
+
+        
+        
+            </div>
+
+   <footer class="container-footer footer ">
+     <div class="grid-child">
+            
+            <div class="col-lg-4 col-12">
+                <ul id="mod-menu117" class="mod-menu mod-list nav ">
+<li class="nav-item item-182"><a href="/index.php/pl/deklaracja-dostępności" title="Deklaracja dostępności strony granica.gov.pl i aplikacji mobilnych">Deklaracja dostępności</a></li><li class="nav-item item-156"><a href="/index.php/pl/polityka-plików-cookies" title="Polityka plików cookies serwisu www.granica.gov.pl">Polityka plików cookies</a></li><li class="nav-item item-170"><a href="/index.php/pl/mapa-strony" title="Mapa strony">Mapa strony</a></li><li class="nav-item item-193"><a href="/index.php/pl/logowanie" title="Link do logowania">Logowanie dla redaktorów</a></li></ul>
+
+            </div>
+
+                    <div class="col-lg-4 col-12">
+                <ul id="mod-menu118" class="mod-menu mod-list nav ">
+<li class="nav-item item-128"><span class="mod-menu__heading nav-header " title="MEDIA SPOŁECZNOŚCIOWE Straży Granicznej ">MEDIA SPOŁECZNOŚCIOWE Straży Granicznej </span>
+</li><li class="nav-item item-131"><a href="https://twitter.com/straz_graniczna" title="Link do X Straży Granicznej"><img class="me-2" src="/images/logoX.png" alt="" width="24" height="24" loading="lazy"><span class="image-title">X Straży Granicznej</span></a></li><li class="nav-item item-132"><a href="https://tiktok.com/@strazgraniczna" title="Link do Tiktok Straży Granicznej"><img class="me-2" src="/images/logoTikTok.png" alt="" width="25" height="24" loading="lazy"><span class="image-title">TikTok Straży Granicznej </span></a></li><li class="nav-item item-133"><a href="https://www.instagram.com/strazgraniczna.pl/" title="Link do Instagram Straży Granicznej"><img class="me-2" src="/images/logoInstagram.png" alt="" width="24" height="24" loading="lazy"><span class="image-title">Instagram Straży Granicznej </span></a></li></ul>
+
+            </div>
+
+                    <div class="col-lg-4 col-12">
+                <ul id="mod-menu119" class="mod-menu mod-list nav ">
+<li class="nav-item item-116"><a href="https://www.gov.pl/web/finanse/informacja-o-dzialalnosci-ministerstwa" title="Link do informacji o zakresie działalności urzędu">Informacja o zakresie działalności urzędu</a></li><li class="nav-item item-134"><span class="mod-menu__heading nav-header ">MEDIA SPOŁECZNOŚCIOWE Krajowej Administracji Skarbowej</span>
+</li><li class="nav-item item-135"><a href="https://twitter.com/kas_gov_pl" title="Link do X Krajowej Administracji Skarbowej"><img class="me-2" src="/images/logoX.png" alt="" width="24" height="24" loading="lazy"><span class="image-title">X KAS</span></a></li><li class="nav-item item-136"><a href="https://www.facebook.com/gov.pl.kas" title="Link do Facebook Krajowej Administracji Skarbowej"><img class="me-2" src="/images/logoFacebook.png" alt="" width="24" height="24" loading="lazy"><span class="image-title">Facebook KAS</span></a></li><li class="nav-item item-137"><a href="https://www.youtube.com/c/KrajowaAdministracjaSkarbowa" title="Link do YouTube Krajowej Administracji Skarbowej"><img class="me-2" src="/images/logoYouTube.png" alt="" width="24" height="24" loading="lazy"><span class="image-title">YouTube KAS</span></a></li><li class="nav-item item-138"><a href="https://www.instagram.com/krajowa.administracja.skarbowa/" title="Link do Instagram Krajowej Administracji Skarbowej"><img class="me-2" src="/images/logoInstagram.png" alt="" width="24" height="24" loading="lazy"><span class="image-title">Instagram KAS</span></a></li></ul>
+
+            </div>
+           </div>
+  </footer>
+  
+             <a href="#top" id="back-top" class="back-to-top-link" aria-label="Początek strony">
+            <span class="icon-arrow-up icon-fw" aria-hidden="true"></span>
+        </a>
+    
+    
+
+
+<div id="custom-cookie-banner" style="position: fixed;bottom: 0;left: 0;right: 0;background-color: #222;color: #fff;padding: 15px;text-align: center;z-index: 9999;display: none;font-family: Arial, sans-serif;">
+   W celu świadczenia usług na najwyższym poziomie serwis www.granica.gov.pl używa pliki cookies. Korzystanie z naszego serwisu www.granica.gov.pl oznacza, że będą one zamieszczane w Państwa urządzeniu. W każdym momencie można dokonać zmiany ustawień Państwa przeglądarki. <a href="/?index.php/pl/polityka-plik%C3%B3w-cookies-serwisu-www-granica-gov-pl" target="blank" title="link otwiera się w nowym oknie"> Zobacz politykę cookies.</a> 
+Wyrażam zgodę na zapisywanie cookies.<br/>
+    <button id="cookie-accept" style="
+        margin-left: 10px;
+        padding: 5px 10px;
+        cursor: pointer;
+        background-color: #ffAF50;
+        color: #fff;
+        border: none;
+        border-radius: 3px;
+    ">Akceptuję</button>
+    <button id="cookie-decline" style="
+        margin-left: 5px;
+        padding: 5px 10px;
+        cursor: pointer;
+        background-color: #ff0000;
+        color: #fff;
+        border: none;
+        border-radius: 3px;
+    ">Odrzucam</button>
+</div>
+
+<script nonce="hFiB+11NgIaUtGTO8qu7SA==">
+document.addEventListener('DOMContentLoaded', function() {
+    const banner = document.getElementById('custom-cookie-banner');
+    const acceptBtn = document.getElementById('cookie-accept');
+    const declineBtn = document.getElementById('cookie-decline');
+    function enableCookies() {
+        // "analityka" w localStorage
+        localStorage.setItem('analyticsEnabled', 'true');
+        //console.log("Cookies/analityka włączona");
+        (window,document,'script','https://www.googletagmanager.com/gtag/js?id=G-8K4EH4KPQW','ga');
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-8K4EH4KPQW');
+    }
+    function disableCookies() {
+        localStorage.setItem('analyticsEnabled', 'false');
+        //console.log("Cookies/analityka zablokowana");
+        // localStorage.removeItem('analyticsEnabled');
+    }
+    const userConsent = localStorage.getItem('userConsent');
+    if (!userConsent) {
+        banner.style.display = 'block';
+    } else {
+        if (userConsent === 'accepted') enableCookies();
+        if (userConsent === 'declined') disableCookies();
+    }
+
+    function handleConsent(consent) {
+        localStorage.setItem('userConsent', consent);
+        if (consent === 'accepted') enableCookies();
+        if (consent === 'declined') disableCookies();
+        banner.style.display = 'none';
+    }
+    acceptBtn.addEventListener('click', function() {
+        handleConsent('accepted');
+    });
+    declineBtn.addEventListener('click', function() {
+        handleConsent('declined');
+    });
+});
+</script>
+
+<script type="text/javascript" src="/_Incapsula_Resource?SWJIYLWA=719d34d31c8e3a6e6fffd425f7e032f3&ns=1&cb=2100548600" async></script></body>
+</html>

@@ -17,3 +17,11 @@
   served (byte-order mark, `;;` separators, CRLF), all 30 offices, fetched
   2026-10-14T23:38:07Z. Open Government Licence – Canada (the "Current Border
   Wait Times" dataset of the Open Government Portal).
+
+## Granica
+
+`granica-2026-11-08.html.txt` contains the exact anonymous Polish country-page response bytes captured on 2026-11-08; the adjacent receipt records the URL, retrieval instant, size and SHA-256. The `.txt` suffix keeps formatting tools from rewriting provider HTML or its scripts. Scripts are never executed. Only the numerical outbound car/truck product is extracted under dataset 1694's CC BY 4.0 grant and explicit website/service equivalence. This is not a licence grant for surrounding website content, images or notices. Synthetic edge cases are labelled in the tests and derive from this capture.
+
+The capture reports freight waits of 16:00, 14:00 and 25:00 at Medyka, Korczowa and Hrebenne, and passenger waits of 2:00, 1:00 and 0:00. DMC means permissible gross mass. The adapter retains the >7500 kg restriction in typed lane eligibility, and estimates waiting to begin clearance. It makes no assertion about facility openness or total crossing duration.
+
+`granica-geometry-evidence.json` identifies the independent Wikidata structured-coordinate statements, revisions and retrieval method. Medyka's JSON was directly captured; the two other entity JSON refreshes returned 403. Their revision-specific indexed entity pages supplied the structured CC0 statements. These joins are not fresh direct API qualification, and contain no silently imported OSM geometry. Decimal coordinates for those two statements are arithmetic conversions of their sexagesimal values. The railway Hrebenne entity is excluded.

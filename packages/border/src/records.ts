@@ -1,5 +1,10 @@
 import type { CatalogFeed, RecordDraft } from "@openconditions/ingest-framework";
-import { observationId, recordLocalId } from "@openconditions/model";
+import {
+  type COMPARISON_OPERATORS,
+  observationId,
+  recordLocalId,
+  type VehicleClass,
+} from "@openconditions/model";
 import type {
   BORDER_MODES,
   BORDER_PROGRAMS,
@@ -21,6 +26,14 @@ export type BorderWaitStatus = (typeof BORDER_WAIT_STATUSES)[number];
 export interface LaneGroupInput {
   key: string;
   mode: BorderMode;
+  vehicleClass?: VehicleClass;
+  eligibility?: {
+    maximumPermissibleGrossMass: {
+      operator: (typeof COMPARISON_OPERATORS)[number];
+      value: { value: number; unit: "kg" };
+    };
+    sourceWording: { lang: string; text: string }[];
+  };
   program?: BorderProgram;
   direction: { from: string; to: string };
   /** How many lanes the queue has in all, open or not. */
@@ -91,6 +104,8 @@ export function crossingDraft(
       mode: lane.mode,
       ...(lane.program === undefined ? {} : { program: lane.program }),
       direction: lane.direction,
+      ...(lane.vehicleClass === undefined ? {} : { vehicleClass: lane.vehicleClass }),
+      ...(lane.eligibility === undefined ? {} : { eligibility: lane.eligibility }),
       ...(lane.lanesTotal === undefined ? {} : { lanesTotal: lane.lanesTotal }),
     },
   }));
