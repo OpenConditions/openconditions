@@ -61,24 +61,27 @@ export function parseQuebecCameras(
       return value === undefined ? [] : [{ lang: lang!, text: value }];
     });
     const road = text("NumeroRoute");
-    out.features.push(
-      cameraDraft(
-        feed,
-        { fetchedAt: ctx.fetchedAt, out },
-        {
-          cameraId: id,
-          point: [point[0], point[1]],
-          names: description,
-          description,
-          type: "traffic",
-          ...(road === undefined ? {} : { road: { ref: road } }),
-          admin: { country: "CA", subdivision: "CA-QC" },
-          detailUrl: text("URL_FLUX_DONNEE"),
-          imageRedistribution: "unknown",
-          views: [],
-        },
-      ),
+    const draft = cameraDraft(
+      feed,
+      { fetchedAt: ctx.fetchedAt, out },
+      {
+        cameraId: id,
+        point: [point[0], point[1]],
+        names: description,
+        description,
+        type: "traffic",
+        ...(road === undefined ? {} : { road: { ref: road } }),
+        admin: { country: "CA", subdivision: "CA-QC" },
+        detailUrl: text("URL_FLUX_DONNEE"),
+        imageRedistribution: "unknown",
+        views: [],
+      },
     );
+    draft["freshness"] = {
+      fetchedAt: ctx.fetchedAt,
+      expiresAt: new Date(Date.parse(ctx.fetchedAt) + feed.freshnessWindowSec * 1000).toISOString(),
+    };
+    out.features.push(draft);
   }
   return out;
 }

@@ -24,7 +24,7 @@ const fixture = () =>
 const worker = createParseProcess({ minBytes: 0 });
 let db: TestDatabase;
 let app: FastifyInstance;
-const now = "2026-11-07T12:00:00Z";
+let now = "2026-11-07T12:00:00Z";
 const detail = "https://www.quebec511.info/Carte/Fenetres/FenetreVideo.html?id=3998";
 beforeAll(async () => {
   db = await createTestDatabase();
@@ -129,3 +129,42 @@ test("worker publication, public APIs and last-good inventory retention", async 
   expect(await rows()).toHaveLength(3);
   expect(await db.sql`SELECT * FROM conditions.observation`).toHaveLength(0);
 }, 120000);
+
+// A retained provider capture can qualify the entire generation without network I/O in tests.
+test("every published record retains exact metadata, credit and two-day expiry", async () => {
+  const body = process.env["QUEBEC_CAPTURE"]
+    ? JSON.parse(readFileSync(process.env["QUEBEC_CAPTURE"], "utf8"))
+    : fixture();
+  expect((await poll(body)).error).toBeUndefined();
+  const res = await app.inject(`/features?source=${feed.id}&expand=components,latest&limit=1000`);
+  expect(res.statusCode, res.body).toBe(200);
+  const records = res.json().records;
+  expect(records).toHaveLength(body.features.length);
+  for (const row of body.features) {
+    const p = row.properties;
+    const record = records.find(
+      (r: { provenance: { recordId: string } }) => r.provenance.recordId === p.IDEcamera,
+    );
+    expect(record).toMatchObject({
+      location: { geometry: row.geometry },
+      description: [
+        { lang: "fr", text: p.DescriptionLocalisationFr.trim() },
+        { lang: "en", text: p.DescriptionLocalisationEn.trim() },
+      ],
+      details: { detailUrl: p.URL_FLUX_DONNEE, imageRedistribution: "unknown" },
+      components: [{ key: "0", details: { detailUrl: p.URL_FLUX_DONNEE } }],
+      freshness: { expiresAt: "2026-11-09T12:00:00.000Z" },
+    });
+    expect(record.provenance.attribution.provider).toContain("consulted 2026-11-09");
+    expect(record.images).toBeUndefined();
+    expect(res.json().latest?.[record.id] ?? []).toEqual([]);
+  }
+  expect(await db.sql`SELECT * FROM conditions.observation`).toHaveLength(0);
+  const geo = await app.inject(`/features.geojson?source=${feed.id}&limit=1000`);
+  expect(geo.json().features).toHaveLength(body.features.length);
+  expect((await poll({}, 403)).error).toBeDefined();
+  expect(await rows()).toHaveLength(body.features.length);
+  now = "2026-11-09T12:00:00Z";
+  const expired = await app.inject(`/features?source=${feed.id}`);
+  expect(expired.json().records).toEqual([]);
+});
