@@ -91,7 +91,7 @@ export async function fetchGeofa(
     for (let page = 0; page < 100; page++) {
       const next = new URL(base);
       next.searchParams.set("count", String(pageSize));
-      next.searchParams.set("startIndex", String(page * pageSize));
+      next.searchParams.set("startIndex", String(geofaFeatures(buffers).length));
       const response = await fetcher(next.toString(), { signal: controller.signal });
       if (!response.ok)
         throw new Error(`GeoFA: page failed HTTP ${response.status}; retry on next daily poll`);
@@ -125,8 +125,9 @@ export async function fetchGeofa(
       urls.push(next.toString());
       payloads.push(digestPayload(next.toString(), buffer));
       const count = geofaFeatures(buffers).length;
-      if (count > expected) throw new Error("GeoFA: generation count changed");
-      if (rows.length < pageSize) {
+      if ((rows.length === 0 && count !== expected) || rows.length > pageSize || count > expected)
+        throw new Error("GeoFA: generation count changed");
+      if (count === expected || (rows.length < pageSize && !config.nonWithdrawing)) {
         if (count !== expected || (q && geofaDigest(geofaFeatures(buffers)) !== q.sha256))
           throw new Error("GeoFA: incomplete or changed qualified generation");
         if (!q && (await hits()) !== expected) throw new Error("GeoFA: hits count changed");

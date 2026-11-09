@@ -1,3 +1,4 @@
+import { digestPayload } from "@openconditions/ingest-framework";
 import { expect, test } from "vitest";
 import { chargingDomain } from "../domain.js";
 import { catalogFeed, fixture, parseContext } from "./helpers/charging-feed.js";
@@ -24,7 +25,17 @@ const row = (properties: Record<string, unknown> = {}) => ({
 const parse = (rows = [row()], at = "2026-11-07T12:00:00Z") =>
   chargingDomain.formats["geofa"]!.parse(
     catalogFeed("dk-geofa-charging"),
-    { main: [Buffer.from(JSON.stringify({ type: "FeatureCollection", features: rows }))] },
+    {
+      main: [
+        Buffer.from(
+          JSON.stringify({
+            type: "FeatureCollection",
+            crs: { properties: { name: "EPSG:4326" } },
+            features: rows,
+          }),
+        ),
+      ],
+    },
     parseContext(at),
   );
 test("GeoFA emits named static EVSEs, unknown physical state, no invented power or readings", () => {
@@ -129,7 +140,13 @@ test("strict snapshot still rejects duplicate facility identities", () => {
       feed,
       {
         main: [
-          Buffer.from(JSON.stringify({ type: "FeatureCollection", features: [row(), row()] })),
+          Buffer.from(
+            JSON.stringify({
+              type: "FeatureCollection",
+              crs: { properties: { name: "EPSG:4326" } },
+              features: [row(), row()],
+            }),
+          ),
         ],
       },
       parseContext("2026-11-09T06:00:00Z"),
@@ -210,7 +227,13 @@ test("reordering pages preserves canonical facility and component drafts", () =>
     row(),
     row({ objekt_id: "b", internationalt_id: "DK*SPA*E3", internationalt_id1: "DK*SPA*E4" }),
   ].map((feature) =>
-    Buffer.from(JSON.stringify({ type: "FeatureCollection", features: [feature] })),
+    Buffer.from(
+      JSON.stringify({
+        type: "FeatureCollection",
+        crs: { properties: { name: "EPSG:4326" } },
+        features: [feature],
+      }),
+    ),
   );
   const one = chargingDomain.formats["geofa"]!.parse(
     feed,
@@ -248,6 +271,7 @@ test("non-withdrawing GeoFA inventory expires at the earlier static TTL or Copen
         Buffer.from(
           JSON.stringify({
             type: "FeatureCollection",
+            crs: { properties: { name: "EPSG:4326" } },
             features: [row({ gyldig_til: "2026-10-25" })],
           }),
         ),
@@ -268,7 +292,15 @@ const parsePartial = (features: ReturnType<typeof row>[]) => {
   return chargingDomain.formats["geofa"]!.parse(
     feed,
     {
-      main: [Buffer.from(JSON.stringify({ type: "FeatureCollection", features }))],
+      main: [
+        Buffer.from(
+          JSON.stringify({
+            type: "FeatureCollection",
+            crs: { properties: { name: "EPSG:4326" } },
+            features,
+          }),
+        ),
+      ],
     },
     parseContext("2026-11-09T06:00:00Z"),
   );
@@ -346,4 +378,64 @@ test("version reconciliation rejects changed geometry or physical identity", () 
   expect(() =>
     parsePartial([row(), row({ versions_id: "v2", internationalt_id: "DK*SPA*E3" })]),
   ).toThrow(/conflicting facility/);
+});
+
+test("CRS aliases share geographic axes but missing declaration needs byte-bound request evidence", () => {
+  const feed = catalogFeed("dk-geofa-charging");
+  const url = feed.endpoints["main"]!.url!;
+  const bodies = ["urn:ogc:def:crs:OGC:1.3:CRS84", undefined].map((name) =>
+    Buffer.from(
+      JSON.stringify({
+        type: "FeatureCollection",
+        ...(name ? { crs: { properties: { name } } } : {}),
+        features: [row()],
+      }),
+    ),
+  );
+  const ctx = parseContext("2026-11-09T06:00:00Z");
+  expect(() => chargingDomain.formats["geofa"]!.parse(feed, { main: [bodies[1]!] }, ctx)).toThrow(
+    /CRS/,
+  );
+  const evidence = bodies.map((body) => digestPayload(url, body));
+  feed.endpoints["main"]!.geofa = { nonWithdrawing: true };
+  expect(
+    chargingDomain.formats["geofa"]!.parse(
+      feed,
+      { main: bodies },
+      { ...ctx, payloadEvidence: { main: evidence } },
+    ).features,
+  ).toHaveLength(1);
+  expect(() =>
+    chargingDomain.formats["geofa"]!.parse(
+      feed,
+      { main: bodies },
+      { ...ctx, payloadEvidence: { main: evidence.map((e) => ({ ...e, sha256: "wrong" })) } },
+    ),
+  ).toThrow(/CRS/);
+});
+
+test.each(["EPSG:3857", "EPSG:25832"])("request evidence cannot override declared %s", (name) => {
+  const feed = catalogFeed("dk-geofa-charging");
+  feed.endpoints["main"]!.geofa = { nonWithdrawing: true };
+  const bodies = ["urn:ogc:def:crs:OGC:1.3:CRS84", name].map((crs) =>
+    Buffer.from(
+      JSON.stringify({
+        type: "FeatureCollection",
+        crs: { properties: { name: crs } },
+        features: [row()],
+      }),
+    ),
+  );
+  expect(() =>
+    chargingDomain.formats["geofa"]!.parse(
+      feed,
+      { main: bodies },
+      {
+        ...parseContext("2026-11-09T06:00:00Z"),
+        payloadEvidence: {
+          main: bodies.map((b) => digestPayload(feed.endpoints["main"]!.url!, b)),
+        },
+      },
+    ),
+  ).toThrow(/CRS/);
 });

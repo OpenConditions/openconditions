@@ -442,6 +442,30 @@ export async function publishFeatures(
   const published = sql.begin(async (tx) => {
     await tx`SELECT pg_advisory_xact_lock(hashtext(${src.id}))`;
     const { output } = input;
+    if (src.id === "dk-geofa-charging" && input.featuresComplete === false) {
+      // Serialize with every publication for this source. Raw identity claims also
+      // count when the parser withheld components because counts were unresolved.
+      const incoming = new Set(output.features.map((f) => String(f["id"])));
+      const claims = (record: Record<string, unknown>): string[] => {
+        const extras = record["extras"] as Record<string, unknown> | undefined;
+        return Array.from({ length: 6 }, (_, i) => extras?.[`internationalt_id${i || ""}`])
+          .filter((v): v is string => typeof v === "string" && v.trim().length > 0)
+          .map((v) => v.trim().replaceAll("*", "").toUpperCase());
+      };
+      const retained = await tx<{ record: Record<string, unknown> }[]>`
+        SELECT record FROM conditions.feature WHERE source_id=${src.id}
+          AND tombstoned_at IS NULL
+          AND (record->'freshness'->>'expiresAt')::timestamptz > ${input.now}::timestamptz`;
+      const owners = new Set(
+        retained
+          .filter(({ record }) => !incoming.has(String(record["id"])))
+          .flatMap(({ record }) => claims(record)),
+      );
+      if (output.features.some((f) => claims(f).some((id) => owners.has(id))))
+        throw new Error(
+          "GeoFA: retained EVSE ownership conflict; preserving last-good publication",
+        );
+    }
     const summary = await writeSnapshotIn(
       tx,
       src.id,
@@ -453,6 +477,8 @@ export async function publishFeatures(
         latestCache: cache,
       },
     );
+    if (src.id === "dk-geofa-charging" && summary.rejected.length > 0)
+      throw new Error("GeoFA: rejected publication; preserving last-good");
     const [{ live }] = await tx<{ live: number }[]>`
       SELECT count(*)::int AS live FROM conditions.feature
        WHERE source_id = ${src.id} AND tombstoned_at IS NULL`;

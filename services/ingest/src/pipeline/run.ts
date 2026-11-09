@@ -543,7 +543,15 @@ async function runAttempt(
   }
   steps.lap("reference");
 
-  const ctx = { fetchedAt: attemptAt, cadenceSec: src.cadenceSec, reference };
+  const ctx = {
+    fetchedAt: attemptAt,
+    cadenceSec: src.cadenceSec,
+    reference,
+    payloadEvidence: {} as Record<
+      string,
+      readonly import("@openconditions/ingest-framework").PayloadDigest[]
+    >,
+  };
   let acceptFetch: (() => void) | undefined;
   let snapshotInspection: SnapshotInspection | undefined;
   // Whether any data payload had bytes: a streamed body is taken to have.
@@ -897,6 +905,7 @@ async function runAttempt(
         if (result.status === "fetched" || result.status === "partial") {
           fresh[role] = result.buffers;
           freshUrls[role] = result.urls;
+          if (src.format === "geofa") ctx.payloadEvidence[role] = result.payloads;
         }
         answered++;
         renewed.add(role);

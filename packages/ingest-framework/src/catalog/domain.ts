@@ -47,6 +47,8 @@ export interface ParseContext {
   cadenceSec: number;
   /** Decoded reference data by role. */
   reference: Readonly<Record<string, unknown>>;
+  /** Acquisition URL and decoded-byte identity, by role; never source document metadata. */
+  payloadEvidence?: Readonly<Record<string, readonly PayloadDigest[]>>;
   /**
    * The grid cell an on-demand read fetched the payloads for: a source whose
    * answer reaches past the cell's edges keeps only what lies inside it.

@@ -1,4 +1,5 @@
 import {
+  digestPayload,
   emptyParseOutput,
   type FeedPayloads,
   geofaDigest,
@@ -62,11 +63,36 @@ export function parseGeofa(
   const nonWithdrawing = feed.endpoints?.["main"]?.geofa?.nonWithdrawing === true;
   out.qualifiedFeatureSnapshot = q !== undefined && !nonWithdrawing;
   const documents = buffers.map((body) => JSON.parse(body.toString("utf8")));
-  if (
-    nonWithdrawing &&
-    new Set(documents.map((doc) => doc.crs?.properties?.name ?? "EPSG:4326")).size > 1
-  )
-    throw new Error("GeoFA: mixed acquisition CRS");
+  // GeoFA's requested EPSG:4326 GeoJSON is longitude/latitude (CRS84 axes).
+  // Missing declarations need acquisition evidence bound to these exact bytes,
+  // not an invented declaration or an assumption made by a direct parser caller.
+  const systems = documents.map((doc, i) => {
+    const crs = doc.crs?.properties?.name;
+    if (crs === undefined) {
+      const evidence = ctx.payloadEvidence?.["main"]?.[i];
+      const configured = feed.endpoints?.["main"]?.url;
+      if (!evidence || !configured) throw new Error("GeoFA: missing CRS request evidence");
+      const request = new URL(evidence.url);
+      const base = new URL(configured);
+      const digest = digestPayload(evidence.url, buffers[i]!);
+      if (
+        request.origin !== base.origin ||
+        request.pathname !== base.pathname ||
+        request.searchParams.get("srsName") !== "EPSG:4326" ||
+        request.searchParams.get("typeNames") !== "fkg:fkg.t_5607_ladefacilitet" ||
+        request.searchParams.get("sortBy") !== "objekt_id" ||
+        digest.sha256 !== evidence.sha256 ||
+        digest.bytes !== evidence.bytes
+      )
+        throw new Error("GeoFA: invalid CRS request evidence");
+      return "geographic";
+    }
+    if (["EPSG:4326", "urn:ogc:def:crs:EPSG::4326", "urn:ogc:def:crs:OGC:1.3:CRS84"].includes(crs))
+      return "geographic";
+    if (["EPSG:25832", "urn:ogc:def:crs:EPSG::25832"].includes(crs)) return "EPSG:25832";
+    throw new Error("GeoFA: unsupported CRS");
+  });
+  if (nonWithdrawing && new Set(systems).size > 1) throw new Error("GeoFA: mixed acquisition CRS");
   const versions = new Map<string, string[]>();
   const unique = new Map<string, Record<string, unknown>>();
   const identity = (id: string) => id.replaceAll("*", "").toUpperCase();

@@ -152,12 +152,16 @@ test("GeoFA non-withdrawing inventory refresh preserves absent facilities and bo
     });
   expect((await runPartial(rows)).outcome).toBe("changed");
   expect(await active()).toBe(2);
+  const initialExpiry = new Date(Date.parse(now()) + 172800000).toISOString();
+  minute++;
   expect((await runPartial([rows[0]])).outcome).toBe("changed");
   expect(await active()).toBe(2);
   const stored = await db.sql`select record from conditions.feature where source_id=${base.id}`;
   for (const r of stored)
     expect(r.record.freshness.expiresAt).toBe(
-      new Date(Date.parse(now()) + 172800000).toISOString(),
+      r.record.id.endsWith(":1")
+        ? new Date(Date.parse(now()) + 172800000).toISOString()
+        : initialExpiry,
     );
   const app = Fastify();
   let readAt = new Date(now());
@@ -177,4 +181,74 @@ test("GeoFA non-withdrawing inventory refresh preserves absent facilities and bo
   }
   expect((await runPartial([])).error).toMatch(/GeoFA/);
   expect(await active()).toBe(2);
+});
+
+test("partial EVSE ownership reconciles retained raw claims atomically until expiry", async () => {
+  await db.sql`truncate conditions.feature cascade`;
+  minute = 4320;
+  const src = { ...base, disabled: undefined };
+  await syncSources(db.sql, [src]);
+  const a = row("a"),
+    b = row("b");
+  b.properties.internationalt_id = "dkspaea";
+  let data = [a];
+  const go = (snapshot = data) =>
+    runSource(src, {
+      sql: db.sql,
+      parseProcess: child,
+      now,
+      lookup: async () => [{ address: "93.184.216.34", family: 4 }],
+      fetch: (async (input: RequestInfo | URL) =>
+        new URL(String(input)).searchParams.has("resultType")
+          ? new Response(`<wfs:FeatureCollection numberMatched="${snapshot.length}"/>`)
+          : new Response(
+              JSON.stringify({ type: "FeatureCollection", features: snapshot }),
+            )) as typeof fetch,
+    });
+  const app = Fastify();
+  registerScope(app, undefined);
+  registerApiRoutes(app, db.sql, { registry: productionRegistry(), now: () => new Date(now()) });
+  const read = async () =>
+    (
+      await app.inject({
+        method: "GET",
+        url: "/features?bbox=11,54,13,56&kind=charging_site&expand=components",
+      })
+    ).json().records;
+  try {
+    expect((await go()).outcome).toBe("changed");
+    const original = await read();
+    data = [b];
+    minute++;
+    expect((await go()).error).toMatch(/retained EVSE/);
+    expect(await read()).toEqual(original);
+    // Both observed owners can replace the old assertion with suppressed components.
+    data = [a, b];
+    minute++;
+    expect((await go()).outcome).toBe("changed");
+    expect((await read()).every((f: { components?: unknown[] }) => !f.components?.length)).toBe(
+      true,
+    );
+    // Even unresolved retained counts participate in ownership.
+    await db.sql`truncate conditions.feature cascade`;
+    a.properties.antal_ladepunkter = 8;
+    data = [a];
+    minute++;
+    expect((await go()).outcome).toBe("changed");
+    data = [b];
+    minute++;
+    expect((await go()).error).toMatch(/retained EVSE/);
+    minute += 2880;
+    expect((await go()).outcome).toBe("changed");
+    expect(await read()).toHaveLength(1);
+    expect((await read())[0].components.length).toBeGreaterThan(0);
+    await db.sql`truncate conditions.feature cascade`;
+    minute++;
+    const racing = await Promise.all([go([a]), go([b])]);
+    expect(racing.filter((r) => r.error === undefined)).toHaveLength(1);
+    expect(racing.filter((r) => r.error?.includes("retained EVSE"))).toHaveLength(1);
+    expect(await read()).toHaveLength(1);
+  } finally {
+    await app.close();
+  }
 });

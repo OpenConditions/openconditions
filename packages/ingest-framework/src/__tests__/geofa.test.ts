@@ -183,3 +183,19 @@ test("non-withdrawing offsets accept repeated IDs for parser integrity reconcili
     fetchEndpoint(qualified(data), "main", (async () => response(data)) as typeof fetch),
   ).rejects.toThrow(/repeated/);
 });
+
+test("non-withdrawing acquisition walks short positive pages by returned offset and still accounts for every hit", async () => {
+  const feed = qualified();
+  feed.endpoints["main"]!.geofa = { nonWithdrawing: true, pageSize: 500 };
+  const offsets: number[] = [];
+  const result = await fetchEndpoint(feed, "main", (async (input: RequestInfo | URL) => {
+    const u = new URL(String(input));
+    if (u.searchParams.has("resultType"))
+      return new Response('<wfs:FeatureCollection numberMatched="501"/>');
+    const offset = Number(u.searchParams.get("startIndex"));
+    offsets.push(offset);
+    return response(rows.slice(offset, offset + (offset === 0 ? 100 : 500)));
+  }) as typeof fetch);
+  expect(result.status).toBe("fetched");
+  expect(offsets).toEqual([0, 100]);
+});

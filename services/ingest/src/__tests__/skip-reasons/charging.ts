@@ -94,6 +94,7 @@ export const SAMPLES: SkipSamples = {
     payloads: {
       main: json({
         type: "FeatureCollection",
+        crs: { properties: { name: "EPSG:4326" } },
         features: [
           {
             type: "Feature",
