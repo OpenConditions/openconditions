@@ -171,7 +171,13 @@ export function attributionStamp(
   return (draft) => {
     const provenance = draft["provenance"] as Record<string, unknown> | undefined;
     if (provenance === undefined) return draft;
-    const publisher = warningPublisher(draft, src);
+    const cameraCredit =
+      draft["property"] === "camera.image"
+        ? AttributionPublisher.safeParse(
+            (provenance["attribution"] as Record<string, unknown> | undefined)?.["publisher"],
+          )
+        : undefined;
+    const publisher = cameraCredit?.success ? cameraCredit.data : warningPublisher(draft, src);
     const at = observedAt(draft) ?? polledAt;
     let feedAttribution = feedAttributions.get(at.getUTCFullYear());
     if (publisher === undefined && feedAttribution === undefined) {
