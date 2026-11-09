@@ -113,9 +113,11 @@ export function fuse(
       const rank = tier === undefined ? -1 : order.indexOf(tier);
       if (rank < 0 || startOf(o) > nowMs) return [];
       if (o.validUntil !== undefined && Date.parse(o.validUntil) <= nowMs) return [];
-      // A crowd report's life is its expiry, which its evidence may not have caught up with
-      // yet (a peer's report is never re-evaluated here).
-      const expiresAt = o.provenance.origin === "crowd" ? o.freshness.expiresAt : undefined;
+      // Bulk snapshot expiries cap polling; on-demand expiry remains owned by its lifecycle seam.
+      const expiresAt =
+        o.provenance.origin === "crowd" || o.provenance.accessMode === "bulk"
+          ? o.freshness.expiresAt
+          : undefined;
       if (expiresAt !== undefined && Date.parse(expiresAt) <= nowMs) return [];
       return [{ c, rank }];
     })
@@ -185,7 +187,8 @@ export interface FusedSubject {
  * `mergedSources`, credited to the winner's publisher with the most
  * restrictive rights of all contributors. A value derived from an on-demand
  * source stays on demand and expires with the earliest such contributor, so
- * fusing never turns a read-through answer into history. The public fusion,
+ * fusing never turns a read-through answer into history. Explicit publisher
+ * expiries also cap the stored value at the earliest contributor expiry. The public fusion,
  * over the public contributors only, is the same row under
  * `@fused-public`.
  */
@@ -197,7 +200,7 @@ export function fusedObservation(
   const w = fusion.winner.observation;
   const contributors = fusion.contributors.map((c) => c.observation);
   const onDemand = contributors.filter((o) => o.provenance.accessMode === "on_demand");
-  const expiries = onDemand.flatMap((o) =>
+  const expiries = contributors.flatMap((o) =>
     o.freshness.expiresAt === undefined ? [] : [Date.parse(o.freshness.expiresAt)],
   );
   const rights = mostRestrictiveRights(contributors.map((o) => o.provenance.attribution));

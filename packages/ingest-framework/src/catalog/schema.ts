@@ -3,7 +3,7 @@ import { type ZodRawShape, z } from "zod";
 import { FEED_QUALIFIER, FEED_TOKEN } from "./ids.js";
 import { MAX_UTC_MINUTES_BACK } from "./templates.js";
 
-const RAW_RETENTION_CLASSES = ["situation", "observation", "reference"] as const;
+const RAW_RETENTION_CLASSES = ["situation", "observation", "reference", "none"] as const;
 
 const FIELD_NAME = /^[a-z][a-z0-9_]*$/;
 const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/;
@@ -277,6 +277,13 @@ export const endpointSchema = z
      * from an old copy. Unset, a held answer stands in at any age.
      */
     maxPayloadAgeSec: z.number().int().positive().optional(),
+    /** Tighter response-byte and full-body deadline caps; never enlarge operator egress limits. */
+    budget: z
+      .strictObject({
+        maxBytes: z.number().int().positive().max(536870912),
+        deadlineSec: z.number().positive().max(900),
+      })
+      .optional(),
     /**
      * Seconds a request to this endpoint may take, body included, for a
      * publisher slower than the operator's `OPENCONDITIONS_FETCH_TIMEOUT_MS`

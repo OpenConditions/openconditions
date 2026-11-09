@@ -1,0 +1,4987 @@
+{
+	"data":
+	[
+		{
+			"cms":
+			{
+				"index": "825307",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district":       "8",
+					"locationName":   "RIV 10 EB [004.60] 1 mi W/O Oak Val (79)",
+					"nearbyPlace":    "RIVERSIDE CO",
+					"longitude":      "-117.014542",
+					"latitude":       "33.953866",
+					"elevation":      "1",
+					"direction":      "East",
+					"county":         "Riverside",
+					"route":          "I-10",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "4.6",
+					"alignment":      "",
+					"milepost":       "43.76"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "18:57:49"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "805710",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district":       "8",
+					"locationName":   "RIV 10 EB [024.00] Verbenia Cabazon (29)",
+					"nearbyPlace":    "RIVERSIDE CO",
+					"longitude":      "-116.698878",
+					"latitude":       "33.923535",
+					"elevation":      "1",
+					"direction":      "East",
+					"county":         "Riverside",
+					"route":          "I-10",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "24",
+					"alignment":      "",
+					"milepost":       "63.15"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:22:14"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "CA-86 30 MIN",
+						"phase1Line2": "CA-177 71 MIN",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "825377",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district":       "8",
+					"locationName":   "RIV 10 EB [055.30] 0.5 mi W/O Jackson st. (80)",
+					"nearbyPlace":    "INDIO",
+					"longitude":      "-116.225807",
+					"latitude":       "33.738594",
+					"elevation":      "1",
+					"direction":      "East",
+					"county":         "Riverside",
+					"route":          "I-10",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "55.3",
+					"alignment":      "",
+					"milepost":       "94.34"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-09-28",
+						"messageTime": "20:19:20"
+					},
+					"display":     "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "825378",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district":       "8",
+					"locationName":   "RIV 10 EB [101.20] 1 mi W/O Eagle Mtn (81)",
+					"nearbyPlace":    "RIVERSIDE CO",
+					"longitude":      "-115.466251",
+					"latitude":       "33.699190",
+					"elevation":      "1",
+					"direction":      "East",
+					"county":         "Riverside",
+					"route":          "I-10",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "101.2",
+					"alignment":      "",
+					"milepost":       "139.54"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "17:38:50"
+					},
+					"display":     "2 Pages (Extended)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "HWY 95 CLOSED",
+						"phase1Line2": "AT WILSON RD",
+						"phase1Line3": "USE ALT RTE"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "HWY-62 CLOSED",
+						"phase2Line2": "AT 177",
+						"phase2Line3": "USE ALT RTE"
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "825652",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district":       "8",
+					"locationName":   "RIV 10 EB [148.10] 1 mi. W/O Rte 78 (82)",
+					"nearbyPlace":    "RIVERSIDE CO",
+					"longitude":      "-114.675740",
+					"latitude":       "33.606454",
+					"elevation":      "1",
+					"direction":      "East",
+					"county":         "Riverside",
+					"route":          "I-10",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "148.1",
+					"alignment":      "",
+					"milepost":       "186.44"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-07-18",
+						"messageTime": "03:43:20"
+					},
+					"display":     "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "807126",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district":       "8",
+					"locationName":   "RIV 10 WB [010.32] Highland Springs Rd (37)",
+					"nearbyPlace":    "BANNING",
+					"longitude":      "-116.954241",
+					"latitude":       "33.927342",
+					"elevation":      "1",
+					"direction":      "West",
+					"county":         "Riverside",
+					"route":          "I-10",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "10.32",
+					"alignment":      "",
+					"milepost":       "49.43"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-09-18",
+						"messageTime": "07:02:22"
+					},
+					"display":     "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "824145",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district":       "8",
+					"locationName":   "RIV 10 WB [034.70] W/O Gene Autry Trail (65)",
+					"nearbyPlace":    "RIVERSIDE CO",
+					"longitude":      "-116.520143",
+					"latitude":       "33.893858",
+					"elevation":      "1",
+					"direction":      "West",
+					"county":         "Riverside",
+					"route":          "I-10",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "34.7",
+					"alignment":      "",
+					"milepost":       "73.75"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-26",
+						"messageTime": "05:48:41"
+					},
+					"display":     "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "806905",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district":       "8",
+					"locationName":   "RIV 10 WB [059.30] Dillion Road (30)",
+					"nearbyPlace":    "Indio",
+					"longitude":      "-116.164629",
+					"latitude":       "33.714348",
+					"elevation":      "11",
+					"direction":      "West",
+					"county":         "Riverside",
+					"route":          "I-10",
+					"routeSuffix":    "",
+					"postmilePrefix": "M",
+					"postmile":       "59.3",
+					"alignment":      "",
+					"milepost":       "59.3"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:22:14"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "CA-6236 MIN",
+						"phase1Line2": "CA-6065 MIN",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "823045",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district":       "8",
+					"locationName":   "RIV 10 WB [106.60] E/O DESERT CENTER (63)",
+					"nearbyPlace":    "RIVERSIDE CO",
+					"longitude":      "-115.373882",
+					"latitude":       "33.710240",
+					"elevation":      "1",
+					"direction":      "West",
+					"county":         "Riverside",
+					"route":          "I-10",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "106.6",
+					"alignment":      "",
+					"milepost":       "144.94"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-04",
+						"messageTime": "14:01:38"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "HWY-62 CLOSED",
+						"phase1Line2": "AT 177",
+						"phase1Line3": "USE ALT RTE"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "222",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district":       "8",
+					"locationName":   "RIV 10 WB [155.33] Blythe E/O 10/95 SEP (64)",
+					"nearbyPlace":    "Riverside CO",
+					"longitude":      "-114.550608",
+					"latitude":       "33.608015",
+					"elevation":      "1",
+					"direction":      "West",
+					"county":         "Riverside",
+					"route":          "I-10",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "20",
+					"alignment":      "",
+					"milepost":       "20"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-04",
+						"messageTime": "06:01:54"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "HWY 95 CLOSED",
+						"phase1Line2": "AT WILSON RD",
+						"phase1Line3": "USE ALT RTE"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "824146",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "RIV 111 NB [059.30] N/O Overture Rd (66)",
+					"nearbyPlace": "RIVERSIDE CO",
+					"longitude": "-116.617895",
+					"latitude": "33.896325",
+					"elevation": "1",
+					"direction": "North",
+					"county": "Riverside",
+					"route": "SR-111",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "59.3",
+					"alignment": "",
+					"milepost": "60.35"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:20:16"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "CA-24328 MIN",
+						"phase1Line2": "CA-6035 MIN",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "800011",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "RIV 15 NB [000.50] SD CO LINE (32)",
+					"nearbyPlace": "RIVERSIDE CO",
+					"longitude": "-117.137989",
+					"latitude": "33.440663",
+					"elevation": "1",
+					"direction": "North",
+					"county": "Riverside",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "0.5",
+					"alignment": "",
+					"milepost": "0.5"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:22:14"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "SR-91 44 MIN",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "825266",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "RIV 15 NB [020.25] 0.7 mi S/O Main (75)",
+					"nearbyPlace": "LAKE ELSINORE",
+					"longitude": "-117.312890",
+					"latitude": "33.672277",
+					"elevation": "1",
+					"direction": "North",
+					"county": "Riverside",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "20.248",
+					"alignment": "",
+					"milepost": "20.25"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "16:58:46"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "800013",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "RIV 15 NB [039.11] 0.4 mi N/O ONTARIO AVE (1)",
+					"nearbyPlace": "RIVERSIDE CO",
+					"longitude": "-117.534341",
+					"latitude": "33.851780",
+					"elevation": "1",
+					"direction": "North",
+					"county": "Riverside",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "39.11",
+					"alignment": "",
+					"milepost": "39.09"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "06:44:35"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "E91 AT GYPSUM",
+						"phase1Line2": "4 LANES CLOSED",
+						"phase1Line3": "UNTIL MON 5AM"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "810005",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "RIV 15 NB [047.70] 68TH STR (53)",
+					"nearbyPlace": "RIVERSIDE CO",
+					"longitude": "-117.548517",
+					"latitude": "33.961951",
+					"elevation": "1",
+					"direction": "North",
+					"county": "Riverside",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "47.7",
+					"alignment": "",
+					"milepost": "47.68"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "17:37:37"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "825265",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "RIV 15 SB [011.98] 1.4 mi N/O Cal Oaks (74)",
+					"nearbyPlace": "MURRIETA",
+					"longitude": "-117.224815",
+					"latitude": "33.578609",
+					"elevation": "1",
+					"direction": "South",
+					"county": "Riverside",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "11.982",
+					"alignment": "",
+					"milepost": "11.98"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "16:58:46"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "825267",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "RIV 15 SB [028.51] 1.8 mi N/O Lake (76)",
+					"nearbyPlace": "RIVERSIDE CO",
+					"longitude": "-117.423482",
+					"latitude": "33.735859",
+					"elevation": "1",
+					"direction": "South",
+					"county": "Riverside",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "28.51",
+					"alignment": "",
+					"milepost": "28.49"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-03",
+						"messageTime": "07:47:48"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "800014",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "RIV 15 SB [044.67] 1.1 mi S/O 6TH (2)",
+					"nearbyPlace": "NORCO",
+					"longitude": "-117.557108",
+					"latitude": "33.920287",
+					"elevation": "1",
+					"direction": "South",
+					"county": "Riverside",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "44.67",
+					"alignment": "",
+					"milepost": "44.65"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "06:44:35"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "E91 AT GYPSUM",
+						"phase1Line2": "4 LANES CLOSED",
+						"phase1Line3": "UNTIL MON 5AM"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "824465",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "RIV 215 NB [007.40] Vine Street (68)",
+					"nearbyPlace": "SAN BERNARDINO",
+					"longitude": "-117.302201",
+					"latitude": "34.113414",
+					"elevation": "1",
+					"direction": "North",
+					"county": "Riverside",
+					"route": "I-215",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "7.4",
+					"alignment": "",
+					"milepost": "44.71"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-03",
+						"messageTime": "07:47:48"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "825954",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "RIV 215 NB [022.02] 0.7mi S/O ETHANAC RD (69)",
+					"nearbyPlace": "RIVERSIDE CO",
+					"longitude": "-117.189025",
+					"latitude": "33.732388",
+					"elevation": "1",
+					"direction": "North",
+					"county": "Riverside",
+					"route": "I-215",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "22.019",
+					"alignment": "",
+					"milepost": "13.59"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "18:58:00"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "817828",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "RIV 215 NB [035.70] CACTUS (61)",
+					"nearbyPlace": "RIVERSIDE CO",
+					"longitude": "-117.276781",
+					"latitude": "33.902599",
+					"elevation": "1",
+					"direction": "North",
+					"county": "Riverside",
+					"route": "I-215",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "35.7",
+					"alignment": "",
+					"milepost": "27.37"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "17:37:50"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "800027",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "RIV 215 NB [040.84] CENTRAL (3)",
+					"nearbyPlace": "RIVERSIDE",
+					"longitude": "-117.310544",
+					"latitude": "33.960030",
+					"elevation": "1",
+					"direction": "North",
+					"county": "Riverside",
+					"route": "I-215",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "40.84",
+					"alignment": "",
+					"milepost": "32.81"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-14",
+						"messageTime": "21:19:02"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "827492",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "RIV 215 SB [011.30] Los Alamos Rd (72)",
+					"nearbyPlace": "MURRIETA",
+					"longitude": "-117.181194",
+					"latitude": "33.582492",
+					"elevation": "1",
+					"direction": "South",
+					"county": "Riverside",
+					"route": "I-215",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "11.3",
+					"alignment": "",
+					"milepost": "2.87"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "16:58:46"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "827493",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "RIV 215 SB [028.40] Nuevo Rd (71)",
+					"nearbyPlace": "PERRIS",
+					"longitude": "-117.236024",
+					"latitude": "33.808719",
+					"elevation": "1",
+					"direction": "South",
+					"county": "Riverside",
+					"route": "I-215",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "28.4",
+					"alignment": "",
+					"milepost": "20.07"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "16:58:46"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "816166",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "RIV 215 SB [039.05] SYCAMORE S/B 215 (33)",
+					"nearbyPlace": "RIVERSIDE CO",
+					"longitude": "-117.305035",
+					"latitude": "33.954517",
+					"elevation": "1",
+					"direction": "South",
+					"county": "Riverside",
+					"route": "I-215",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "39.052",
+					"alignment": "",
+					"milepost": "31.03"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-14",
+						"messageTime": "21:05:28"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "800028",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "RIV 215 SB [045.27] 0.45mi S/O IOWA (4)",
+					"nearbyPlace": "RIVERSIDE CO",
+					"longitude": "-117.338214",
+					"latitude": "34.021238",
+					"elevation": "1",
+					"direction": "South",
+					"county": "Riverside",
+					"route": "I-215",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "45.27",
+					"alignment": "",
+					"milepost": "37.24"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "06:44:35"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "E91 AT GYPSUM",
+						"phase1Line2": "4 LANES CLOSED",
+						"phase1Line3": "UNTIL MON 5AM"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "800021",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "RIV 60 EB [008.69] RUBIDOUX BLVD (6)",
+					"nearbyPlace": "RIVERSIDE CO",
+					"longitude": "-117.415118",
+					"latitude": "34.005784",
+					"elevation": "1",
+					"direction": "East",
+					"county": "Riverside",
+					"route": "SR-60",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "10.23",
+					"alignment": "",
+					"milepost": "19.91"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:22:14"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "CA-74 23 MIN",
+						"phase1Line2": "I-10 29 MIN",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "827911",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "RIV 60 EB [019.80] 0.5 mi W/O Redlands blv (83)",
+					"nearbyPlace": "MORENO VALLEY",
+					"longitude": "-117.166624",
+					"latitude": "33.939272",
+					"elevation": "1",
+					"direction": "East",
+					"county": "Riverside",
+					"route": "SR-60",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "19.8",
+					"alignment": "",
+					"milepost": "29.32"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-09-08",
+						"messageTime": "15:23:07"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "800020",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "RIV 60 WB [004.94] PEDLEY (5)",
+					"nearbyPlace": "RIVERSIDE CO",
+					"longitude": "-117.490066",
+					"latitude": "34.019706",
+					"elevation": "1",
+					"direction": "West",
+					"county": "Riverside",
+					"route": "SR-60",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "4.94",
+					"alignment": "",
+					"milepost": "14.9"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:22:14"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "LA CNTY 14 MIN",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "810317",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "RIV 60 WB [015.70] HEACOCK (56)",
+					"nearbyPlace": "MORENO VALLEY",
+					"longitude": "-117.241679",
+					"latitude": "33.941290",
+					"elevation": "1",
+					"direction": "West",
+					"county": "Riverside",
+					"route": "SR-60",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "15.699",
+					"alignment": "",
+					"milepost": "25.22"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "17:37:43"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "824147",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "RIV 62 WB [001.60] N/O Dillon Rd (67)",
+					"nearbyPlace": "RIVERSIDE CO",
+					"longitude": "-116.597613",
+					"latitude": "33.936736",
+					"elevation": "1",
+					"direction": "West",
+					"county": "Riverside",
+					"route": "SR-62",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "1.6",
+					"alignment": "",
+					"milepost": "1.6"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:22:16"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "CA-24327 MIN",
+						"phase1Line2": "CA-6034 MIN",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "828685",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "RIV 74 WB [012.80] 0.7 mi w/o Lincoln (85)",
+					"nearbyPlace": "LAKE ELSINORE",
+					"longitude": "-117.381080",
+					"latitude": "33.668391",
+					"elevation": "1",
+					"direction": "West",
+					"county": "Riverside",
+					"route": "SR-74",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "12.8",
+					"alignment": "",
+					"milepost": "12.77"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "16:58:47"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "825260",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "RIV 86 NB [020.10] 0.33 mi N/O Avenue 50 (84)",
+					"nearbyPlace": "RIVERSIDE CO",
+					"longitude": "-116.159902",
+					"latitude": "33.684141",
+					"elevation": "1",
+					"direction": "North",
+					"county": "Riverside",
+					"route": "SR-86",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "20.1",
+					"alignment": "R",
+					"milepost": "20.1"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "16:58:47"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "800022",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "RIV 91 EB [000.52] 0.5 mi E/O OC Line (7)",
+					"nearbyPlace": "CORONA",
+					"longitude": "-117.663619",
+					"latitude": "33.873150",
+					"elevation": "1",
+					"direction": "East",
+					"county": "Riverside",
+					"route": "SR-91",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "0.52",
+					"alignment": "R",
+					"milepost": "0.52"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "06:44:01"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "E91 AT GYPSUM",
+						"phase1Line2": "4 LANES CLOSED",
+						"phase1Line3": "UNTIL MON 5AM"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "8",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "RIV 91 EB [004.96] 0.9 mi E/O Maple (8)",
+					"nearbyPlace": "Riverside CO",
+					"longitude": "-117.588619",
+					"latitude": "33.882283",
+					"elevation": "1",
+					"direction": "East",
+					"county": "Riverside",
+					"route": "SR-91",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "4.96",
+					"alignment": "",
+					"milepost": "8"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "06:44:35"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "E91 AT GYPSUM",
+						"phase1Line2": "4 LANES CLOSED",
+						"phase1Line3": "UNTIL MON 5AM"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "800026",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "RIV 91 EB [018.71] CENTRAL (11)",
+					"nearbyPlace": "RIVERSIDE",
+					"longitude": "-117.379859",
+					"latitude": "33.956502",
+					"elevation": "1",
+					"direction": "East",
+					"county": "Riverside",
+					"route": "SR-91",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "18.71",
+					"alignment": "",
+					"milepost": "18.82"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:22:14"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "VIA I-215 TO ",
+						"phase1Line2": "I-10 11 MIN",
+						"phase1Line3": "Devore 24 MIN"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "800024",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "RIV 91 WB [004.73] Smith Ave (9)",
+					"nearbyPlace": "CORONA",
+					"longitude": "-117.581927",
+					"latitude": "33.881906",
+					"elevation": "1",
+					"direction": "West",
+					"county": "Riverside",
+					"route": "SR-91",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "4.73",
+					"alignment": "",
+					"milepost": "4.84"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "06:44:35"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "E91 AT GYPSUM",
+						"phase1Line2": "4 LANES CLOSED",
+						"phase1Line3": "UNTIL MON 5AM"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "800025",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "RIV 91 WB [010.11] 0.7 mi W/O PIERCE (10)",
+					"nearbyPlace": "CORONA",
+					"longitude": "-117.503993",
+					"latitude": "33.893164",
+					"elevation": "1",
+					"direction": "West",
+					"county": "Riverside",
+					"route": "SR-91",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "10.11",
+					"alignment": "",
+					"milepost": "10.22"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "06:44:35"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "E91 AT GYPSUM",
+						"phase1Line2": "4 LANES CLOSED",
+						"phase1Line3": "UNTIL MON 5AM"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "812859",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 10 EB [002.60] E/O MOUNTAIN AVE (39)",
+					"nearbyPlace": "UPLAND",
+					"longitude": "-117.664213",
+					"latitude": "34.087031",
+					"elevation": "1",
+					"direction": "East",
+					"county": "San Bernardino",
+					"route": "I-10",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "2.6",
+					"alignment": "",
+					"milepost": "2.6"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "17:37:42"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "800006",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 10 EB [008.42] 0.1 mi E/O HAVEN (12)",
+					"nearbyPlace": "ONTARIO",
+					"longitude": "-117.572078",
+					"latitude": "34.067228",
+					"elevation": "1",
+					"direction": "East",
+					"county": "San Bernardino",
+					"route": "I-10",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "8.42",
+					"alignment": "",
+					"milepost": "8.42"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:22:13"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "VIA I-15 TO",
+						"phase1Line2": "Devore 14 MIN",
+						"phase1Line3": "SR-91 18 MIN"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "800008",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 10 EB [022.04] 0.5 mi E/O RANCHO (14)",
+					"nearbyPlace": "COLTON",
+					"longitude": "-117.332766",
+					"latitude": "34.066383",
+					"elevation": "1",
+					"direction": "East",
+					"county": "San Bernardino",
+					"route": "I-10",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "22.04",
+					"alignment": "",
+					"milepost": "22.05"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-29",
+						"messageTime": "05:11:31"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "816978",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 10 EB [027.50] E/O MT VIEW (59)",
+					"nearbyPlace": "REDLANDS",
+					"longitude": "-117.241033",
+					"latitude": "34.066392",
+					"elevation": "1",
+					"direction": "East",
+					"county": "San Bernardino",
+					"route": "I-10",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "27.5",
+					"alignment": "",
+					"milepost": "27.5"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:22:14"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "CA-24329 MIN",
+						"phase1Line2": "CA-6237 MIN",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "9992",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 10 EB [035.03] TPAS Cactus City Status",
+					"nearbyPlace": "Yucaipa",
+					"longitude": "-117.127454",
+					"latitude": "34.028045",
+					"elevation": "1387",
+					"direction": "East",
+					"county": "San Bernardino",
+					"route": "I-10",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "35.03",
+					"alignment": "",
+					"milepost": "35.03"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2025-05-30",
+						"messageTime": "22:10:47"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "000000",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 10 WB [014.53] 0.65 mi W/O CITRUS (13)",
+					"nearbyPlace": "FONTANA",
+					"longitude": "-117.465126",
+					"latitude": "34.066696",
+					"elevation": "1",
+					"direction": "West",
+					"county": "San Bernardino",
+					"route": "I-10",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "14.53",
+					"alignment": "",
+					"milepost": "14.53"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:22:14"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "LA CNTY 17 MIN",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "800009",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 10 WB [027.50] 0.3 mi W/O MT VIEW (15)",
+					"nearbyPlace": "LOMA LINDA",
+					"longitude": "-117.249897",
+					"latitude": "34.066922",
+					"elevation": "1",
+					"direction": "West",
+					"county": "San Bernardino",
+					"route": "I-10",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "27.5",
+					"alignment": "",
+					"milepost": "27.5"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:22:13"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "I-1517 MIN",
+						"phase1Line2": "Devore18 MIN",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "816979",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 10 WB [032.50] W/O FORD STR (60)",
+					"nearbyPlace": "REDLANDS",
+					"longitude": "-117.157798",
+					"latitude": "34.047524",
+					"elevation": "1",
+					"direction": "West",
+					"county": "San Bernardino",
+					"route": "I-10",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "32.5",
+					"alignment": "",
+					"milepost": "32.5"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "17:37:39"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "827910",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 138 EB [037.65] 0.2 mi n/o Hwy 18 (77)",
+					"nearbyPlace": "SAN BERNARDINO CO",
+					"longitude": "-117.290930",
+					"latitude": "34.230982",
+					"elevation": "1",
+					"direction": "East",
+					"county": "San Bernardino",
+					"route": "SR-138",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "37.65",
+					"alignment": "",
+					"milepost": "36.67"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "16:58:46"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "826567",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 138 WB [009.93] 9.9mi W/O Hess Road (70)",
+					"nearbyPlace": "SAN BERNARDINO CO",
+					"longitude": "-117.534700",
+					"latitude": "34.360830",
+					"elevation": "1",
+					"direction": "West",
+					"county": "San Bernardino",
+					"route": "SR-138",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "9.934",
+					"alignment": "",
+					"milepost": "9.93"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-03",
+						"messageTime": "07:47:50"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "800016",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 15 NB [005.90] 0.5 mi S/O Baseline N (17)",
+					"nearbyPlace": "RANCHO CUCAMONGA",
+					"longitude": "-117.524085",
+					"latitude": "34.112582",
+					"elevation": "1",
+					"direction": "North",
+					"county": "San Bernardino",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "5.9",
+					"alignment": "",
+					"milepost": "58.15"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:22:13"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "Devore12 MIN",
+						"phase1Line2": "US-39525 MIN",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "807165",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 15 NB [011.54] 0.5 mi S/O Sierra (34)",
+					"nearbyPlace": "FONTANA",
+					"longitude": "-117.454842",
+					"latitude": "34.169815",
+					"elevation": "1",
+					"direction": "North",
+					"county": "San Bernardino",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "11.54",
+					"alignment": "",
+					"milepost": "63.8"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-02",
+						"messageTime": "11:52:55"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "805804",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 15 NB [018.20] 3 mi N/O Kenwood (18)",
+					"nearbyPlace": "SAN BERNARDINO CO",
+					"longitude": "-117.449104",
+					"latitude": "34.273602",
+					"elevation": "1",
+					"direction": "North",
+					"county": "San Bernardino",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "18.2",
+					"alignment": "",
+					"milepost": "73.05"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-04",
+						"messageTime": "07:41:44"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "809527",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 15 NB [030.40] S/O SR 395 (42)",
+					"nearbyPlace": "HESPERIA",
+					"longitude": "-117.415074",
+					"latitude": "34.382792",
+					"elevation": "1",
+					"direction": "North",
+					"county": "San Bernardino",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "30.4",
+					"alignment": "",
+					"milepost": "83.42"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-26",
+						"messageTime": "09:54:35"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "810326",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 15 NB [051.45] Dale Evans Pkwy (54)",
+					"nearbyPlace": "APPLE VALLEY",
+					"longitude": "-117.227816",
+					"latitude": "34.630601",
+					"elevation": "1",
+					"direction": "North",
+					"county": "San Bernardino",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "51.45",
+					"alignment": "",
+					"milepost": "104.47"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "17:38:05"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "810325",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 15 NB [068.52] LENWOOD (55)",
+					"nearbyPlace": "BARSTOW",
+					"longitude": "-117.087539",
+					"latitude": "34.843469",
+					"elevation": "1",
+					"direction": "North",
+					"county": "San Bernardino",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "68.52",
+					"alignment": "",
+					"milepost": "121.54"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "17:38:08"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "809533",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 15 NB [135.80] S/O BAKER ROAD (48)",
+					"nearbyPlace": "SAN BERNARDINO CO",
+					"longitude": "-116.084741",
+					"latitude": "35.256019",
+					"elevation": "1",
+					"direction": "North",
+					"county": "San Bernardino",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "135.8",
+					"alignment": "",
+					"milepost": "188.82"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "17:38:06"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "80015",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 15 SB [005.90] 0.5 mi S/O Baseline S (16)",
+					"nearbyPlace": "RANCHO CUCAMONGA",
+					"longitude": "-117.525373",
+					"latitude": "34.112346",
+					"elevation": "1",
+					"direction": "South",
+					"county": "San Bernardino",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "5.9",
+					"alignment": "",
+					"milepost": "58.15"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:22:13"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "CA-9120 MIN",
+						"phase1Line2": "CA-7950 MIN",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "807166",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 15 SB [010.00] 0.2 mi N/O Summit (35)",
+					"nearbyPlace": "FONTANA",
+					"longitude": "-117.471839",
+					"latitude": "34.156755",
+					"elevation": "1",
+					"direction": "South",
+					"county": "San Bernardino",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "10",
+					"alignment": "",
+					"milepost": "62.26"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "17:37:39"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "805751",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 15 SB [018.20] 3 mi N/O Kenwood (19)",
+					"nearbyPlace": "SAN BERNARDINO CO",
+					"longitude": "-117.450714",
+					"latitude": "34.275641",
+					"elevation": "1",
+					"direction": "South",
+					"county": "San Bernardino",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "18.198",
+					"alignment": "",
+					"milepost": "73.05"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "21:37:58"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "SR-9131 MIN",
+						"phase1Line2": "CA-7448 MIN",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "809528",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 15 SB [030.40] S/O SR 395 (43)",
+					"nearbyPlace": "HESPERIA",
+					"longitude": "-117.415258",
+					"latitude": "34.383540",
+					"elevation": "1",
+					"direction": "South",
+					"county": "San Bernardino",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "30.4",
+					"alignment": "",
+					"milepost": "83.77"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-26",
+						"messageTime": "09:11:58"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "805806",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 15 SB [036.70] 0.8 mi S/O Bear Vly (20)",
+					"nearbyPlace": "HESPERIA",
+					"longitude": "-117.355317",
+					"latitude": "34.459192",
+					"elevation": "1",
+					"direction": "South",
+					"county": "San Bernardino",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "36.7",
+					"alignment": "",
+					"milepost": "90.07"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:22:15"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "SR-13858 MIN",
+						"phase1Line2": "Devore69 MIN",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "205807",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 15 SB [045.60] 0.5 mi N/O Stoddard (21)",
+					"nearbyPlace": "VICTORVILLE",
+					"longitude": "-117.279544",
+					"latitude": "34.569058",
+					"elevation": "1",
+					"direction": "South",
+					"county": "San Bernardino",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "45.6",
+					"alignment": "",
+					"milepost": "98.97"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:22:15"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "SR-13845 MIN",
+						"phase1Line2": "Devore78 MIN",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "809529",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 15 SB [070.80] N/O JCT 58 (44)",
+					"nearbyPlace": "BARSTOW",
+					"longitude": "-117.067500",
+					"latitude": "34.879072",
+					"elevation": "1",
+					"direction": "South",
+					"county": "San Bernardino",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "70.8",
+					"alignment": "",
+					"milepost": "124.17"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-03",
+						"messageTime": "11:18:19"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "805808",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 15 SB [080.60] 1.1 mi S/O Yermo Rd. (22)",
+					"nearbyPlace": "BARSTOW",
+					"longitude": "-116.908817",
+					"latitude": "34.901435",
+					"elevation": "1",
+					"direction": "South",
+					"county": "San Bernardino",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "80.6",
+					"alignment": "",
+					"milepost": "133.97"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:22:24"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "D ST  34 MIN",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "809534",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 15 SB [139.30] N/O BAKER ROAD (49)",
+					"nearbyPlace": "SAN BERNARDINO CO",
+					"longitude": "-116.040365",
+					"latitude": "35.287850",
+					"elevation": "1",
+					"direction": "South",
+					"county": "San Bernardino",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "139.3",
+					"alignment": "",
+					"milepost": "192.54"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "17:38:06"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "807125",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 15 SB [182.00] Yates Wells Rd (36)",
+					"nearbyPlace": "SAN BERNARDINO CO",
+					"longitude": "-115.416906",
+					"latitude": "35.548358",
+					"elevation": "1",
+					"direction": "South",
+					"county": "San Bernardino",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "182",
+					"alignment": "",
+					"milepost": "235.24"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "17:38:04"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "827862",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 18 SB [020.53] Lake Gregory Dr. (78)",
+					"nearbyPlace": "SAN BERNARDINO CO",
+					"longitude": "-117.252484",
+					"latitude": "34.227958",
+					"elevation": "1",
+					"direction": "South",
+					"county": "San Bernardino",
+					"route": "SR-18",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "20.53",
+					"alignment": "",
+					"milepost": "19.3"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "16:58:54"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "819087",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 18 SB [049.44] MAIN STR (62)",
+					"nearbyPlace": "BIG BEAR LAKE",
+					"longitude": "-116.905749",
+					"latitude": "34.243706",
+					"elevation": "1",
+					"direction": "South",
+					"county": "San Bernardino",
+					"route": "SR-18",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "49.436",
+					"alignment": "",
+					"milepost": "48.03"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-03",
+						"messageTime": "07:47:52"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "808866",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 210 EB [000.80] .75mi E/O BASELINE E (41)",
+					"nearbyPlace": "RANCHO CUCAMONGA",
+					"longitude": "-117.680826",
+					"latitude": "34.132143",
+					"elevation": "1",
+					"direction": "East",
+					"county": "San Bernardino",
+					"route": "I-210",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "0.8",
+					"alignment": "",
+					"milepost": "0.8"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-09-28",
+						"messageTime": "20:19:15"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "807945",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 210 EB [007.80] 210 at Milliken (31)",
+					"nearbyPlace": "RANCHO CUCAMONGA",
+					"longitude": "-117.560171",
+					"latitude": "34.136324",
+					"elevation": "1",
+					"direction": "East",
+					"county": "San Bernardino",
+					"route": "I-210",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "7.8",
+					"alignment": "",
+					"milepost": "7.8"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "17:37:39"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "813237",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 210 EB [019.00] RIVERSIDE AVE (57)",
+					"nearbyPlace": "RIALTO",
+					"longitude": "-117.362204",
+					"latitude": "34.135902",
+					"elevation": "1",
+					"direction": "East",
+					"county": "San Bernardino",
+					"route": "I-210",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "19",
+					"alignment": "",
+					"milepost": "19"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "17:37:40"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "800017",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 210 EB [025.24] 1.0mi E/O WATERMAN (26)",
+					"nearbyPlace": "SAN BERNARDINO",
+					"longitude": "-117.260642",
+					"latitude": "34.143838",
+					"elevation": "1",
+					"direction": "East",
+					"county": "San Bernardino",
+					"route": "I-210",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "25.24",
+					"alignment": "",
+					"milepost": "25.24"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:22:13"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "Big Bear 55 MIN",
+						"phase1Line2": "I-10 8 MIN",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "828925",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 210 EB [030.31] Fifth St EB Onramp (88)",
+					"nearbyPlace": "HIGHLAND",
+					"longitude": "-117.199190",
+					"latitude": "34.107009",
+					"elevation": "1",
+					"direction": "East",
+					"county": "San Bernardino",
+					"route": "I-210",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "30.31",
+					"alignment": "",
+					"milepost": "30.31"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "16:58:47"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "808865",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 210 WB [000.80] .75mi E/O Baseline (40)",
+					"nearbyPlace": "RANCHO CUCAMONGA",
+					"longitude": "-117.683336",
+					"latitude": "34.131415",
+					"elevation": "1",
+					"direction": "West",
+					"county": "San Bernardino",
+					"route": "I-210",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "0.8",
+					"alignment": "",
+					"milepost": "0.8"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-09-28",
+						"messageTime": "20:19:15"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "813236",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 210 WB [015.10] SIERRA AVE (58)",
+					"nearbyPlace": "FONTANA",
+					"longitude": "-117.427933",
+					"latitude": "34.136662",
+					"elevation": "1",
+					"direction": "West",
+					"county": "San Bernardino",
+					"route": "I-210",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "15.1",
+					"alignment": "",
+					"milepost": "15.1"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "17:37:38"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "827731",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 210 WB [024.88] E/O Waterman Ave (73)",
+					"nearbyPlace": "SAN BERNARDINO",
+					"longitude": "-117.267202",
+					"latitude": "34.144626",
+					"elevation": "1",
+					"direction": "West",
+					"county": "San Bernardino",
+					"route": "I-210",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "24.876",
+					"alignment": "",
+					"milepost": "24.88"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "16:58:47"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "800018",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 210 WB [030.22] FIFTH STR UC (27)",
+					"nearbyPlace": "HIGHLAND",
+					"longitude": "-117.198691",
+					"latitude": "34.109074",
+					"elevation": "1",
+					"direction": "West",
+					"county": "San Bernardino",
+					"route": "I-210",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "30.22",
+					"alignment": "",
+					"milepost": "30.22"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:22:14"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "Big Bear 54 MIN",
+						"phase1Line2": "I-15 21 MIN",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "800029",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 215 NB [000.50] 0.8mi S/O BARTON (23)",
+					"nearbyPlace": "COLTON",
+					"longitude": "-117.329224",
+					"latitude": "34.029702",
+					"elevation": "1",
+					"direction": "North",
+					"county": "Riverside",
+					"route": "I-215",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "0.5",
+					"alignment": "",
+					"milepost": "37.81"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "06:44:35"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "E91 AT GYPSUM",
+						"phase1Line2": "4 LANES CLOSED",
+						"phase1Line3": "UNTIL MON 5AM"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "800031",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 215 NB [012.74] 0.9mi N/O UNIV. PKWY (25)",
+					"nearbyPlace": "SAN BERNARDINO",
+					"longitude": "-117.344276",
+					"latitude": "34.177499",
+					"elevation": "1",
+					"direction": "North",
+					"county": "Riverside",
+					"route": "I-215",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "12.74",
+					"alignment": "",
+					"milepost": "50.05"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:22:13"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "VIA I-15 TO",
+						"phase1Line2": "CA-18 32 MIN",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "800030",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 215 SB [006.64] 0.2mi S/O 2ND (24)",
+					"nearbyPlace": "SAN BERNARDINO",
+					"longitude": "-117.302204",
+					"latitude": "34.097809",
+					"elevation": "1",
+					"direction": "South",
+					"county": "Riverside",
+					"route": "I-215",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "6.64",
+					"alignment": "",
+					"milepost": "43.95"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "06:44:35"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "E91 AT GYPSUM",
+						"phase1Line2": "4 LANES CLOSED",
+						"phase1Line3": "UNTIL MON 5AM"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "828749",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 215 SB [012.74] 0.9mi N/O UNIVERSITY (86)",
+					"nearbyPlace": "SAN BERNARDINO",
+					"longitude": "-117.345161",
+					"latitude": "34.177875",
+					"elevation": "1",
+					"direction": "South",
+					"county": "Riverside",
+					"route": "I-215",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "12.74",
+					"alignment": "",
+					"milepost": "50.05"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-03",
+						"messageTime": "07:47:51"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "828750",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 259 NB [001.40] W/O E Street (87)",
+					"nearbyPlace": "SAN BERNARDINO",
+					"longitude": "-117.295072",
+					"latitude": "34.145272",
+					"elevation": "1",
+					"direction": "North",
+					"county": "Riverside",
+					"route": "SR-259",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "1.4",
+					"alignment": "",
+					"milepost": "1.55"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-03",
+						"messageTime": "07:47:51"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "809531",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 40 EB [003.00] E/O MAIN E (46)",
+					"nearbyPlace": "SAN BERNARDINO CO",
+					"longitude": "-116.960749",
+					"latitude": "34.872482",
+					"elevation": "1",
+					"direction": "East",
+					"county": "San Bernardino",
+					"route": "I-40",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "3",
+					"alignment": "",
+					"milepost": "3.79"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "17:38:01"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "809530",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 40 WB [003.00] E/O MAIN W (45)",
+					"nearbyPlace": "BARSTOW",
+					"longitude": "-116.961844",
+					"latitude": "34.873791",
+					"elevation": "1",
+					"direction": "West",
+					"county": "San Bernardino",
+					"route": "I-40",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "3",
+					"alignment": "",
+					"milepost": "3.79"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "17:38:02"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "807605",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 40 WB [149.00] E/O Five Mile Rd (38)",
+					"nearbyPlace": "NEEDLES",
+					"longitude": "-114.560683",
+					"latitude": "34.746869",
+					"elevation": "1",
+					"direction": "West",
+					"county": "San Bernardino",
+					"route": "I-40",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "149",
+					"alignment": "",
+					"milepost": "149.77"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "17:38:32"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "92",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 58 EB [002.65] 2.6 mi w/o 58/395 jct (92)",
+					"nearbyPlace": "SAN BERNARDINO",
+					"longitude": "-117.587728",
+					"latitude": "35.001445",
+					"elevation": "1",
+					"direction": "East",
+					"county": "San Bernardino",
+					"route": "SR-58",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "6.65",
+					"alignment": "",
+					"milepost": "2.65"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-20",
+						"messageTime": "13:24:39"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "809532",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 58 EB [032.90] E/O LENWOOD (47)",
+					"nearbyPlace": "RIVERSIDE CO",
+					"longitude": "-117.094123",
+					"latitude": "34.894105",
+					"elevation": "1",
+					"direction": "East",
+					"county": "San Bernardino",
+					"route": "SR-58",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "32.9",
+					"alignment": "",
+					"milepost": "33.28"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "17:38:39"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "93",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 58 WB [006.26] 1 mi e/o 58 / 395 jct (93)",
+					"nearbyPlace": "SAN BERNARDINO",
+					"longitude": "-117.524902",
+					"latitude": "34.996223",
+					"elevation": "1",
+					"direction": "West",
+					"county": "San Bernardino",
+					"route": "SR-58",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "6.26",
+					"alignment": "",
+					"milepost": "6.26"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-03",
+						"messageTime": "07:47:53"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "812860",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 60 EB [003.70] E/O MOUNTAIN AVE (51)",
+					"nearbyPlace": "UPLAND",
+					"longitude": "-117.666451",
+					"latitude": "34.030080",
+					"elevation": "1",
+					"direction": "East",
+					"county": "San Bernardino",
+					"route": "SR-60",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "3.7",
+					"alignment": "",
+					"milepost": "3.7"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "17:37:42"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "800019",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 60 EB [007.91] ARCHIBALD UC (28)",
+					"nearbyPlace": "ONTARIO",
+					"longitude": "-117.592598",
+					"latitude": "34.030297",
+					"elevation": "1",
+					"direction": "East",
+					"county": "San Bernardino",
+					"route": "SR-60",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "7.91",
+					"alignment": "",
+					"milepost": "7.91"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:22:14"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "SR-91 15 MIN",
+						"phase1Line2": "Devore 33 MIN",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "810045",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 60 WB [000.85] W/O PIPELINE AVE. (50)",
+					"nearbyPlace": "POMONA",
+					"longitude": "-117.719628",
+					"latitude": "34.027692",
+					"elevation": "1",
+					"direction": "West",
+					"county": "San Bernardino",
+					"route": "SR-60",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "0.85",
+					"alignment": "",
+					"milepost": "0.85"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "00:12:11"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "VINCENT THOMAS",
+						"phase1Line2": "BRIDGE CLOSED",
+						"phase1Line3": "USE ALT RTE"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "810046",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 60 WB [005.69] E/O GROVE (52)",
+					"nearbyPlace": "UPLAND",
+					"longitude": "-117.621282",
+					"latitude": "34.030749",
+					"elevation": "1",
+					"direction": "West",
+					"county": "San Bernardino",
+					"route": "SR-60",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "5.69",
+					"alignment": "",
+					"milepost": "5.69"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "17:37:38"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "828923",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 71 NB [005.96] 0.536 mi N/O Pine Ave (90)",
+					"nearbyPlace": "CHINO HILLS",
+					"longitude": "-117.679507",
+					"latitude": "33.954790",
+					"elevation": "1",
+					"direction": "North",
+					"county": "San Bernardino",
+					"route": "SR-71",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "5.96",
+					"alignment": "",
+					"milepost": "5.96"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-09-26",
+						"messageTime": "09:27:11"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "828922",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 71 SB [002.44] 0.599 mi S/O Grand Ave (89)",
+					"nearbyPlace": "CHINO",
+					"longitude": "-117.719151",
+					"latitude": "33.993118",
+					"elevation": "1",
+					"direction": "South",
+					"county": "San Bernardino",
+					"route": "SR-71",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "2.438",
+					"alignment": "",
+					"milepost": "2.44"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "06:44:37"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "E91 AT GYPSUM",
+						"phase1Line2": "4 LANES CLOSED",
+						"phase1Line3": "UNTIL MON 5AM"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "828924",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:03"
+				},
+				"location":
+				{
+					"district": "8",
+					"locationName": "SBD 71 SB [007.00] 0.505 mi S/O Pine Ave (91)",
+					"nearbyPlace": "CHINO HILLS",
+					"longitude": "-117.669885",
+					"latitude": "33.942042",
+					"elevation": "1",
+					"direction": "South",
+					"county": "San Bernardino",
+					"route": "SR-71",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "7",
+					"alignment": "",
+					"milepost": "7"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "06:44:37"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "E91 AT GYPSUM",
+						"phase1Line2": "4 LANES CLOSED",
+						"phase1Line3": "UNTIL MON 5AM"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		}
+	]
+}

@@ -59,7 +59,18 @@ export type StatusIndex = ReadonlyMap<string, readonly StatusSubject[]>;
 
 /** What one poll of a feed parsed into, per record class. */
 export interface ParseOutput {
+  /** Explicit publication authority; omitted fields preserve existing formats. */
+  publication?: {
+    featuresComplete: boolean;
+    offersComplete: boolean;
+    statesComplete: boolean;
+    sourcePublishedAt?: string;
+  };
+  /** Explicit false preserves absent features and display series until provider qualification. */
+  featuresComplete?: boolean;
   situations: RecordDraft[];
+  /** False withholds absence-based withdrawal; omitted preserves the format's established complete publication. Independent of received-row accounting. */
+  situationsComplete?: boolean;
   features: RecordDraft[];
   observations: RecordDraft[];
   offers: RecordDraft[];
@@ -71,6 +82,8 @@ export interface ParseOutput {
   statusIndex?: StatusIndex;
   /** The publisher cut its answer at a result cap: records past it are missing. */
   truncated?: boolean;
+  /** The format independently qualified the entire feature snapshot, including an empty one. */
+  featureSnapshotComplete?: true;
 }
 
 /** What a status-only poll parsed into: readings, and the status records it could not use. */

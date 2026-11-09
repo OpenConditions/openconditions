@@ -283,3 +283,78 @@ describe("fetchEndpoint link pagination (OCPI)", () => {
     expect(calls.map((u) => new URL(u).searchParams.get("offset"))).toEqual([null, "2", "4"]);
   });
 });
+
+it.each([true, false])(
+  "rejects ArcGIS short pages reporting transfer limits (nested=%s)",
+  async (nested) => {
+    const endpoint = catalogFeed({
+      endpoints: {
+        main: {
+          url: "https://example.test/query",
+          cadenceSec: 300,
+          pagination: { skipParam: "resultOffset", pageSize: 2000, recordsPath: "features" },
+        },
+      },
+    });
+    const fn = (async () =>
+      new Response(
+        JSON.stringify({
+          type: "FeatureCollection",
+          features: [],
+          ...(nested
+            ? { properties: { exceededTransferLimit: true } }
+            : { exceededTransferLimit: true }),
+        }),
+      )) as typeof fetch;
+    await expect(
+      fetchEndpoint(endpoint, "main", fn, { state: createFetchState() }),
+    ).rejects.toThrow(/transfer limit/);
+  },
+);
+
+it.each([
+  '{"features":[]}',
+  '{"error":{"code":500},"features":[]}',
+  '{"error":{"code":500}}',
+  '{"type":"FeatureCollection","features":[',
+])("rejects error and truncated GeoJSON pages before publishing %s", async (payload) => {
+  const endpoint = catalogFeed({
+    endpoints: {
+      main: {
+        url: "https://example.test/query",
+        cadenceSec: 300,
+        pagination: { skipParam: "resultOffset", pageSize: 2000, recordsPath: "features" },
+      },
+    },
+  });
+  const fn = (async () => new Response(payload)) as typeof fetch;
+  await expect(
+    fetchEndpoint(endpoint, "main", fn, { state: createFetchState() }),
+  ).rejects.toThrow();
+});
+
+it("continues a full transfer-limited page and accepts a genuine empty terminal page", async () => {
+  const endpoint = catalogFeed({
+    endpoints: {
+      main: {
+        url: "https://example.test/query",
+        cadenceSec: 300,
+        pagination: { skipParam: "resultOffset", pageSize: 2, recordsPath: "features" },
+      },
+    },
+  });
+  const offsets: string[] = [];
+  const fn = (async (url: string | URL | Request) => {
+    offsets.push(new URL(String(url)).searchParams.get("resultOffset")!);
+    return new Response(
+      JSON.stringify({
+        type: "FeatureCollection",
+        features: offsets.length === 1 ? [1, 2] : [],
+        exceededTransferLimit: offsets.length === 1,
+      }),
+    );
+  }) as typeof fetch;
+  const out = await fetchEndpoint(endpoint, "main", fn, { state: createFetchState() });
+  expect(out.status === "fetched" && out.buffers).toHaveLength(1);
+  expect(offsets).toEqual(["0", "2"]);
+});

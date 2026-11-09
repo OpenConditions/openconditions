@@ -17,12 +17,14 @@ import {
 } from "./catalog/templates.js";
 import type { CatalogFeed, FeedEndpoint, FetchFn } from "./catalog/types.js";
 import { boundedGunzip, maxFeedBytes } from "./egress.js";
+import { budgetFetch } from "./endpoint-budget.js";
 import { decodedFromGzip, type HeldPayload, heldBuffer, holdPayload } from "./held.js";
 import { guardedImpersonatingFetch, type ImpersonationOptions } from "./impersonate.js";
 import { getPath } from "./layouts/row.js";
 import { nextLinkTarget } from "./link-header.js";
 import type { OAuthGrants } from "./oauth-grant.js";
 import { digestPayload, type PayloadDigest } from "./payload.js";
+import { acquirePun, PUN_ROOT, punHostFetch } from "./pun.js";
 import { feedSecretValues, redactSecrets, redactUrl } from "./redact.js";
 import { unzipEntries } from "./zip.js";
 
@@ -123,6 +125,8 @@ export type KeptItems = ReadonlyMap<string, KeptItem>;
 
 /** What a fetch that answered carries besides its status. */
 interface FetchedPayloads {
+  /** Transport-derived upper bound for Caltrans publication, never source revision authority. */
+  publicationExpiresAt?: string;
   /** Every parsed body (including walk dependencies) was acquired in this call; held/304 copies are not acquisition evidence. */
   bodyFreshness: "acquired" | "held";
   /** The payloads to parse. */
@@ -169,6 +173,8 @@ export type FetchResult =
 
 export interface FetchOptions {
   state?: FetchState;
+  /** Cancels a bounded PUN acquisition, including queue and body waits. */
+  signal?: AbortSignal;
   /** The resolvers a catalogue parent may name: its domain's. */
   resolvers?: readonly CatalogResolver[];
   /** Where credentials are read; defaults to `process.env`. */
@@ -548,6 +554,20 @@ async function fetchPaginated(
         xml: pg.xmlLists === true,
         firstPage: page === 0,
       });
+      // ArcGIS can return a short page while still reporting truncation. Such
+      // a page cannot prove completeness; offset advancement would skip rows.
+      if (!pg.xmlLists) {
+        const doc = JSON.parse(buffer.toString("utf8"));
+        if (doc?.error) throw new Error(`pagination: ${feedId} provider returned an error page`);
+        if (recordsPath === "features" && doc?.type !== "FeatureCollection") {
+          throw new Error(`pagination: ${feedId} expected a GeoJSON FeatureCollection`);
+        }
+        const limited =
+          doc?.exceededTransferLimit === true || doc?.properties?.exceededTransferLimit === true;
+        if (limited && count < pg.pageSize) {
+          throw new Error(`pagination: ${feedId} short page exceeded transfer limit`);
+        }
+      }
       if (count > 0) {
         out.push(buffer);
         urls.push(url);
@@ -1182,8 +1202,76 @@ export async function fetchEndpoint(
   baseFetch: FetchFn,
   opts: FetchOptions = {},
 ): Promise<FetchResult> {
+  if (
+    feed.format !== "pun" &&
+    Object.values(feed.endpoints).some((endpoint) =>
+      [endpoint.url, ...(endpoint.urls ?? [])].some((url) =>
+        url?.startsWith("https://cruscotto-italia.dati.gov.it/"),
+      ),
+    )
+  )
+    baseFetch = punHostFetch(baseFetch);
+  if (feed.format === "pun") {
+    if (role !== "main" || feedEndpoint(feed, role).url !== `${PUN_ROOT}manifest.json`)
+      throw new Error("PUN requires the public mirror manifest");
+    return acquirePun(baseFetch, opts.state ?? sharedFetchState, opts.signal);
+  }
   const unzip = feedEndpoint(feed, role).unzip;
-  const result = await fetchRole(feed, role, baseFetch, opts);
+  // CMS verification has a finite lifetime even when an intermediary supplies
+  // a successful response. Keep this policy local to the accepted CMS scope.
+  const at = opts.at ?? Date.now();
+  const started = performance.now();
+  const lifetime = (feed.freshnessWindowSec ?? 900) * 1000;
+  let expires = at + lifetime;
+  const cmsFetch: FetchFn = async (url, init) => {
+    const requestAt = at + performance.now() - started;
+    const headers = new Headers(init?.headers);
+    headers.set("Cache-Control", "no-cache");
+    const response = await baseFetch(url, { ...init, headers, cache: "no-cache" });
+    // Conditional validation keeps the established no-renewal path. It does
+    // not turn a held body into a newly verified display.
+    if (!response.ok) return response;
+    const age = response.headers.get("age");
+    const date = response.headers.get("date");
+    if (age !== null) {
+      if (!/^\d+$/.test(age) || !Number.isSafeInteger(Number(age)))
+        throw new Error("Caltrans transport freshness: malformed Age");
+      // Age plus response delay (RFC 9111): anchor at request start, so
+      // network/body time cannot grant extra verification lifetime.
+      expires = Math.min(expires, requestAt + lifetime - Number(age) * 1000);
+    }
+    if (date !== null) {
+      const instant = Date.parse(date);
+      if (!Number.isFinite(instant) || new Date(instant).toUTCString() !== date)
+        throw new Error("Caltrans transport freshness: malformed Date");
+      // Future server clocks never extend the local lifetime. Last-Modified
+      // and ETags are deliberately absent from this calculation.
+      expires = Math.min(expires, instant + lifetime);
+    }
+    if (expires <= at + performance.now() - started)
+      throw new Error("Caltrans transport freshness: stale response");
+    return response;
+  };
+  const cms = feed.format === "caltrans-cms";
+  const none = feed.rawRetention === "none";
+  const state = opts.state ?? sharedFetchState;
+  if (none) {
+    for (const key of state.conditional.keys()) {
+      if (key.startsWith(`${feed.id}#`)) state.conditional.delete(key);
+    }
+  }
+  const result = await fetchRole(
+    feed,
+    role,
+    cms ? cmsFetch : baseFetch,
+    none ? { ...opts, kept: undefined } : opts,
+  );
+  if (none && (result.status === "fetched" || result.status === "partial")) delete result.kept;
+  if (cms && (result.status === "fetched" || result.status === "partial")) {
+    if (expires <= at + performance.now() - started)
+      throw new Error("Caltrans transport freshness: expired during acquisition");
+    result.publicationExpiresAt = new Date(expires).toISOString();
+  }
   return unzip ? unzipped(result, unzip) : result;
 }
 
@@ -1213,7 +1301,22 @@ async function fetchRole(
   if (endpoint.impersonate && feed.auth?.kind === "mtls") {
     throw new Error("impersonate cannot be combined with mtls auth");
   }
-  const base = endpoint.impersonate ? guardedImpersonatingFetch(opts.impersonation) : baseFetch;
+  const transport = endpoint.impersonate
+    ? guardedImpersonatingFetch(opts.impersonation)
+    : baseFetch;
+  const bounded = endpoint.budget ? budgetFetch(transport, endpoint.budget) : transport;
+  const base: FetchFn =
+    feed.rawRetention === "none"
+      ? async (url, init) => {
+          const headers = new Headers(init?.headers);
+          headers.delete("if-none-match");
+          headers.delete("if-modified-since");
+          const response = await bounded(url, { ...init, headers });
+          // No prior body exists to reconstruct a complete snapshot. Retry once;
+          // a repeated 304 remains a failure and cannot authorize replacement.
+          return response.status === 304 ? bounded(url, { ...init, headers }) : response;
+        }
+      : bounded;
   const authorized = makeAuthorizedFetch(feed, base, env, Date.now, opts.grants);
   // A bulk fetch keeps to the feed's stated rate here; a cell read is paced
   // by the on-demand request budget instead. A followed URL is not the
@@ -1264,7 +1367,16 @@ async function fetchRole(
       }
       const sources = opts.eachSource.map((buffer, i) => ({ buffer, url: sourceUrls[i]! }));
       return fanoutResult(
-        await fetchWalk(each.links, sources, opts.kept, at, fetchFn, init, redact, tolerant),
+        await fetchWalk(
+          each.links,
+          sources,
+          feed.rawRetention === "none" ? undefined : opts.kept,
+          at,
+          fetchFn,
+          init,
+          redact,
+          tolerant,
+        ),
       );
     }
     const { items, refused } = eachItems(each, opts.eachSource);
@@ -1272,7 +1384,7 @@ async function fetchRole(
       console.warn(`[ingest] ${feed.id}: ${role}: ${refused} items refused (not a plain path)`);
     }
     const urls = items.map((item) => resolveEachUrl(feed, role, item, env, at));
-    if (each.keepSec === undefined) {
+    if (each.keepSec === undefined || feed.rawRetention === "none") {
       return fanoutResult(await fetchEach(urls, fetchFn, init, redact, tolerant));
     }
     const keepMs = each.keepSec * 1000;
@@ -1417,14 +1529,22 @@ async function fetchRole(
   const provisional: FetchState = {
     conditional: new Map(
       urls.flatMap((url) => {
-        const prior = state.conditional.get(cacheKey(url));
+        const prior =
+          feed.rawRetention === "none" ? undefined : state.conditional.get(cacheKey(url));
         return prior ? [[url, prior] as const] : [];
       }),
     ),
     sourceConfig: state.sourceConfig,
     pacers: state.pacers,
   };
-  const results = await fetchAllBounded(urls, fetchFn, init, provisional, urls.length > 1, redact);
+  const results = await fetchAllBounded(
+    urls,
+    fetchFn,
+    init,
+    feed.rawRetention === "none" ? undefined : provisional,
+    urls.length > 1,
+    redact,
+  );
 
   if (results.every((r) => !r.changed)) {
     return { status: "not-modified", validatedAtNetwork: true };
@@ -1432,6 +1552,7 @@ async function fetchRole(
   return {
     status: "fetched",
     accept: () => {
+      if (feed.rawRetention === "none") return;
       // A URL the endpoint no longer names (yesterday's dated URL, a dropped
       // expand item) is never asked again: its validators go.
       for (const key of state.conditional.keys()) {

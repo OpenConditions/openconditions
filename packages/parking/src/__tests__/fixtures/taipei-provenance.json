@@ -1,0 +1,50 @@
+{
+  "capture": [
+    {
+      "role": "sites",
+      "url": "https://tcgbusfs.blob.core.windows.net/blobtcmsv/TCMSV_alldesc.xml",
+      "retrievedAt": "2026-11-07T08:13:29.244624+00:00",
+      "bytes": 4132370,
+      "sha256": "e736a7a7ccb600725689ffad262feda16f1dcc3b3bccfe43ef1b9cfd1cb30e05",
+      "headers": {
+        "Content-Length": "4132370",
+        "Content-Type": "application/octet-stream",
+        "Content-MD5": "v5GV2Zy4h2QINs82jdOqgQ==",
+        "Last-Modified": "Sat, 07 Nov 2026 08:11:09 GMT",
+        "ETag": "0x8DF3CA6ADF83A2B",
+        "Server": "Windows-Azure-Blob/1.0 Microsoft-HTTPAPI/2.0",
+        "x-ms-request-id": "5e494dcf-e01e-0020-3e8f-6e1b0e000000",
+        "x-ms-version": "2009-09-19",
+        "x-ms-lease-status": "unlocked",
+        "x-ms-blob-type": "BlockBlob",
+        "Access-Control-Allow-Origin": "*",
+        "Date": "Sat, 07 Nov 2026 08:13:26 GMT",
+        "Connection": "close"
+      }
+    },
+    {
+      "role": "status",
+      "url": "https://tcgbusfs.blob.core.windows.net/blobtcmsv/TCMSV_allavailable.xml",
+      "retrievedAt": "2026-11-07T08:13:31.389917+00:00",
+      "bytes": 687307,
+      "sha256": "0ee732a93f3138f23a2b6a7cdfdc02e9753209cea4d1e402c45e4b7a594041c8",
+      "headers": {
+        "Content-Length": "687307",
+        "Content-Type": "application/octet-stream",
+        "Content-MD5": "1A6eNMQw3jpTrWELXLCbPg==",
+        "Last-Modified": "Sat, 07 Nov 2026 08:11:15 GMT",
+        "ETag": "0x8DF3CA6B1C50AEB",
+        "Server": "Windows-Azure-Blob/1.0 Microsoft-HTTPAPI/2.0",
+        "x-ms-request-id": "d91329e0-301e-001c-808f-6e32c9000000",
+        "x-ms-version": "2009-09-19",
+        "x-ms-lease-status": "unlocked",
+        "x-ms-blob-type": "BlockBlob",
+        "Access-Control-Allow-Origin": "*",
+        "Date": "Sat, 07 Nov 2026 08:13:29 GMT",
+        "Connection": "close"
+      }
+    }
+  ],
+  "reduction": "Selected complete PARK elements: TPE0001, TPE0002, TPE0006, TPE0201U03 and first TYPE=2 site. Root UPDATETIME preserved. No fields changed.",
+  "attribution": "臺北市停車管理工程處 2026 臺北市停車場資訊V2／剩餘停車位數V2；依政府資料開放授權條款第1版釋出 (https://data.gov.tw/license)"
+}

@@ -11,6 +11,7 @@ import {
   type ParseOutput,
   type StreamingParse,
 } from "@openconditions/ingest-framework";
+import { parseCaltransCms } from "./caltrans-cms.js";
 import { parseCarsSigns } from "./cars-signs.js";
 import { autobahnIndexResolver, wzdxRegistryResolver } from "./catalog/index.js";
 import { type RoadFeed, roadsFeedShape } from "./feed-schema.js";
@@ -149,6 +150,14 @@ const measuredDataStream: StreamingParse<RoadFeed> = {
 };
 
 const FORMATS: FeedFormat<RoadFeed>[] = [
+  {
+    id: "caltrans-cms",
+    kind: "features",
+    products: ["signs"],
+    produces: { kinds: ["vms", "sign_face"], properties: ["vms.display"] },
+    endpoints: { main: MAIN },
+    parse: parseCaltransCms,
+  },
   situations("datex2"),
   situations("open511"),
   situations("wzdx"),
@@ -164,6 +173,7 @@ const FORMATS: FeedFormat<RoadFeed>[] = [
   situations("digitraffic"),
   situations("ohgo-events"),
   situations("vic-disruptions"),
+  situations("wa-webeoc"),
   measurements(
     "datex2-measured",
     { required: false, decoders: ["datex2-sites", "france-comptage-csv"] },
