@@ -1,0 +1,41 @@
+{
+  "$schema": "../schema/parking.schema.json",
+  "feeds": [
+    {
+      "operator": "vegvesen",
+      "product": "parking",
+      "name": "Statens vegvesen national parking register inventory",
+      "homepage": "https://dataut.vegvesen.no/dataset/parkeringsregisteret",
+      "tier": "authoritative",
+      "format": "vegvesen-parkreg",
+      "endpoints": {
+        "main": {
+          "url": "https://parkreg-open.atlas.vegvesen.no/ws/no/vegvesen/veg/parkeringsomraade/parkeringsregisteret/v1/parkeringsomraade?datafelter=alle",
+          "cadenceSec": 86400,
+          "budget": { "maxBytes": 100663296, "deadlineSec": 60 },
+        },
+        "inventory": {
+          "url": "https://parkreg-open.atlas.vegvesen.no/ws/no/vegvesen/veg/parkeringsomraade/parkeringsregisteret/v1/parkeringsomraade?datafelter=kart",
+          "cadenceSec": 86400,
+          "budget": { "maxBytes": 16777216, "deadlineSec": 30 },
+        },
+      },
+      "rawRetention": "none",
+      "freshnessWindowSec": 172800,
+      "parkreg": { "qualified": false },
+      "disabled": {
+        "reason": "National alle acquisition exceeded the 96 MiB qualification budget on 2026-11-07. Qualify complete national IDs against kart, geometry and load before enabling and setting parkreg.qualified.",
+        "since": "2026-11-07",
+      },
+      "license": "NLOD-2.0",
+      "licenseUrl": "https://data.norge.no/nlod/no/2.0",
+      "attribution": "Inneholder data under Norsk lisens for offentlige data (NLOD) tilgjengeliggjort av Statens vegvesen. Normalisert av OpenConditions.",
+      "privacyUrl": "https://www.vegvesen.no/om-oss/om-organisasjonen/personvern/",
+      "terms": {
+        "url": "https://dataut.vegvesen.no/dataset/parkeringsregisteret",
+        "reviewedAt": "2026-11-07",
+        "note": "Product metadata assigns NLOD; the national catalogue identifies NLOD 2.0. Structured inventory only; no contacts, assessment prose, PDFs or images. OpenConditions normalizes current versions and capacity totals.",
+      },
+    },
+  ],
+}

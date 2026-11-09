@@ -64,6 +64,7 @@ export const PARKING_SOURCE_FORMATS = [
   "hdb",
   "utmc",
   "tfnsw",
+  "vegvesen-parkreg",
 ] as const;
 
 /**

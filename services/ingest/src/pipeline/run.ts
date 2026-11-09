@@ -359,7 +359,8 @@ export function pollTickSec(cadenceSec: number): number {
  */
 function rolesDue(src: CatalogFeed, roles: RoleState | undefined, now: number): string[] {
   if (!roles) return dataRoles(src);
-  return dueRoles(src, roles.lastFetchedAt, now + pollTickSec(src.cadenceSec) * 500);
+  const due = dueRoles(src, roles.lastFetchedAt, now + pollTickSec(src.cadenceSec) * 500);
+  return due.length > 0 && src.rawRetention === "none" ? dataRoles(src) : due;
 }
 
 /**
@@ -432,6 +433,12 @@ export function createOpenlrClient(): MapMatchClient | null {
  */
 export async function runSource(src: CatalogFeed, deps: RunDeps): Promise<RunResult> {
   const attemptAt = deps.now();
+  if (src.rawRetention === "none" && deps.roles !== undefined) {
+    deps.roles.payloads = {};
+    deps.roles.urls = {};
+    deps.roles.items = {};
+    deps.roles.answers = {};
+  }
   const due = rolesDue(src, deps.roles, Date.parse(attemptAt));
   if (due.length === 0) return { count: 0, durationMs: 0, notDue: true };
   const attempt: PollAttempt = {
@@ -625,7 +632,8 @@ async function runAttempt(
     /** The URL of each fresh payload, same order. */
     const freshUrls: Record<string, readonly string[]> = {};
     const accepts: (() => void)[] = [];
-    const keepPayloads = deps.roles !== undefined && dataRoles(src).length > 1;
+    const keepPayloads =
+      deps.roles !== undefined && dataRoles(src).length > 1 && src.rawRetention !== "none";
     /** The data roles whose payloads changed this poll. */
     let fetched: string[] = [];
     const acquiredRoles = new Set<string>();
@@ -682,6 +690,7 @@ async function runAttempt(
       const endpoint = src.endpoints[role];
       if (
         deps.roles === undefined ||
+        src.rawRetention === "none" ||
         endpoint?.fanout !== "tolerant" ||
         endpoint.urls === undefined ||
         endpoint.each !== undefined
@@ -831,7 +840,12 @@ async function runAttempt(
         }
         // The walk's kept items are renewed even when its snapshot is refused:
         // they are the publisher's answers, and the next poll builds on them.
-        if (result.status === "partial" && deps.roles && result.kept) {
+        if (
+          src.rawRetention !== "none" &&
+          result.status === "partial" &&
+          deps.roles &&
+          result.kept
+        ) {
           deps.roles.items[role] = result.kept;
         }
         if (result.status === "partial" && eachPartial) {
@@ -863,7 +877,8 @@ async function runAttempt(
           }
           // The items kept are the role's own cache of the publisher's
           // answers, renewed whatever becomes of this poll.
-          if (deps.roles && result.kept) deps.roles.items[role] = result.kept;
+          if (src.rawRetention !== "none" && deps.roles && result.kept)
+            deps.roles.items[role] = result.kept;
         }
         if (result.status === "no-endpoint") {
           await recordStatus({
@@ -1466,7 +1481,14 @@ async function finishFeaturePoll(
   skipped: SkipCounts,
 ): Promise<RunResult> {
   const { src, deps } = poll;
-  if (heldPayload && parse.features.length === 0) {
+  if (parse.featureSnapshotComplete && poll.warning !== undefined) {
+    return fail(
+      poll,
+      "failed",
+      "qualified feature snapshot requires successful acquisition of every role",
+    );
+  }
+  if (heldPayload && parse.features.length === 0 && !parse.featureSnapshotComplete) {
     const error =
       "features feed produced zero features from a non-empty payload — skipping the write to keep the last good publication";
     console.warn(`[ingest] ${src.id}: ${error}`);
