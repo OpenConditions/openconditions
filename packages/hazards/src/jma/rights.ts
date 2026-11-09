@@ -4,7 +4,13 @@ import { parseJmaXml } from "./xml.js";
 /** Reviewed 2026-11-07 against JMA terms and the retained official samples.
  * JMA's CC BY 4.0 alternative does not clear participating non-JMA authorities.
  */
-const OFFICES = new Set(["気象庁", "気象庁本庁", "札幌管区気象台", "横浜地方気象台"]);
+const OFFICES = new Set([
+  "気象庁",
+  "気象庁本庁",
+  "札幌管区気象台",
+  "横浜地方気象台",
+  "新潟地方気象台",
+]);
 // Closed inventory of retained native elements, not an XSD claim. New extension
 // elements need review before we can redistribute their unprojected native XML.
 const ELEMENTS = new Set(

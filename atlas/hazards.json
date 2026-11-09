@@ -606,8 +606,8 @@
           "attribution": "Japan Meteorological Agency; normalized by OpenConditions (CC BY 4.0)",
           "terms": {
             "url": "https://www.jma.go.jp/jma/en/copyright.html",
-            "reviewedAt": "2026-11-07",
-            "note": "JMA adopts Public Data License 1.0 and permits CC BY 4.0 as an alternative. Third-party rights require separate clearance. Native wording and authority are retained; OpenConditions is responsible for normalization. XML reuse notice: https://xml.kishou.go.jp/considerationforxml.pdf. No independent forecasts or warnings."
+            "reviewedAt": "2026-11-09",
+            "note": "JMA adopts Public Data License 1.0 and permits CC BY 4.0 as an alternative. Third-party rights require separate clearance. Native wording and authority are retained; OpenConditions is responsible for normalization. XML reuse notice: https://xml.kishou.go.jp/considerationforxml.pdf. No independent forecasts or warnings. Observed-report coverage is incomplete: rolling-index absence never means all-clear. Unknown offices and uncleared upstream authorities withhold the whole poll. No GIS geometry."
           },
           "privacyUrl": "https://www.jma.go.jp/jma/kishou/koukai/kojin.html",
           "homepage": "https://www.jma.go.jp/",
@@ -615,10 +615,6 @@
             "countries": [
               "JP"
             ]
-          },
-          "disabled": {
-            "reason": "Incomplete rolling-index coverage; worker/API, rights and lifecycle acceptance pending.",
-            "since": "2026-11-07"
           }
         },
         {
@@ -639,8 +635,8 @@
           "attribution": "Japan Meteorological Agency; normalized by OpenConditions (CC BY 4.0)",
           "terms": {
             "url": "https://www.jma.go.jp/jma/en/copyright.html",
-            "reviewedAt": "2026-11-07",
-            "note": "JMA adopts Public Data License 1.0 and permits CC BY 4.0 as an alternative. Third-party rights require separate clearance. Native wording and authority are retained; OpenConditions is responsible for normalization. XML reuse notice: https://xml.kishou.go.jp/considerationforxml.pdf. No independent forecasts or warnings."
+            "reviewedAt": "2026-11-09",
+            "note": "JMA adopts Public Data License 1.0 and permits CC BY 4.0 as an alternative. Third-party rights require separate clearance. Native wording and authority are retained; OpenConditions is responsible for normalization. XML reuse notice: https://xml.kishou.go.jp/considerationforxml.pdf. No independent forecasts or warnings. Observed-report coverage is incomplete: rolling-index absence never means all-clear. Unknown offices and uncleared upstream authorities withhold the whole poll. No GIS geometry."
           },
           "privacyUrl": "https://www.jma.go.jp/jma/kishou/koukai/kojin.html",
           "homepage": "https://www.jma.go.jp/",
@@ -648,10 +644,6 @@
             "countries": [
               "JP"
             ]
-          },
-          "disabled": {
-            "reason": "Incomplete rolling-index coverage; authoritative active-warning bootstrap is not qualified.",
-            "since": "2026-11-07"
           }
         }
       ]
@@ -1716,8 +1708,8 @@
       "attribution": "Japan Meteorological Agency; normalized by OpenConditions (CC BY 4.0)",
       "terms": {
         "url": "https://www.jma.go.jp/jma/en/copyright.html",
-        "reviewedAt": "2026-11-07",
-        "note": "JMA adopts Public Data License 1.0 and permits CC BY 4.0 as an alternative. Third-party rights require separate clearance. Native wording and authority are retained; OpenConditions is responsible for normalization. XML reuse notice: https://xml.kishou.go.jp/considerationforxml.pdf. No independent forecasts or warnings."
+        "reviewedAt": "2026-11-09",
+        "note": "JMA adopts Public Data License 1.0 and permits CC BY 4.0 as an alternative. Third-party rights require separate clearance. Native wording and authority are retained; OpenConditions is responsible for normalization. XML reuse notice: https://xml.kishou.go.jp/considerationforxml.pdf. No independent forecasts or warnings. Observed-report coverage is incomplete: rolling-index absence never means all-clear. Unknown offices and uncleared upstream authorities withhold the whole poll. No GIS geometry."
       },
       "privacyUrl": "https://www.jma.go.jp/jma/kishou/koukai/kojin.html",
       "homepage": "https://www.jma.go.jp/",
@@ -1725,10 +1717,6 @@
         "countries": [
           "JP"
         ]
-      },
-      "disabled": {
-        "reason": "Incomplete rolling-index coverage; worker/API, rights and lifecycle acceptance pending.",
-        "since": "2026-11-07"
       },
       "id": "jp-jma-quakes",
       "domain": "hazards",
@@ -1747,7 +1735,7 @@
       },
       "evidence": {
         "url": "https://www.jma.go.jp/jma/en/copyright.html",
-        "reviewedAt": "2026-11-07"
+        "reviewedAt": "2026-11-09"
       },
       "permissions": {
         "display": "yes",
@@ -1778,8 +1766,8 @@
       "attribution": "Japan Meteorological Agency; normalized by OpenConditions (CC BY 4.0)",
       "terms": {
         "url": "https://www.jma.go.jp/jma/en/copyright.html",
-        "reviewedAt": "2026-11-07",
-        "note": "JMA adopts Public Data License 1.0 and permits CC BY 4.0 as an alternative. Third-party rights require separate clearance. Native wording and authority are retained; OpenConditions is responsible for normalization. XML reuse notice: https://xml.kishou.go.jp/considerationforxml.pdf. No independent forecasts or warnings."
+        "reviewedAt": "2026-11-09",
+        "note": "JMA adopts Public Data License 1.0 and permits CC BY 4.0 as an alternative. Third-party rights require separate clearance. Native wording and authority are retained; OpenConditions is responsible for normalization. XML reuse notice: https://xml.kishou.go.jp/considerationforxml.pdf. No independent forecasts or warnings. Observed-report coverage is incomplete: rolling-index absence never means all-clear. Unknown offices and uncleared upstream authorities withhold the whole poll. No GIS geometry."
       },
       "privacyUrl": "https://www.jma.go.jp/jma/kishou/koukai/kojin.html",
       "homepage": "https://www.jma.go.jp/",
@@ -1787,10 +1775,6 @@
         "countries": [
           "JP"
         ]
-      },
-      "disabled": {
-        "reason": "Incomplete rolling-index coverage; authoritative active-warning bootstrap is not qualified.",
-        "since": "2026-11-07"
       },
       "id": "jp-jma-alerts",
       "domain": "hazards",
@@ -1809,7 +1793,7 @@
       },
       "evidence": {
         "url": "https://www.jma.go.jp/jma/en/copyright.html",
-        "reviewedAt": "2026-11-07"
+        "reviewedAt": "2026-11-09"
       },
       "permissions": {
         "display": "yes",

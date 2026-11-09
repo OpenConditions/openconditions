@@ -64,3 +64,16 @@ test("XML declaration cannot conceal uninspected native credits", () => {
   const xml = clean.replace('encoding="UTF-8"', 'encoding="UTF-8" credit="Copyright Partner"');
   expect(() => assertJmaRights(readJmaReport(Buffer.from(xml), "VXSE52"))).toThrow();
 });
+
+test("current Niigata JMA rain is admitted while Kanagawa embedded partner material stays withheld", () => {
+  const rain = readJmaReport(
+    readFileSync(new URL("live-20261109/20261107070852_0_VPWW55_150000.xml", directory)),
+    "VPWW55",
+  );
+  expect(() => assertJmaRights(rain)).not.toThrow();
+  const partner = readJmaReport(
+    readFileSync(new URL("VPWW56_JPTF_170922.xml", directory)),
+    "VPWW56",
+  );
+  expect(() => assertJmaRights(partner)).toThrow("office");
+});

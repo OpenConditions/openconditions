@@ -321,3 +321,14 @@ test("xmlns-like undeclared attribute is not a declaration", () => {
     .replace("<OriginTime>", '<OriginTime xmlnsghost:nil="true">');
   expect(() => readJmaReport(Buffer.from(xml), "VXSE52")).toThrow();
 });
+
+describe("retained operational 2026-11-09 publications", () => {
+  test.each([
+    ["20261109050528_0_VXSE53_010000.xml", "VXSE53"],
+    ["20261109045431_0_VXSE51_010000.xml", "VXSE51"],
+  ] as const)("decodes operational 1.0_1 %s", (name, family) => {
+    const report = readJmaReport(fixture(`live-20261109/${name.replace(/\.xml$/, "")}`), family);
+    expect(report.infoKindVersion).toBe("1.0_1");
+    expect(report.operational).toBe(true);
+  });
+});

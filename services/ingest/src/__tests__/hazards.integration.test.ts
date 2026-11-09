@@ -707,7 +707,7 @@ describe("hazards fires, quakes and smoke through the pipeline", () => {
 });
 
 describe("hazards feeds in the catalogue", () => {
-  it("holds the thirteen feeds", () => {
+  it("holds the fifteen enabled feeds", () => {
     expect(HAZARDS.map((f) => f.id).sort()).toEqual([
       "ca-eccc-alerts",
       "de-dwd-alerts",
@@ -715,6 +715,8 @@ describe("hazards feeds in the catalogue", () => {
       "eu-meteoalarm-alerts",
       "eumetsat-slstr-fires",
       "gdacs-events",
+      "jp-jma-alerts",
+      "jp-jma-quakes",
       "nasa-eonet-events",
       "nasa-firms-modis-fires",
       "nasa-firms-viirs-fires",
@@ -1248,5 +1250,101 @@ describe("JMA durable worker publication", () => {
     const rows = await sql`SELECT 1 FROM conditions.raw_payload WHERE source_id=${feed.id}`;
     expect(rows).toHaveLength(0);
     await api.close();
+  });
+});
+
+describe("JMA retained operational byte qualification", () => {
+  it("publishes exact bounded official quake/rain bytes and retains incomplete state on restart", async () => {
+    const now = "2026-11-09T11:20:00Z";
+    clock = now;
+    const quakes = repoFeed("jp-jma-quakes");
+    const alerts = repoFeed("jp-jma-alerts");
+    expect(quakes.disabled).toBeUndefined();
+    expect(alerts.disabled).toBeUndefined();
+    await syncSources(sql, [quakes, alerts]);
+    const files = [
+      "20261109045431_0_VXSE51_010000.xml",
+      "20261109045644_0_VXSE52_010000.xml",
+      "20261109050528_0_VXSE53_010000.xml",
+      "20261107070852_0_VPWW55_150000.xml",
+    ];
+    const payloads = new Map(
+      files.map((name) => [
+        `https://www.data.jma.go.jp/developer/xml/data/${name}`,
+        fixture(`jma/live-20261109/${name}`),
+      ]),
+    );
+    const calls: string[] = [];
+    const deps = {
+      sql,
+      now: () => clock,
+      lookup: fakeLookup,
+      model: { registry, instanceId: "test.local" },
+      env: {
+        OPENCONDITIONS_JMA_EGRESS_ID: "retained-operational",
+        OPENCONDITIONS_JMA_WARNING_COVERAGE: "incomplete",
+      },
+      fetch: (async (input) => {
+        const url = String(input);
+        calls.push(url);
+        const body = payloads.get(url);
+        if (body) return new Response(new Uint8Array(body));
+        // Deliberately bounded selection, not an unmodified provider index or census.
+        const selected = [...payloads.keys()].filter((u) =>
+          u.includes(url.includes("extra") ? "VPWW" : "VXSE"),
+        );
+        return new Response(
+          `<feed xmlns="http://www.w3.org/2005/Atom"><updated>${clock}</updated>${selected.map((u) => `<entry><id>${u}</id><link href="${u}"/></entry>`).join("")}</feed>`,
+        );
+      }) as typeof fetch,
+    };
+    const app = Fastify();
+    registerScope(app, TOKEN);
+    registerApiRoutes(app, sql, { registry, now: () => new Date(clock), catalog: REPO_CATALOG });
+    await app.ready();
+    try {
+      await runSource(quakes, deps);
+      await runSource(alerts, deps);
+      const response = await app.inject({ url: "/situations?domain=hazards&limit=1000" });
+      expect(response.statusCode).toBe(200);
+      const records = (response.json() as Rec)["records"] as Rec[];
+      const native = records.filter((r) =>
+        [quakes.id, alerts.id].includes((r["provenance"] as Rec)["sourceId"] as string),
+      );
+      const quake = native.find((r) => JSON.stringify(r).includes("20261109045644_0_VXSE52"));
+      expect(quake?.["details"]).toMatchObject({
+        magnitude: { value: 5.9, scale: "Mj" },
+        depth: { value: 10000, unit: "m" },
+      });
+      expect((quake?.["location"] as Rec)?.["geometry"]).toMatchObject({
+        type: "Point",
+        coordinates: [142.2, 36.2],
+      });
+      const rain = native.filter(
+        (r) => ((r["details"] as Rec)["jma"] as Rec)?.["family"] === "VPWW55",
+      );
+      expect(rain.length).toBeGreaterThan(0);
+      for (const record of rain) {
+        expect((record["location"] as Rec)["geometry"]).toBeNull();
+        expect(record["details"]).not.toHaveProperty("cap");
+        expect(JSON.stringify(record)).toContain("Japan Meteorological Agency");
+        expect(
+          (await app.inject({ url: `/situations/${encodeURIComponent(String(record["id"]))}` }))
+            .statusCode,
+        ).toBe(200);
+      }
+      const [state] = await sql`SELECT value FROM conditions.jma_state WHERE source=${alerts.id}`;
+      expect(state!.value.initialization.coverage).toBe("incomplete");
+      // Fresh invocation reuses persisted payloads and retains the original fetch clock.
+      clock = "2026-11-09T11:20:01Z";
+      await runSource(alerts, { ...deps });
+      for (const u of payloads.keys()) expect(calls.filter((c) => c === u)).toHaveLength(1);
+      expect((await app.inject({ url: "/sources" })).statusCode).toBe(200);
+      expect((await app.inject({ url: "/situations.geojson?domain=hazards" })).statusCode).toBe(
+        200,
+      );
+    } finally {
+      await app.close();
+    }
   });
 });

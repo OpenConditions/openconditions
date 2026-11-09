@@ -326,7 +326,7 @@ export function readJmaReport(body: Buffer, family: JmaFamily): JmaReport {
   const header = HEADERS[family];
   if (
     required(h["InfoKind"]) !== header.kind ||
-    ![header.version, ...(family === "VXSE52" ? ["1.0_1"] : [])].includes(
+    ![header.version, ...(family.startsWith("VXSE") ? ["1.0_1"] : [])].includes(
       required(h["InfoKindVersion"]),
     ) ||
     required(c["Title"]) !== header.title
