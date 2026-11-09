@@ -1,0 +1,800 @@
+{
+	"data":
+	[
+		{
+			"cms":
+			{
+				"index": "V1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:03"
+				},
+				"location":
+				{
+					"district":       "9",
+					"locationName":   "1 - SR 58 At Cache Creek",
+					"nearbyPlace":    "Mojave",
+					"longitude":      "-118.21095",
+					"latitude":       "35.117611",
+					"elevation":      "3405",
+					"direction":      "West",
+					"county":         "Kern",
+					"route":          "SR-58",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "107.06",
+					"alignment":      "",
+					"milepost":       "158.66"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:00:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V2",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:03"
+				},
+				"location":
+				{
+					"district":       "9",
+					"locationName":   "2 - SR 14 At California City",
+					"nearbyPlace":    "Mojave",
+					"longitude":      "-118.114772",
+					"latitude":       "35.136863",
+					"elevation":      "2765",
+					"direction":      "North",
+					"county":         "Kern",
+					"route":          "SR-14",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "22.23",
+					"alignment":      "",
+					"milepost":       "75.68"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:00:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V3",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:03"
+				},
+				"location":
+				{
+					"district":       "9",
+					"locationName":   "3 - US 395 At Bradys Junction",
+					"nearbyPlace":    "Inyokern",
+					"longitude":      "-117.868595",
+					"latitude":       "35.72337",
+					"elevation":      "2516",
+					"direction":      "North",
+					"county":         "Kern",
+					"route":          "US-395",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "31.65",
+					"alignment":      "",
+					"milepost":       "100.06"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:00:03"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V5",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:03"
+				},
+				"location":
+				{
+					"district":       "9",
+					"locationName":   "5 - SR 14 NB at Silver Queen",
+					"nearbyPlace":    "Mojave",
+					"longitude":      "-118.158935",
+					"latitude":       "34.987459",
+					"elevation":      "2644",
+					"direction":      "North",
+					"county":         "Kern",
+					"route":          "SR-14",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "11.6",
+					"alignment":      "",
+					"milepost":       "63.77"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:00:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V6",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:03"
+				},
+				"location":
+				{
+					"district":       "9",
+					"locationName":   "6 - SR 58 EB at Cache Creek",
+					"nearbyPlace":    "Mojave",
+					"longitude":      "-118.212017",
+					"latitude":       "35.117356",
+					"elevation":      "3408",
+					"direction":      "East",
+					"county":         "Kern",
+					"route":          "SR-58",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "107",
+					"alignment":      "",
+					"milepost":       "158.59"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:00:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V7",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:03"
+				},
+				"location":
+				{
+					"district":       "9",
+					"locationName":   "7 - SR 14 SB at Bradys",
+					"nearbyPlace":    "Inyokern",
+					"longitude":      "-117.869183",
+					"latitude":       "35.723367",
+					"elevation":      "2522",
+					"direction":      "South",
+					"county":         "Kern",
+					"route":          "US-395",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "31.65",
+					"alignment":      "",
+					"milepost":       "100.06"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:00:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V8",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:03"
+				},
+				"location":
+				{
+					"district":       "9",
+					"locationName":   "8 - US 395 SB at Lone Pine",
+					"nearbyPlace":    "Lone Pine",
+					"longitude":      "-118.06653",
+					"latitude":       "36.614114",
+					"elevation":      "3713",
+					"direction":      "South",
+					"county":         "Inyo",
+					"route":          "US-395",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "58.38",
+					"alignment":      "",
+					"milepost":       "163.57"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:00:02"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V10",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:03"
+				},
+				"location":
+				{
+					"district":       "9",
+					"locationName":   "10 - US 395 At Bishop",
+					"nearbyPlace":    "Bishop",
+					"longitude":      "-118.395068",
+					"latitude":       "37.356764",
+					"elevation":      "4146",
+					"direction":      "North",
+					"county":         "Inyo",
+					"route":          "US-395",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "115.05",
+					"alignment":      "",
+					"milepost":       "219.76"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-05",
+						"messageTime": "12:15:02"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "SR 120- OPEN\\\\\\\\",
+						"phase1Line2": "SR 108- OPEN\\\\\\\\",
+						"phase1Line3": "SR  89- OPEN\\\\\\\\"
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V14",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:03"
+				},
+				"location":
+				{
+					"district":       "9",
+					"locationName":   "14 - US 395 NB Crowley Lake",
+					"nearbyPlace":    "Mammoth Lakes",
+					"longitude":      "-118.731952",
+					"latitude":       "37.574274",
+					"elevation":      "6899",
+					"direction":      "North",
+					"county":         "Mono",
+					"route":          "US-395",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "13.54",
+					"alignment":      "",
+					"milepost":       "247.79"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "16:49:40"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "SR 120- OPEN\\\\\\\\",
+						"phase1Line2": "SR 108- OPEN\\\\\\\\",
+						"phase1Line3": "SR  89- OPEN\\\\\\\\"
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V15",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:03"
+				},
+				"location":
+				{
+					"district":       "9",
+					"locationName":   "15 - SR203 EB Mammoth Lakes",
+					"nearbyPlace":    "Mammoth Lakes",
+					"longitude":      "-118.943086",
+					"latitude":       "37.641805",
+					"elevation":      "7657",
+					"direction":      "East",
+					"county":         "Mono",
+					"route":          "SR-203",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "7.05",
+					"alignment":      "",
+					"milepost":       "7.74"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-05",
+						"messageTime": "12:15:02"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "SR 120- OPEN\\\\\\\\",
+						"phase1Line2": "SR 108- OPEN\\\\\\\\",
+						"phase1Line3": "SR  89- OPEN\\\\\\\\"
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V17",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:03"
+				},
+				"location":
+				{
+					"district":       "9",
+					"locationName":   "17 - US 395 NB Lee Vining",
+					"nearbyPlace":    "Lee Vining",
+					"longitude":      "-119.12101",
+					"latitude":       "37.959275",
+					"elevation":      "6774",
+					"direction":      "North",
+					"county":         "Mono",
+					"route":          "US-395",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "51.56",
+					"alignment":      "",
+					"milepost":       "285.17"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-05",
+						"messageTime": "12:15:02"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "SR 120- OPEN\\\\\\\\",
+						"phase1Line2": "SR 108- OPEN\\\\\\\\",
+						"phase1Line3": "SR  89- OPEN\\\\\\\\"
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V20",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:03"
+				},
+				"location":
+				{
+					"district":       "9",
+					"locationName":   "20 - US 395 At Bridgeport",
+					"nearbyPlace":    "Bridgeport",
+					"longitude":      "-119.22458",
+					"latitude":       "38.234112",
+					"elevation":      "6496",
+					"direction":      "South",
+					"county":         "Mono",
+					"route":          "US-395",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "74.8",
+					"alignment":      "",
+					"milepost":       "308.42"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-04",
+						"messageTime": "06:34:37"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "MOVE OVER OR",
+						"phase1Line2": "SLOW DOWN FOR",
+						"phase1Line3": "CRASH RESPONDERS"
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V21",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:03"
+				},
+				"location":
+				{
+					"district":       "9",
+					"locationName":   "1 US395 0 US395",
+					"nearbyPlace":    "Bridgeport",
+					"longitude":      "-119.2245403",
+					"latitude":       "38.2339717",
+					"elevation":      "6489",
+					"direction":      "South",
+					"county":         "Mono",
+					"route":          "US-395",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "74.768",
+					"alignment":      "",
+					"milepost":       "308.342"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-05",
+						"messageTime": "12:15:01"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "SR 108- OPEN",
+						"phase1Line2": "",
+						"phase1Line3": "SR 89- OPEN\\\\"
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V25",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:03"
+				},
+				"location":
+				{
+					"district":       "9",
+					"locationName":   "25 - US 395 At Topaz",
+					"nearbyPlace":    "Topaz",
+					"longitude":      "-119.548231",
+					"latitude":       "38.681454",
+					"elevation":      "5065",
+					"direction":      "South",
+					"county":         "Mono",
+					"route":          "US-395",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "120.08",
+					"alignment":      "",
+					"milepost":       "353.64"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-05",
+						"messageTime": "12:15:02"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "SR 89- OPEN\\\\",
+						"phase1Line2": "SR 108- OPEN\\\\\\\\",
+						"phase1Line3": "SR 120- OPEN\\\\\\\\"
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V95",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:03"
+				},
+				"location":
+				{
+					"district":       "9",
+					"locationName":   "95 - SR 120 At Lee Vining",
+					"nearbyPlace":    "Lee Vining",
+					"longitude":      "-119.113698",
+					"latitude":       "37.948762",
+					"elevation":      "6863",
+					"direction":      "West",
+					"county":         "Mono",
+					"route":          "SR-120",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "11.94",
+					"alignment":      "",
+					"milepost":       "106.85"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "14:34:01"
+					},
+					"display":     "2 Pages (Extended)",
+					"displayTime": "2.2",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "TIOGA",
+						"phase1Line2": "PASS",
+						"phase1Line3": "OPEN"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Single_Stroke",
+						"phase2Line1": "WATCH",
+						"phase2Line2": "FOR",
+						"phase2Line3": "ROCKS"
+					}
+				}
+			}
+		}
+	]
+}

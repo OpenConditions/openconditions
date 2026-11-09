@@ -60,6 +60,7 @@ test("parkingDomain registers every format with produces", () => {
     "parkapi-v3",
     "rdw",
     "sbb",
+    "taipei",
     "tfnsw",
     "utmc",
     "vegvesen-parkreg",
@@ -68,6 +69,7 @@ test("parkingDomain registers every format with produces", () => {
   const roles: Record<string, unknown> = {
     datex2: liveSites,
     hdb: liveSites,
+    taipei: liveSites,
     opendatahub: liveSites,
     utmc: liveSites,
     "parkapi-v3": {
@@ -132,6 +134,10 @@ test("a format without a payload parses to nothing", () => {
   for (const format of Object.values(parkingDomain.formats)) {
     if (format.id === "vegvesen-parkreg") {
       expect(() => format.parse({} as never, {}, ctx)).toThrow(/qualified/);
+      continue;
+    }
+    if (format.id === "taipei") {
+      expect(() => format.parse({} as never, {}, ctx)).toThrow(/requires one sites/);
       continue;
     }
     const out = format.parse({} as never, {}, ctx);

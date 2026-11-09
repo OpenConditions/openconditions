@@ -22,7 +22,7 @@ describe("feeds/parking", () => {
     expect(credit("de-nw-mobidrom-parkride-parking")).toBe("NRW.Mobidrom GmbH");
   });
 
-  it("holds one feed per source taken, and keeps the sources without lawful terms disabled", () => {
+  it("holds one feed per source taken, and keeps sources awaiting terms or operational qualification disabled", () => {
     expect(feeds.map((f) => f.id).sort()).toEqual([
       "at-5-salzburg-parking",
       "at-9-vienna-parking",
@@ -52,6 +52,7 @@ describe("feeds/parking", () => {
       "no-vegvesen-parking",
       "osm-parking",
       "sg-hdb-parking",
+      "tw-tpe-pma-parking",
     ]);
     expect(
       feeds

@@ -35,11 +35,11 @@
     "@openconditions/ingest-framework": "workspace:*",
     "@openconditions/model": "workspace:*",
     "@tufjs/canonical-json": "2.0.0",
-    "@tufjs/models": "5.0.1",
+    "@tufjs/models": "5.0.2",
     "http-message-signatures": "1.0.6",
     "postgres": "^3.4.9",
     "structured-headers": "^2.1.1",
-    "tuf-js": "6.0.1",
+    "tuf-js": "6.0.2",
     "yaml": "2.9.1"
   },
   "devDependencies": {

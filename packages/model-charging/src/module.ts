@@ -58,6 +58,7 @@ export const CHARGING_SOURCE_FORMATS = [
   "keco",
   "tdx",
   "ocm",
+  "pun",
 ] as const;
 
 /**

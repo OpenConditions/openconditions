@@ -44,6 +44,8 @@ export type FeedPayloads = Readonly<Record<string, readonly Buffer[]>>;
 export interface ParseContext {
   /** When the poll fetched its payloads (ISO instant); dates readings the source leaves undated. */
   fetchedAt: string;
+  /** Optional acquisition upper bound; does not date observations or identify source revisions. */
+  publicationExpiresAt?: string;
   cadenceSec: number;
   /** Decoded reference data by role. */
   reference: Readonly<Record<string, unknown>>;
@@ -109,6 +111,8 @@ export interface FeedFormat<F extends CatalogFeed = CatalogFeed> {
    * ended, such as the place a vehicle has since moved on from.
    */
   restatesTransient?: true;
+  /** Retained responses must be parsed and their publisher clock validated even after HTTP 304. */
+  sourceClock?: true;
   endpoints: Readonly<Record<string, EndpointRole>>;
   /** One poll's payloads as record drafts; throws when a payload cannot be read. */
   parse(feed: F, payloads: FeedPayloads, ctx: ParseContext): ParseOutput;

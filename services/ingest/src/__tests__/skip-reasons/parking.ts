@@ -36,6 +36,15 @@ export const SAMPLES: SkipSamples = {
       ]),
     },
   },
+  "parking/taipei": {
+    reason: "unknown_value",
+    payloads: {
+      sites:
+        "<DATA><UPDATETIME>Fri Jul 31 20:00:00 CST 2026</UPDATETIME><PARK><ID>TPE0001</ID><TW97X>302864.7812</TW97X><TW97Y>2771988.958</TW97Y><TOTALCAR>17</TOTALCAR></PARK></DATA>",
+      status:
+        "<DATA><UPDATETIME>Fri Jul 31 20:00:00 CST 2026</UPDATETIME><PARK><ID>TPE0001</ID><AVAILABLECAR>broken</AVAILABLECAR></PARK></DATA>",
+    },
+  },
   // A facility whose address carries no location.
   "parking/db-bahnpark": {
     reason: "no_geometry",

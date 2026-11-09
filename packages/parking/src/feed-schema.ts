@@ -150,6 +150,7 @@ const parkingFeedExtension = {
         .optional(),
     })
     .optional(),
+  taipei: z.strictObject({ qualifiedSnapshot: z.boolean() }).optional(),
   layout: layoutBlockSchema.optional(),
   parking: parkingMappingSchema.optional(),
 } as const;

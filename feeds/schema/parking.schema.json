@@ -70,6 +70,7 @@
               "parkapi-v3",
               "rdw",
               "sbb",
+              "taipei",
               "tfnsw",
               "utmc",
               "vegvesen-parkreg"
@@ -1101,6 +1102,18 @@
             },
             "required": [
               "qualified"
+            ],
+            "additionalProperties": false
+          },
+          "taipei": {
+            "type": "object",
+            "properties": {
+              "qualifiedSnapshot": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "qualifiedSnapshot"
             ],
             "additionalProperties": false
           },

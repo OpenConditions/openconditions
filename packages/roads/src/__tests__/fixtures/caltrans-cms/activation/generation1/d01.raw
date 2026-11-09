@@ -1,0 +1,1489 @@
+{
+	"data":
+	[
+		{
+			"cms":
+			{
+				"index": "V1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:04"
+				},
+				"location":
+				{
+					"district":       "1",
+					"locationName":   "1 - Men 101 PM 31.6 - N of 101\/20 Calpella - FSBT",
+					"nearbyPlace":    "Redwood Valley",
+					"longitude":      "-123.210905",
+					"latitude":       "39.249675",
+					"elevation":      "761",
+					"direction":      "South",
+					"county":         "Mendocino",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "31.55",
+					"alignment":      "",
+					"milepost":       "555.9"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-04",
+						"messageTime": "12:15:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V2",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:04"
+				},
+				"location":
+				{
+					"district":       "1",
+					"locationName":   "2 - Men 101 PM 29.8 - S of 101\/ 20 Calpella - FNBT",
+					"nearbyPlace":    "Ukiah",
+					"longitude":      "-123.207213",
+					"latitude":       "39.225283",
+					"elevation":      "741",
+					"direction":      "North",
+					"county":         "Mendocino",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "29.81",
+					"alignment":      "",
+					"milepost":       "554.22"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-05",
+						"messageTime": "09:00:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V3",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:04"
+				},
+				"location":
+				{
+					"district":       "1",
+					"locationName":   "3 - Hum 101 PM 58.7 - N of Jct 36 - FSBT",
+					"nearbyPlace":    "Fortuna",
+					"longitude":      "-124.147953",
+					"latitude":       "40.56276",
+					"elevation":      "49",
+					"direction":      "South",
+					"county":         "Humboldt",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "58.67",
+					"alignment":      "",
+					"milepost":       "686.02"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "01:35:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V4",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:04"
+				},
+				"location":
+				{
+					"district":       "1",
+					"locationName":   "4 - Hum 101 PM 87.7 - S of 101\/299 - FNBT",
+					"nearbyPlace":    "Arcata",
+					"longitude":      "-124.07933",
+					"latitude":       "40.88913",
+					"elevation":      "82",
+					"direction":      "North",
+					"county":         "Humboldt",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "87.67",
+					"alignment":      "",
+					"milepost":       "714.96"
+				},
+				"inService": "false",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Not Reported",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "Not Reported",
+						"phase1Line2": "Not Reported",
+						"phase1Line3": "Not Reported"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "Not Reported",
+						"phase2Line2": "Not Reported",
+						"phase2Line3": "Not Reported"
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V4b",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:04"
+				},
+				"location":
+				{
+					"district":       "1",
+					"locationName":   "4b - US 101 \/ SR-299",
+					"nearbyPlace":    "Arcata",
+					"longitude":      "-124.07933",
+					"latitude":       "40.88913",
+					"elevation":      "82",
+					"direction":      "North",
+					"county":         "Humboldt",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "87.67",
+					"alignment":      "",
+					"milepost":       "714.96"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "13:30:02"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V5",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:04"
+				},
+				"location":
+				{
+					"district":       "1",
+					"locationName":   "5 - Hum 101 PM 89.4 - N of 101\/299 - FSBT",
+					"nearbyPlace":    "Arcata",
+					"longitude":      "-124.091012",
+					"latitude":       "40.912415",
+					"elevation":      "26",
+					"direction":      "South",
+					"county":         "Humboldt",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "89.38",
+					"alignment":      "",
+					"milepost":       "716.66"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-03",
+						"messageTime": "07:35:02"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "RUTTING SEASON",
+						"phase1Line2": "USE CAUTION",
+						"phase1Line3": "WATCH FOR DEER"
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V6",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:04"
+				},
+				"location":
+				{
+					"district":       "1",
+					"locationName":   "6 - Men 20 PM 35.6 - E 0f 101\/20 Calpella - FWBT",
+					"nearbyPlace":    "Redwood Valley",
+					"longitude":      "-123.167599",
+					"latitude":       "39.238016",
+					"elevation":      "925",
+					"direction":      "West",
+					"county":         "Mendocino",
+					"route":          "SR-20",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "35.58",
+					"alignment":      "",
+					"milepost":       "35.54"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-21",
+						"messageTime": "08:49:29"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "RUTTING SEASON",
+						"phase1Line2": "USE CAUTION",
+						"phase1Line3": "WATCH FOR DEER"
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V7",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:04"
+				},
+				"location":
+				{
+					"district":       "1",
+					"locationName":   "7 - Men 20 PM 32.29 - W of Willits - FWBT",
+					"nearbyPlace":    "Willits",
+					"longitude":      "-123.369739",
+					"latitude":       "39.406104",
+					"elevation":      "1443",
+					"direction":      "West",
+					"county":         "Mendocino",
+					"route":          "SR-20",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "32.2",
+					"alignment":      "",
+					"milepost":       "32.12"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "10:20:02"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "RUTTING SEASON",
+						"phase1Line2": "USE CAUTION",
+						"phase1Line3": "WATCH FOR DEER"
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V8",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:04"
+				},
+				"location":
+				{
+					"district":       "1",
+					"locationName":   "8 - Men 101 PM 48.53 - N of Willits - FNBT",
+					"nearbyPlace":    "Willits",
+					"longitude":      "-123.358293",
+					"latitude":       "39.43344",
+					"elevation":      "1338",
+					"direction":      "North",
+					"county":         "Mendocino",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "48.53",
+					"alignment":      "",
+					"milepost":       "573.02"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "09:50:01"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "RUTTING SEASON",
+						"phase1Line2": "USE CAUTION",
+						"phase1Line3": "WATCH FOR DEER"
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V9",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:04"
+				},
+				"location":
+				{
+					"district":       "1",
+					"locationName":   "9 - Lak 20 PM 7.7 - W of Jct 29 - FEBT",
+					"nearbyPlace":    "Upper Lake",
+					"longitude":      "-122.92962",
+					"latitude":       "39.167146",
+					"elevation":      "1361",
+					"direction":      "East",
+					"county":         "Lake",
+					"route":          "SR-20",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "7.79",
+					"alignment":      "",
+					"milepost":       "51.75"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "13:35:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V10",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:04"
+				},
+				"location":
+				{
+					"district":       "1",
+					"locationName":   "10 - Lak 20 PM 30.45 - W of Jct 53 - FEBT",
+					"nearbyPlace":    "Clearlake Oaks",
+					"longitude":      "-122.630779",
+					"latitude":       "39.012704",
+					"elevation":      "1587",
+					"direction":      "East",
+					"county":         "Lake",
+					"route":          "SR-20",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "30.65",
+					"alignment":      "",
+					"milepost":       "74.61"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-05",
+						"messageTime": "18:50:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V11",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:04"
+				},
+				"location":
+				{
+					"district":       "1",
+					"locationName":   "11 - Lak 20 PM 31.94 - E of Jct 53 - FWBT",
+					"nearbyPlace":    "Clearlake Oaks",
+					"longitude":      "-122.604277",
+					"latitude":       "39.01233",
+					"elevation":      "1745",
+					"direction":      "West",
+					"county":         "Lake",
+					"route":          "SR-20",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "32.23",
+					"alignment":      "",
+					"milepost":       "76.22"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-05",
+						"messageTime": "17:10:02"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V12",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:04"
+				},
+				"location":
+				{
+					"district":       "1",
+					"locationName":   "12 - Lak 53 PM 5.1 - S of Jct 53 - FNBT",
+					"nearbyPlace":    "Clearlake Oaks",
+					"longitude":      "-122.612666",
+					"latitude":       "38.980376",
+					"elevation":      "1427",
+					"direction":      "North",
+					"county":         "Lake",
+					"route":          "SR-53",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "5.14",
+					"alignment":      "",
+					"milepost":       "5.14"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-21",
+						"messageTime": "08:50:02"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "RUTTING SEASON",
+						"phase1Line2": "USE CAUTION",
+						"phase1Line3": "WATCH FOR DEER"
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V13",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:04"
+				},
+				"location":
+				{
+					"district":       "1",
+					"locationName":   "13 - Hum 101 PM 55.96 - S of Jct 36 - FNBT",
+					"nearbyPlace":    "Fortuna",
+					"longitude":      "-124.150183",
+					"latitude":       "40.525289",
+					"elevation":      "78",
+					"direction":      "North",
+					"county":         "Humboldt",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "55.98",
+					"alignment":      "",
+					"milepost":       "683.34"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-03",
+						"messageTime": "11:09:02"
+					},
+					"display":     "2 Pages (Extended)",
+					"displayTime": "2.5",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "HWY 36",
+						"phase1Line2": "1-WAY TRAFFIC",
+						"phase1Line3": "15 MILES AHEAD"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Single_Stroke",
+						"phase2Line1": "EXPECT DELAYS",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V14",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:04"
+				},
+				"location":
+				{
+					"district":       "1",
+					"locationName":   "14 - DN 101 PM 28.5 - S of 101\/199 - FNBT",
+					"nearbyPlace":    "Crescent City",
+					"longitude":      "-124.179497",
+					"latitude":       "41.779637",
+					"elevation":      "72",
+					"direction":      "North",
+					"county":         "Del Norte",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "28.51",
+					"alignment":      "",
+					"milepost":       "791.55"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-26",
+						"messageTime": "09:25:02"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "RUTTING SEASON",
+						"phase1Line2": "USE CAUTION",
+						"phase1Line3": "WATCH FOR DEER"
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V15",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:04"
+				},
+				"location":
+				{
+					"district":       "1",
+					"locationName":   "15 - DN 101 PM 37.54 - N of 101\/197 - FSBT",
+					"nearbyPlace":    "Smith River",
+					"longitude":      "-124.137094",
+					"latitude":       "41.899567",
+					"elevation":      "91",
+					"direction":      "South",
+					"county":         "Del Norte",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "37.56",
+					"alignment":      "",
+					"milepost":       "800.52"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-26",
+						"messageTime": "12:10:02"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "RUTTING SEASON",
+						"phase1Line2": "USE CAUTION",
+						"phase1Line3": "WATCH FOR DEER"
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V16",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:04"
+				},
+				"location":
+				{
+					"district":       "1",
+					"locationName":   "16 - DN 199 PM 36.1 - S of State Line - FSBT",
+					"nearbyPlace":    "Gasquet",
+					"longitude":      "-123.719809",
+					"latitude":       "41.993307",
+					"elevation":      "1765",
+					"direction":      "South",
+					"county":         "Del Norte",
+					"route":          "US-199",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "36.11",
+					"alignment":      "",
+					"milepost":       "35.91"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-21",
+						"messageTime": "08:50:01"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "RUTTING SEASON",
+						"phase1Line2": "USE CAUTION",
+						"phase1Line3": "WATCH FOR DEER"
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V17",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:04"
+				},
+				"location":
+				{
+					"district":       "1",
+					"locationName":   "17 - DN 101 PM 22.37 - Cushing Creek - FSBT",
+					"nearbyPlace":    "Klamath",
+					"longitude":      "-124.13765",
+					"latitude":       "41.719817",
+					"elevation":      "561",
+					"direction":      "South",
+					"county":         "Del Norte",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "22.41",
+					"alignment":      "",
+					"milepost":       "785.49"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-21",
+						"messageTime": "08:50:01"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "RUTTING SEASON",
+						"phase1Line2": "USE CAUTION",
+						"phase1Line3": "WATCH FOR DEER"
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V18",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:04"
+				},
+				"location":
+				{
+					"district":       "1",
+					"locationName":   "18 - DN 101 PM 20.57 - Cushing Creek - FNBT",
+					"nearbyPlace":    "Klamath",
+					"longitude":      "-124.126438",
+					"latitude":       "41.705665",
+					"elevation":      "1056",
+					"direction":      "North",
+					"county":         "Del Norte",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "20.78",
+					"alignment":      "",
+					"milepost":       "783.84"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-22",
+						"messageTime": "06:40:01"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "RUTTING SEASON",
+						"phase1Line2": "USE CAUTION",
+						"phase1Line3": "WATCH FOR DEER"
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V19",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:04"
+				},
+				"location":
+				{
+					"district":       "1",
+					"locationName":   "19 - SB US-101 S of SR-20",
+					"nearbyPlace":    "Willits",
+					"longitude":      "-123.319217",
+					"latitude":       "39.369483",
+					"elevation":      "1561",
+					"direction":      "South",
+					"county":         "Mendocino",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "43.18",
+					"alignment":      "",
+					"milepost":       "567.27"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "10:20:05"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "RUTTING SEASON",
+						"phase1Line2": "USE CAUTION",
+						"phase1Line3": "WATCH FOR DEER"
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V25",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:04"
+				},
+				"location":
+				{
+					"district":       "1",
+					"locationName":   "25 - SB US-101 North of Ridgewood Grade",
+					"nearbyPlace":    "Willits",
+					"longitude":      "-123.30873",
+					"latitude":       "39.33679",
+					"elevation":      "1883",
+					"direction":      "South",
+					"county":         "Mendocino",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "40.56",
+					"alignment":      "",
+					"milepost":       "564.65"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2021-04-24",
+						"messageTime": "10:45:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V73",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:04"
+				},
+				"location":
+				{
+					"district":       "1",
+					"locationName":   "73 - Lak 29 PM 44.47 - S of SR-20 - FNBT",
+					"nearbyPlace":    "Lakeport",
+					"longitude":      "-122.93067",
+					"latitude":       "39.07585",
+					"elevation":      "1469",
+					"direction":      "North",
+					"county":         "Lake",
+					"route":          "SR-29",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "44.476",
+					"alignment":      "R",
+					"milepost":       "98.944"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "06:30:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V74",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:04"
+				},
+				"location":
+				{
+					"district":       "1",
+					"locationName":   "74 - Lak 20 PM 12.32 - E of SR-29 - FWBT",
+					"nearbyPlace":    "Nice",
+					"longitude":      "-122.86815",
+					"latitude":       "39.12913",
+					"elevation":      "1348",
+					"direction":      "West",
+					"county":         "Lake",
+					"route":          "SR-20",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "12.317",
+					"alignment":      "L",
+					"milepost":       "59.033"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "23:25:02"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V75",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:04"
+				},
+				"location":
+				{
+					"district":       "1",
+					"locationName":   "75 - Men 20 PM 0.25 Ft. Bragg FEBT",
+					"nearbyPlace":    "Fort Bragg",
+					"longitude":      "-123.803047",
+					"latitude":       "39.419186",
+					"elevation":      "82",
+					"direction":      "East",
+					"county":         "Mendocino",
+					"route":          "SR-20",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "0.26",
+					"alignment":      "",
+					"milepost":       "0.27"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-21",
+						"messageTime": "08:50:02"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "CAUTION",
+						"phase1Line2": "WATCH",
+						"phase1Line3": "FOR DEER"
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V76",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:04"
+				},
+				"location":
+				{
+					"district":       "1",
+					"locationName":   "76 - Lak 29 PM 22.11 - W of SR-53 - FSBT",
+					"nearbyPlace":    "Lower Lake",
+					"longitude":      "-122.64474",
+					"latitude":       "38.9103",
+					"elevation":      "1732",
+					"direction":      "South",
+					"county":         "Lake",
+					"route":          "SR-29",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "22.111",
+					"alignment":      "L",
+					"milepost":       "76.579"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-04",
+						"messageTime": "06:58:50"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "RUTTING SEASON",
+						"phase1Line2": "USE CAUTION",
+						"phase1Line3": "WATCH FOR DEER"
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V77",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:04"
+				},
+				"location":
+				{
+					"district":       "1",
+					"locationName":   "77 - Lak 53 PM 1.23 - Dam Road - FSBT",
+					"nearbyPlace":    "Clearlake",
+					"longitude":      "-122.61703",
+					"latitude":       "38.92704",
+					"elevation":      "1358",
+					"direction":      "South",
+					"county":         "Lake",
+					"route":          "SR-53",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "1.231",
+					"alignment":      "L",
+					"milepost":       "1.231"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-05",
+						"messageTime": "15:35:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V78",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:04"
+				},
+				"location":
+				{
+					"district":       "1",
+					"locationName":   "78 - Lak 29 PM 20.05 - S of SR-53 - FNBT",
+					"nearbyPlace":    "Lower Lake",
+					"longitude":      "-122.61217",
+					"latitude":       "38.90643",
+					"elevation":      "1453",
+					"direction":      "North",
+					"county":         "Lake",
+					"route":          "SR-29",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "20.054",
+					"alignment":      "L",
+					"milepost":       "74.522"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-03",
+						"messageTime": "07:37:24"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "RUTTING SEASON",
+						"phase1Line2": "USE CAUTION",
+						"phase1Line3": "WATCH FOR DEER"
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V79",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:04"
+				},
+				"location":
+				{
+					"district":       "1",
+					"locationName":   "79 -Men 101 PM 8.44 - Hopland - FNBT",
+					"nearbyPlace":    "Hopland",
+					"longitude":      "-123.0857",
+					"latitude":       "38.94936",
+					"elevation":      "485",
+					"direction":      "North",
+					"county":         "Mendocino",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "8.437",
+					"alignment":      "R",
+					"milepost":       "532.832"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-02",
+						"messageTime": "09:10:09"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "RUTTING SEASON",
+						"phase1Line2": "USE CAUTION",
+						"phase1Line3": "WATCH FOR DEER"
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		}
+	]
+}

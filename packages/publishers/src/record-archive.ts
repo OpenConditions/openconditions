@@ -1,5 +1,10 @@
 import { type EgressRecord, publicRecords } from "@openconditions/ingest-framework";
-import { federationEligible, type RecordClass, subjectKey } from "@openconditions/model";
+import {
+  contentHash,
+  federationEligible,
+  type RecordClass,
+  subjectKey,
+} from "@openconditions/model";
 import {
   asyncBufferFromFile,
   parquetMetadataAsync,
@@ -98,7 +103,7 @@ export function publishedRecords<T extends ArchivableRecord>(
   return publicRecords(kept).map((r) => {
     if (r["extras"] === undefined || opts.federateExtras?.(r.provenance.sourceId)) return r;
     const { extras: _extras, ...rest } = r;
-    return rest as T;
+    return (r.contentHash === undefined ? rest : { ...rest, contentHash: contentHash(rest) }) as T;
   });
 }
 

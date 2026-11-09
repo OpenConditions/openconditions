@@ -123,6 +123,39 @@
       "$schema": "../schema/roads.schema.json",
       "feeds": [
         {
+          "subdivision": "wa",
+          "operator": "mainroads",
+          "qualifier": "closures",
+          "product": "events",
+          "name": "Main Roads Western Australia WebEOC road closures",
+          "format": "wa-webeoc",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://services2.arcgis.com/cHGEnmsJ165IBJRM/arcgis/rest/services/WebEoc_RoadClosures/FeatureServer/4/query?where=publishExt%3D%27Yes%27&outFields=FID%2CId%2CGlobalID%2CLocation%2CIncidentTy%2CClosureTyp%2CpublishExt%2CEntryDate%2CUpdateDate%2CRoad%2CRegion%2CSuburb%2CTrafficImp%2CSeeMoreUrl%2CLocalRoadName&returnGeometry=true&outSR=4326&orderByFields=FID&resultRecordCount=2000&f=geojson",
+              "pagination": {
+                "skipParam": "resultOffset",
+                "pageSize": 2000,
+                "recordsPath": "features",
+                "maxPages": 20
+              },
+              "cadenceSec": 300
+            }
+          },
+          "freshnessWindowSec": 900,
+          "accessMode": "bulk",
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "Main Roads WA; Commissioner of Main Roads",
+          "terms": {
+            "url": "https://www.arcgis.com/sharing/rest/content/items/6bb807d09b37476f83a073cb4660e932?f=pjson",
+            "reviewedAt": "2026-11-08",
+            "note": "Feature data only. Normalized by OpenConditions; source structure may be transformed. Enabled partial-source operation: records expire 900 seconds after their own retrieval; subset and empty polls do not refresh absent records or authorize withdrawal. GlobalIDs persisted across captured refreshes. Source string dates remain uninterpreted. Requests require outSR=4326; explicit incompatible response CRS fails closed. Repeat endpoint, transformation and identity checks after the scheduled 13–16 November 2026 GDA2020 transition.",
+            "notice": "The Commissioner of Main Roads is the creator and owner of the data and Licenced Material, which is accessed pursuant to a Creative Commons (Attribution) Licence, which has a disclaimer of warranties and limitation of liability. Normalized by OpenConditions; source structure may be transformed."
+          },
+          "privacyUrl": "https://www.mainroads.wa.gov.au/privacy/"
+        },
+        {
           "subdivision": "nsw",
           "operator": "livetraffic",
           "product": "events",
@@ -4742,6 +4775,354 @@
       "$schema": "../schema/roads.schema.json",
       "feeds": [
         {
+          "subdivision": "ca",
+          "operator": "caltrans",
+          "qualifier": "d01",
+          "product": "signs",
+          "name": "Caltrans District 1 changeable message signs",
+          "format": "caltrans-cms",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://cwwp2.dot.ca.gov/data/d1/cms/cmsStatusD01.json",
+              "cadenceSec": 60
+            }
+          },
+          "freshnessWindowSec": 900,
+          "extrasAllow": [
+            "caltransCms"
+          ],
+          "license": "LicenseRef-Caltrans-Conditions-of-Use",
+          "licenseUrl": "https://dot.ca.gov/conditions-of-use",
+          "attribution": "Caltrans",
+          "terms": {
+            "url": "https://dot.ca.gov/conditions-of-use",
+            "reviewedAt": "2026-11-09",
+            "note": "Conditions of Use dated July 19, 2021, rechecked November 9, 2026. Agency-owned CMS location/display data only; excludes third-party content and photographs. Caltrans disclaims completeness and warranties. Partial district snapshots: absence never refreshes a sign; per-sign verification expires after 15 minutes. No physical census or perpetual identity stability claimed."
+          },
+          "privacyUrl": "https://dot.ca.gov/privacy-policy",
+          "caltransDistrict": 1
+        },
+        {
+          "subdivision": "ca",
+          "operator": "caltrans",
+          "qualifier": "d02",
+          "product": "signs",
+          "name": "Caltrans District 2 changeable message signs",
+          "format": "caltrans-cms",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://cwwp2.dot.ca.gov/data/d2/cms/cmsStatusD02.json",
+              "cadenceSec": 300
+            }
+          },
+          "freshnessWindowSec": 900,
+          "extrasAllow": [
+            "caltransCms"
+          ],
+          "license": "LicenseRef-Caltrans-Conditions-of-Use",
+          "licenseUrl": "https://dot.ca.gov/conditions-of-use",
+          "attribution": "Caltrans",
+          "terms": {
+            "url": "https://dot.ca.gov/conditions-of-use",
+            "reviewedAt": "2026-11-09",
+            "note": "Conditions of Use dated July 19, 2021, rechecked November 9, 2026. Agency-owned CMS location/display data only; excludes third-party content and photographs. Caltrans disclaims completeness and warranties. Partial district snapshots: absence never refreshes a sign; per-sign verification expires after 15 minutes. No physical census or perpetual identity stability claimed."
+          },
+          "privacyUrl": "https://dot.ca.gov/privacy-policy",
+          "caltransDistrict": 2
+        },
+        {
+          "subdivision": "ca",
+          "operator": "caltrans",
+          "qualifier": "d03",
+          "product": "signs",
+          "name": "Caltrans District 3 changeable message signs",
+          "format": "caltrans-cms",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://cwwp2.dot.ca.gov/data/d3/cms/cmsStatusD03.json",
+              "cadenceSec": 60
+            }
+          },
+          "freshnessWindowSec": 900,
+          "extrasAllow": [
+            "caltransCms"
+          ],
+          "license": "LicenseRef-Caltrans-Conditions-of-Use",
+          "licenseUrl": "https://dot.ca.gov/conditions-of-use",
+          "attribution": "Caltrans",
+          "terms": {
+            "url": "https://dot.ca.gov/conditions-of-use",
+            "reviewedAt": "2026-11-09",
+            "note": "Conditions of Use dated July 19, 2021, rechecked November 9, 2026. Agency-owned CMS location/display data only; excludes third-party content and photographs. Caltrans disclaims completeness and warranties. Partial district snapshots: absence never refreshes a sign; per-sign verification expires after 15 minutes. No physical census or perpetual identity stability claimed."
+          },
+          "privacyUrl": "https://dot.ca.gov/privacy-policy",
+          "caltransDistrict": 3
+        },
+        {
+          "subdivision": "ca",
+          "operator": "caltrans",
+          "qualifier": "d04",
+          "product": "signs",
+          "name": "Caltrans District 4 changeable message signs",
+          "format": "caltrans-cms",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://cwwp2.dot.ca.gov/data/d4/cms/cmsStatusD04.json",
+              "cadenceSec": 60
+            }
+          },
+          "freshnessWindowSec": 900,
+          "extrasAllow": [
+            "caltransCms"
+          ],
+          "license": "LicenseRef-Caltrans-Conditions-of-Use",
+          "licenseUrl": "https://dot.ca.gov/conditions-of-use",
+          "attribution": "Caltrans",
+          "terms": {
+            "url": "https://dot.ca.gov/conditions-of-use",
+            "reviewedAt": "2026-11-09",
+            "note": "Conditions of Use dated July 19, 2021, rechecked November 9, 2026. Agency-owned CMS location/display data only; excludes third-party content and photographs. Caltrans disclaims completeness and warranties. Partial district snapshots: absence never refreshes a sign; per-sign verification expires after 15 minutes. No physical census or perpetual identity stability claimed."
+          },
+          "privacyUrl": "https://dot.ca.gov/privacy-policy",
+          "caltransDistrict": 4
+        },
+        {
+          "subdivision": "ca",
+          "operator": "caltrans",
+          "qualifier": "d05",
+          "product": "signs",
+          "name": "Caltrans District 5 changeable message signs",
+          "format": "caltrans-cms",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://cwwp2.dot.ca.gov/data/d5/cms/cmsStatusD05.json",
+              "cadenceSec": 60
+            }
+          },
+          "freshnessWindowSec": 900,
+          "extrasAllow": [
+            "caltransCms"
+          ],
+          "license": "LicenseRef-Caltrans-Conditions-of-Use",
+          "licenseUrl": "https://dot.ca.gov/conditions-of-use",
+          "attribution": "Caltrans",
+          "terms": {
+            "url": "https://dot.ca.gov/conditions-of-use",
+            "reviewedAt": "2026-11-09",
+            "note": "Conditions of Use dated July 19, 2021, rechecked November 9, 2026. Agency-owned CMS location/display data only; excludes third-party content and photographs. Caltrans disclaims completeness and warranties. Partial district snapshots: absence never refreshes a sign; per-sign verification expires after 15 minutes. No physical census or perpetual identity stability claimed."
+          },
+          "privacyUrl": "https://dot.ca.gov/privacy-policy",
+          "caltransDistrict": 5
+        },
+        {
+          "subdivision": "ca",
+          "operator": "caltrans",
+          "qualifier": "d06",
+          "product": "signs",
+          "name": "Caltrans District 6 changeable message signs",
+          "format": "caltrans-cms",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://cwwp2.dot.ca.gov/data/d6/cms/cmsStatusD06.json",
+              "cadenceSec": 60
+            }
+          },
+          "freshnessWindowSec": 900,
+          "extrasAllow": [
+            "caltransCms"
+          ],
+          "license": "LicenseRef-Caltrans-Conditions-of-Use",
+          "licenseUrl": "https://dot.ca.gov/conditions-of-use",
+          "attribution": "Caltrans",
+          "terms": {
+            "url": "https://dot.ca.gov/conditions-of-use",
+            "reviewedAt": "2026-11-09",
+            "note": "Conditions of Use dated July 19, 2021, rechecked November 9, 2026. Agency-owned CMS location/display data only; excludes third-party content and photographs. Caltrans disclaims completeness and warranties. Partial district snapshots: absence never refreshes a sign; per-sign verification expires after 15 minutes. No physical census or perpetual identity stability claimed."
+          },
+          "privacyUrl": "https://dot.ca.gov/privacy-policy",
+          "caltransDistrict": 6
+        },
+        {
+          "subdivision": "ca",
+          "operator": "caltrans",
+          "qualifier": "d07",
+          "product": "signs",
+          "name": "Caltrans District 7 changeable message signs",
+          "format": "caltrans-cms",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://cwwp2.dot.ca.gov/data/d7/cms/cmsStatusD07.json",
+              "cadenceSec": 60
+            }
+          },
+          "freshnessWindowSec": 900,
+          "extrasAllow": [
+            "caltransCms"
+          ],
+          "license": "LicenseRef-Caltrans-Conditions-of-Use",
+          "licenseUrl": "https://dot.ca.gov/conditions-of-use",
+          "attribution": "Caltrans",
+          "terms": {
+            "url": "https://dot.ca.gov/conditions-of-use",
+            "reviewedAt": "2026-11-09",
+            "note": "Conditions of Use dated July 19, 2021, rechecked November 9, 2026. Agency-owned CMS location/display data only; excludes third-party content and photographs. Caltrans disclaims completeness and warranties. Partial district snapshots: absence never refreshes a sign; per-sign verification expires after 15 minutes. No physical census or perpetual identity stability claimed."
+          },
+          "privacyUrl": "https://dot.ca.gov/privacy-policy",
+          "caltransDistrict": 7
+        },
+        {
+          "subdivision": "ca",
+          "operator": "caltrans",
+          "qualifier": "d08",
+          "product": "signs",
+          "name": "Caltrans District 8 changeable message signs",
+          "format": "caltrans-cms",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://cwwp2.dot.ca.gov/data/d8/cms/cmsStatusD08.json",
+              "cadenceSec": 60
+            }
+          },
+          "freshnessWindowSec": 900,
+          "extrasAllow": [
+            "caltransCms"
+          ],
+          "license": "LicenseRef-Caltrans-Conditions-of-Use",
+          "licenseUrl": "https://dot.ca.gov/conditions-of-use",
+          "attribution": "Caltrans",
+          "terms": {
+            "url": "https://dot.ca.gov/conditions-of-use",
+            "reviewedAt": "2026-11-09",
+            "note": "Conditions of Use dated July 19, 2021, rechecked November 9, 2026. Agency-owned CMS location/display data only; excludes third-party content and photographs. Caltrans disclaims completeness and warranties. Partial district snapshots: absence never refreshes a sign; per-sign verification expires after 15 minutes. No physical census or perpetual identity stability claimed."
+          },
+          "privacyUrl": "https://dot.ca.gov/privacy-policy",
+          "caltransDistrict": 8
+        },
+        {
+          "subdivision": "ca",
+          "operator": "caltrans",
+          "qualifier": "d09",
+          "product": "signs",
+          "name": "Caltrans District 9 changeable message signs",
+          "format": "caltrans-cms",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://cwwp2.dot.ca.gov/data/d9/cms/cmsStatusD09.json",
+              "cadenceSec": 60
+            }
+          },
+          "freshnessWindowSec": 900,
+          "extrasAllow": [
+            "caltransCms"
+          ],
+          "license": "LicenseRef-Caltrans-Conditions-of-Use",
+          "licenseUrl": "https://dot.ca.gov/conditions-of-use",
+          "attribution": "Caltrans",
+          "terms": {
+            "url": "https://dot.ca.gov/conditions-of-use",
+            "reviewedAt": "2026-11-09",
+            "note": "Conditions of Use dated July 19, 2021, rechecked November 9, 2026. Agency-owned CMS location/display data only; excludes third-party content and photographs. Caltrans disclaims completeness and warranties. Partial district snapshots: absence never refreshes a sign; per-sign verification expires after 15 minutes. No physical census or perpetual identity stability claimed."
+          },
+          "privacyUrl": "https://dot.ca.gov/privacy-policy",
+          "caltransDistrict": 9
+        },
+        {
+          "subdivision": "ca",
+          "operator": "caltrans",
+          "qualifier": "d10",
+          "product": "signs",
+          "name": "Caltrans District 10 changeable message signs",
+          "format": "caltrans-cms",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://cwwp2.dot.ca.gov/data/d10/cms/cmsStatusD10.json",
+              "cadenceSec": 60
+            }
+          },
+          "freshnessWindowSec": 900,
+          "extrasAllow": [
+            "caltransCms"
+          ],
+          "license": "LicenseRef-Caltrans-Conditions-of-Use",
+          "licenseUrl": "https://dot.ca.gov/conditions-of-use",
+          "attribution": "Caltrans",
+          "terms": {
+            "url": "https://dot.ca.gov/conditions-of-use",
+            "reviewedAt": "2026-11-09",
+            "note": "Conditions of Use dated July 19, 2021, rechecked November 9, 2026. Agency-owned CMS location/display data only; excludes third-party content and photographs. Caltrans disclaims completeness and warranties. Partial district snapshots: absence never refreshes a sign; per-sign verification expires after 15 minutes. No physical census or perpetual identity stability claimed."
+          },
+          "privacyUrl": "https://dot.ca.gov/privacy-policy",
+          "caltransDistrict": 10
+        },
+        {
+          "subdivision": "ca",
+          "operator": "caltrans",
+          "qualifier": "d11",
+          "product": "signs",
+          "name": "Caltrans District 11 changeable message signs",
+          "format": "caltrans-cms",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://cwwp2.dot.ca.gov/data/d11/cms/cmsStatusD11.json",
+              "cadenceSec": 60
+            }
+          },
+          "freshnessWindowSec": 900,
+          "extrasAllow": [
+            "caltransCms"
+          ],
+          "license": "LicenseRef-Caltrans-Conditions-of-Use",
+          "licenseUrl": "https://dot.ca.gov/conditions-of-use",
+          "attribution": "Caltrans",
+          "terms": {
+            "url": "https://dot.ca.gov/conditions-of-use",
+            "reviewedAt": "2026-11-09",
+            "note": "Conditions of Use dated July 19, 2021, rechecked November 9, 2026. Agency-owned CMS location/display data only; excludes third-party content and photographs. Caltrans disclaims completeness and warranties. Partial district snapshots: absence never refreshes a sign; per-sign verification expires after 15 minutes. No physical census or perpetual identity stability claimed."
+          },
+          "privacyUrl": "https://dot.ca.gov/privacy-policy",
+          "caltransDistrict": 11
+        },
+        {
+          "subdivision": "ca",
+          "operator": "caltrans",
+          "qualifier": "d12",
+          "product": "signs",
+          "name": "Caltrans District 12 changeable message signs",
+          "format": "caltrans-cms",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://cwwp2.dot.ca.gov/data/d12/cms/cmsStatusD12.json",
+              "cadenceSec": 60
+            }
+          },
+          "freshnessWindowSec": 900,
+          "extrasAllow": [
+            "caltransCms"
+          ],
+          "license": "LicenseRef-Caltrans-Conditions-of-Use",
+          "licenseUrl": "https://dot.ca.gov/conditions-of-use",
+          "attribution": "Caltrans",
+          "terms": {
+            "url": "https://dot.ca.gov/conditions-of-use",
+            "reviewedAt": "2026-11-09",
+            "note": "Conditions of Use dated July 19, 2021, rechecked November 9, 2026. Agency-owned CMS location/display data only; excludes third-party content and photographs. Caltrans disclaims completeness and warranties. Partial district snapshots: absence never refreshes a sign; per-sign verification expires after 15 minutes. No physical census or perpetual identity stability claimed."
+          },
+          "privacyUrl": "https://dot.ca.gov/privacy-policy",
+          "caltransDistrict": 12
+        },
+        {
           "operator": "wzdx",
           "product": "events",
           "name": "WZDx (United States)",
@@ -5427,6 +5808,74 @@
       },
       "cadenceSec": 300,
       "country": "AT"
+    },
+    {
+      "subdivision": "wa",
+      "operator": "mainroads",
+      "qualifier": "closures",
+      "product": "events",
+      "name": "Main Roads Western Australia WebEOC road closures",
+      "format": "wa-webeoc",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://services2.arcgis.com/cHGEnmsJ165IBJRM/arcgis/rest/services/WebEoc_RoadClosures/FeatureServer/4/query?where=publishExt%3D%27Yes%27&outFields=FID%2CId%2CGlobalID%2CLocation%2CIncidentTy%2CClosureTyp%2CpublishExt%2CEntryDate%2CUpdateDate%2CRoad%2CRegion%2CSuburb%2CTrafficImp%2CSeeMoreUrl%2CLocalRoadName&returnGeometry=true&outSR=4326&orderByFields=FID&resultRecordCount=2000&f=geojson",
+          "pagination": {
+            "skipParam": "resultOffset",
+            "pageSize": 2000,
+            "recordsPath": "features",
+            "maxPages": 20
+          },
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 900,
+      "accessMode": "bulk",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Main Roads WA; Commissioner of Main Roads",
+      "terms": {
+        "url": "https://www.arcgis.com/sharing/rest/content/items/6bb807d09b37476f83a073cb4660e932?f=pjson",
+        "reviewedAt": "2026-11-08",
+        "note": "Feature data only. Normalized by OpenConditions; source structure may be transformed. Enabled partial-source operation: records expire 900 seconds after their own retrieval; subset and empty polls do not refresh absent records or authorize withdrawal. GlobalIDs persisted across captured refreshes. Source string dates remain uninterpreted. Requests require outSR=4326; explicit incompatible response CRS fails closed. Repeat endpoint, transformation and identity checks after the scheduled 13–16 November 2026 GDA2020 transition.",
+        "notice": "The Commissioner of Main Roads is the creator and owner of the data and Licenced Material, which is accessed pursuant to a Creative Commons (Attribution) Licence, which has a disclaimer of warranties and limitation of liability. Normalized by OpenConditions; source structure may be transformed."
+      },
+      "privacyUrl": "https://www.mainroads.wa.gov.au/privacy/",
+      "homepage": "https://services2.arcgis.com",
+      "id": "au-wa-mainroads-closures-events",
+      "domain": "roads",
+      "region": "au",
+      "file": "feeds/roads/au.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": true,
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "changeNotice": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://www.arcgis.com/sharing/rest/content/items/6bb807d09b37476f83a073cb4660e932?f=pjson",
+        "reviewedAt": "2026-11-08"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "AU"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "AU"
     },
     {
       "subdivision": "nsw",
@@ -35032,6 +35481,774 @@
       },
       "cadenceSec": 300,
       "country": "TH"
+    },
+    {
+      "subdivision": "ca",
+      "operator": "caltrans",
+      "qualifier": "d01",
+      "product": "signs",
+      "name": "Caltrans District 1 changeable message signs",
+      "format": "caltrans-cms",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://cwwp2.dot.ca.gov/data/d1/cms/cmsStatusD01.json",
+          "cadenceSec": 60
+        }
+      },
+      "freshnessWindowSec": 900,
+      "extrasAllow": [
+        "caltransCms"
+      ],
+      "license": "LicenseRef-Caltrans-Conditions-of-Use",
+      "licenseUrl": "https://dot.ca.gov/conditions-of-use",
+      "attribution": "Caltrans",
+      "terms": {
+        "url": "https://dot.ca.gov/conditions-of-use",
+        "reviewedAt": "2026-11-09",
+        "note": "Conditions of Use dated July 19, 2021, rechecked November 9, 2026. Agency-owned CMS location/display data only; excludes third-party content and photographs. Caltrans disclaims completeness and warranties. Partial district snapshots: absence never refreshes a sign; per-sign verification expires after 15 minutes. No physical census or perpetual identity stability claimed."
+      },
+      "privacyUrl": "https://dot.ca.gov/privacy-policy",
+      "caltransDistrict": 1,
+      "homepage": "https://cwwp2.dot.ca.gov",
+      "id": "us-ca-caltrans-d01-signs",
+      "domain": "roads",
+      "region": "us",
+      "file": "feeds/roads/us.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": true,
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": false,
+        "changeNotice": false,
+        "retention": true,
+        "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://dot.ca.gov/conditions-of-use",
+        "reviewedAt": "2026-11-09"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "US"
+        ]
+      },
+      "cadenceSec": 60,
+      "country": "US"
+    },
+    {
+      "subdivision": "ca",
+      "operator": "caltrans",
+      "qualifier": "d02",
+      "product": "signs",
+      "name": "Caltrans District 2 changeable message signs",
+      "format": "caltrans-cms",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://cwwp2.dot.ca.gov/data/d2/cms/cmsStatusD02.json",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 900,
+      "extrasAllow": [
+        "caltransCms"
+      ],
+      "license": "LicenseRef-Caltrans-Conditions-of-Use",
+      "licenseUrl": "https://dot.ca.gov/conditions-of-use",
+      "attribution": "Caltrans",
+      "terms": {
+        "url": "https://dot.ca.gov/conditions-of-use",
+        "reviewedAt": "2026-11-09",
+        "note": "Conditions of Use dated July 19, 2021, rechecked November 9, 2026. Agency-owned CMS location/display data only; excludes third-party content and photographs. Caltrans disclaims completeness and warranties. Partial district snapshots: absence never refreshes a sign; per-sign verification expires after 15 minutes. No physical census or perpetual identity stability claimed."
+      },
+      "privacyUrl": "https://dot.ca.gov/privacy-policy",
+      "caltransDistrict": 2,
+      "homepage": "https://cwwp2.dot.ca.gov",
+      "id": "us-ca-caltrans-d02-signs",
+      "domain": "roads",
+      "region": "us",
+      "file": "feeds/roads/us.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": true,
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": false,
+        "changeNotice": false,
+        "retention": true,
+        "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://dot.ca.gov/conditions-of-use",
+        "reviewedAt": "2026-11-09"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "US"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "US"
+    },
+    {
+      "subdivision": "ca",
+      "operator": "caltrans",
+      "qualifier": "d03",
+      "product": "signs",
+      "name": "Caltrans District 3 changeable message signs",
+      "format": "caltrans-cms",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://cwwp2.dot.ca.gov/data/d3/cms/cmsStatusD03.json",
+          "cadenceSec": 60
+        }
+      },
+      "freshnessWindowSec": 900,
+      "extrasAllow": [
+        "caltransCms"
+      ],
+      "license": "LicenseRef-Caltrans-Conditions-of-Use",
+      "licenseUrl": "https://dot.ca.gov/conditions-of-use",
+      "attribution": "Caltrans",
+      "terms": {
+        "url": "https://dot.ca.gov/conditions-of-use",
+        "reviewedAt": "2026-11-09",
+        "note": "Conditions of Use dated July 19, 2021, rechecked November 9, 2026. Agency-owned CMS location/display data only; excludes third-party content and photographs. Caltrans disclaims completeness and warranties. Partial district snapshots: absence never refreshes a sign; per-sign verification expires after 15 minutes. No physical census or perpetual identity stability claimed."
+      },
+      "privacyUrl": "https://dot.ca.gov/privacy-policy",
+      "caltransDistrict": 3,
+      "homepage": "https://cwwp2.dot.ca.gov",
+      "id": "us-ca-caltrans-d03-signs",
+      "domain": "roads",
+      "region": "us",
+      "file": "feeds/roads/us.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": true,
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": false,
+        "changeNotice": false,
+        "retention": true,
+        "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://dot.ca.gov/conditions-of-use",
+        "reviewedAt": "2026-11-09"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "US"
+        ]
+      },
+      "cadenceSec": 60,
+      "country": "US"
+    },
+    {
+      "subdivision": "ca",
+      "operator": "caltrans",
+      "qualifier": "d04",
+      "product": "signs",
+      "name": "Caltrans District 4 changeable message signs",
+      "format": "caltrans-cms",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://cwwp2.dot.ca.gov/data/d4/cms/cmsStatusD04.json",
+          "cadenceSec": 60
+        }
+      },
+      "freshnessWindowSec": 900,
+      "extrasAllow": [
+        "caltransCms"
+      ],
+      "license": "LicenseRef-Caltrans-Conditions-of-Use",
+      "licenseUrl": "https://dot.ca.gov/conditions-of-use",
+      "attribution": "Caltrans",
+      "terms": {
+        "url": "https://dot.ca.gov/conditions-of-use",
+        "reviewedAt": "2026-11-09",
+        "note": "Conditions of Use dated July 19, 2021, rechecked November 9, 2026. Agency-owned CMS location/display data only; excludes third-party content and photographs. Caltrans disclaims completeness and warranties. Partial district snapshots: absence never refreshes a sign; per-sign verification expires after 15 minutes. No physical census or perpetual identity stability claimed."
+      },
+      "privacyUrl": "https://dot.ca.gov/privacy-policy",
+      "caltransDistrict": 4,
+      "homepage": "https://cwwp2.dot.ca.gov",
+      "id": "us-ca-caltrans-d04-signs",
+      "domain": "roads",
+      "region": "us",
+      "file": "feeds/roads/us.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": true,
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": false,
+        "changeNotice": false,
+        "retention": true,
+        "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://dot.ca.gov/conditions-of-use",
+        "reviewedAt": "2026-11-09"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "US"
+        ]
+      },
+      "cadenceSec": 60,
+      "country": "US"
+    },
+    {
+      "subdivision": "ca",
+      "operator": "caltrans",
+      "qualifier": "d05",
+      "product": "signs",
+      "name": "Caltrans District 5 changeable message signs",
+      "format": "caltrans-cms",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://cwwp2.dot.ca.gov/data/d5/cms/cmsStatusD05.json",
+          "cadenceSec": 60
+        }
+      },
+      "freshnessWindowSec": 900,
+      "extrasAllow": [
+        "caltransCms"
+      ],
+      "license": "LicenseRef-Caltrans-Conditions-of-Use",
+      "licenseUrl": "https://dot.ca.gov/conditions-of-use",
+      "attribution": "Caltrans",
+      "terms": {
+        "url": "https://dot.ca.gov/conditions-of-use",
+        "reviewedAt": "2026-11-09",
+        "note": "Conditions of Use dated July 19, 2021, rechecked November 9, 2026. Agency-owned CMS location/display data only; excludes third-party content and photographs. Caltrans disclaims completeness and warranties. Partial district snapshots: absence never refreshes a sign; per-sign verification expires after 15 minutes. No physical census or perpetual identity stability claimed."
+      },
+      "privacyUrl": "https://dot.ca.gov/privacy-policy",
+      "caltransDistrict": 5,
+      "homepage": "https://cwwp2.dot.ca.gov",
+      "id": "us-ca-caltrans-d05-signs",
+      "domain": "roads",
+      "region": "us",
+      "file": "feeds/roads/us.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": true,
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": false,
+        "changeNotice": false,
+        "retention": true,
+        "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://dot.ca.gov/conditions-of-use",
+        "reviewedAt": "2026-11-09"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "US"
+        ]
+      },
+      "cadenceSec": 60,
+      "country": "US"
+    },
+    {
+      "subdivision": "ca",
+      "operator": "caltrans",
+      "qualifier": "d06",
+      "product": "signs",
+      "name": "Caltrans District 6 changeable message signs",
+      "format": "caltrans-cms",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://cwwp2.dot.ca.gov/data/d6/cms/cmsStatusD06.json",
+          "cadenceSec": 60
+        }
+      },
+      "freshnessWindowSec": 900,
+      "extrasAllow": [
+        "caltransCms"
+      ],
+      "license": "LicenseRef-Caltrans-Conditions-of-Use",
+      "licenseUrl": "https://dot.ca.gov/conditions-of-use",
+      "attribution": "Caltrans",
+      "terms": {
+        "url": "https://dot.ca.gov/conditions-of-use",
+        "reviewedAt": "2026-11-09",
+        "note": "Conditions of Use dated July 19, 2021, rechecked November 9, 2026. Agency-owned CMS location/display data only; excludes third-party content and photographs. Caltrans disclaims completeness and warranties. Partial district snapshots: absence never refreshes a sign; per-sign verification expires after 15 minutes. No physical census or perpetual identity stability claimed."
+      },
+      "privacyUrl": "https://dot.ca.gov/privacy-policy",
+      "caltransDistrict": 6,
+      "homepage": "https://cwwp2.dot.ca.gov",
+      "id": "us-ca-caltrans-d06-signs",
+      "domain": "roads",
+      "region": "us",
+      "file": "feeds/roads/us.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": true,
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": false,
+        "changeNotice": false,
+        "retention": true,
+        "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://dot.ca.gov/conditions-of-use",
+        "reviewedAt": "2026-11-09"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "US"
+        ]
+      },
+      "cadenceSec": 60,
+      "country": "US"
+    },
+    {
+      "subdivision": "ca",
+      "operator": "caltrans",
+      "qualifier": "d07",
+      "product": "signs",
+      "name": "Caltrans District 7 changeable message signs",
+      "format": "caltrans-cms",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://cwwp2.dot.ca.gov/data/d7/cms/cmsStatusD07.json",
+          "cadenceSec": 60
+        }
+      },
+      "freshnessWindowSec": 900,
+      "extrasAllow": [
+        "caltransCms"
+      ],
+      "license": "LicenseRef-Caltrans-Conditions-of-Use",
+      "licenseUrl": "https://dot.ca.gov/conditions-of-use",
+      "attribution": "Caltrans",
+      "terms": {
+        "url": "https://dot.ca.gov/conditions-of-use",
+        "reviewedAt": "2026-11-09",
+        "note": "Conditions of Use dated July 19, 2021, rechecked November 9, 2026. Agency-owned CMS location/display data only; excludes third-party content and photographs. Caltrans disclaims completeness and warranties. Partial district snapshots: absence never refreshes a sign; per-sign verification expires after 15 minutes. No physical census or perpetual identity stability claimed."
+      },
+      "privacyUrl": "https://dot.ca.gov/privacy-policy",
+      "caltransDistrict": 7,
+      "homepage": "https://cwwp2.dot.ca.gov",
+      "id": "us-ca-caltrans-d07-signs",
+      "domain": "roads",
+      "region": "us",
+      "file": "feeds/roads/us.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": true,
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": false,
+        "changeNotice": false,
+        "retention": true,
+        "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://dot.ca.gov/conditions-of-use",
+        "reviewedAt": "2026-11-09"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "US"
+        ]
+      },
+      "cadenceSec": 60,
+      "country": "US"
+    },
+    {
+      "subdivision": "ca",
+      "operator": "caltrans",
+      "qualifier": "d08",
+      "product": "signs",
+      "name": "Caltrans District 8 changeable message signs",
+      "format": "caltrans-cms",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://cwwp2.dot.ca.gov/data/d8/cms/cmsStatusD08.json",
+          "cadenceSec": 60
+        }
+      },
+      "freshnessWindowSec": 900,
+      "extrasAllow": [
+        "caltransCms"
+      ],
+      "license": "LicenseRef-Caltrans-Conditions-of-Use",
+      "licenseUrl": "https://dot.ca.gov/conditions-of-use",
+      "attribution": "Caltrans",
+      "terms": {
+        "url": "https://dot.ca.gov/conditions-of-use",
+        "reviewedAt": "2026-11-09",
+        "note": "Conditions of Use dated July 19, 2021, rechecked November 9, 2026. Agency-owned CMS location/display data only; excludes third-party content and photographs. Caltrans disclaims completeness and warranties. Partial district snapshots: absence never refreshes a sign; per-sign verification expires after 15 minutes. No physical census or perpetual identity stability claimed."
+      },
+      "privacyUrl": "https://dot.ca.gov/privacy-policy",
+      "caltransDistrict": 8,
+      "homepage": "https://cwwp2.dot.ca.gov",
+      "id": "us-ca-caltrans-d08-signs",
+      "domain": "roads",
+      "region": "us",
+      "file": "feeds/roads/us.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": true,
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": false,
+        "changeNotice": false,
+        "retention": true,
+        "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://dot.ca.gov/conditions-of-use",
+        "reviewedAt": "2026-11-09"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "US"
+        ]
+      },
+      "cadenceSec": 60,
+      "country": "US"
+    },
+    {
+      "subdivision": "ca",
+      "operator": "caltrans",
+      "qualifier": "d09",
+      "product": "signs",
+      "name": "Caltrans District 9 changeable message signs",
+      "format": "caltrans-cms",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://cwwp2.dot.ca.gov/data/d9/cms/cmsStatusD09.json",
+          "cadenceSec": 60
+        }
+      },
+      "freshnessWindowSec": 900,
+      "extrasAllow": [
+        "caltransCms"
+      ],
+      "license": "LicenseRef-Caltrans-Conditions-of-Use",
+      "licenseUrl": "https://dot.ca.gov/conditions-of-use",
+      "attribution": "Caltrans",
+      "terms": {
+        "url": "https://dot.ca.gov/conditions-of-use",
+        "reviewedAt": "2026-11-09",
+        "note": "Conditions of Use dated July 19, 2021, rechecked November 9, 2026. Agency-owned CMS location/display data only; excludes third-party content and photographs. Caltrans disclaims completeness and warranties. Partial district snapshots: absence never refreshes a sign; per-sign verification expires after 15 minutes. No physical census or perpetual identity stability claimed."
+      },
+      "privacyUrl": "https://dot.ca.gov/privacy-policy",
+      "caltransDistrict": 9,
+      "homepage": "https://cwwp2.dot.ca.gov",
+      "id": "us-ca-caltrans-d09-signs",
+      "domain": "roads",
+      "region": "us",
+      "file": "feeds/roads/us.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": true,
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": false,
+        "changeNotice": false,
+        "retention": true,
+        "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://dot.ca.gov/conditions-of-use",
+        "reviewedAt": "2026-11-09"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "US"
+        ]
+      },
+      "cadenceSec": 60,
+      "country": "US"
+    },
+    {
+      "subdivision": "ca",
+      "operator": "caltrans",
+      "qualifier": "d10",
+      "product": "signs",
+      "name": "Caltrans District 10 changeable message signs",
+      "format": "caltrans-cms",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://cwwp2.dot.ca.gov/data/d10/cms/cmsStatusD10.json",
+          "cadenceSec": 60
+        }
+      },
+      "freshnessWindowSec": 900,
+      "extrasAllow": [
+        "caltransCms"
+      ],
+      "license": "LicenseRef-Caltrans-Conditions-of-Use",
+      "licenseUrl": "https://dot.ca.gov/conditions-of-use",
+      "attribution": "Caltrans",
+      "terms": {
+        "url": "https://dot.ca.gov/conditions-of-use",
+        "reviewedAt": "2026-11-09",
+        "note": "Conditions of Use dated July 19, 2021, rechecked November 9, 2026. Agency-owned CMS location/display data only; excludes third-party content and photographs. Caltrans disclaims completeness and warranties. Partial district snapshots: absence never refreshes a sign; per-sign verification expires after 15 minutes. No physical census or perpetual identity stability claimed."
+      },
+      "privacyUrl": "https://dot.ca.gov/privacy-policy",
+      "caltransDistrict": 10,
+      "homepage": "https://cwwp2.dot.ca.gov",
+      "id": "us-ca-caltrans-d10-signs",
+      "domain": "roads",
+      "region": "us",
+      "file": "feeds/roads/us.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": true,
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": false,
+        "changeNotice": false,
+        "retention": true,
+        "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://dot.ca.gov/conditions-of-use",
+        "reviewedAt": "2026-11-09"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "US"
+        ]
+      },
+      "cadenceSec": 60,
+      "country": "US"
+    },
+    {
+      "subdivision": "ca",
+      "operator": "caltrans",
+      "qualifier": "d11",
+      "product": "signs",
+      "name": "Caltrans District 11 changeable message signs",
+      "format": "caltrans-cms",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://cwwp2.dot.ca.gov/data/d11/cms/cmsStatusD11.json",
+          "cadenceSec": 60
+        }
+      },
+      "freshnessWindowSec": 900,
+      "extrasAllow": [
+        "caltransCms"
+      ],
+      "license": "LicenseRef-Caltrans-Conditions-of-Use",
+      "licenseUrl": "https://dot.ca.gov/conditions-of-use",
+      "attribution": "Caltrans",
+      "terms": {
+        "url": "https://dot.ca.gov/conditions-of-use",
+        "reviewedAt": "2026-11-09",
+        "note": "Conditions of Use dated July 19, 2021, rechecked November 9, 2026. Agency-owned CMS location/display data only; excludes third-party content and photographs. Caltrans disclaims completeness and warranties. Partial district snapshots: absence never refreshes a sign; per-sign verification expires after 15 minutes. No physical census or perpetual identity stability claimed."
+      },
+      "privacyUrl": "https://dot.ca.gov/privacy-policy",
+      "caltransDistrict": 11,
+      "homepage": "https://cwwp2.dot.ca.gov",
+      "id": "us-ca-caltrans-d11-signs",
+      "domain": "roads",
+      "region": "us",
+      "file": "feeds/roads/us.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": true,
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": false,
+        "changeNotice": false,
+        "retention": true,
+        "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://dot.ca.gov/conditions-of-use",
+        "reviewedAt": "2026-11-09"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "US"
+        ]
+      },
+      "cadenceSec": 60,
+      "country": "US"
+    },
+    {
+      "subdivision": "ca",
+      "operator": "caltrans",
+      "qualifier": "d12",
+      "product": "signs",
+      "name": "Caltrans District 12 changeable message signs",
+      "format": "caltrans-cms",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://cwwp2.dot.ca.gov/data/d12/cms/cmsStatusD12.json",
+          "cadenceSec": 60
+        }
+      },
+      "freshnessWindowSec": 900,
+      "extrasAllow": [
+        "caltransCms"
+      ],
+      "license": "LicenseRef-Caltrans-Conditions-of-Use",
+      "licenseUrl": "https://dot.ca.gov/conditions-of-use",
+      "attribution": "Caltrans",
+      "terms": {
+        "url": "https://dot.ca.gov/conditions-of-use",
+        "reviewedAt": "2026-11-09",
+        "note": "Conditions of Use dated July 19, 2021, rechecked November 9, 2026. Agency-owned CMS location/display data only; excludes third-party content and photographs. Caltrans disclaims completeness and warranties. Partial district snapshots: absence never refreshes a sign; per-sign verification expires after 15 minutes. No physical census or perpetual identity stability claimed."
+      },
+      "privacyUrl": "https://dot.ca.gov/privacy-policy",
+      "caltransDistrict": 12,
+      "homepage": "https://cwwp2.dot.ca.gov",
+      "id": "us-ca-caltrans-d12-signs",
+      "domain": "roads",
+      "region": "us",
+      "file": "feeds/roads/us.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": true,
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": false,
+        "changeNotice": false,
+        "retention": true,
+        "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://dot.ca.gov/conditions-of-use",
+        "reviewedAt": "2026-11-09"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "US"
+        ]
+      },
+      "cadenceSec": 60,
+      "country": "US"
     },
     {
       "operator": "wzdx",
