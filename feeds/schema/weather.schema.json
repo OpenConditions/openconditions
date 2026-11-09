@@ -58,7 +58,8 @@
             "type": "string",
             "minLength": 1,
             "enum": [
-              "digitraffic-weather"
+              "digitraffic-weather",
+              "fmi-weather"
             ]
           },
           "tier": {

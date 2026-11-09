@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CompositeObservableProperty xmlns="http://inspire.ec.europa.eu/schemas/omop/2.9"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:gml="http://www.opengis.net/gml/3.2"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  gml:id="prop-1"
+  xsi:schemaLocation="http://inspire.ec.europa.eu/schemas/omop/2.9 http://inspire.ec.europa.eu/draft-schemas/omop/2.9/ObservableProperties.xsd">
+  <count>9</count>
+    <component>
+      <ObservableProperty gml:id="r_1h">
+        <label>Precipitation amount</label>
+      	<basePhenomenon>Amount of precipitation</basePhenomenon>
+      	<uom uom="mm"/>
+      	<statisticalMeasure>     
+          <StatisticalMeasure gml:id="stat-acc-PT1H-r_1h---">
+            <statisticalFunction>acc</statisticalFunction><aggregationTimePeriod>PT1H</aggregationTimePeriod>
+          </StatisticalMeasure>
+        </statisticalMeasure>
+      </ObservableProperty>
+    </component>  
+    <component>
+      <ObservableProperty gml:id="rh">
+        <label>Relative humidity</label>
+      	<basePhenomenon>Humidity</basePhenomenon>
+      	<uom uom="%"/>
+      	<statisticalMeasure>     
+          <StatisticalMeasure gml:id="stat-avg-PT1M-rh---">
+            <statisticalFunction>avg</statisticalFunction><aggregationTimePeriod>PT1M</aggregationTimePeriod>
+          </StatisticalMeasure>
+        </statisticalMeasure>
+      </ObservableProperty>
+    </component>  
+    <component>
+      <ObservableProperty gml:id="ri_10min">
+        <label>Precipitation intensity</label>
+      	<basePhenomenon>Amount of precipitation</basePhenomenon>
+      	<uom uom="mm/h"/>
+      	<statisticalMeasure>     
+          <StatisticalMeasure gml:id="stat-avg-PT10M-ri_10min---">
+            <statisticalFunction>avg</statisticalFunction><aggregationTimePeriod>PT10M</aggregationTimePeriod>
+          </StatisticalMeasure>
+        </statisticalMeasure>
+      </ObservableProperty>
+    </component>  
+    <component>
+      <ObservableProperty gml:id="t2m">
+        <label>Air temperature</label>
+      	<basePhenomenon>Temperature</basePhenomenon>
+      	<uom uom="degC"/>
+      	<statisticalMeasure>     
+          <StatisticalMeasure gml:id="stat-avg-PT1M-t2m---">
+            <statisticalFunction>avg</statisticalFunction><aggregationTimePeriod>PT1M</aggregationTimePeriod>
+          </StatisticalMeasure>
+        </statisticalMeasure>
+      </ObservableProperty>
+    </component>  
+    <component>
+      <ObservableProperty gml:id="td">
+        <label>Dew-point temperature</label>
+      	<basePhenomenon>Humidity</basePhenomenon>
+      	<uom uom="degC"/>
+      	<statisticalMeasure>     
+          <StatisticalMeasure gml:id="stat-avg-PT1M-td---">
+            <statisticalFunction>avg</statisticalFunction><aggregationTimePeriod>PT1M</aggregationTimePeriod>
+          </StatisticalMeasure>
+        </statisticalMeasure>
+      </ObservableProperty>
+    </component>  
+    <component>
+      <ObservableProperty gml:id="vis">
+        <label>Horizontal visibility</label>
+      	<basePhenomenon>Visibility</basePhenomenon>
+      	<uom uom="m"/>
+      	<statisticalMeasure>     
+          <StatisticalMeasure gml:id="stat-avg-PT1M-vis---">
+            <statisticalFunction>avg</statisticalFunction><aggregationTimePeriod>PT1M</aggregationTimePeriod>
+          </StatisticalMeasure>
+        </statisticalMeasure>
+      </ObservableProperty>
+    </component>  
+    <component>
+      <ObservableProperty gml:id="wd_10min">
+        <label>Wind direction</label>
+      	<basePhenomenon>Wind</basePhenomenon>
+      	<uom uom="deg"/>
+      	<statisticalMeasure>     
+          <StatisticalMeasure gml:id="stat-avg-PT10M-wd_10min---">
+            <statisticalFunction>avg</statisticalFunction><aggregationTimePeriod>PT10M</aggregationTimePeriod>
+          </StatisticalMeasure>
+        </statisticalMeasure>
+      </ObservableProperty>
+    </component>  
+    <component>
+      <ObservableProperty gml:id="wg_10min">
+        <label>Gust speed</label>
+      	<basePhenomenon>Wind</basePhenomenon>
+      	<uom uom="m/s"/>
+      	<statisticalMeasure>     
+          <StatisticalMeasure gml:id="stat-max-PT10M-wg_10min---">
+            <statisticalFunction>max</statisticalFunction><aggregationTimePeriod>PT10M</aggregationTimePeriod>
+          </StatisticalMeasure>
+        </statisticalMeasure>
+      </ObservableProperty>
+    </component>  
+    <component>
+      <ObservableProperty gml:id="ws_10min">
+        <label>Wind speed</label>
+      	<basePhenomenon>Wind</basePhenomenon>
+      	<uom uom="m/s"/>
+      	<statisticalMeasure>     
+          <StatisticalMeasure gml:id="stat-avg-PT10M-ws_10min---">
+            <statisticalFunction>avg</statisticalFunction><aggregationTimePeriod>PT10M</aggregationTimePeriod>
+          </StatisticalMeasure>
+        </statisticalMeasure>
+      </ObservableProperty>
+    </component>  </CompositeObservableProperty>

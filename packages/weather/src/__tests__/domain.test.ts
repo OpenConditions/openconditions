@@ -45,7 +45,8 @@ test("every format is a source format the weather model contributes, producing t
       if (property === "device.status") continue;
       expect(registry.property(property)?.domain, property).toBe("weather");
     }
-    expect(format.produces?.properties).toContain("device.status");
+    if (id === "digitraffic-weather")
+      expect(format.produces?.properties).toContain("device.status");
   }
 });
 
@@ -72,7 +73,7 @@ test("the feed shape is the base shape alone", () => {
 });
 
 test("the Digitraffic feed polls the v2 API with the user and compression headers", () => {
-  expect([...weatherCatalogue().keys()]).toEqual(["fi-digitraffic-weather"]);
+  expect([...weatherCatalogue().keys()]).toEqual(["fi-digitraffic-weather", "fi-fmi-weather"]);
   const feed = catalogFeed("fi-digitraffic-weather");
   expect(feed).toMatchObject({
     domain: "weather",

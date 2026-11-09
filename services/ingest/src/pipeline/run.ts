@@ -440,7 +440,40 @@ export async function runSource(src: CatalogFeed, deps: RunDeps): Promise<RunRes
     closed: false,
   };
   try {
-    return await runAttempt(src, deps, attempt, due);
+    const accepted = deps.roles;
+    const candidate =
+      accepted && formatOf(src).transactionalRoles
+        ? {
+            ...accepted,
+            lastFetchedAt: { ...accepted.lastFetchedAt },
+            payloads: { ...accepted.payloads },
+            urls: { ...accepted.urls },
+            items: { ...accepted.items },
+            failing: { ...accepted.failing },
+            answers: Object.fromEntries(
+              Object.entries(accepted.answers).map(([role, answers]) => [role, { ...answers }]),
+            ),
+          }
+        : undefined;
+    const result = await runAttempt(
+      src,
+      candidate ? { ...deps, roles: candidate } : deps,
+      attempt,
+      due,
+    );
+    if (
+      candidate &&
+      accepted &&
+      result.error === undefined &&
+      (result.outcome === undefined ||
+        result.outcome === "validated_unchanged" ||
+        result.outcome === "changed" ||
+        result.outcome === "complete_empty")
+    ) {
+      Object.assign(accepted, candidate);
+      if (candidate.statusIndex === undefined) delete accepted.statusIndex;
+    }
+    return result;
   } catch (err) {
     if (!attempt.closed) {
       await upsertSourceStatus(deps.sql, src.id, {
@@ -504,6 +537,7 @@ async function runAttempt(
   const env = deps.env ?? process.env;
   const fetchFor = (role: string) => feedFetch(src, { ...deps, env }, role);
   const format = formatOf(src);
+  if (format.acquisitionBlocked) throw new Error(format.acquisitionBlocked);
   const teeFor = (c: ReturnType<typeof capture>): StreamTeeFactory =>
     c ? archivingTee(c.archive, c.meta) : digestOnlyTee;
 
@@ -1478,6 +1512,7 @@ async function finishFeaturePoll(
   const stampOne = attributionStamp(src, new Date(poll.attempt.at));
   const stamp = (drafts: readonly RecordDraft[]) => drafts.map((d) => stampOne(d));
   const output = {
+    featuresComplete: parse.featuresComplete,
     features: stamp(parse.features),
     observations: stamp(parse.observations),
     offers: stamp(parse.offers),
