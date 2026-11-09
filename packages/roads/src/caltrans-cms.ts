@@ -56,6 +56,12 @@ export function parseCaltransCms(
   const out = emptyParseOutput();
   out.featuresComplete = feed.caltransSnapshotQualified === true;
   const seen = new Set<string>();
+  const freshness = {
+    fetchedAt: ctx.fetchedAt,
+    expiresAt: new Date(
+      Date.parse(ctx.fetchedAt) + (feed.freshnessWindowSec ?? 900) * 1000,
+    ).toISOString(),
+  };
   for (const row of doc["data"]) {
     const raw = obj(obj(row)["cms"]),
       loc = obj(raw["location"]),
@@ -67,9 +73,23 @@ export function parseCaltransCms(
       recordSkipped(feed.id, "malformed");
       continue;
     }
-    // Names are operational identities; coordinates can be corrected without rekeying.
+    // Road position disambiguates repeated names; coordinates/index are correctable diagnostics.
     const key = createHash("sha256")
-      .update(JSON.stringify([feed.caltransDistrict, name]))
+      .update(
+        JSON.stringify([
+          feed.caltransDistrict,
+          name,
+          ...[
+            "county",
+            "route",
+            "routeSuffix",
+            "direction",
+            "postmilePrefix",
+            "postmile",
+            "alignment",
+          ].map((k) => text(loc[k])),
+        ]),
+      )
       .digest("hex");
     if (seen.has(key)) throw new Error("ambiguous Caltrans CMS identity");
     seen.add(key);
@@ -140,7 +160,7 @@ export function parseCaltransCms(
       lifecycle: "operational",
       location,
       provenance,
-      freshness: { fetchedAt: ctx.fetchedAt },
+      freshness,
       name: [{ lang: "en", text: name }],
       components: [
         { key: "0", kind: "sign_face", details: { kind: "sign_face", v: 1, vmsIndex: 0 } },
@@ -180,7 +200,7 @@ export function parseCaltransCms(
       temporality: "live",
       location,
       provenance,
-      freshness: { fetchedAt: ctx.fetchedAt },
+      freshness,
       subject: { kind: "feature", featureId: id, componentKey: "0" },
       result: {
         type: "structured",

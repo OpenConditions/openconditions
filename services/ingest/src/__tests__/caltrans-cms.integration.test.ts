@@ -1,7 +1,9 @@
 import { readFileSync } from "node:fs";
-import { type LookupFn, toCatalogFeed } from "@openconditions/ingest-framework";
-import { buildRegistry } from "@openconditions/model";
+import path from "node:path";
+import { type LookupFn, readCatalogDir, toCatalogFeed } from "@openconditions/ingest-framework";
+import { buildRegistry, contentHash } from "@openconditions/model";
 import { productionModules } from "@openconditions/model-registry";
+import { roadsDomain } from "@openconditions/roads";
 import {
   ensureObservationPartitions,
   retentionClasses,
@@ -176,3 +178,137 @@ it("retains subset/empty/failure last-good independently, clears blank/offline t
   expect(endedSeries!.n).toBe(0);
   expect(await live(11)).toBe(1);
 });
+
+it("publishes every actual district generation through the catalogue, registry and public API with bounded absent-reading expiry", async () => {
+  const { files } = readCatalogDir(
+    path.resolve(import.meta.dirname, "../../../../feeds"),
+    [roadsDomain],
+    { otherDomains: "ignore" },
+  );
+  const feeds = files.flatMap((file) =>
+    file.feeds
+      .filter((f) => f.format === "caltrans-cms")
+      .map((def) =>
+        toCatalogFeed(def, {
+          domain: file.domain,
+          region: file.region,
+          file: file.path,
+          maintainers: file.maintainers,
+        }),
+      ),
+  );
+  expect(feeds).toHaveLength(12);
+  await syncSources(db.sql, feeds);
+  const api = Fastify();
+  registerScope(api, undefined);
+  registerApiRoutes(api, db.sql, {
+    registry,
+    catalog: { sources: feeds },
+    now: () => new Date(now),
+  });
+  await api.ready();
+  try {
+    for (const generation of [1, 2]) {
+      for (const source of feeds) {
+        const d = source.id.match(/-d(\d{2})-/)![1]!;
+        const body = readFileSync(
+          new URL(
+            `../../../../packages/roads/src/__tests__/fixtures/caltrans-cms/activation/generation${generation}/d${d}.raw`,
+            import.meta.url,
+          ),
+        );
+        const result = await runSource(source, {
+          sql: db.sql,
+          fetch: (async () => new Response(body)) as typeof fetch,
+          now: () => now,
+          lookup,
+          model: { registry, instanceId: "test.local" },
+        });
+        expect(result.error, source.id).toBeUndefined();
+        const response = await api.inject({
+          method: "GET",
+          url: `/features?source=${source.id}&expand=latest&limit=500`,
+        });
+        expect(response.statusCode).toBe(200);
+        const data = response.json();
+        expect(data.records.length, source.id).toBe(
+          [28, 42, 107, 189, 22, 118, 145, 94, 15, 107, 80, 66][Number(d) - 1],
+        );
+        expect(
+          data.records.every(
+            (r: { provenance: { attribution: { provider: string } } }) =>
+              r.provenance.attribution.provider === "Caltrans",
+          ),
+        ).toBe(true);
+        console.log(
+          "Caltrans actual capture",
+          generation,
+          source.id,
+          data.records.length,
+          Object.keys(data.latest).length,
+        );
+      }
+      now = new Date(Date.parse(now) + 300000).toISOString();
+    }
+    const source = feeds.find((s) => s.id === "us-ca-caltrans-d01-signs")!;
+    const before = (
+      await api.inject({ method: "GET", url: `/features?source=${source.id}&expand=latest` })
+    ).json();
+    const result = await runSource(source, {
+      sql: db.sql,
+      fetch: (async () => new Response("<html>unavailable</html>")) as typeof fetch,
+      now: () => now,
+      lookup,
+      model: { registry, instanceId: "test.local" },
+    });
+    expect(result.error).toBeDefined();
+    const held = (
+      await api.inject({ method: "GET", url: `/features?source=${source.id}&expand=latest` })
+    ).json();
+    expect(held.records.length).toBe(before.records.length);
+    const body = JSON.parse(
+      readFileSync(
+        new URL(
+          "../../../../packages/roads/src/__tests__/fixtures/caltrans-cms/activation/generation2/d01.raw",
+          import.meta.url,
+        ),
+        "utf8",
+      ),
+    );
+    body.data.shift();
+    now = new Date(Date.parse(now) + 901000).toISOString();
+    const subset = await runSource(source, {
+      sql: db.sql,
+      fetch: (async () => new Response(JSON.stringify(body))) as typeof fetch,
+      now: () => now,
+      lookup,
+      model: { registry, instanceId: "test.local" },
+    });
+    expect(subset.error).toBeUndefined();
+    const expired = (
+      await api.inject({ method: "GET", url: `/features?source=${source.id}&expand=latest` })
+    ).json();
+    expect(expired.records).toHaveLength(27);
+    expect(Object.keys(expired.latest)).toHaveLength(27);
+    const canonical = (
+      await api.inject({
+        method: "GET",
+        url: `/features?source=${source.id}&canonical=1&expand=components,latest`,
+      })
+    ).json();
+    expect(canonical.records).toHaveLength(27);
+    for (const record of canonical.records) expect(record.contentHash).toBe(contentHash(record));
+    now = new Date(Date.parse(now) + 901000).toISOString();
+    const allExpired = (
+      await api.inject({ method: "GET", url: `/features?source=${source.id}&expand=latest` })
+    ).json();
+    expect(allExpired.records).toHaveLength(0);
+    expect(Object.keys(allExpired.latest)).toHaveLength(0);
+    const sourceReadings = (
+      await api.inject({ method: "GET", url: `/observations/latest?source=${source.id}` })
+    ).json();
+    expect(sourceReadings.records).toHaveLength(0);
+  } finally {
+    await api.close();
+  }
+}, 120000);

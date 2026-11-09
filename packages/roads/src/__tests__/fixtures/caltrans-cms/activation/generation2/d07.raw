@@ -1,0 +1,7690 @@
+{
+	"data":
+	[
+		{
+			"cms":
+			{
+				"index": "726684",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "S\/O EL SEGUNDO BLVD",
+					"nearbyPlace":    "Hawthorne",
+					"longitude":      "-118.370131",
+					"latitude":       "33.909795",
+					"elevation":      "98",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "I-405",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "19.77",
+					"alignment":      "",
+					"milepost":       "43.54"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726685",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "S\/O INGLEWOOD AVE",
+					"nearbyPlace":    "Lawndale",
+					"longitude":      "-118.356402",
+					"latitude":       "33.887674",
+					"elevation":      "75",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "I-405",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "17.9",
+					"alignment":      "",
+					"milepost":       "41.63"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726686",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "W\/O CENTINELA  AVE",
+					"nearbyPlace":    "Santa Monica",
+					"longitude":      "-118.460887",
+					"latitude":       "34.026491",
+					"elevation":      "164",
+					"direction":      "East",
+					"county":         "Los Angeles",
+					"route":          "I-10",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "3.83",
+					"alignment":      "",
+					"milepost":       "1.66"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726687",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "CENTRAL AVE",
+					"nearbyPlace":    "Carson",
+					"longitude":      "-118.252005",
+					"latitude":       "33.873865",
+					"elevation":      "114",
+					"direction":      "West",
+					"county":         "Los Angeles",
+					"route":          "SR-91",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "8.24",
+					"alignment":      "",
+					"milepost":       "2.24"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726688",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "E\/O OVERLAND AVE",
+					"nearbyPlace":    "Los Angeles",
+					"longitude":      "-118.409371",
+					"latitude":       "34.030027",
+					"elevation":      "157",
+					"direction":      "East",
+					"county":         "Los Angeles",
+					"route":          "I-10",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "6.86",
+					"alignment":      "",
+					"milepost":       "4.69"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726689",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "WASHINGTON BLVD",
+					"nearbyPlace":    "Los Angeles",
+					"longitude":      "-118.367086",
+					"latitude":       "34.034515",
+					"elevation":      "98",
+					"direction":      "East",
+					"county":         "Los Angeles",
+					"route":          "I-10",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "9.47",
+					"alignment":      "",
+					"milepost":       "7.32"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726690",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "N\/O LAUREL CYN BLVD",
+					"nearbyPlace":    "Studio City",
+					"longitude":      "-118.404927",
+					"latitude":       "34.156439",
+					"elevation":      "646",
+					"direction":      "South",
+					"county":         "Los Angeles",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "13.38",
+					"alignment":      "",
+					"milepost":       "14.75"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726691",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "WOODMAN AVE",
+					"nearbyPlace":    "Sherman Oaks",
+					"longitude":      "-118.431956",
+					"latitude":       "34.155837",
+					"elevation":      "652",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "14.94",
+					"alignment":      "",
+					"milepost":       "16.3"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726692",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "INDIANA ST.",
+					"nearbyPlace":    "Los Angeles",
+					"longitude":      "-118.189591",
+					"latitude":       "34.020376",
+					"elevation":      "200",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "14.8",
+					"alignment":      "",
+					"milepost":       "131.42"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726693",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "NINTH ST",
+					"nearbyPlace":    "Los Angeles",
+					"longitude":      "-118.265264",
+					"latitude":       "34.048965",
+					"elevation":      "295",
+					"direction":      "South",
+					"county":         "Los Angeles",
+					"route":          "I-110",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "22.38",
+					"alignment":      "",
+					"milepost":       "22.31"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726694",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "INDIANA ST",
+					"nearbyPlace":    "Los Angeles",
+					"longitude":      "-118.192945",
+					"latitude":       "34.030894",
+					"elevation":      "311",
+					"direction":      "East",
+					"county":         "Los Angeles",
+					"route":          "SR-60",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "1.9",
+					"alignment":      "",
+					"milepost":       "2.07"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726695",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "WHITE OAK AVE",
+					"nearbyPlace":    "Encino",
+					"longitude":      "-118.518136",
+					"latitude":       "34.170975",
+					"elevation":      "787",
+					"direction":      "South",
+					"county":         "Los Angeles",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "20.21",
+					"alignment":      "",
+					"milepost":       "21.56"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726696",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "MELROSE AVE",
+					"nearbyPlace":    "Los Angeles",
+					"longitude":      "-118.298256",
+					"latitude":       "34.083301",
+					"elevation":      "321",
+					"direction":      "South",
+					"county":         "Los Angeles",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "4.82",
+					"alignment":      "",
+					"milepost":       "6.18"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726697",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "CRENSHAW BLVD",
+					"nearbyPlace":    "Los Angeles",
+					"longitude":      "-118.334251",
+					"latitude":       "34.034838",
+					"elevation":      "147",
+					"direction":      "East",
+					"county":         "Los Angeles",
+					"route":          "I-10",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "11.36",
+					"alignment":      "",
+					"milepost":       "9.21"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726698",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "ALAMEDA ST",
+					"nearbyPlace":    "Los Angeles",
+					"longitude":      "-118.240285",
+					"latitude":       "34.024458",
+					"elevation":      "242",
+					"direction":      "West",
+					"county":         "Los Angeles",
+					"route":          "I-10",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "17.06",
+					"alignment":      "",
+					"milepost":       "14.9"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726699",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "WASHINGTON BLVD",
+					"nearbyPlace":    "Los Angeles",
+					"longitude":      "-118.172425",
+					"latitude":       "34.005633",
+					"elevation":      "157",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "I-710",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "22.52",
+					"alignment":      "",
+					"milepost":       "17.53"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726700",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "WESTERN AVE",
+					"nearbyPlace":    "Los Angeles",
+					"longitude":      "-118.309309",
+					"latitude":       "34.036903",
+					"elevation":      "213",
+					"direction":      "East",
+					"county":         "Los Angeles",
+					"route":          "I-10",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "12.8",
+					"alignment":      "",
+					"milepost":       "10.64"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726701",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "S\/O MULHOLLAND DR",
+					"nearbyPlace":    "Los Angeles",
+					"longitude":      "-118.480905",
+					"latitude":       "34.109766",
+					"elevation":      "948",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "I-405",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "35.74",
+					"alignment":      "",
+					"milepost":       "59.52"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726702",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "BROADWAY ST.",
+					"nearbyPlace":    "Los Angeles",
+					"longitude":      "-118.218185",
+					"latitude":       "34.070351",
+					"elevation":      "318",
+					"direction":      "South",
+					"county":         "Los Angeles",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "19.53",
+					"alignment":      "",
+					"milepost":       "136.12"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726703",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "DOWNEY AVE",
+					"nearbyPlace":    "Long Beach",
+					"longitude":      "-118.152699",
+					"latitude":       "33.877263",
+					"elevation":      "78",
+					"direction":      "West",
+					"county":         "Los Angeles",
+					"route":          "SR-91",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "14.04",
+					"alignment":      "",
+					"milepost":       "8.02"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "VINCENT THOMAS",
+						"phase1Line2": "BRIDGE CLOSED",
+						"phase1Line3": "USE ALT ROUTES"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726704",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "WESTERN AVE",
+					"nearbyPlace":    "Los Angeles",
+					"longitude":      "-118.307343",
+					"latitude":       "34.037343",
+					"elevation":      "216",
+					"direction":      "West",
+					"county":         "Los Angeles",
+					"route":          "I-10",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "12.91",
+					"alignment":      "",
+					"milepost":       "10.75"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726705",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "MELROSE AVE",
+					"nearbyPlace":    "Los Angeles",
+					"longitude":      "-118.29824",
+					"latitude":       "34.083295",
+					"elevation":      "321",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "4.82",
+					"alignment":      "",
+					"milepost":       "6.18"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726706",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "N\/O PIONEER BLVD",
+					"nearbyPlace":    "Norwalk",
+					"longitude":      "-118.084883",
+					"latitude":       "33.924641",
+					"elevation":      "114",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "5.52",
+					"alignment":      "",
+					"milepost":       "122.13"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726707",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "CRENSHAW BLVD",
+					"nearbyPlace":    "Los Angeles",
+					"longitude":      "-118.335949",
+					"latitude":       "34.035168",
+					"elevation":      "137",
+					"direction":      "West",
+					"county":         "Los Angeles",
+					"route":          "I-10",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "11.26",
+					"alignment":      "",
+					"milepost":       "9.11"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726708",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "NATIONAL BLVD",
+					"nearbyPlace":    "Los Angeles",
+					"longitude":      "-118.405048",
+					"latitude":       "34.030025",
+					"elevation":      "160",
+					"direction":      "West",
+					"county":         "Los Angeles",
+					"route":          "I-10",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "7.1",
+					"alignment":      "",
+					"milepost":       "4.94"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726709",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "ROBERTSON BLVD",
+					"nearbyPlace":    "Los Angeles",
+					"longitude":      "-118.389109",
+					"latitude":       "34.032201",
+					"elevation":      "131",
+					"direction":      "West",
+					"county":         "Los Angeles",
+					"route":          "I-10",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "8.08",
+					"alignment":      "",
+					"milepost":       "5.93"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726710",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "N\/O VICTORY BLVD",
+					"nearbyPlace":    "Van Nuys",
+					"longitude":      "-118.474573",
+					"latitude":       "34.193584",
+					"elevation":      "757",
+					"direction":      "South",
+					"county":         "Los Angeles",
+					"route":          "I-405",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "41.85",
+					"alignment":      "",
+					"milepost":       "65.61"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726711",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "MAPLE AVE",
+					"nearbyPlace":    "Los Angeles",
+					"longitude":      "-118.25948",
+					"latitude":       "34.030913",
+					"elevation":      "249",
+					"direction":      "East",
+					"county":         "Los Angeles",
+					"route":          "I-10",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "15.81",
+					"alignment":      "",
+					"milepost":       "13.66"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726712",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "SANTA MONICA BLVD",
+					"nearbyPlace":    "Los Angeles",
+					"longitude":      "-118.445584",
+					"latitude":       "34.045323",
+					"elevation":      "252",
+					"direction":      "South",
+					"county":         "Los Angeles",
+					"route":          "I-405",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "30.74",
+					"alignment":      "",
+					"milepost":       "54.51"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726714",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "CLOVERFIELD BL",
+					"nearbyPlace":    "Santa Monica",
+					"longitude":      "-118.468607",
+					"latitude":       "34.024901",
+					"elevation":      "160",
+					"direction":      "West",
+					"county":         "Los Angeles",
+					"route":          "I-10",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "3.38",
+					"alignment":      "",
+					"milepost":       "1.23"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726715",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "S\/O VENICE BLVD",
+					"nearbyPlace":    "Culver City",
+					"longitude":      "-118.417347",
+					"latitude":       "34.010181",
+					"elevation":      "78",
+					"direction":      "South",
+					"county":         "Los Angeles",
+					"route":          "I-405",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "27.82",
+					"alignment":      "",
+					"milepost":       "51.58"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726716",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "S\/O CARSON ST",
+					"nearbyPlace":    "Carson",
+					"longitude":      "-118.287103",
+					"latitude":       "33.821868",
+					"elevation":      "59",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "I-110",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "6.34",
+					"alignment":      "",
+					"milepost":       "6.27"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "NORTH 605",
+						"phase1Line2": "AT ROSE HILLS",
+						"phase1Line3": "2 LANES ONLY"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726717",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "N\/O LAKEWOOD",
+					"nearbyPlace":    "Long Beach",
+					"longitude":      "-118.150042",
+					"latitude":       "33.807196",
+					"elevation":      "52",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "I-405",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "3.77",
+					"alignment":      "",
+					"milepost":       "27.72"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "VINCENT THOMAS",
+						"phase1Line2": "BRIDGE CLOSED",
+						"phase1Line3": "USE ALT ROUTES"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726718",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "WESTERN AVE",
+					"nearbyPlace":    "Torrance",
+					"longitude":      "-118.311621",
+					"latitude":       "33.859942",
+					"elevation":      "75",
+					"direction":      "South",
+					"county":         "Los Angeles",
+					"route":          "I-405",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "14.56",
+					"alignment":      "",
+					"milepost":       "38.32"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726719",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "WESTERN AVE",
+					"nearbyPlace":    "Glendale",
+					"longitude":      "-118.295409",
+					"latitude":       "34.163383",
+					"elevation":      "508",
+					"direction":      "South",
+					"county":         "Los Angeles",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "27.73",
+					"alignment":      "",
+					"milepost":       "144.32"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726720",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "N\/O PARAMOUNT BL",
+					"nearbyPlace":    "Downey",
+					"longitude":      "-118.122348",
+					"latitude":       "33.968799",
+					"elevation":      "157",
+					"direction":      "South",
+					"county":         "Los Angeles",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "9.29",
+					"alignment":      "",
+					"milepost":       "125.96"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726721",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "REDONDO BEACH BL.",
+					"nearbyPlace":    "Gardena",
+					"longitude":      "-118.285296",
+					"latitude":       "33.891749",
+					"elevation":      "65",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "I-110",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "11.18",
+					"alignment":      "",
+					"milepost":       "11.11"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726722",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "S\/O  ATLANTIC BL.",
+					"nearbyPlace":    "Los Angeles",
+					"longitude":      "-118.150901",
+					"latitude":       "34.002646",
+					"elevation":      "157",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "12.18",
+					"alignment":      "",
+					"milepost":       "128.8"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726723",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "GARFIELD AVE",
+					"nearbyPlace":    "Monterey Park",
+					"longitude":      "-118.130642",
+					"latitude":       "34.033349",
+					"elevation":      "259",
+					"direction":      "West",
+					"county":         "Los Angeles",
+					"route":          "SR-60",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "5.59",
+					"alignment":      "",
+					"milepost":       "5.75"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726724",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "ROSECRANS AVE",
+					"nearbyPlace":    "Norwalk",
+					"longitude":      "-118.105509",
+					"latitude":       "33.901327",
+					"elevation":      "95",
+					"direction":      "South",
+					"county":         "Los Angeles",
+					"route":          "I-605",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "6.78",
+					"alignment":      "",
+					"milepost":       "8.82"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726725",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "ACADEMY DRIVE",
+					"nearbyPlace":    "Los Angeles",
+					"longitude":      "-118.230754",
+					"latitude":       "34.076634",
+					"elevation":      "482",
+					"direction":      "South",
+					"county":         "Los Angeles",
+					"route":          "I-110",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "25.2",
+					"alignment":      "L",
+					"milepost":       "25.09"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726726",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "STADIUM WAY",
+					"nearbyPlace":    "Los Angeles",
+					"longitude":      "-118.242066",
+					"latitude":       "34.094085",
+					"elevation":      "357",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "21.79",
+					"alignment":      "",
+					"milepost":       "138.41"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "MINUTES TO",
+						"phase1Line2": "RTE 134..... 8",
+						"phase1Line3": "RTE 118..... 30"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726727",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "AVALON BLVD",
+					"nearbyPlace":    "Carson",
+					"longitude":      "-118.262508",
+					"latitude":       "33.838816",
+					"elevation":      "42",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "I-405",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "11.18",
+					"alignment":      "",
+					"milepost":       "34.93"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726728",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "WILMINGTON AVE",
+					"nearbyPlace":    "Carson",
+					"longitude":      "-118.239983",
+					"latitude":       "33.825632",
+					"elevation":      "22",
+					"direction":      "South",
+					"county":         "Los Angeles",
+					"route":          "I-405",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "9.47",
+					"alignment":      "",
+					"milepost":       "33.23"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726729",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "N OF COMPTON BLVD",
+					"nearbyPlace":    "Compton",
+					"longitude":      "-118.187866",
+					"latitude":       "33.89648",
+					"elevation":      "85",
+					"direction":      "South",
+					"county":         "Los Angeles",
+					"route":          "I-710",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "14.46",
+					"alignment":      "",
+					"milepost":       "9.5"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726730",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "S\/O WILLOW ST.",
+					"nearbyPlace":    "Long Beach",
+					"longitude":      "-118.206701",
+					"latitude":       "33.798039",
+					"elevation":      "19",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "I-710",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "7.45",
+					"alignment":      "",
+					"milepost":       "2.49"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "NORTH 605",
+						"phase1Line2": "AT ROSE HILLS",
+						"phase1Line3": "2 LANES ONLY"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726731",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "DIAMOND BAR BLVD",
+					"nearbyPlace":    "Diamond Bar",
+					"longitude":      "-117.847235",
+					"latitude":       "33.970197",
+					"elevation":      "711",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "SR-57",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "2.1",
+					"alignment":      "",
+					"milepost":       "13.92"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726732",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "BURBANK BLVD",
+					"nearbyPlace":    "North Hollywood",
+					"longitude":      "-118.390242",
+					"latitude":       "34.172758",
+					"elevation":      "669",
+					"direction":      "South",
+					"county":         "Los Angeles",
+					"route":          "SR-170",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "16.09",
+					"alignment":      "",
+					"milepost":       "3.16"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726733",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "FOREST LAWN DR.",
+					"nearbyPlace":    "Los Angeles",
+					"longitude":      "-118.31011",
+					"latitude":       "34.154906",
+					"elevation":      "521",
+					"direction":      "East",
+					"county":         "Los Angeles",
+					"route":          "SR-134",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "3.86",
+					"alignment":      "",
+					"milepost":       "3.85"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726734",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "N\/O VENICE BLVD",
+					"nearbyPlace":    "Los Angeles",
+					"longitude":      "-118.419575",
+					"latitude":       "34.014209",
+					"elevation":      "85",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "I-405",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "28.12",
+					"alignment":      "",
+					"milepost":       "51.88"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726735",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "S\/O ATLANTIC BLVD",
+					"nearbyPlace":    "Alhambra",
+					"longitude":      "-118.129101",
+					"latitude":       "34.07181",
+					"elevation":      "419",
+					"direction":      "West",
+					"county":         "Los Angeles",
+					"route":          "I-10",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "23.63",
+					"alignment":      "",
+					"milepost":       "22.13"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726736",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "S\/O RTE 14",
+					"nearbyPlace":    "Sylmar",
+					"longitude":      "-118.495904",
+					"latitude":       "34.32115",
+					"elevation":      "1318",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "I-5",
+					"routeSuffix":    "S",
+					"postmilePrefix": "C",
+					"postmile":       "44.44",
+					"alignment":      "R",
+					"milepost":       "0.52"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726737",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "MAGIC MOUNTAIN TRUCK SCALE",
+					"nearbyPlace":    "Valencia",
+					"longitude":      "-118.592568",
+					"latitude":       "34.435185",
+					"elevation":      "1053",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "54.55",
+					"alignment":      "",
+					"milepost":       "170.95"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726738",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "LAKEWOOD BLVD",
+					"nearbyPlace":    "Downey",
+					"longitude":      "-118.140035",
+					"latitude":       "33.913398",
+					"elevation":      "98",
+					"direction":      "West",
+					"county":         "Los Angeles",
+					"route":          "I-105",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "15.8",
+					"alignment":      "",
+					"milepost":       "15.8"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726739",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "W\/O RTE 405",
+					"nearbyPlace":    "Los Angeles",
+					"longitude":      "-118.380545",
+					"latitude":       "33.930947",
+					"elevation":      "114",
+					"direction":      "East",
+					"county":         "Los Angeles",
+					"route":          "I-105",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "1.4",
+					"alignment":      "",
+					"milepost":       "1.45"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726740",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "E\/O CRENSHAW BLVD",
+					"nearbyPlace":    "Hawthorne",
+					"longitude":      "-118.317935",
+					"latitude":       "33.925209",
+					"elevation":      "85",
+					"direction":      "East",
+					"county":         "Los Angeles",
+					"route":          "I-105",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "5.22",
+					"alignment":      "",
+					"milepost":       "5.22"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "VINCENT THOMAS",
+						"phase1Line2": "BRIDGE CLOSED",
+						"phase1Line3": "USE ALT ROUTES"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726741",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "LONG BEACH BLVD",
+					"nearbyPlace":    "Lynwood",
+					"longitude":      "-118.211952",
+					"latitude":       "33.925468",
+					"elevation":      "108",
+					"direction":      "East",
+					"county":         "Los Angeles",
+					"route":          "I-105",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "11.43",
+					"alignment":      "",
+					"milepost":       "11.43"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "NORTH 605",
+						"phase1Line2": "AT ROSE HILLS",
+						"phase1Line3": "2 LANES ONLY"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726742",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "W\/O LAKEWOOD BLVD",
+					"nearbyPlace":    "Downey",
+					"longitude":      "-118.149257",
+					"latitude":       "33.912546",
+					"elevation":      "88",
+					"direction":      "East",
+					"county":         "Los Angeles",
+					"route":          "I-105",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "15.26",
+					"alignment":      "",
+					"milepost":       "15.26"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "NORTH 605",
+						"phase1Line2": "AT ROSE HILLS",
+						"phase1Line3": "2 LANES ONLY"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726743",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "SANTA ANITA AVE",
+					"nearbyPlace":    "South El Monte",
+					"longitude":      "-118.043871",
+					"latitude":       "34.068755",
+					"elevation":      "282",
+					"direction":      "East",
+					"county":         "Los Angeles",
+					"route":          "I-10",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "28.58",
+					"alignment":      "",
+					"milepost":       "27.08"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726744",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "W\/O WILMINGTON AVE",
+					"nearbyPlace":    "Los Angeles",
+					"longitude":      "-118.244588",
+					"latitude":       "33.928981",
+					"elevation":      "111",
+					"direction":      "West",
+					"county":         "Los Angeles",
+					"route":          "I-105",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "9.47",
+					"alignment":      "",
+					"milepost":       "9.47"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726745",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "CRENSHAW BLVD",
+					"nearbyPlace":    "Inglewood",
+					"longitude":      "-118.329798",
+					"latitude":       "33.925323",
+					"elevation":      "88",
+					"direction":      "West",
+					"county":         "Los Angeles",
+					"route":          "I-105",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "4.53",
+					"alignment":      "",
+					"milepost":       "4.53"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726746",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "WESTLAKE BLVD",
+					"nearbyPlace":    "Thousand Oaks",
+					"longitude":      "-118.827417",
+					"latitude":       "34.159468",
+					"elevation":      "931",
+					"direction":      "North",
+					"county":         "Ventura",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "0.86",
+					"alignment":      "",
+					"milepost":       "40.42"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "726751",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "OSBORNE ST",
+					"nearbyPlace":    "Pacoima",
+					"longitude":      "-118.421399",
+					"latitude":       "34.244266",
+					"elevation":      "928",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "37.35",
+					"alignment":      "",
+					"milepost":       "153.98"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "759117",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "GAGE AVE",
+					"nearbyPlace":    "Los Angeles",
+					"longitude":      "-118.280265",
+					"latitude":       "33.982747",
+					"elevation":      "164",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "I-110",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "17.54",
+					"alignment":      "",
+					"milepost":       "17.47"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "759119",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "EXPOSITION DR",
+					"nearbyPlace":    "Los Angeles",
+					"longitude":      "-118.278527",
+					"latitude":       "34.019682",
+					"elevation":      "213",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "I-110",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "20.12",
+					"alignment":      "",
+					"milepost":       "20.03"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "759120",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "W\/O CITY TERRACE DR",
+					"nearbyPlace":    "Los Angeles",
+					"longitude":      "-118.190129",
+					"latitude":       "34.055092",
+					"elevation":      "403",
+					"direction":      "East",
+					"county":         "Los Angeles",
+					"route":          "I-10",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "19.81",
+					"alignment":      "",
+					"milepost":       "18.31"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "MINUTES TO",
+						"phase1Line2": "RTE 605..... 12",
+						"phase1Line3": "RTE 57...... 25"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "759121",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "ARTESIA BLVD.",
+					"nearbyPlace":    "Cerritos",
+					"longitude":      "-118.059102",
+					"latitude":       "33.872715",
+					"elevation":      "68",
+					"direction":      "West",
+					"county":         "Los Angeles",
+					"route":          "SR-91",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "19.51",
+					"alignment":      "",
+					"milepost":       "13.51"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "NORTH 605",
+						"phase1Line2": "AT ROSE HILLS",
+						"phase1Line3": "2 LANES ONLY"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "759122",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "WILMINGTON AVE.",
+					"nearbyPlace":    "Compton",
+					"longitude":      "-118.237819",
+					"latitude":       "33.873448",
+					"elevation":      "124",
+					"direction":      "East",
+					"county":         "Los Angeles",
+					"route":          "SR-91",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "9.06",
+					"alignment":      "",
+					"milepost":       "3.06"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "NORTH 605",
+						"phase1Line2": "AT ROSE HILLS",
+						"phase1Line3": "2 LANES ONLY"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "759123",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "PUENTE AVE.",
+					"nearbyPlace":    "Baldwin Park",
+					"longitude":      "-117.959795",
+					"latitude":       "34.070623",
+					"elevation":      "354",
+					"direction":      "West",
+					"county":         "Los Angeles",
+					"route":          "I-10",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "33.49",
+					"alignment":      "",
+					"milepost":       "31.98"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "759124",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "SEVENTH AVENUE",
+					"nearbyPlace":    "Hacienda Heights",
+					"longitude":      "-117.993325",
+					"latitude":       "34.024998",
+					"elevation":      "380",
+					"direction":      "West",
+					"county":         "Los Angeles",
+					"route":          "SR-60",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "13.83",
+					"alignment":      "",
+					"milepost":       "13.97"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "759125",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "S\/O SLAUSON AVE",
+					"nearbyPlace":    "Santa Fe Springs",
+					"longitude":      "-118.086276",
+					"latitude":       "33.96087",
+					"elevation":      "144",
+					"direction":      "South",
+					"county":         "Los Angeles",
+					"route":          "I-605",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "11.1",
+					"alignment":      "",
+					"milepost":       "13.13"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "759126",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "W\/O HOLLYWOOD WAY",
+					"nearbyPlace":    "Burbank",
+					"longitude":      "-118.349584",
+					"latitude":       "34.153774",
+					"elevation":      "574",
+					"direction":      "West",
+					"county":         "Los Angeles",
+					"route":          "SR-134",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "1.55",
+					"alignment":      "",
+					"milepost":       "1.55"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "759127",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "MANCHESTER AVE",
+					"nearbyPlace":    "Los Angeles",
+					"longitude":      "-118.281223",
+					"latitude":       "33.956379",
+					"elevation":      "141",
+					"direction":      "South",
+					"county":         "Los Angeles",
+					"route":          "I-110",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "15.72",
+					"alignment":      "",
+					"milepost":       "15.66"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "VINCENT THOMAS",
+						"phase1Line2": "BRIDGE CLOSED",
+						"phase1Line3": "USE ALT ROUTES"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "759128",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "N\/O BEVERLY BLVD",
+					"nearbyPlace":    "Whittier",
+					"longitude":      "-118.057904",
+					"latitude":       "34.009011",
+					"elevation":      "272",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "I-605",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "14.87",
+					"alignment":      "",
+					"milepost":       "16.93"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "759129",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "W\/O WHITE AVE",
+					"nearbyPlace":    "Pomona",
+					"longitude":      "-117.768133",
+					"latitude":       "34.071841",
+					"elevation":      "869",
+					"direction":      "West",
+					"county":         "Los Angeles",
+					"route":          "I-10",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "44.77",
+					"alignment":      "",
+					"milepost":       "43.27"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "MINUTES TO",
+						"phase1Line2": "RTE 605..... 14",
+						"phase1Line3": "DOWNTOWN.... 30"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "759130",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "ALLEN AVE.",
+					"nearbyPlace":    "Pasadena",
+					"longitude":      "-118.111311",
+					"latitude":       "34.15278",
+					"elevation":      "843",
+					"direction":      "West",
+					"county":         "Los Angeles",
+					"route":          "I-210",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "27.53",
+					"alignment":      "",
+					"milepost":       "27.5"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "759131",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "FOOTHILL BLVD.",
+					"nearbyPlace":    "La Canada Flintridge",
+					"longitude":      "-118.185026",
+					"latitude":       "34.196686",
+					"elevation":      "1197",
+					"direction":      "East",
+					"county":         "Los Angeles",
+					"route":          "I-210",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "21.01",
+					"alignment":      "",
+					"milepost":       "21.01"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "MINUTES TO",
+						"phase1Line2": "RTE 605..... 15",
+						"phase1Line3": "RTE 57...... 25"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "759132",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "S\/O CALGROVE BLVD",
+					"nearbyPlace":    "Newhall",
+					"longitude":      "-118.541049",
+					"latitude":       "34.349377",
+					"elevation":      "1601",
+					"direction":      "South",
+					"county":         "Los Angeles",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "47.81",
+					"alignment":      "",
+					"milepost":       "164.13"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "759133",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "S\/O CARSON ST",
+					"nearbyPlace":    "Hawaiian Gardens",
+					"longitude":      "-118.081551",
+					"latitude":       "33.82504",
+					"elevation":      "45",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "I-605",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "1.3",
+					"alignment":      "",
+					"milepost":       "3.34"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "759134",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "SAN FERNANDO ROAD",
+					"nearbyPlace":    "Newhall",
+					"longitude":      "-118.504475",
+					"latitude":       "34.363996",
+					"elevation":      "1437",
+					"direction":      "South",
+					"county":         "Los Angeles",
+					"route":          "SR-14",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "26.95",
+					"alignment":      "",
+					"milepost":       "2.16"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "759135",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "N\/O FIRESTONE BLVD",
+					"nearbyPlace":    "Bell",
+					"longitude":      "-118.170811",
+					"latitude":       "33.957315",
+					"elevation":      "95",
+					"direction":      "South",
+					"county":         "Los Angeles",
+					"route":          "I-710",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "18.96",
+					"alignment":      "",
+					"milepost":       "15.51"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "759136",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "BARHAM BLVD.",
+					"nearbyPlace":    "Los Angeles",
+					"longitude":      "-118.349569",
+					"latitude":       "34.13164",
+					"elevation":      "741",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "9.46",
+					"alignment":      "",
+					"milepost":       "10.8"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "762695",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "FULLERTON RD",
+					"nearbyPlace":    "Rowland Heights",
+					"longitude":      "-117.906538",
+					"latitude":       "33.993918",
+					"elevation":      "452",
+					"direction":      "East",
+					"county":         "Los Angeles",
+					"route":          "SR-60",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "19.4",
+					"alignment":      "",
+					"milepost":       "19.53"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "762696",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "E\/O HOLT AVE",
+					"nearbyPlace":    "Covina",
+					"longitude":      "-117.856301",
+					"latitude":       "34.067882",
+					"elevation":      "685",
+					"direction":      "East",
+					"county":         "Los Angeles",
+					"route":          "I-10",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "39.5",
+					"alignment":      "",
+					"milepost":       "37.98"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "762697",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "W\/O SUNFLOWER AVE",
+					"nearbyPlace":    "Glendora",
+					"longitude":      "-117.857323",
+					"latitude":       "34.117064",
+					"elevation":      "800",
+					"direction":      "East",
+					"county":         "Los Angeles",
+					"route":          "I-210",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "42.54",
+					"alignment":      "",
+					"milepost":       "42.81"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "762698",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "SANTA ANITA AVE",
+					"nearbyPlace":    "South El Monte",
+					"longitude":      "-118.054494",
+					"latitude":       "34.039955",
+					"elevation":      "226",
+					"direction":      "East",
+					"county":         "Los Angeles",
+					"route":          "SR-60",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "10.08",
+					"alignment":      "",
+					"milepost":       "10.21"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "762699",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "VERNON AVE",
+					"nearbyPlace":    "Azusa",
+					"longitude":      "-117.917572",
+					"latitude":       "34.127701",
+					"elevation":      "554",
+					"direction":      "West",
+					"county":         "Los Angeles",
+					"route":          "I-210",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "38.83",
+					"alignment":      "",
+					"milepost":       "39.15"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "765423",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "TERRA BELLA ST",
+					"nearbyPlace":    "Pacoima",
+					"longitude":      "-118.428591",
+					"latitude":       "34.250157",
+					"elevation":      "944",
+					"direction":      "South",
+					"county":         "Los Angeles",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "37.94",
+					"alignment":      "",
+					"milepost":       "154.58"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "765424",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "HAYVENHURST AVE",
+					"nearbyPlace":    "Granada Hills",
+					"longitude":      "-118.491452",
+					"latitude":       "34.272846",
+					"elevation":      "971",
+					"direction":      "East",
+					"county":         "Los Angeles",
+					"route":          "SR-118",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "8.53",
+					"alignment":      "",
+					"milepost":       "42.07"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "765425",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "LOWER AZUSA RD",
+					"nearbyPlace":    "Baldwin Park",
+					"longitude":      "-117.993419",
+					"latitude":       "34.090405",
+					"elevation":      "314",
+					"direction":      "South",
+					"county":         "Los Angeles",
+					"route":          "I-605",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "22.01",
+					"alignment":      "",
+					"milepost":       "24.05"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "765426",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "GLENDALE AVE",
+					"nearbyPlace":    "Glendale",
+					"longitude":      "-118.244621",
+					"latitude":       "34.156571",
+					"elevation":      "639",
+					"direction":      "West",
+					"county":         "Los Angeles",
+					"route":          "SR-134",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "7.72",
+					"alignment":      "",
+					"milepost":       "7.72"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "765427",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "N\/O MANCHESTER BL",
+					"nearbyPlace":    "Inglewood",
+					"longitude":      "-118.369778",
+					"latitude":       "33.961852",
+					"elevation":      "108",
+					"direction":      "South",
+					"county":         "Los Angeles",
+					"route":          "I-405",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "23.38",
+					"alignment":      "",
+					"milepost":       "47.11"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "765428",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "FOOTHILL BLVD",
+					"nearbyPlace":    "La Verne",
+					"longitude":      "-117.787773",
+					"latitude":       "34.12034",
+					"elevation":      "1118",
+					"direction":      "West",
+					"county":         "Los Angeles",
+					"route":          "I-210",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "46.58",
+					"alignment":      "",
+					"milepost":       "46.87"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "766762",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "N\/O HASLEY CANYON RD",
+					"nearbyPlace":    "Castaic",
+					"longitude":      "-118.616222",
+					"latitude":       "34.471786",
+					"elevation":      "1085",
+					"direction":      "South",
+					"county":         "Los Angeles",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "57.7",
+					"alignment":      "",
+					"milepost":       "174.09"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "766763",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "NORDHOFF STREET",
+					"nearbyPlace":    "North Hills",
+					"longitude":      "-118.472782",
+					"latitude":       "34.23702",
+					"elevation":      "859",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "I-405",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "44.85",
+					"alignment":      "",
+					"milepost":       "68.61"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "767472",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "VERDUGO RD",
+					"nearbyPlace":    "Los Angeles",
+					"longitude":      "-118.232833",
+					"latitude":       "34.118738",
+					"elevation":      "433",
+					"direction":      "East",
+					"county":         "Los Angeles",
+					"route":          "SR-2",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "16.77",
+					"alignment":      "",
+					"milepost":       "7.5"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "767473",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "S\/O VERDUGO RD",
+					"nearbyPlace":    "Los Angeles",
+					"longitude":      "-118.23703",
+					"latitude":       "34.117109",
+					"elevation":      "439",
+					"direction":      "West",
+					"county":         "Los Angeles",
+					"route":          "SR-2",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "16.51",
+					"alignment":      "",
+					"milepost":       "7.23"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "767637",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "VENTU PARK ROAD",
+					"nearbyPlace":    "Newbury Park",
+					"longitude":      "-118.912135",
+					"latitude":       "34.184113",
+					"elevation":      "646",
+					"direction":      "South",
+					"county":         "Ventura",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "6.24",
+					"alignment":      "",
+					"milepost":       "45.79"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "767638",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "S\/O VICTORIA AVE",
+					"nearbyPlace":    "Ventura",
+					"longitude":      "-119.204238",
+					"latitude":       "34.249299",
+					"elevation":      "104",
+					"direction":      "North",
+					"county":         "Ventura",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "24.2",
+					"alignment":      "",
+					"milepost":       "63.7"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "767639",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "S\/O RTE 33",
+					"nearbyPlace":    "Ventura",
+					"longitude":      "-119.293891",
+					"latitude":       "34.277229",
+					"elevation":      "32",
+					"direction":      "South",
+					"county":         "Ventura",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "30.2",
+					"alignment":      "",
+					"milepost":       "69.72"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "767665",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "WHEATLAND AVE",
+					"nearbyPlace":    "Sylmar",
+					"longitude":      "-118.360602",
+					"latitude":       "34.273422",
+					"elevation":      "1125",
+					"direction":      "West",
+					"county":         "Los Angeles",
+					"route":          "I-210",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "9",
+					"alignment":      "",
+					"milepost":       "8.99"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "767666",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "AVENUE P",
+					"nearbyPlace":    "Palmdale",
+					"longitude":      "-118.141795",
+					"latitude":       "34.600803",
+					"elevation":      "2687",
+					"direction":      "South",
+					"county":         "Los Angeles",
+					"route":          "SR-14",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "61.29",
+					"alignment":      "",
+					"milepost":       "36.44"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "767667",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "GOLDEN VALLEY ROAD",
+					"nearbyPlace":    "Newhall",
+					"longitude":      "-118.47426",
+					"latitude":       "34.391863",
+					"elevation":      "1755",
+					"direction":      "South",
+					"county":         "Los Angeles",
+					"route":          "SR-14",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "29.58",
+					"alignment":      "",
+					"milepost":       "4.79"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "768734",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "SMOKEY BEAR RD",
+					"nearbyPlace":    "Lebec",
+					"longitude":      "-118.796416",
+					"latitude":       "34.70925",
+					"elevation":      "2887",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "78.06",
+					"alignment":      "",
+					"milepost":       "194.57"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "768735",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "GORMAN",
+					"nearbyPlace":    "Lebec",
+					"longitude":      "-118.851077",
+					"latitude":       "34.794681",
+					"elevation":      "3825",
+					"direction":      "South",
+					"county":         "Los Angeles",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "85.73",
+					"alignment":      "",
+					"milepost":       "202.23"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "768879",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "DE SOTO AVE",
+					"nearbyPlace":    "Woodland Hills",
+					"longitude":      "-118.590401",
+					"latitude":       "34.168599",
+					"elevation":      "921",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "24.44",
+					"alignment":      "",
+					"milepost":       "25.8"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "769121",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "2MI W\/O S-LA CO LINE",
+					"nearbyPlace":    "Valyermo",
+					"longitude":      "-117.673321",
+					"latitude":       "34.372157",
+					"elevation":      "6578",
+					"direction":      "West",
+					"county":         "Los Angeles",
+					"route":          "SR-2",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "81",
+					"alignment":      "",
+					"milepost":       "70.72"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "769611",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "S\/O TEMPLE AVE",
+					"nearbyPlace":    "Diamond Bar",
+					"longitude":      "-117.808615",
+					"latitude":       "34.033749",
+					"elevation":      "738",
+					"direction":      "South",
+					"county":         "Los Angeles",
+					"route":          "SR-57",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "5.35",
+					"alignment":      "",
+					"milepost":       "17.17"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "E 91 AT GYPSUM",
+						"phase1Line2": "4 LANES CLOSED",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "769612",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "TEMPLE AVE",
+					"nearbyPlace":    "Diamond Bar",
+					"longitude":      "-117.807056",
+					"latitude":       "34.035093",
+					"elevation":      "761",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "SR-57",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "5.48",
+					"alignment":      "",
+					"milepost":       "17.3"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "769613",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "S\/O VIA VERDE",
+					"nearbyPlace":    "San Dimas",
+					"longitude":      "-117.819878",
+					"latitude":       "34.088187",
+					"elevation":      "958",
+					"direction":      "South",
+					"county":         "Los Angeles",
+					"route":          "SR-57",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "9.51",
+					"alignment":      "",
+					"milepost":       "21.36"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "769614",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "S\/O COVINA BLVD",
+					"nearbyPlace":    "San Dimas",
+					"longitude":      "-117.819207",
+					"latitude":       "34.091428",
+					"elevation":      "912",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "SR-57",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "9.73",
+					"alignment":      "",
+					"milepost":       "21.55"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "771128",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "PARKWAY CALABASAS",
+					"nearbyPlace":    "Calabasas",
+					"longitude":      "-118.649713",
+					"latitude":       "34.154144",
+					"elevation":      "977",
+					"direction":      "South",
+					"county":         "Los Angeles",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "28.14",
+					"alignment":      "",
+					"milepost":       "29.5"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "771129",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "LOST HILLS RD",
+					"nearbyPlace":    "Calabasas",
+					"longitude":      "-118.710002",
+					"latitude":       "34.140489",
+					"elevation":      "816",
+					"direction":      "South",
+					"county":         "Los Angeles",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "31.95",
+					"alignment":      "",
+					"milepost":       "33.27"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "771237",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "TIERRA REJADA",
+					"nearbyPlace":    "Moorpark",
+					"longitude":      "-118.85003",
+					"latitude":       "34.265819",
+					"elevation":      "652",
+					"direction":      "North",
+					"county":         "Ventura",
+					"route":          "SR-23",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "10.08",
+					"alignment":      "",
+					"milepost":       "18.67"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "771622",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "N\/O CARSON",
+					"nearbyPlace":    "Torrance",
+					"longitude":      "-118.28745",
+					"latitude":       "33.837577",
+					"elevation":      "45",
+					"direction":      "South",
+					"county":         "Los Angeles",
+					"route":          "I-110",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "7.43",
+					"alignment":      "",
+					"milepost":       "7.35"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "VINCENT THOMAS",
+						"phase1Line2": "BRIDGE CLOSED",
+						"phase1Line3": "USE ALT ROUTES"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "771623",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "N\/O WILLOW",
+					"nearbyPlace":    "Long Beach",
+					"longitude":      "-118.207182",
+					"latitude":       "33.811794",
+					"elevation":      "36",
+					"direction":      "South",
+					"county":         "Los Angeles",
+					"route":          "I-710",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "8.4",
+					"alignment":      "",
+					"milepost":       "3.44"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "VINCENT THOMAS",
+						"phase1Line2": "BRIDGE CLOSED",
+						"phase1Line3": "USE ALT ROUTES"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "772059",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "COLLINS DR",
+					"nearbyPlace":    "Moorpark",
+					"longitude":      "-118.841175",
+					"latitude":       "34.293634",
+					"elevation":      "610",
+					"direction":      "West",
+					"county":         "Ventura",
+					"route":          "SR-118",
+					"routeSuffix":    "",
+					"postmilePrefix": "T",
+					"postmile":       "20.07",
+					"alignment":      "",
+					"milepost":       "21.02"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "772066",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "KEUHNER DR",
+					"nearbyPlace":    "Simi Valley",
+					"longitude":      "-118.666458",
+					"latitude":       "34.279097",
+					"elevation":      "1108",
+					"direction":      "East",
+					"county":         "Ventura",
+					"route":          "SR-118",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "31.23",
+					"alignment":      "",
+					"milepost":       "31.23"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "772324",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "HOWARD HUGHES PKWY",
+					"nearbyPlace":    "Los Angeles",
+					"longitude":      "-118.381309",
+					"latitude":       "33.974038",
+					"elevation":      "72",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "I-405",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "24.52",
+					"alignment":      "",
+					"milepost":       "48.28"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "772325",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "E\/O CULVER BLVD",
+					"nearbyPlace":    "Marina Del Rey",
+					"longitude":      "-118.424846",
+					"latitude":       "33.980706",
+					"elevation":      "42",
+					"direction":      "East",
+					"county":         "Los Angeles",
+					"route":          "SR-90",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "1.99",
+					"alignment":      "",
+					"milepost":       "1.07"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "772540",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "W\/O MYRTLE AVE",
+					"nearbyPlace":    "Monrovia",
+					"longitude":      "-118.008517",
+					"latitude":       "34.135735",
+					"elevation":      "449",
+					"direction":      "East",
+					"county":         "Los Angeles",
+					"route":          "I-210",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "33.47",
+					"alignment":      "",
+					"milepost":       "33.74"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "MINUTES TO",
+						"phase1Line2": "RTE 57...... 12",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "773067",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "S\/O NATIONAL BLVD",
+					"nearbyPlace":    "Los Angeles",
+					"longitude":      "-118.419577",
+					"latitude":       "34.014232",
+					"elevation":      "85",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "I-405",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "28.11",
+					"alignment":      "",
+					"milepost":       "51.88"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "773606",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "N\/O DEL AMO BL",
+					"nearbyPlace":    "Compton",
+					"longitude":      "-118.203571",
+					"latitude":       "33.85528",
+					"elevation":      "45",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "I-710",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "11.45",
+					"alignment":      "",
+					"milepost":       "6.48"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "773607",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "N\/O DEL AMO BL",
+					"nearbyPlace":    "Compton",
+					"longitude":      "-118.204131",
+					"latitude":       "33.855515",
+					"elevation":      "55",
+					"direction":      "South",
+					"county":         "Los Angeles",
+					"route":          "I-710",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "11.45",
+					"alignment":      "",
+					"milepost":       "6.47"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "773608",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "ALONDRA BL",
+					"nearbyPlace":    "Compton",
+					"longitude":      "-118.188783",
+					"latitude":       "33.888366",
+					"elevation":      "75",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "I-710",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "13.9",
+					"alignment":      "",
+					"milepost":       "8.94"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "773641",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "LOS FELIZ BL",
+					"nearbyPlace":    "Los Angeles",
+					"longitude":      "-118.270901",
+					"latitude":       "34.120443",
+					"elevation":      "403",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "24.32",
+					"alignment":      "",
+					"milepost":       "140.95"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "774249",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "N\/O INDIANA ST",
+					"nearbyPlace":    "Los Angeles",
+					"longitude":      "-118.201794",
+					"latitude":       "34.023571",
+					"elevation":      "229",
+					"direction":      "South",
+					"county":         "Los Angeles",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "15.55",
+					"alignment":      "",
+					"milepost":       "132.18"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "775370",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "CMS 998 ",
+					"nearbyPlace":    "Glendale",
+					"longitude":      "-118.224649",
+					"latitude":       "34.156109",
+					"elevation":      "725",
+					"direction":      "East",
+					"county":         "Los Angeles",
+					"route":          "SR-2",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "19.48",
+					"alignment":      "",
+					"milepost":       "10.21"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "775540",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "BATES RD",
+					"nearbyPlace":    "Ventura",
+					"longitude":      "-119.473946",
+					"latitude":       "34.376159",
+					"elevation":      "39",
+					"direction":      "North",
+					"county":         "Ventura",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "43.37",
+					"alignment":      "",
+					"milepost":       "82.81"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "775789",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "REDONDO BEACH BLVD ",
+					"nearbyPlace":    "Gardena",
+					"longitude":      "-118.285975",
+					"latitude":       "33.89034",
+					"elevation":      "68",
+					"direction":      "South",
+					"county":         "Los Angeles",
+					"route":          "I-110",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "11.09",
+					"alignment":      "",
+					"milepost":       "10.28"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "VINCENT THOMAS",
+						"phase1Line2": "BRIDGE CLOSED",
+						"phase1Line3": "USE ALT ROUTES"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "775790",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "EL SEGUNDO BLVD",
+					"nearbyPlace":    "Gardena",
+					"longitude":      "-118.286993",
+					"latitude":       "33.911636",
+					"elevation":      "124",
+					"direction":      "South",
+					"county":         "Los Angeles",
+					"route":          "I-110",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "12.56",
+					"alignment":      "",
+					"milepost":       "11.75"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "VINCENT THOMAS",
+						"phase1Line2": "BRIDGE CLOSED",
+						"phase1Line3": "USE ALT ROUTES"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "775856",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "COMMERCE CTR DR",
+					"nearbyPlace":    "Valencia",
+					"longitude":      "-118.613262",
+					"latitude":       "34.43784",
+					"elevation":      "1010",
+					"direction":      "East",
+					"county":         "Los Angeles",
+					"route":          "SR-126",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "5.22",
+					"alignment":      "",
+					"milepost":       "39.67"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "776042",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "W\/O FOOTHILL",
+					"nearbyPlace":    "La Canada Flintridge",
+					"longitude":      "-118.187917",
+					"latitude":       "34.200627",
+					"elevation":      "1223",
+					"direction":      "West",
+					"county":         "Los Angeles",
+					"route":          "I-210",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "20.71",
+					"alignment":      "",
+					"milepost":       "20.69"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "776045",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "N\/O CESAR CHAVEZ AVE",
+					"nearbyPlace":    "Monterey Park",
+					"longitude":      "-118.166962",
+					"latitude":       "34.049172",
+					"elevation":      "331",
+					"direction":      "South",
+					"county":         "Los Angeles",
+					"route":          "I-710",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "25.57",
+					"alignment":      "",
+					"milepost":       "22.12"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "776046",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "N\/O CESAR CHAVEZ AVE",
+					"nearbyPlace":    "Monterey Park",
+					"longitude":      "-118.166209",
+					"latitude":       "34.049201",
+					"elevation":      "387",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "I-710",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "25.6",
+					"alignment":      "",
+					"milepost":       "22.15"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "776382",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "MYRTLE AVE",
+					"nearbyPlace":    "Monrovia",
+					"longitude":      "-118.002619",
+					"latitude":       "34.135728",
+					"elevation":      "462",
+					"direction":      "West",
+					"county":         "Los Angeles",
+					"route":          "I-210",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "33.82",
+					"alignment":      "",
+					"milepost":       "34.11"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "776383",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "W\/O ALTADENA DR",
+					"nearbyPlace":    "Pasadena",
+					"longitude":      "-118.11113",
+					"latitude":       "34.152181",
+					"elevation":      "846",
+					"direction":      "East",
+					"county":         "Los Angeles",
+					"route":          "I-210",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "27.54",
+					"alignment":      "",
+					"milepost":       "27.52"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "777038",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "S\/O IMPERIAL HWY",
+					"nearbyPlace":    "Norwalk",
+					"longitude":      "-118.075571",
+					"latitude":       "33.912944",
+					"elevation":      "104",
+					"direction":      "South",
+					"county":         "Los Angeles",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "4.56",
+					"alignment":      "",
+					"milepost":       "120.98"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "777475",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "WESTHILLS COURT",
+					"nearbyPlace":    "Simi Valley",
+					"longitude":      "-118.800019",
+					"latitude":       "34.287912",
+					"elevation":      "839",
+					"direction":      "West",
+					"county":         "Ventura",
+					"route":          "SR-118",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "22.509",
+					"alignment":      "",
+					"milepost":       "21.798"
+				},
+				"inService": "false",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Not Reported",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "Not Reported",
+						"phase1Line2": "Not Reported",
+						"phase1Line3": "Not Reported"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "Not Reported",
+						"phase2Line2": "Not Reported",
+						"phase2Line3": "Not Reported"
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "777660",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "VCMS N\/O NEWHALL ",
+					"nearbyPlace":    "Newhall",
+					"longitude":      "-118.50528",
+					"latitude":       "34.36175",
+					"elevation":      "1453",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "SR-14",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "26.801",
+					"alignment":      "",
+					"milepost":       "2.005"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "777661",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "VCMS VIA PRINCESSA ",
+					"nearbyPlace":    "Canyon Country",
+					"longitude":      "-118.45193",
+					"latitude":       "34.4041",
+					"elevation":      "1509",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "SR-14",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "31.104",
+					"alignment":      "",
+					"milepost":       "6.316"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "777662",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "VCMS AT PENROSE ST ",
+					"nearbyPlace":    "Sun Valley",
+					"longitude":      "-118.374868",
+					"latitude":       "34.22589",
+					"elevation":      "866",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "32.24",
+					"alignment":      "",
+					"milepost":       "150.677"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "777663",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "VCMS N\/O CALGROVE BL ",
+					"nearbyPlace":    "Newhall",
+					"longitude":      "-118.55579",
+					"latitude":       "34.36446",
+					"elevation":      "1351",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "49.195",
+					"alignment":      "",
+					"milepost":       "165.409"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "777664",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "VCMS ROXFORD ST",
+					"nearbyPlace":    "Granada Hills",
+					"longitude":      "-118.48057",
+					"latitude":       "34.30439",
+					"elevation":      "1210",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "42.75",
+					"alignment":      "",
+					"milepost":       "159.187"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "777665",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:36"
+				},
+				"location":
+				{
+					"district":       "7",
+					"locationName":   "VCMS SHERMAN WAY  ",
+					"nearbyPlace":    "Van Nuys",
+					"longitude":      "-118.473285",
+					"latitude":       "34.202206",
+					"elevation":      "780",
+					"direction":      "North",
+					"county":         "Los Angeles",
+					"route":          "I-405",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "42.45",
+					"alignment":      "",
+					"milepost":       "66.398"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		}
+	]
+}

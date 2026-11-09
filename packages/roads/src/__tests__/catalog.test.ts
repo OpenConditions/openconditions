@@ -1074,3 +1074,13 @@ describe("source tiers", () => {
     expect(aggregators.sort()).toEqual(["de-nw-mobidrom-events", "th-longdo-events"]);
   });
 });
+
+test("all twelve Caltrans districts are enabled independent partial sources", () => {
+  for (let d = 1; d <= 12; d++) {
+    const source = feed(`us-ca-caltrans-d${String(d).padStart(2, "0")}-signs`);
+    expect(source.disabled).toBeUndefined();
+    expect(source).not.toMatchObject({ caltransSnapshotQualified: true });
+    expect(source.endpoints["main"]?.cadenceSec).toBe(d === 2 ? 300 : 60);
+    expect(source.freshnessWindowSec).toBe(900);
+  }
+});

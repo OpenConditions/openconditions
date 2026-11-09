@@ -141,3 +141,32 @@ it("retains distinct D03/D11 duplicates and drops placeholders/implausible posit
     expect(out.featuresComplete).toBe(false);
   }
 });
+
+it("bounds each sign to its own verification, independently of old message-change dates", () => {
+  const row = structuredClone(rows[0]);
+  row.cms.message.messageTimestamp = { messageDate: "2020-01-01", messageTime: "12:00:00" };
+  const out = parse([row], { ...feed, freshnessWindowSec: 900 });
+  for (const record of [...out.features, ...out.observations]) {
+    expect(record.freshness).toMatchObject({
+      fetchedAt: ctx.fetchedAt,
+      expiresAt: "2026-11-07T08:15:00.000Z",
+    });
+  }
+});
+
+it("retains D7 same-name devices by their publisher road position, stable when reordered", () => {
+  const data = JSON.parse(
+    readFileSync(
+      new URL("./fixtures/caltrans-cms/activation/generation1/d07.raw", import.meta.url),
+      "utf8",
+    ),
+  ).data;
+  const config = { ...feed, caltransDistrict: 7 };
+  const a = parse(data, config);
+  expect(a.features).toHaveLength(145);
+  expect(a.features.map((f) => f.id).sort()).toEqual(
+    parse([...data].reverse(), config)
+      .features.map((f) => f.id)
+      .sort(),
+  );
+});
