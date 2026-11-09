@@ -132,12 +132,18 @@ const eachSchema = z
     pattern: z.string().min(1).optional(),
     links: z.array(z.string().min(1)).nonempty().optional(),
     keepSec: z.number().int().positive().optional(),
+    /** Revalidates unchanged terminal links only when the listing supplies version metadata. */
+    revalidateSec: z.number().int().positive().optional(),
+    maxItems: z.number().int().positive().max(10000).optional(),
   })
   .strict()
   .superRefine((each, ctx) => {
     const listed = each.records !== undefined || each.field !== undefined;
     if (listed === (each.links !== undefined)) {
       ctx.addIssue({ code: "custom", message: "each needs exactly one of records+field or links" });
+    }
+    if (listed && (each.revalidateSec !== undefined || each.maxItems !== undefined)) {
+      ctx.addIssue({ code: "custom", message: "revalidateSec and maxItems apply only to links" });
     }
     if (listed && (each.records === undefined || each.field === undefined)) {
       ctx.addIssue({ code: "custom", message: "each needs both records and field" });

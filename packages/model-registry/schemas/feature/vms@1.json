@@ -2360,6 +2360,7 @@
             "tripcheck",
             "cars-cctv",
             "digitraffic-weather",
+            "dwd-cdc-10min",
             "parkapi-v3",
             "datex2-light",
             "db-bahnpark",

@@ -738,3 +738,69 @@ describe("endpointSchema each", () => {
     ).toBe(false);
   });
 });
+
+it("terminal listing versions revalidate unchanged minute/size within a bounded interval", async () => {
+  const feed = catalogFeed({
+    endpoints: {
+      index: { url: "https://api.test/data/", cadenceSec: 3600 },
+      details: {
+        url: "{item}",
+        cadenceSec: 3600,
+        each: { role: "index", links: ['href="([^"]+\\.zip)"\\s+([^<]+)'], revalidateSec: 3600 },
+      },
+    },
+  });
+  let value = "old";
+  const calls: string[] = [];
+  const fn = (async (url: unknown) => {
+    calls.push(String(url));
+    return new Response(value);
+  }) as typeof fetch;
+  const options = {
+    state: createFetchState(),
+    eachSource: [Buffer.from('<a href="a.zip" 07-Nov-2026 23:00:00 100<')],
+    eachSourceUrls: ["https://api.test/data/"],
+    at: 0,
+  };
+  const first = await fetchEndpoint(feed, "details", fn, options);
+  if (first.status !== "fetched") throw new Error(first.status);
+  value = "new";
+  const held = await fetchEndpoint(feed, "details", fn, {
+    ...options,
+    kept: first.kept,
+    at: 3599_000,
+  });
+  if (held.status !== "fetched") throw new Error(held.status);
+  expect(held.buffers.map(String)).toEqual(["old"]);
+  expect(calls).toHaveLength(1);
+  const fresh = await fetchEndpoint(feed, "details", fn, {
+    ...options,
+    kept: first.kept,
+    at: 3600_000,
+  });
+  if (fresh.status !== "fetched") throw new Error(fresh.status);
+  expect(fresh.buffers.map(String)).toEqual(["new"]);
+  expect(calls).toHaveLength(2);
+});
+
+it("walk item bounds fail before fanout requests", async () => {
+  const feed = catalogFeed({
+    endpoints: {
+      index: { url: "https://api.test/data/", cadenceSec: 3600 },
+      details: {
+        url: "{item}",
+        cadenceSec: 3600,
+        each: { role: "index", links: ['href="([^"]+\\.zip)"'], maxItems: 1 },
+      },
+    },
+  });
+  const up = upstream();
+  await expect(
+    fetchEndpoint(feed, "details", up.fn, {
+      state: createFetchState(),
+      eachSource: [Buffer.from('<a href="a.zip"><a href="b.zip">')],
+      eachSourceUrls: ["https://api.test/data/"],
+    }),
+  ).rejects.toThrow(/exceeds 1 items/);
+  expect(up.calls).toEqual([]);
+});
