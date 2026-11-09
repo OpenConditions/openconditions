@@ -104,6 +104,9 @@ test("parent wall-clock timer interrupts actual CPU decoding after child readine
 
 test("actual native decoder heap exhaustion is contained and next task succeeds", async () => {
   let pid = 0;
+  const session: JmaNativeSession = {
+    entry: new URL("../../../dist/jma-native-child.js", import.meta.url),
+  };
   await expect(
     jmaNative(
       {
@@ -113,14 +116,18 @@ test("actual native decoder heap exhaustion is contained and next task succeeds"
         ).toString("base64"),
       },
       AbortSignal.timeout(10_000),
-      undefined,
+      session,
       (value) => {
         pid = value;
       },
     ),
   ).rejects.toThrow(/native child exited/);
   gone(pid);
-  expect(await jmaNative(small, AbortSignal.timeout(10_000))).toHaveProperty("urls", []);
+  try {
+    expect(await jmaNative(small, AbortSignal.timeout(10_000), session)).toHaveProperty("urls", []);
+  } finally {
+    await closeJmaNative(session);
+  }
 });
 
 test("IPC input ceiling refuses before any child starts", async () => {

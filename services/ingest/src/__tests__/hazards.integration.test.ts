@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { crc32 } from "node:zlib";
+import { runMigrations } from "@openconditions/core/server";
 import { readOutbox } from "@openconditions/federation";
 import {
   type CatalogFeed,
@@ -14,9 +15,15 @@ import {
   sweepRecords,
   syncSources,
 } from "@openconditions/storage";
-import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
+import type { TestDatabase } from "@openconditions/test-database";
+import {
+  assertPostgisProfile,
+  POSTGIS_IMAGES,
+  postgisProfile,
+} from "@openconditions/test-database/profile";
 import Fastify, { type FastifyInstance } from "fastify";
-import type postgres from "postgres";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { registerApiRoutes } from "../api/routes.js";
 import { registerScope } from "../api/scope.js";
@@ -55,26 +62,76 @@ let app: FastifyInstance;
 
 const HAZARDS = REPO_CATALOG.feeds.filter((feed) => feed.domain === "hazards");
 
+// Outbox visibility depends on the server-wide xmin, not just this database.
+// Keep other suites' transactions outside this fixture's federation horizon.
+async function startHazardsDatabase(): Promise<TestDatabase> {
+  const profile = postgisProfile();
+  const container = await new GenericContainer(POSTGIS_IMAGES[profile])
+    .withEnvironment({
+      POSTGRES_DB: "conditions_test",
+      POSTGRES_USER: "oc",
+      POSTGRES_PASSWORD: "oc",
+    })
+    .withExposedPorts(5432)
+    .withWaitStrategy(Wait.forLogMessage(/database system is ready to accept connections/, 2))
+    .start();
+  const url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
+  const sql = postgres(url, { max: 4, onnotice: () => {} });
+  let closed = false;
+  const close = async () => {
+    if (closed) return;
+    closed = true;
+    try {
+      await sql.end();
+    } finally {
+      await container.stop();
+    }
+  };
+  try {
+    await assertPostgisProfile(sql, profile, {
+      fixture: "hazards.integration.test.ts",
+      containerId: container.getId(),
+    });
+    await runMigrations(url);
+    return { sql, url, close };
+  } catch (error) {
+    await close();
+    throw error;
+  }
+}
+
 beforeAll(async () => {
-  db = await createTestDatabase();
-  sql = db.sql;
-  await ensureObservationPartitions(sql, {
-    classes: retentionClasses(registry),
-    now: new Date("2026-10-07T03:00:00Z"),
-  });
-  await syncSources(
-    sql,
-    HAZARDS.map((feed) => ({ ...feed })),
-  );
-  app = Fastify();
-  registerScope(app, TOKEN);
-  registerApiRoutes(app, sql, { registry, now: () => new Date(clock), catalog: REPO_CATALOG });
-  await app.ready();
+  db = await startHazardsDatabase();
+  try {
+    sql = db.sql;
+    await ensureObservationPartitions(sql, {
+      classes: retentionClasses(registry),
+      now: new Date("2026-10-07T03:00:00Z"),
+    });
+    await syncSources(
+      sql,
+      HAZARDS.map((feed) => ({ ...feed })),
+    );
+    app = Fastify();
+    registerScope(app, TOKEN);
+    registerApiRoutes(app, sql, { registry, now: () => new Date(clock), catalog: REPO_CATALOG });
+    await app.ready();
+  } catch (error) {
+    try {
+      await app?.close();
+    } finally {
+      await db.close();
+    }
+    throw error;
+  }
 }, 180_000);
 
 afterAll(async () => {
-  await app?.close();
-  await db?.close();
+  try {
+    await app?.close();
+  } finally {
+    await db?.close();
+  }
 }, 30_000);
 
 /**
