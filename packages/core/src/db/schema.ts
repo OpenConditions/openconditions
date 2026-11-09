@@ -815,6 +815,7 @@ export const federationSubscription = conditionsSchema.table(
 
 /** Last wholly accepted GeoNet acquisition; publication shares its transaction. */
 export const geonetCoverage = conditionsSchema.table("geonet_coverage", {
+  revisions: jsonb("revisions").notNull().default({}),
   sourceId: text("source_id").primaryKey(),
   coveredFrom: timestamp("covered_from", { withTimezone: true }).notNull(),
   coveredUntil: timestamp("covered_until", { withTimezone: true }).notNull(),

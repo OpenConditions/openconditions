@@ -442,6 +442,7 @@ export async function runSource(src: CatalogFeed, deps: RunDeps): Promise<RunRes
       fetch: feedFetch(src, deps),
       now: deps.now,
       model: writeModel(deps.model),
+      raw: deps.raw,
     });
   }
   const attemptAt = deps.now();

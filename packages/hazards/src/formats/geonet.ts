@@ -348,10 +348,28 @@ export function geonetRevision(detail: Rec, history: readonly Rec[], fetchedAt: 
   return newest;
 }
 
+const clockKey = (c: Clocks) => [c.created, c.modified];
+const magnitudeKey = (s: GeonetSolution) => [s.magnitude?.value, s.magnitude?.scale];
+const solutionKey = (s: GeonetSolution) =>
+  JSON.stringify([
+    s.id,
+    s.type,
+    s.time,
+    s.point,
+    s.depth,
+    magnitudeKey(s),
+    s.reviewed,
+    s.preferredOrigin,
+    s.preferredMagnitude,
+    clockKey(s.clocks.event),
+    clockKey(s.clocks.origin),
+    clockKey(s.clocks.magnitude),
+  ]);
+
 /** Only an ordered event revision with non-regressing component clocks may supersede a conflict. */
 export function geonetSelect(a: GeonetSolution | undefined, b: GeonetSolution): GeonetSolution {
   if (!a) return b;
-  if (JSON.stringify(a) === JSON.stringify(b)) return a;
+  if (solutionKey(a) === solutionKey(b)) return a;
   const ac = latestClock(a.clocks.event),
     bc = latestClock(b.clocks.event);
   if (!ac || !bc || ticks(ac) === ticks(bc)) throw new Error("Incomparable GeoNet XML revisions");
@@ -360,7 +378,8 @@ export function geonetSelect(a: GeonetSolution | undefined, b: GeonetSolution): 
     const x = latestClock(older.clocks[component]),
       y = latestClock(newer.clocks[component]);
     if (
-      JSON.stringify(older.clocks[component]) !== JSON.stringify(newer.clocks[component]) &&
+      JSON.stringify(clockKey(older.clocks[component])) !==
+        JSON.stringify(clockKey(newer.clocks[component])) &&
       (!x || !y || ticks(y) < ticks(x))
     )
       throw new Error("Conflicting GeoNet component clocks");
@@ -376,7 +395,7 @@ export function geonetSelect(a: GeonetSolution | undefined, b: GeonetSolution): 
     throw new Error("Unordered GeoNet origin revision");
   if (
     (older.preferredMagnitude !== newer.preferredMagnitude ||
-      JSON.stringify(older.magnitude) !== JSON.stringify(newer.magnitude)) &&
+      JSON.stringify(magnitudeKey(older)) !== JSON.stringify(magnitudeKey(newer))) &&
     (!latestClock(older.clocks.magnitude) ||
       !latestClock(newer.clocks.magnitude) ||
       ticks(latestClock(newer.clocks.magnitude)!) <= ticks(latestClock(older.clocks.magnitude)!))

@@ -1,4 +1,6 @@
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { geonetDraft, hazardsDomain } from "@openconditions/hazards";
 import {
   type CatalogFeed,
@@ -16,6 +18,7 @@ import { registerScope } from "../api/scope.js";
 import { sourcesOf } from "../api/sources.js";
 import { acquireGeonet } from "../pipeline/geonet.js";
 import { createRoleState, runSource } from "../pipeline/run.js";
+import { createRawArchive } from "../raw/archive.js";
 
 const root = new URL("../../../../", import.meta.url).pathname;
 const file = readCatalogDir(`${root}feeds`, [hazardsDomain], { otherDomains: "ignore" }).files.find(
@@ -28,6 +31,7 @@ const feed = toCatalogFeed(file.feeds[0]!, {
   maintainers: file.maintainers,
 }) as CatalogFeed;
 const registry = productionRegistry();
+const rawDir = mkdtempSync(join(tmpdir(), "geonet-raw-"));
 const EVENT = "2026p837394";
 const ID = `oc:situation:nz-geonet-quakes:${EVENT}`;
 const capturedXml = readFileSync(
@@ -49,6 +53,13 @@ let noDetail = false;
 let outage = false;
 let split = false;
 let failSplit = false;
+const stampRevision = (clock: string) => {
+  feature.properties.modificationTime = clock;
+  xml = xml.replace(
+    /(<scs:modificationTime[^>]*>)[^<]*(<\/scs:modificationTime>)/g,
+    `$1${clock}$2`,
+  );
+};
 const calls: URL[] = [];
 const lookup: LookupFn = async () => [{ address: "93.184.216.34", family: 4 }];
 const collection = (features: unknown[]) => JSON.stringify({ type: "FeatureCollection", features });
@@ -102,6 +113,7 @@ const poll = () =>
     now: () => now,
     model: { registry, instanceId: "geonet-test" },
     geonetQualification: "contract-test",
+    raw: createRawArchive(db.sql, { dir: rawDir }),
     roles: createRoleState(),
   });
 const kept = async () =>
@@ -155,6 +167,14 @@ describe("GeoNet bounded worker and durable publication lifecycle", () => {
       provenance: { sourceFormat: "geonet" },
       freshness: { fetchedAt: now },
     });
+    const capturedPayloads =
+      await db.sql`SELECT hash, url_key, fetch_id, storage_key FROM conditions.raw_payload WHERE source_id = ${feed.id}`;
+    expect(capturedPayloads.length).toBeGreaterThan(0);
+    expect(capturedPayloads.some((r) => String(r.url_key).includes("history"))).toBe(true);
+    for (const r of capturedPayloads) {
+      expect(r.fetch_id).not.toBeNull();
+      expect(readFileSync(join(rawDir, r.storage_key)).byteLength).toBeGreaterThan(0);
+    }
     const app = Fastify();
     registerScope(app, undefined);
     registerApiRoutes(app, db.sql, {
@@ -248,6 +268,7 @@ describe("GeoNet bounded worker and durable publication lifecycle", () => {
     xml = capturedXml
       .replace("2026-11-06T20:03:41.541356Z", "2026-11-05T11:59:59Z")
       .replace("3969.5246219635", "10000");
+    stampRevision("2026-11-07T12:09:00Z");
     now = "2026-11-07T12:10:00Z";
     expect((await poll()).error).toBeUndefined();
     expect((await kept()).record).toMatchObject({
@@ -289,6 +310,7 @@ describe("GeoNet bounded worker and durable publication lifecycle", () => {
   it("withdraws an explicitly reclassified event even when the API detail is absent", async () => {
     xml = xml.replace("<type>earthquake</type>", "<type>quarry blast</type>");
     noDetail = true;
+    stampRevision("2026-11-07T12:44:00Z");
     now = "2026-11-07T12:45:00Z";
     expect((await poll()).error).toBeUndefined();
     expect((await kept()).tombstone_reason).toBe("withdrawn");
@@ -296,18 +318,21 @@ describe("GeoNet bounded worker and durable publication lifecycle", () => {
     noDetail = false;
     recent = true;
     malformedDiscovery = false;
+    stampRevision("2026-11-07T12:45:30Z");
     now = "2026-11-07T12:46:00Z";
     expect((await poll()).error).toBeUndefined();
     expect((await kept()).tombstone_reason).toBeNull();
   });
   it("explicit deleted immediately withdraws; recovery and expiry are separate dispositions", async () => {
     feature.properties.quality = "deleted";
+    stampRevision("2026-11-07T12:49:00Z");
     now = "2026-11-07T12:50:00Z";
     expect((await poll()).error).toBeUndefined();
     expect((await kept()).tombstone_reason).toBe("withdrawn");
     feature.properties.quality = "best";
     recent = true;
     malformedDiscovery = false;
+    stampRevision("2026-11-07T12:59:00Z");
     now = "2026-11-07T13:00:00Z";
     expect((await poll()).error).toBeUndefined();
     expect((await kept()).tombstone_reason).toBeNull();
@@ -433,6 +458,8 @@ describe("GeoNet conflicting and malformed revisions retain publication atomical
     expect(status.at(-1)?.outcome).toBe("failed");
   });
   it("accepts a newer exact earthquake after an older window reclassification", async () => {
+    // Independent intra-acquisition ordering scenario, not the preceding durable generation.
+    await db.sql`DELETE FROM conditions.geonet_coverage WHERE source_id = ${feed.id}`;
     malformedDiscovery = false;
     Object.assign(feature, structuredClone(captured));
     historyRows = [];
@@ -449,6 +476,8 @@ describe("GeoNet conflicting and malformed revisions retain publication atomical
     });
   });
   it("accepts contractual absent measurements with XML 204", async () => {
+    // Independent cold-start missing-measurement scenario.
+    await db.sql`DELETE FROM conditions.geonet_coverage WHERE source_id = ${feed.id}`;
     Object.assign(feature, structuredClone(captured));
     historyRows = [];
     xmlMissing = true;
@@ -463,4 +492,51 @@ describe("GeoNet conflicting and malformed revisions retain publication atomical
     expect(await cursor()).toContain("12:03:00");
     xmlMissing = false;
   });
+});
+
+it.each(["older deleted", "equal-clock deleted", "equal-clock XML reclassification"])(
+  "rejects %s after a newer durable publication",
+  async (scenario) => {
+    await db.sql`DELETE FROM conditions.geonet_coverage WHERE source_id = ${feed.id}`;
+    Object.assign(feature, structuredClone(captured));
+    feature.properties.modificationTime = "2026-11-08T12:03:30Z";
+    xml = capturedXml.replaceAll("2026-11-06T20:06:22.536381Z", "2026-11-08T12:03:30Z");
+    exactXml = undefined;
+    historyRows = [];
+    recent = true;
+    noData = false;
+    noDetail = false;
+    now = "2026-11-08T12:04:00Z";
+    expect((await poll()).error).toBeUndefined();
+    const before = await kept(),
+      covered = await cursor();
+    Object.assign(feature, structuredClone(captured));
+    feature.properties.quality = "deleted";
+    xml = capturedXml;
+    if (scenario === "equal-clock deleted")
+      feature.properties.modificationTime = "2026-11-08T12:03:30Z";
+    if (scenario === "equal-clock XML reclassification") {
+      feature.properties.quality = "best";
+      stampRevision("2026-11-08T12:03:30Z");
+      xml = xml.replace("<type>earthquake</type>", "<type>quarry blast</type>");
+    }
+    now = "2026-11-08T12:05:00Z";
+    expect((await poll()).error).toBeDefined();
+    expect(await kept()).toEqual(before);
+    expect(await cursor()).toBe(covered);
+  },
+);
+
+it("commits one durable generation when two same-clock polls race", async () => {
+  Object.assign(feature, structuredClone(captured));
+  xml = capturedXml;
+  stampRevision("2026-11-08T12:05:30Z");
+  exactXml = undefined;
+  historyRows = [];
+  now = "2026-11-08T12:06:00Z";
+  const results = await Promise.all([poll(), poll()]);
+  expect(results.filter((r) => r.error)).toHaveLength(1);
+  expect(results.filter((r) => !r.error)).toHaveLength(1);
+  expect((await kept()).tombstone_reason).toBeNull();
+  expect(await cursor()).toContain("12:06:00");
 });

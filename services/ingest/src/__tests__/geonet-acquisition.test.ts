@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import type { CatalogFeed } from "@openconditions/ingest-framework";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { acquireGeonet } from "../pipeline/geonet.js";
 
 const AT = "2026-11-07T12:00:00Z";
@@ -22,6 +22,39 @@ const history = JSON.parse(
 const empty = () => new Response('{"type":"FeatureCollection","features":[]}');
 
 describe("GeoNet acquisition resource and completeness bounds", () => {
+  it("allows a serial full generation beyond two minutes within the five-minute budget", async () => {
+    vi.useFakeTimers();
+    const deadline = vi.spyOn(AbortSignal, "timeout").mockImplementation((ms) => {
+      const controller = new AbortController();
+      setTimeout(() => controller.abort(new Error("deadline exceeded")), ms);
+      return controller.signal;
+    });
+    try {
+      let first = true;
+      const fetcher = (async (_url, init) => {
+        if (first) {
+          first = false;
+          await new Promise<void>((resolve, reject) => {
+            setTimeout(resolve, 121_000);
+            init?.signal?.addEventListener("abort", () => reject(init.signal?.reason));
+          });
+          init?.signal?.throwIfAborted();
+          return empty();
+        }
+        return new Response(null, { status: 204 });
+      }) as typeof fetch;
+      const result = acquireGeonet(feed, fetcher, AT, []);
+      const observed = result.then(
+        (value) => ({ value }),
+        (error: unknown) => ({ error }),
+      );
+      await vi.advanceTimersByTimeAsync(121_000);
+      expect(await observed).toMatchObject({ value: { drafts: [], terminal: [] } });
+    } finally {
+      deadline.mockRestore();
+      vi.useRealTimers();
+    }
+  });
   it("refuses event fanout overflow instead of silently cutting a snapshot", async () => {
     const fetcher = (async () =>
       new Response(

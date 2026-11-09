@@ -253,3 +253,36 @@ it("rejects conflicting history ties with equivalent clock spellings", () => {
   props(b)["quality"] = "deleted";
   expect(() => geonetRevision(a, [b], AT)).toThrow();
 });
+
+it("compares persisted preferred solutions independently of JSON object key order", () => {
+  const solution = geonetSolutions(body("event.xml"))[0]!;
+  const reorder = (v: unknown): unknown =>
+    Array.isArray(v)
+      ? v.map(reorder)
+      : v && typeof v === "object"
+        ? Object.fromEntries(
+            Object.entries(v)
+              .reverse()
+              .map(([k, x]) => [k, reorder(x)]),
+          )
+        : v;
+  const persisted = reorder(solution) as typeof solution;
+  expect(() => geonetSelect(persisted, solution)).not.toThrow();
+  persisted.magnitude = { ...persisted.magnitude!, value: 9 };
+  expect(() => geonetSelect(persisted, solution)).toThrow("Incomparable");
+});
+
+it("preserves the captured API versus event-clock disagreement without guessing a revision", () => {
+  const current = geonetRevision(
+    geonetFeatures(body("component-clock-detail.geojson"))[0]!,
+    geonetFeatures(body("component-clock-history.geojson")),
+    "2026-11-09T10:00:54.987Z",
+  );
+  const solution = geonetSolutions(body("component-clock.xml"))[0]!;
+  expect(props(current)["modificationTime"]).toBe("2026-11-08T21:30:01.678Z");
+  expect(solution.clocks.event.modified).toBe("2026-11-08T21:29:52.729711Z");
+  expect(solution.clocks.magnitude.modified).toBe("2026-11-08T21:30:01.678579Z");
+  expect(() => geonetDraft(feed(), current, solution, "2026-11-09T10:00:54.987Z")).toThrow(
+    "revision conflict",
+  );
+});

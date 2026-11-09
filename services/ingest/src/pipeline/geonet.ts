@@ -13,13 +13,17 @@ import {
 import type { CatalogFeed, RecordDraft } from "@openconditions/ingest-framework";
 import { tombstoneRecords, writeSnapshotIn } from "@openconditions/storage";
 import type postgres from "postgres";
+import type { RawArchive } from "../raw/archive.js";
+import { rawTierFor } from "../raw/tiers.js";
 import { stampAttribution, type WriteModel } from "./publish.js";
 import { openPollAttempt, upsertSourceStatus } from "./source-status.js";
 
 type Rec = Record<string, unknown>;
 const properties = (f: Rec) => f["properties"] as Rec;
 export const GEONET_MAX_EVENTS = 512;
+type RevisionState = Record<string, { feature?: Rec; solution?: GeonetSolution }>;
 export interface GeonetAcquisition {
+  revisions: RevisionState;
   drafts: RecordDraft[];
   terminal: string[];
   hashes: string[];
@@ -35,8 +39,10 @@ export async function acquireGeonet(
   retained: readonly string[],
   since?: string,
   signal?: AbortSignal,
+  capture?: (url: string, body: Buffer) => Promise<void>,
+  previous: RevisionState = {},
 ): Promise<GeonetAcquisition> {
-  const deadline = AbortSignal.timeout(120_000);
+  const deadline = AbortSignal.timeout(300_000);
   const abort = signal ? AbortSignal.any([deadline, signal]) : deadline;
   let requests = 0;
   let bytes = 0;
@@ -84,6 +90,7 @@ export async function acquireGeonet(
         await reader.cancel().catch(() => {});
       }
       const body = Buffer.concat(chunks);
+      await capture?.(url, body);
       hashes.push(createHash("sha256").update(body).digest("hex"));
       return { status: res.status, body };
     }
@@ -99,8 +106,20 @@ export async function acquireGeonet(
   const recent = await request("https://api.geonet.org.nz/quake?MMI=-1", GEONET_ACCEPT);
   if (recent.status !== 200) throw new Error("GeoNet discovery did not answer");
   for (const f of geonetFeatures(recent.body)) add(String(properties(f)["publicID"]));
+  const revisions: RevisionState = {};
   const solutions = new Map<string, GeonetSolution>();
   const candidates = new Map<string, GeonetSolution[]>();
+  for (const [id, prior] of Object.entries(previous)) {
+    const origin = prior.solution?.time ?? properties(prior.feature ?? {})?.["time"];
+    if (
+      retained.includes(id) ||
+      (origin && Date.parse(String(origin)) + GEONET_COVERAGE_MS > until)
+    ) {
+      add(id);
+      revisions[id] = prior;
+      if (prior.solution) solutions.set(id, geonetAddSolution(candidates, prior.solution, at));
+    }
+  }
   let partitions = 0;
   const window = async (start: number, end: number, updated?: string): Promise<void> => {
     if (++partitions > 64) throw new Error("GeoNet partition budget exhausted");
@@ -134,6 +153,8 @@ export async function acquireGeonet(
     abort.throwIfAborted();
     const detail = await request(`https://api.geonet.org.nz/quake/${id}`, GEONET_ACCEPT);
     if (detail.status === 204) {
+      const solution = solutions.get(id);
+      if (solution) revisions[id] = { ...revisions[id], solution };
       if (solutions.get(id)?.type && solutions.get(id)?.type !== "earthquake") terminal.push(id);
       continue;
     }
@@ -144,10 +165,24 @@ export async function acquireGeonet(
       throw new Error("GeoNet detail identity mismatch");
     const history = await request(`https://api.geonet.org.nz/quake/history/${id}`, GEONET_ACCEPT);
     if (![200, 204].includes(history.status)) throw new Error("GeoNet history incomplete");
-    const revisions = history.status === 204 ? [] : geonetFeatures(history.body);
-    if (revisions.some((f) => properties(f)["publicID"] !== id))
+    const historyRevisions = history.status === 204 ? [] : geonetFeatures(history.body);
+    if (historyRevisions.some((f) => properties(f)["publicID"] !== id))
       throw new Error("GeoNet history identity mismatch");
-    const current = geonetRevision(features[0]!, revisions, at);
+    const prior = previous[id]?.feature;
+    const current = geonetRevision(
+      features[0]!,
+      [...historyRevisions, ...(prior ? [prior] : [])],
+      at,
+    );
+    const currentClock = properties(features[0]!)["modificationTime"];
+    const priorClock = prior && properties(prior)["modificationTime"];
+    if (
+      currentClock &&
+      priorClock &&
+      String(currentClock) !== String(priorClock) &&
+      Date.parse(String(currentClock)) < Date.parse(String(priorClock))
+    )
+      throw new Error("Stale GeoNet durable revision");
     let solution = solutions.get(id);
     // Exact-id enrichment also catches revisions whose origin crossed the window boundary.
     if (properties(current)["quality"] !== "deleted") {
@@ -162,6 +197,7 @@ export async function acquireGeonet(
         solution = geonetAddSolution(candidates, selected[0]!, at);
       } else if (xml.status !== 204) throw new Error("GeoNet exact-event incomplete");
     }
+    revisions[id] = { feature: current, solution };
     const draft = geonetDraft(feed, current, solution, at);
     if (!draft) terminal.push(id);
     else if (
@@ -170,7 +206,14 @@ export async function acquireGeonet(
     )
       drafts.push(draft);
   }
-  return { drafts, terminal, hashes, coveredFrom: new Date(from).toISOString(), coveredUntil: at };
+  return {
+    revisions,
+    drafts,
+    terminal,
+    hashes,
+    coveredFrom: new Date(from).toISOString(),
+    coveredUntil: at,
+  };
 }
 
 /** Publication and durable coverage state commit together. Failed acquisition never moves the cursor. */
@@ -182,6 +225,7 @@ export async function runGeonet(
     now: () => string;
     model: WriteModel;
     signal?: AbortSignal;
+    raw?: RawArchive;
   },
 ): Promise<{ count: number; durationMs: number; error?: string }> {
   const started = Date.now();
@@ -189,8 +233,8 @@ export async function runGeonet(
   const attempt = await openPollAttempt(deps.sql, src.id, at);
   try {
     const [prior] = await deps.sql<
-      { covered_until: string }[]
-    >`SELECT covered_until::text FROM conditions.geonet_coverage WHERE source_id = ${src.id}`;
+      { covered_until: string; revisions: RevisionState }[]
+    >`SELECT covered_until::text, revisions FROM conditions.geonet_coverage WHERE source_id = ${src.id}`;
     if (prior && Date.parse(at) <= Date.parse(prior.covered_until))
       throw new Error("GeoNet stale acquisition time");
     const retained = await deps.sql<
@@ -205,6 +249,16 @@ export async function runGeonet(
       retained.map((r) => r.id),
       prior?.covered_until ? new Date(prior.covered_until).toISOString() : undefined,
       deps.signal,
+      async (url, body) => {
+        const tier = rawTierFor(src, "feed");
+        if (deps.raw && tier)
+          await deps.raw.capture(
+            { sourceId: src.id, fetchId: attempt, fetchedAt: new Date(at), tier, url },
+            body,
+            { url, sha256: createHash("sha256").update(body).digest("hex"), bytes: body.length },
+          );
+      },
+      prior?.revisions,
     );
     const summary = await deps.sql.begin(async (tx) => {
       await tx`SELECT pg_advisory_xact_lock(hashtext(${src.id}))`;
@@ -241,7 +295,7 @@ export async function runGeonet(
         ctx,
         result,
       );
-      await tx`INSERT INTO conditions.geonet_coverage (source_id, covered_from, covered_until) VALUES (${src.id}, ${acquired.coveredFrom}, ${at}) ON CONFLICT (source_id) DO UPDATE SET covered_from = EXCLUDED.covered_from, covered_until = EXCLUDED.covered_until`;
+      await tx`INSERT INTO conditions.geonet_coverage (source_id, covered_from, covered_until, revisions) VALUES (${src.id}, ${acquired.coveredFrom}, ${at}, ${tx.json(acquired.revisions as never)}) ON CONFLICT (source_id) DO UPDATE SET covered_from = EXCLUDED.covered_from, covered_until = EXCLUDED.covered_until, revisions = EXCLUDED.revisions`;
       const [{ n }] = await tx<
         { n: number }[]
       >`SELECT count(*)::int AS n FROM conditions.situation WHERE source_id = ${src.id} AND tombstoned_at IS NULL`;
