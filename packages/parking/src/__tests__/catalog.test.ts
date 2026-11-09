@@ -63,7 +63,6 @@ describe("feeds/parking", () => {
       "de-hb-bremen-parking",
       "de-ni-braunschweig-parking",
       "de-nw-apag-parking",
-      "no-vegvesen-parking",
     ]);
   });
 

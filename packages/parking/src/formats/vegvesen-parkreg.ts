@@ -16,7 +16,8 @@ const text = (v: unknown): string | undefined =>
 const validId = (v: unknown): v is number =>
   typeof v === "number" && Number.isSafeInteger(v) && v > 0;
 // The API documents int32 counts. Subsets are not additional spaces.
-function count(v: unknown): number {
+function count(v: unknown): number | undefined {
+  if (v === null || v === undefined) return undefined;
   if (typeof v !== "number" || !Number.isInteger(v) || v < 0 || v > 2147483647)
     throw new Error("parkreg: invalid capacity");
   return v;
@@ -117,15 +118,19 @@ export function parseVegvesenParkreg(
     if (start > now || end <= now) continue;
     const point = lonLat(row["lengdegrad"], row["breddegrad"]);
     if (!point || (point[0] === 0 && point[1] === 0)) throw new Error("parkreg: invalid geometry");
-    const total = count(v["antallAvgiftsbelagtePlasser"]) + count(v["antallAvgiftsfriePlasser"]);
+    const paid = count(v["antallAvgiftsbelagtePlasser"]);
+    const free = count(v["antallAvgiftsfriePlasser"]);
+    const total = paid !== undefined && free !== undefined ? paid + free : undefined;
     const areas: AreaInput[] = [];
     for (const [field, userGroup] of [
       ["antallForflytningshemmede", "disabled"],
       ["antallLadeplasser", "ev_charging"],
     ] as const) {
       const capacity = count(v[field]);
-      if (capacity > total) throw new Error("parkreg: subset exceeds total");
-      if (capacity > 0) areas.push({ vehicleType: "car", userGroup, capacity });
+      if (capacity !== undefined && total !== undefined && capacity > total)
+        throw new Error("parkreg: subset exceeds total");
+      if (capacity !== undefined && capacity > 0)
+        areas.push({ vehicleType: "car", userGroup, capacity });
     }
     const kind = v["typeParkeringsomrade"];
     const ride = v["innfartsparkering"];

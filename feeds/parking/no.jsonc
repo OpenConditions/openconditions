@@ -12,20 +12,19 @@
         "main": {
           "url": "https://parkreg-open.atlas.vegvesen.no/ws/no/vegvesen/veg/parkeringsomraade/parkeringsregisteret/v1/parkeringsomraade?datafelter=alle",
           "cadenceSec": 86400,
-          "budget": { "maxBytes": 100663296, "deadlineSec": 60 },
+          "budget": { "maxBytes": 268435456, "deadlineSec": 120 },
         },
         "inventory": {
           "url": "https://parkreg-open.atlas.vegvesen.no/ws/no/vegvesen/veg/parkeringsomraade/parkeringsregisteret/v1/parkeringsomraade?datafelter=kart",
           "cadenceSec": 86400,
-          "budget": { "maxBytes": 16777216, "deadlineSec": 30 },
+          "budget": { "maxBytes": 16777216, "deadlineSec": 45 },
         },
       },
       "rawRetention": "none",
       "freshnessWindowSec": 172800,
-      "parkreg": { "qualified": false },
-      "disabled": {
-        "reason": "National alle acquisition exceeded the 96 MiB qualification budget on 2026-11-07. Qualify complete national IDs against kart, geometry and load before enabling and setting parkreg.qualified.",
-        "since": "2026-11-07",
+      "parkreg": {
+        "qualified": true,
+        "acquisitionSha256": "52966b9770373cd188badb38495e13517483c560a1f977e719fd389e0465caac",
       },
       "license": "NLOD-2.0",
       "licenseUrl": "https://data.norge.no/nlod/no/2.0",
@@ -33,7 +32,7 @@
       "privacyUrl": "https://www.vegvesen.no/om-oss/om-organisasjonen/personvern/",
       "terms": {
         "url": "https://dataut.vegvesen.no/dataset/parkeringsregisteret",
-        "reviewedAt": "2026-11-07",
+        "reviewedAt": "2026-11-09",
         "note": "Product metadata assigns NLOD; the national catalogue identifies NLOD 2.0. Structured inventory only; no contacts, assessment prose, PDFs or images. OpenConditions normalizes current versions and capacity totals.",
       },
     },

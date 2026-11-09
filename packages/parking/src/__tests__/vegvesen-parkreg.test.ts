@@ -75,7 +75,7 @@ for (const field of [
   "antallLadeplasser",
   "antallForflytningshemmede",
 ]) {
-  test.each([null, undefined, -1, 1.5, Number.MAX_SAFE_INTEGER, "3"])(
+  test.each([-1, 1.5, Number.MAX_SAFE_INTEGER, "3"])(
     `invalid ${field}: %s retains publication`,
     (value) => {
       const r = rows();
@@ -104,7 +104,7 @@ test("missing deactivation, invalid dates, geometry and duplicate identities rej
 
 test("partial and unqualified snapshots have no write authority, qualified empty is explicit", () => {
   expect(() => parse(rows().slice(1), rows())).toThrow(/inventory/);
-  const unqualified = catalogFeed("no-vegvesen-parking");
+  const unqualified = { ...catalogFeed("no-vegvesen-parking"), parkreg: { qualified: false } };
   expect(() => parseVegvesenParkreg(unqualified, {}, parseContext("2026-11-07T12:00:00Z"))).toThrow(
     /qualified/,
   );
@@ -156,4 +156,21 @@ test("qualification is invalidated when a reviewed acquisition budget changes", 
       parseContext("2026-11-07T12:00:00Z"),
     ),
   ).toThrow(/national acquisition/);
+});
+
+test("absent capacities remain unknown without losing a valid inventory site", () => {
+  for (const missing of [null, undefined]) {
+    const r = rows();
+    r[0].aktivVersjon.antallAvgiftsfriePlasser = missing;
+    r[0].aktivVersjon.antallLadeplasser = missing;
+    r[0].aktivVersjon.antallForflytningshemmede = 4;
+    const out = parse(r);
+    expect(out.features).toHaveLength(2);
+    expect(out.features[0]).toMatchObject({
+      components: [{ key: "car:disabled", details: { capacity: 4 } }],
+    });
+    expect(out.features[0]?.["details"]).not.toHaveProperty("capacityTotal");
+    expect(sealFailures(out.features)).toEqual([]);
+    expect(out.featureSnapshotComplete).toBe(true);
+  }
 });

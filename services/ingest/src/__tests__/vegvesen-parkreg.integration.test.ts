@@ -226,3 +226,19 @@ test("no-retention re-evaluates activation/end dates across mixed and all condit
   }
   conditionalMode = "off";
 }, 60000);
+
+test("unknown total capacity keeps a valid site through the worker and public API", async () => {
+  day++;
+  records = structuredClone(captured);
+  map = structuredClone(captured);
+  records[0].aktivVersjon.antallAvgiftsfriePlasser = null;
+  expect((await tick()).error).toBeUndefined();
+  expect(await live()).toHaveLength(2);
+  const response = await app.inject({ url: `/features?source=${feed.id}` });
+  expect(response.statusCode).toBe(200);
+  const site = response.json().records.find((r: { id: string }) => r.id.endsWith(":32771"));
+  expect(site).toBeDefined();
+  expect(site.details).not.toHaveProperty("capacityTotal");
+  expect(await db.sql`SELECT * FROM conditions.observation`).toHaveLength(0);
+  expect(await db.sql`SELECT id FROM conditions.offer WHERE source_id=${feed.id}`).toHaveLength(0);
+}, 60000);
