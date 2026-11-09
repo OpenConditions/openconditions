@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { expect, test } from "vitest";
 import { closeJmaNative, type JmaNativeSession, jmaNative } from "../jma-native-process.js";
+import { observeOomFork } from "./jma-oom-diagnostics.js";
 
 const small = {
   kind: "index",
@@ -107,26 +108,49 @@ test("actual native decoder heap exhaustion is contained and next task succeeds"
   const session: JmaNativeSession = {
     entry: new URL("../../../dist/jma-native-child.js", import.meta.url),
   };
-  await expect(
-    jmaNative(
-      {
-        ...large,
-        body: Buffer.from(
-          `<feed xmlns="http://www.w3.org/2005/Atom"><updated>2026-11-09T11:00:00Z</updated>${Array.from({ length: 700_000 }, (_, i) => `<x${i}/>`).join("")}</feed>`,
-        ).toString("base64"),
-      },
-      AbortSignal.timeout(10_000),
-      session,
-      (value) => {
-        pid = value;
-      },
-    ),
-  ).rejects.toThrow(/native child exited/);
-  gone(pid);
+  const task = {
+    ...large,
+    body: Buffer.from(
+      `<feed xmlns="http://www.w3.org/2005/Atom"><updated>2026-11-09T11:00:00Z</updated>${Array.from({ length: 700_000 }, (_, i) => `<x${i}/>`).join("")}</feed>`,
+    ).toString("base64"),
+  };
+  const signal = AbortSignal.timeout(10_000);
+  const diagnostics = observeOomFork(signal);
   try {
+    diagnostics.record("call");
+    await expect(
+      jmaNative(task, signal, session, (value) => {
+        pid = value;
+        diagnostics.record("started-callback", { pid });
+      }),
+    ).rejects.toThrow(/native child exited/);
+    diagnostics.record("native-exit-rejection", { pid });
+    gone(pid);
+    diagnostics.record("pid-gone", { pid });
     expect(await jmaNative(small, AbortSignal.timeout(10_000), session)).toHaveProperty("urls", []);
+    diagnostics.record("recovery", { pid: session.child?.pid });
+    expect(diagnostics.snapshot().events).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          event: "fork",
+          pid,
+          execArgv: ["--max-old-space-size=256"],
+          emptyNodeOptions: true,
+        }),
+        expect.objectContaining({ event: "fatal-stderr", pid }),
+        expect.objectContaining({ event: "exit", pid }),
+      ]),
+    );
   } finally {
-    await closeJmaNative(session);
+    try {
+      await closeJmaNative(session);
+      diagnostics.record("closed");
+    } finally {
+      diagnostics.restore();
+      process.stderr.write(
+        `JMA synthetic OOM lifecycle ${JSON.stringify(diagnostics.snapshot())}\n`,
+      );
+    }
   }
 });
 
