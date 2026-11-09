@@ -240,3 +240,20 @@ it("resolves only unique exact tuples and withholds ambiguous effects and affect
     expect(wrongSender.situations).toHaveLength(kind === "Update" ? 2 : 1);
   }
 });
+
+it.each(["severity", "urgency", "certainty"])(
+  "refuses expired SMN messages with malformed %s before lifecycle accounting",
+  (field) => {
+    const xml = body
+      .toString()
+      .replace(new RegExp(`<${field}>[^<]*</${field}>`), `<${field}>INVALID</${field}>`);
+    const feed = catalogFeed("ar-smn-alerts");
+    const ctx = parseContext("2026-11-09T07:11:40Z");
+    expect(() => parseCap(feed, { alerts: [Buffer.from(xml)] }, ctx)).toThrow("unusable");
+    const generic = {
+      ...feed,
+      endpoints: { alerts: { url: "https://example.org/cap", cadenceSec: 180 } },
+    };
+    expect(() => parseCap(generic, { alerts: [Buffer.from(xml)] }, ctx)).not.toThrow();
+  },
+);

@@ -8,7 +8,7 @@ import { capReferences } from "@openconditions/model-hazards";
 import { XMLValidator } from "fast-xml-parser";
 import type { Geometry } from "geojson";
 import { capOutput } from "../cap/accounting.js";
-import type { DerivedShape } from "../cap/situations.js";
+import { capDrafts, type DerivedShape } from "../cap/situations.js";
 import { smnOutput } from "../cap/smn.js";
 import type { CapAlert, CapArea } from "../cap/types.js";
 import { CapReadError, readCapXml } from "../cap/xml.js";
@@ -147,6 +147,11 @@ export function parseCap(
           capReferences(rawReferences).length !== rawReferences.split(/\s+/).length
         )
           throw new Error("SMN: malformed CAP references");
+        // Expiry is not validation: malformed hazards must never gain lifecycle
+        // authority merely because ordinary CAP accounting treats them as terminal.
+        const validation = capDrafts(alert, feed, { fetchedAt: ctx.fetchedAt });
+        if ((validation.skipped.malformed ?? 0) > 0)
+          throw new Error("SMN: unusable CAP hazard refuses the bulletin");
         const one = capOutput([alert], feed, {
           fetchedAt: ctx.fetchedAt,
           reportSkips: false,
