@@ -9,6 +9,7 @@ import { parseEffis } from "./formats/effis.js";
 import { parseEonet } from "./formats/eonet.js";
 import { parseFirms } from "./formats/firms.js";
 import { parseGdacs } from "./formats/gdacs.js";
+import { parseGeonet } from "./formats/geonet.js";
 import { parseHms } from "./formats/hms.js";
 import { parseMeteoAlarm } from "./formats/meteoalarm.js";
 import { parseNws } from "./formats/nws.js";
@@ -23,6 +24,18 @@ import { parseWfigs } from "./formats/wfigs.js";
 export const HAZARDS_PRODUCTS = ["alerts", "fires", "smoke", "quakes", "events"] as const;
 
 const FORMATS: FeedFormat<HazardsCatalogFeed>[] = [
+  {
+    id: "geonet",
+    kind: "situations",
+    products: ["quakes"],
+    endpoints: {
+      recent: { required: true },
+      detail: { required: true },
+      history: { required: true },
+      solutions: { required: true },
+    },
+    parse: parseGeonet,
+  },
   {
     id: "cap",
     kind: "situations",

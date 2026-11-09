@@ -1,0 +1,25 @@
+{
+  "captures": [
+    {
+      "file": "history.geojson",
+      "url": "https://api.geonet.org.nz/quake/history/2026p837394",
+      "retrievalCompletedAt": "2026-11-07T18:24:10.062104+00:00",
+      "sha256": "4e1ff11430b1d99b422d13e9fa3ce262e3cad4b38e6138937eaa62feadd20e89",
+      "bytes": 6455,
+      "accept": "application/vnd.geo+json;version=2",
+      "publicationClock": "history properties.modificationTime per solution; origin time is not publication time",
+      "status": 200
+    },
+    {
+      "file": "event.xml",
+      "url": "https://service.geonet.org.nz/fdsnws/event/1/query?eventid=2026p837394",
+      "retrievalCompletedAt": "2026-11-07T18:24:12.036346+00:00",
+      "sha256": "9140c11e90c5b9cc373ee26a05103518347f6666b2ef803460526a15a7ecd10a",
+      "bytes": 43724,
+      "accept": "application/xml",
+      "publicationClock": "history properties.modificationTime per solution; origin time is not publication time",
+      "status": 200
+    }
+  ],
+  "scope": "Bounded exact-event official captures. No completeness, SLA or sustained load qualification. Synthetic variants are explicitly constructed in tests."
+}

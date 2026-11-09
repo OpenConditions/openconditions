@@ -122,4 +122,7 @@ export const SAMPLES: SkipSamples = {
   },
 };
 
-export const EXEMPT: SkipExemptions = {};
+export const EXEMPT: SkipExemptions = {
+  "hazards/geonet":
+    "GeoNet fails the whole bounded reconciliation on malformed or unknown required values; deleted/reclassified events are explicit terminal dispositions, not skipped records. Optional unavailable measurements remain absent. Parser and PostGIS lifecycle tests cover these paths.",
+};
