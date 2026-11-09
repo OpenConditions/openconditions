@@ -105,8 +105,13 @@
             }
           },
           "freshnessWindowSec": 3600,
+          "acquisitionLimits": {
+            "requests": 3000,
+            "bytes": 16777216,
+            "deadlineSec": 1200
+          },
           "requestLimits": {
-            "perMinute": 60
+            "perMinute": 240
           },
           "license": "CC-BY-4.0",
           "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
@@ -116,11 +121,7 @@
             "reviewedAt": "2026-11-07"
           },
           "privacyUrl": "https://www.dwd.de/DE/service/datenschutz/datenschutz_node.html",
-          "homepage": "https://opendata.dwd.de/climate_environment/CDC/",
-          "disabled": {
-            "reason": "Full fan-out load, deadlines and freshness qualification pending; worker acquisition is also gated",
-            "since": "2026-11-07"
-          }
+          "homepage": "https://opendata.dwd.de/climate_environment/CDC/"
         }
       ]
     },
@@ -288,8 +289,13 @@
         }
       },
       "freshnessWindowSec": 3600,
+      "acquisitionLimits": {
+        "requests": 3000,
+        "bytes": 16777216,
+        "deadlineSec": 1200
+      },
       "requestLimits": {
-        "perMinute": 60
+        "perMinute": 240
       },
       "license": "CC-BY-4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
@@ -300,10 +306,6 @@
       },
       "privacyUrl": "https://www.dwd.de/DE/service/datenschutz/datenschutz_node.html",
       "homepage": "https://opendata.dwd.de/climate_environment/CDC/",
-      "disabled": {
-        "reason": "Full fan-out load, deadlines and freshness qualification pending; worker acquisition is also gated",
-        "since": "2026-11-07"
-      },
       "id": "de-dwd-cdc-weather",
       "domain": "weather",
       "region": "de",

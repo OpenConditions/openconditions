@@ -278,3 +278,19 @@ test("metadata supports channels when a product archive is absent, including its
     },
   ]);
 });
+
+test("real daily station-table lag does not discard fresh next-day precipitation", () => {
+  const p = payloads();
+  p.rr_stations = [fixture("rr-00020-stations-20261109.txt")];
+  p.rr = [fixture("rr-00020-20261109.zip")];
+  const out = parseDwd(feed(), p, parseContext("2026-11-09T14:02:08Z"));
+  const reading = out.observations.find(
+    (o) => (o.provenance as { recordId: string }).recordId === "00020",
+  );
+  expect(reading).toMatchObject({
+    property: "weather.precipitation_amount",
+    result: { value: 0, unit: "mm" },
+    phenomenonTime: { start: "2026-11-09T13:10:00Z", end: "2026-11-09T13:20:00Z" },
+    freshness: { expiresAt: "2026-11-09T14:20:00Z" },
+  });
+});

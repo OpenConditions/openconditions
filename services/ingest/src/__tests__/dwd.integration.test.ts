@@ -10,26 +10,12 @@ import {
 import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import { weatherDomain } from "@openconditions/weather";
 import Fastify from "fastify";
-import { afterAll, beforeAll, expect, test, vi } from "vitest";
+import { afterAll, beforeAll, expect, test } from "vitest";
 import { registerApiRoutes } from "../api/routes.js";
 import { registerScope } from "../api/scope.js";
 import { createRoleState, runSource } from "../pipeline/run.js";
 import { buildZip } from "./helpers/zip.js";
 
-// Only this bounded fixture harness bypasses the production load-qualification gate.
-let qualified = false;
-vi.mock("../domains.js", async (importOriginal) => {
-  const original = await importOriginal<typeof import("../domains.js")>();
-  return {
-    ...original,
-    formatOf: (src: Parameters<typeof original.formatOf>[0]) => {
-      const format = original.formatOf(src);
-      return src.format === "dwd-cdc-10min" && qualified
-        ? { ...format, acquisitionBlockedReason: undefined }
-        : format;
-    },
-  };
-});
 const registry = buildRegistry(productionModules);
 const root = new URL("../../../../packages/weather/src/__tests__/fixtures/dwd/", import.meta.url);
 const fixture = (file: string) => readFileSync(new URL(file, root));
@@ -96,6 +82,7 @@ const fetch = (async (input: unknown, init?: RequestInit) => {
     if (role === "tu" && metadataMode !== "normal") {
       let text = bytes.toString("latin1");
       if (metadataMode === "absent") text = text.replace(/^00044[^\n]*\n/m, "");
+      if (metadataMode === "lagging") text = text.replace(/^(00044 \d{8} )\d{8}/m, "$120261106");
       if (metadataMode === "ended") text = text.replace(/^(00044 \d{8} )\d{8}/m, "$120260101");
       bytes = Buffer.from(text, "latin1");
     }
@@ -180,13 +167,11 @@ afterAll(async () => {
   await db?.close();
 });
 
-test("worker qualification gate prevents requests even for a locally enabled catalogue", async () => {
-  const result = await tick();
-  expect(result.error).toMatch(/not qualified/);
-  expect(calls).toEqual([]);
+test("national acquisition declares cumulative bounds", () => {
+  expect(weatherDomain.formats["dwd-cdc-10min"]!.acquisitionBlockedReason).toBeUndefined();
+  expect(feed.acquisitionLimits).toEqual({ requests: 3000, bytes: 16777216, deadlineSec: 1200 });
 });
 test("real worker publishes public station channels, canonical units and credit, retains failed polls and same-clock corrections", async () => {
-  qualified = true;
   const first = await tick();
   expect(first.error).toBeUndefined();
   expect(first.count).toBe(9);
@@ -255,7 +240,6 @@ const publicAir = async () =>
 const publicStations = async () =>
   (await app.inject({ url: "/features?kind=weather_station&expand=components" })).json().records;
 async function resetPublication() {
-  qualified = true;
   metadataMode = "normal";
   correction = failing = missingWind = restricted = missingTu = badZip = overflow = false;
   roles = createRoleState();
@@ -439,3 +423,59 @@ test.each(["absent", "ended", "restricted"])(
     expect(await publicAir()).toEqual([]);
   },
 );
+
+test.each(["requests", "bytes"] as const)(
+  "a cumulative %s failure preserves last-good publication",
+  async (kind) => {
+    metadataMode = "normal";
+    missingTu = false;
+    restricted = false;
+    failing = false;
+    roles = createRoleState();
+    now = "2026-11-07T23:05:00Z";
+    expect((await tick()).error).toBeUndefined();
+    const rows =
+      await db.sql`SELECT * FROM conditions.observation_latest WHERE source_id=${feed.id} ORDER BY series_id`;
+    const status =
+      await db.sql`SELECT publication_revision,last_network_success_at FROM conditions.source_status WHERE source=${feed.id}`;
+    const limits = feed.acquisitionLimits!;
+    feed.acquisitionLimits = { ...limits, [kind]: 1 };
+    roles = createRoleState();
+    now = "2026-11-07T23:06:00Z";
+    try {
+      expect((await tick()).error).toMatch(/acquisition .* budget/);
+      expect(
+        await db.sql`SELECT * FROM conditions.observation_latest WHERE source_id=${feed.id} ORDER BY series_id`,
+      ).toEqual(rows);
+      expect(
+        await db.sql`SELECT publication_revision,last_network_success_at FROM conditions.source_status WHERE source=${feed.id}`,
+      ).toEqual(status);
+    } finally {
+      feed.acquisitionLimits = limits;
+    }
+  },
+);
+
+test("daily metadata lag preserves a retained live TU reading when its archive is absent", async () => {
+  metadataMode = "normal";
+  missingTu = false;
+  roles = createRoleState();
+  now = "2026-11-07T23:05:00Z";
+  expect((await tick()).error).toBeUndefined();
+  const before =
+    await db.sql`SELECT * FROM conditions.observation_latest WHERE source_id=${feed.id} AND property='weather.air_temperature'`;
+  metadataMode = "lagging";
+  missingTu = true;
+  roles = createRoleState();
+  now = "2026-11-07T23:06:00Z";
+  try {
+    expect((await tick()).error).toBeUndefined();
+    expect(
+      await db.sql`SELECT * FROM conditions.observation_latest WHERE source_id=${feed.id} AND property='weather.air_temperature'`,
+    ).toEqual(before);
+    expect(await publicAir()).toHaveLength(1);
+  } finally {
+    metadataMode = "normal";
+    missingTu = false;
+  }
+});

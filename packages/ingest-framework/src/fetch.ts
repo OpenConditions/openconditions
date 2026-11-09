@@ -77,14 +77,20 @@ const MINUTE_MS = 60_000;
  * window has left it. Starts are spaced, not refused, so a fan-out or a
  * page sequence finishes at the rate the publisher allows.
  */
-function pacedFetch(pacer: Pacer, perMinute: number, fetchFn: FetchFn): FetchFn {
+function pacedFetch(
+  pacer: Pacer,
+  perMinute: number,
+  fetchFn: FetchFn,
+  signal?: AbortSignal,
+): FetchFn {
   const wait = async (): Promise<void> => {
+    signal?.throwIfAborted();
     const sinceWindow = () => Date.now() - MINUTE_MS;
     pacer.starts = pacer.starts.filter((t) => t > sinceWindow());
     if (pacer.starts.length >= perMinute) {
       const delay = (pacer.starts[0] ?? 0) + MINUTE_MS - Date.now();
       // A wait of up to a minute never holds a stopping process open.
-      await new Promise((resolve) => setTimeout(resolve, Math.max(0, delay)).unref());
+      await delayWait(Math.max(0, delay), signal);
       pacer.starts = pacer.starts.filter((t) => t > sinceWindow());
     }
     pacer.starts.push(Date.now());
@@ -93,8 +99,24 @@ function pacedFetch(pacer: Pacer, perMinute: number, fetchFn: FetchFn): FetchFn 
     const mine = pacer.turn.then(wait);
     pacer.turn = mine.catch(() => {});
     await mine;
+    signal?.throwIfAborted();
     return fetchFn(...args);
   }) as FetchFn;
+}
+
+function delayWait(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const abort = () => {
+      clearTimeout(timer);
+      reject(signal?.reason);
+    };
+    const timer = setTimeout(() => {
+      signal?.removeEventListener("abort", abort);
+      resolve();
+    }, ms).unref();
+    signal?.addEventListener("abort", abort, { once: true });
+    if (signal?.aborted) abort();
+  });
 }
 
 const sharedFetchState = createFetchState();
@@ -168,6 +190,7 @@ export type FetchResult =
     };
 
 export interface FetchOptions {
+  signal?: AbortSignal;
   state?: FetchState;
   /** The resolvers a catalogue parent may name: its domain's. */
   resolvers?: readonly CatalogResolver[];
@@ -1233,7 +1256,7 @@ async function fetchRole(
       pacer = { starts: [], turn: Promise.resolve() };
       state.pacers.set(feed.id, pacer);
     }
-    fetchFn = pacedFetch(pacer, perMinute, authorized);
+    fetchFn = pacedFetch(pacer, perMinute, authorized, opts.signal);
   }
 
   if (feed.catalog) {

@@ -16,8 +16,6 @@ const FORMATS: FeedFormat<WeatherCatalogFeed>[] = [
     id: "dwd-cdc-10min",
     kind: "features",
     products: WEATHER_PRODUCTS,
-    acquisitionBlockedReason:
-      "DWD CDC full-fanout request, byte, deadline and latency budget is not qualified",
     produces: { kinds: ["weather_station", "sensor_channel"], properties: DWD_PROPERTIES },
     endpoints: Object.fromEntries(
       DWD_ROLES.flatMap((role) => [

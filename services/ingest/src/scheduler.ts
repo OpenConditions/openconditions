@@ -1,6 +1,9 @@
+import { createHash } from "node:crypto";
+import { join } from "node:path";
 import {
   type Catalog,
   type CatalogFeed,
+  createFetchState,
   type Env,
   guardedFetch,
   guardOptionsFromEnv,
@@ -13,6 +16,7 @@ import { fetch as undiciFetch } from "undici";
 import { feedErrorMessage } from "./feed-error.js";
 import type { FeedStatusStore } from "./feed-status.js";
 import { createOAuthGrants } from "./oauth-grants.js";
+import { loadAcquisitionCache, saveAcquisitionCache } from "./pipeline/acquisition-cache.js";
 import { buildDailyArchive } from "./pipeline/archive-build.js";
 import { deriveBaselines } from "./pipeline/baseline-derive.js";
 import { drainBindingQueue as defaultDrainBindingQueue } from "./pipeline/bind-records.js";
@@ -227,6 +231,12 @@ export function scheduleFeed(feed: CatalogFeed, ctx: FeedJobContext): Cron | und
 
   const cronExpr = feedCron(feed.id, feed.cadenceSec);
   const deps: RunDeps = { ...ctx.deps, env, roles: createRoleState() };
+  const cacheConfig = createHash("sha256").update(JSON.stringify(feed)).digest("hex");
+  const cachePath =
+    feed.format === "dwd-cdc-10min"
+      ? join(env["OPENCONDITIONS_RAW_DIR"] || "./data/raw", "acquisition", `${feed.id}.cache`)
+      : undefined;
+  let loaded = false;
   let running = false;
   const job = new Cron(cronExpr, { catch: true }, async () => {
     if (running) {
@@ -241,6 +251,17 @@ export function scheduleFeed(feed: CatalogFeed, ctx: FeedJobContext): Cron | und
     }
     running = true;
     try {
+      if (cachePath && !loaded) {
+        const cache = await loadAcquisitionCache(cachePath, cacheConfig);
+        deps.fetchState = cache?.state ?? createFetchState();
+        if (cache) deps.roles = cache.roles;
+        // Previous process starts may still occupy the shared IP's request window.
+        deps.fetchState.pacers.set(feed.id, {
+          starts: Array.from({ length: feed.requestLimits?.perMinute ?? 1 }, () => Date.now()),
+          turn: Promise.resolve(),
+        });
+        loaded = true;
+      }
       const poll = runFeedOnce(
         feed,
         deps,
@@ -249,6 +270,11 @@ export function scheduleFeed(feed: CatalogFeed, ctx: FeedJobContext): Cron | und
       );
       await (ctx.inFlight?.track(poll) ?? poll);
     } finally {
+      if (cachePath && deps.roles && deps.fetchState) {
+        await saveAcquisitionCache(cachePath, cacheConfig, deps.roles, deps.fetchState).catch(
+          (error) => console.error(`[scheduler] ${feed.id}: cache write failed`, error),
+        );
+      }
       running = false;
     }
   });

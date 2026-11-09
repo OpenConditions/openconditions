@@ -1,5 +1,5 @@
 import type { FeedPayloads, ParseOutput } from "@openconditions/ingest-framework";
-import { DWD_PRODUCTS, DWD_ROLES, dwdSites } from "@openconditions/weather";
+import { DWD_PRODUCTS, DWD_ROLES, dwdMetadataEnd, dwdSites } from "@openconditions/weather";
 import type postgres from "postgres";
 
 /** Reject incomplete DWD transitions rather than changing the rights or subject of retained readings. */
@@ -46,7 +46,7 @@ export async function checkDwdRetained(
     if (
       !site ||
       day < site.from ||
-      day > site.until ||
+      day > dwdMetadataEnd(site.until) ||
       (restricted.has(reading.station) && !restatedRestricted.has(reading.id))
     )
       throw new Error(

@@ -720,6 +720,32 @@
               "on_demand"
             ]
           },
+          "acquisitionLimits": {
+            "type": "object",
+            "properties": {
+              "requests": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "bytes": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "deadlineSec": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "requests",
+              "bytes",
+              "deadlineSec"
+            ],
+            "additionalProperties": false
+          },
           "requestLimits": {
             "type": "object",
             "properties": {

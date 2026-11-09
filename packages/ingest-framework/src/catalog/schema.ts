@@ -467,6 +467,14 @@ export const feedBaseShape = {
     .optional(),
   freshnessWindowSec: z.number().int().positive(),
   accessMode: z.enum(ACCESS_MODES).optional(),
+  acquisitionLimits: z
+    .object({
+      requests: z.number().int().positive(),
+      bytes: z.number().int().positive(),
+      deadlineSec: z.number().int().positive(),
+    })
+    .strict()
+    .optional(),
   requestLimits: z
     .object({
       perMinute: z.number().int().positive().optional(),

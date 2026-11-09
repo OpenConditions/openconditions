@@ -92,6 +92,10 @@ export function dwdSites(body: Buffer): Map<string, Site> {
   if (!sites.size) throw new Error("DWD empty station metadata");
   return sites;
 }
+/** Daily station-table coverage can lag fresh now/ archives by one UTC day. */
+export function dwdMetadataEnd(until: string): string {
+  return new Date(Date.parse(`${until}T00:00:00Z`) + 86400_000).toISOString().slice(0, 10);
+}
 interface Sample {
   time: string;
   value: number;
@@ -127,7 +131,7 @@ export function parseDwd(
     // Metadata describes supported channels; a directory omission cannot withdraw them.
     for (const [id, site] of sites) {
       const day = ctx.fetchedAt.slice(0, 10);
-      if (day < site.from || day > site.until) continue;
+      if (day < site.from || day > dwdMetadataEnd(site.until)) continue;
       const prior = stations.get(id);
       if (prior && JSON.stringify(prior.site.point) !== JSON.stringify(site.point))
         throw new Error("DWD conflicting source-epoch geography");
@@ -191,7 +195,7 @@ export function parseDwd(
           if (
             !site ||
             time.slice(0, 10) < site.from ||
-            time.slice(0, 10) > site.until ||
+            time.slice(0, 10) > dwdMetadataEnd(site.until) ||
             Date.parse(ctx.fetchedAt) - Date.parse(time) >= 3600_000
           )
             continue;

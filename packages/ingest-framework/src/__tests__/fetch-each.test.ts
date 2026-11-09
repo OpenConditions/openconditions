@@ -804,3 +804,24 @@ it("walk item bounds fail before fanout requests", async () => {
   ).rejects.toThrow(/exceeds 1 items/);
   expect(up.calls).toEqual([]);
 });
+
+it("cancels a pacing wait without starting the queued provider request", async () => {
+  vi.useFakeTimers();
+  try {
+    const up = upstream();
+    const feed = feedWith({ requestLimits: { perMinute: 1 } });
+    const state = createFetchState();
+    const controller = new AbortController();
+    await fetchEndpoint(feed, "sites", up.fn, { state });
+    const pending = expect(
+      fetchEndpoint(feed, "sites", up.fn, { state, signal: controller.signal }),
+    ).rejects.toThrow();
+    await vi.advanceTimersByTimeAsync(1);
+    controller.abort(new Error("stop generation"));
+    await pending;
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(up.calls).toHaveLength(1);
+  } finally {
+    vi.useRealTimers();
+  }
+});

@@ -44,6 +44,7 @@ import { feedErrorMessage } from "../feed-error.js";
 import type { RawArchive } from "../raw/archive.js";
 import { archivingTee, digestOnlyTee, type StreamTeeFactory } from "../raw/stream-tee.js";
 import { rawTierFor } from "../raw/tiers.js";
+import { acquisitionBudget } from "./acquisition-budget.js";
 import { loadBaselineMap } from "./baseline-store.js";
 import { bindRecords } from "./bind-records.js";
 import { bodyStreamFrom } from "./body-stream.js";
@@ -215,6 +216,9 @@ export interface RunResult {
 }
 
 export interface RunDeps {
+  fetchState?: import("@openconditions/ingest-framework").FetchState;
+  signal?: AbortSignal;
+  acquisitionCheck?: () => void;
   sql: Sql;
   fetch: typeof fetch;
   now: () => string;
@@ -439,8 +443,18 @@ export async function runSource(src: CatalogFeed, deps: RunDeps): Promise<RunRes
     at: attemptAt,
     closed: false,
   };
+  const budget = src.acquisitionLimits
+    ? acquisitionBudget(src.acquisitionLimits, deps.fetch, deps.signal)
+    : undefined;
   try {
-    return await runAttempt(src, deps, attempt, due);
+    return await runAttempt(
+      src,
+      budget
+        ? { ...deps, fetch: budget.fetch, signal: budget.signal, acquisitionCheck: budget.check }
+        : deps,
+      attempt,
+      due,
+    );
   } catch (err) {
     if (!attempt.closed) {
       await upsertSourceStatus(deps.sql, src.id, {
@@ -457,6 +471,8 @@ export async function runSource(src: CatalogFeed, deps: RunDeps): Promise<RunRes
       );
     }
     throw err;
+  } finally {
+    budget?.close();
   }
 }
 
@@ -575,6 +591,7 @@ async function runAttempt(
     statesComplete: !leftOut,
   });
   const finish = (parse: ParseOutput, dwdStationPayloads?: FeedPayloads): Promise<RunResult> => {
+    deps.acquisitionCheck?.();
     const poll = pollContext();
     const skipped = drainSkipped(src.id);
     if (format.kind === "features")
@@ -764,6 +781,8 @@ async function runAttempt(
             role,
             guardedFeedFetch(deps, src.endpoints[role]?.timeoutSec),
             {
+              state: deps.fetchState,
+              signal: deps.signal,
               resolvers: domainOf(src).resolvers,
               env,
               ...(deps.grants ? { grants: deps.grants } : {}),
@@ -776,6 +795,7 @@ async function runAttempt(
             },
           );
         } catch (err) {
+          deps.acquisitionCheck?.();
           const reason = feedErrorMessage(src, err, env);
           gap(role);
           // A tolerant `urls` role whose every URL failed stands in URL by URL,
@@ -961,6 +981,7 @@ async function runAttempt(
           delete freshUrls[role];
         }
       }
+      deps.acquisitionCheck?.();
       // A role counts as fetched once its answer is held: a poll that fails
       // before then leaves it due, or the next polls would parse nothing for it
       // until its cadence came round again.
@@ -1111,6 +1132,7 @@ async function runAttempt(
       }
     };
     const parseAndFinish = async (): Promise<RunResult> => {
+      deps.acquisitionCheck?.();
       steps.lap("gate");
       const latest = await parseLatest();
       if ("failed" in latest) return latest.failed;
