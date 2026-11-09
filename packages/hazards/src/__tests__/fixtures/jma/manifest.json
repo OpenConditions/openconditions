@@ -1,0 +1,113 @@
+{
+  "source": "https://xml.kishou.go.jp/jmaxml_20260917_Samples.zip",
+  "attribution": "Japan Meteorological Agency; normalized by OpenConditions (CC BY 4.0)",
+  "license": "https://www.jma.go.jp/jma/en/copyright.html",
+  "retrievedAt": "2026-11-07",
+  "archiveSha256": "96332ca3f8e107be36fedff26e576b533c731616f85312d85b058f2118c2b6c2",
+  "files": {
+    "32-35_01_01_100806_VXSE51.xml": "d88e7f2dea48d1833a0101a2e1fa44f1b25ecf09c1a278083edf6dd05d48e3cf",
+    "32-35_01_02_240613_VXSE52.xml": "cb39f5ca648a2152a3af505db7b2fe7a83d4be7bccaf926bb340dc36376f5835",
+    "32-35_01_03_240613_VXSE53.xml": "10ed391a49278a1a98184e4d1b74653f227bdb15e7c31bd9708f08b91faa6dca",
+    "32-35_06_02_100915_VXSE52.xml": "d4f0ada9fd5fb186cfa9e7abecef66b4b69a7c20ced1005302b03b1d3979d0c3",
+    "32-35_06_06_100915_VXSE53.xml": "803a63295a5cf1b95fcdce1218a98ad89160f0471a055f91cde2795b771c2c03",
+    "33_12_01_240613_VXSE52.xml": "e1ea3f3ef0ec07bfbcff94a323795abf41cab728bfa8fea68b4ca55f4943a94f",
+    "VPWW55_JPTF_170922.xml": "d87caec8a18f10c62284370b3e8c71718903ef004cf76c2794ce8ed905d0b7b3",
+    "VPWW55_JPTF_170925.xml": "d332feb977579aa8eb6f28c699ac10d787e91f257f6f2f11f925d1fb6440b65c",
+    "VPWW55_JPTF_170928.xml": "af15835314b0be9c07a6dde95ba03b3da1fe81f6b4e23245939ce0fcd89eb4d4",
+    "VPWW55_JPTF_170930.xml": "413f668ef6a385ce2294a983ad453fe9ded8454ca47d03b9b8c5e77c781711e2",
+    "VPWW55_JPTF_170932.xml": "4cbb816af630c6f6451ea30e0bc77bbad7abfbdc7f324735a7b4715d81e02bf6",
+    "VPWW55_JPTF_170934.xml": "40515f24546f6792700104a2578c99991f4ab66e66db261c1acbad4b746c4f5b",
+    "VPWW55_JPTF_170936.xml": "2af47c8ded86769f109af2f65362c9722d07b412735ca978fd9ee6b2a8d2a0c6",
+    "VPWW55_JPTF_170938.xml": "ce35a5af90b56e6b4a0856aac1725880384da862649c21a8526218e364d1cbe5",
+    "45_01_01_200522_VFVO50.xml": "c5ca07c13f316803bbe60af955f7c49690b942b3b1efc6856b6078b968e9c2ef",
+    "VPWW56_JPTF_170922.xml": "89af82adbbe01e8db66adc4bfaa063f40cfe4c800b8bb8b36d40ced2c3ae66e9",
+    "VPWW56_JPTF_170925.xml": "302a746e134643d2139b9dd3aab1bb68e211760d4fb71afbbd0198a9df576ac1",
+    "VPWW56_JPTF_170928.xml": "3699ebb7899fbd1e96add8c62761517957529c1337c34124c05bf589d86c8b00",
+    "VPWW56_JPTF_170930.xml": "23980e0763759e86d06d34f911a745e1d7d6f6292ec641cc03fcee02b541dbbb",
+    "VPWW56_JPTF_170932.xml": "a03afe7f215e72e16949b2624936206a7ebddac6cf2ef2f9930dc1bacde05fb0",
+    "VPWW56_JPTF_170936.xml": "4c651e4904ac895450413228436a56483a85ab4002396b453103cad4a17d921b",
+    "VPWW56_JPTF_170938.xml": "9f3f4c7a0425e96e2a225812f7470ede80c9a555dabf0c4958aac5bf3be25768",
+    "VPWW57_JPTF_151056.xml": "7e4967edda56ba4bcefaea16d466e3bc963aeb28beac3c9cd70e120b54364b09",
+    "VPWW57_JPTF_151653.xml": "384ed70675a55eb0a9e79f418ad71f5aeca4987378afe42ff4a02aea77ddeaca",
+    "VPWW57_JPTF_152115.xml": "d2f5078dc419fb797d7281a03095e41f8e95c53aca2f8d84cdbb52ac2c768af0",
+    "VPWW57_JPTF_160734.xml": "89e6ac0d611d4b9c7903a151cfab55b9467ff8ce79cf5db03cec324ceecb884d",
+    "VPWW57_JPTF_161105.xml": "971e6b6d08ad20fc6bcdfed8bdb5564338ddf86f1f23bd063b7fa556fee96a90",
+    "VPWW57_JPTF_161106.xml": "033bde9b8bca09c569dc5568b33602658a417c466302967f446cc9fbcbad63b9",
+    "20261104010017_0_VFVO50_016000.xml": "077d512b8bd7c7968c39d745cf01f71f5f06e56da3695e05a754b5c3fd552688"
+  },
+  "additionalArchive": {
+    "url": "https://www.jma.go.jp/jma/kishou/know/bosai/keiho-update2026/tech-info/zip/20260323_sample_timeline_heavyrain.zip",
+    "sha256": "abe69d4a57c0d2410ac931464a6fcc2a41fcca1a0a7f52c4c83c5433b98c958f"
+  },
+  "archiveByFile": {
+    "32-35_01_01_100806_VXSE51.xml": "https://xml.kishou.go.jp/jmaxml_20260917_Samples.zip",
+    "32-35_01_02_240613_VXSE52.xml": "https://xml.kishou.go.jp/jmaxml_20260917_Samples.zip",
+    "32-35_01_03_240613_VXSE53.xml": "https://xml.kishou.go.jp/jmaxml_20260917_Samples.zip",
+    "32-35_06_02_100915_VXSE52.xml": "https://xml.kishou.go.jp/jmaxml_20260917_Samples.zip",
+    "32-35_06_06_100915_VXSE53.xml": "https://xml.kishou.go.jp/jmaxml_20260917_Samples.zip",
+    "33_12_01_240613_VXSE52.xml": "https://xml.kishou.go.jp/jmaxml_20260917_Samples.zip",
+    "VPWW55_JPTF_170922.xml": "https://www.jma.go.jp/jma/kishou/know/bosai/keiho-update2026/tech-info/zip/20260323_sample_timeline_heavyrain.zip",
+    "VPWW55_JPTF_170925.xml": "https://www.jma.go.jp/jma/kishou/know/bosai/keiho-update2026/tech-info/zip/20260323_sample_timeline_heavyrain.zip",
+    "VPWW55_JPTF_170928.xml": "https://www.jma.go.jp/jma/kishou/know/bosai/keiho-update2026/tech-info/zip/20260323_sample_timeline_heavyrain.zip",
+    "VPWW55_JPTF_170930.xml": "https://www.jma.go.jp/jma/kishou/know/bosai/keiho-update2026/tech-info/zip/20260323_sample_timeline_heavyrain.zip",
+    "VPWW55_JPTF_170932.xml": "https://www.jma.go.jp/jma/kishou/know/bosai/keiho-update2026/tech-info/zip/20260323_sample_timeline_heavyrain.zip",
+    "VPWW55_JPTF_170934.xml": "https://www.jma.go.jp/jma/kishou/know/bosai/keiho-update2026/tech-info/zip/20260323_sample_timeline_heavyrain.zip",
+    "VPWW55_JPTF_170936.xml": "https://www.jma.go.jp/jma/kishou/know/bosai/keiho-update2026/tech-info/zip/20260323_sample_timeline_heavyrain.zip",
+    "VPWW55_JPTF_170938.xml": "https://www.jma.go.jp/jma/kishou/know/bosai/keiho-update2026/tech-info/zip/20260323_sample_timeline_heavyrain.zip",
+    "45_01_01_200522_VFVO50.xml": "https://xml.kishou.go.jp/jmaxml_20260917_Samples.zip",
+    "VPWW56_JPTF_170922.xml": "https://www.jma.go.jp/jma/kishou/know/bosai/keiho-update2026/tech-info/zip/20260323_sample_timeline_landslide.zip",
+    "VPWW56_JPTF_170925.xml": "https://www.jma.go.jp/jma/kishou/know/bosai/keiho-update2026/tech-info/zip/20260323_sample_timeline_landslide.zip",
+    "VPWW56_JPTF_170928.xml": "https://www.jma.go.jp/jma/kishou/know/bosai/keiho-update2026/tech-info/zip/20260323_sample_timeline_landslide.zip",
+    "VPWW56_JPTF_170930.xml": "https://www.jma.go.jp/jma/kishou/know/bosai/keiho-update2026/tech-info/zip/20260323_sample_timeline_landslide.zip",
+    "VPWW56_JPTF_170932.xml": "https://www.jma.go.jp/jma/kishou/know/bosai/keiho-update2026/tech-info/zip/20260323_sample_timeline_landslide.zip",
+    "VPWW56_JPTF_170936.xml": "https://www.jma.go.jp/jma/kishou/know/bosai/keiho-update2026/tech-info/zip/20260323_sample_timeline_landslide.zip",
+    "VPWW56_JPTF_170938.xml": "https://www.jma.go.jp/jma/kishou/know/bosai/keiho-update2026/tech-info/zip/20260323_sample_timeline_landslide.zip",
+    "VPWW57_JPTF_151056.xml": "https://www.jma.go.jp/jma/kishou/know/bosai/keiho-update2026/tech-info/zip/20260323_sample_timeline_stormsurge.zip",
+    "VPWW57_JPTF_151653.xml": "https://www.jma.go.jp/jma/kishou/know/bosai/keiho-update2026/tech-info/zip/20260323_sample_timeline_stormsurge.zip",
+    "VPWW57_JPTF_152115.xml": "https://www.jma.go.jp/jma/kishou/know/bosai/keiho-update2026/tech-info/zip/20260323_sample_timeline_stormsurge.zip",
+    "VPWW57_JPTF_160734.xml": "https://www.jma.go.jp/jma/kishou/know/bosai/keiho-update2026/tech-info/zip/20260323_sample_timeline_stormsurge.zip",
+    "VPWW57_JPTF_161105.xml": "https://www.jma.go.jp/jma/kishou/know/bosai/keiho-update2026/tech-info/zip/20260323_sample_timeline_stormsurge.zip",
+    "VPWW57_JPTF_161106.xml": "https://www.jma.go.jp/jma/kishou/know/bosai/keiho-update2026/tech-info/zip/20260323_sample_timeline_stormsurge.zip",
+    "20261104010017_0_VFVO50_016000.xml": "https://www.data.jma.go.jp/developer/xml/data/20261104010017_0_VFVO50_016000.xml"
+  },
+  "specificationCaptures": [
+    {
+      "url": "https://xml.kishou.go.jp/jmaxml_20221209_format_v1_3.pdf",
+      "retrievedAt": "2026-11-07T19:56:30.462452+00:00",
+      "bytes": 588523,
+      "sha256": "39c3f85d2a7b5ad01e0a617562bc23474a7723349b4b42226aac3ab85a3874d9"
+    },
+    {
+      "url": "https://xml.kishou.go.jp/jmaxml_guide_20260430_head_control_list.pdf",
+      "retrievedAt": "2026-11-07T19:56:36.968234+00:00",
+      "bytes": 353575,
+      "sha256": "8603b08afe7827941744b79e7c312ad50043fc9be8940227c2d15721d2eb83a3"
+    },
+    {
+      "url": "https://www.jma.go.jp/jma/en/copyright.html",
+      "retrievedAt": "2026-11-07T19:56:37.041148+00:00",
+      "bytes": 13749,
+      "sha256": "ff851548d5d8351c5b64abb3b253a540469a98c8fc25ad539b8b51a4b89d6f62"
+    },
+    {
+      "url": "https://xml.kishou.go.jp/considerationforxml.pdf",
+      "retrievedAt": "2026-11-07T19:56:42.985768+00:00",
+      "bytes": 116364,
+      "sha256": "7dfaaa27758af28d3105271bd28ada1d90678b326acae6c85dfcb1e26310293d"
+    }
+  ],
+  "timelineCaptures": [
+    {
+      "url": "https://www.jma.go.jp/jma/kishou/know/bosai/keiho-update2026/tech-info/zip/20260323_sample_timeline_landslide.zip",
+      "bytes": 278297,
+      "sha256": "d5a1649bdc809d8d4db6a3149f8a18804df51403250a217c28877c80ca4ee66e",
+      "retrievedAt": "2026-11-07T20:03:11.333490+00:00"
+    },
+    {
+      "url": "https://www.jma.go.jp/jma/kishou/know/bosai/keiho-update2026/tech-info/zip/20260323_sample_timeline_stormsurge.zip",
+      "bytes": 192924,
+      "sha256": "231c59b17177b7821949d9703f771151c31965d4bc37a259311044107f398894",
+      "retrievedAt": "2026-11-07T20:03:12.820333+00:00"
+    }
+  ]
+}
