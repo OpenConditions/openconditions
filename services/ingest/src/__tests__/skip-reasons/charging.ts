@@ -89,6 +89,29 @@ export const SAMPLES: SkipSamples = {
     },
   },
   // A site whose geometry is null.
+  "charging/geofa": {
+    reason: "unknown_value",
+    payloads: {
+      main: json({
+        type: "FeatureCollection",
+        features: [
+          {
+            type: "Feature",
+            geometry: { type: "MultiPoint", coordinates: [[12, 55]] },
+            properties: {
+              objekt_id: "test",
+              off_kode: 1,
+              statuskode: 3,
+              ladefacilitet_type_kode: 1,
+              tilgaengelighed_type_kode: 1,
+              antal_ladepunkter: 8,
+              internationalt_id: "DK*SPA*E1",
+            },
+          },
+        ],
+      }),
+    },
+  },
   "charging/evroam": {
     reason: "no_geometry",
     payloads: {

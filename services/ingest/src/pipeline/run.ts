@@ -1466,7 +1466,13 @@ async function finishFeaturePoll(
   skipped: SkipCounts,
 ): Promise<RunResult> {
   const { src, deps } = poll;
-  if (heldPayload && parse.features.length === 0) {
+  if (src.format === "geofa" && !parse.qualifiedFeatureSnapshot)
+    return fail(poll, "failed", "GeoFA: publication qualification required");
+  if (
+    heldPayload &&
+    parse.features.length === 0 &&
+    !(src.format === "geofa" && parse.qualifiedFeatureSnapshot)
+  ) {
     const error =
       "features feed produced zero features from a non-empty payload — skipping the write to keep the last good publication";
     console.warn(`[ingest] ${src.id}: ${error}`);

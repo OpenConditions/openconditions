@@ -25,6 +25,7 @@ export * from "./crowd.js";
 export * from "./download.js";
 export * from "./egress.js";
 export * from "./fetch.js";
+export * from "./geofa.js";
 export * from "./held.js";
 export * from "./impersonate.js";
 export * from "./layouts/block.js";

@@ -67,6 +67,7 @@
               "digitraffic",
               "eipa",
               "evroam",
+              "geofa",
               "geojson",
               "irve",
               "json",
@@ -162,6 +163,31 @@
                   "additionalProperties": {
                     "type": "string"
                   }
+                },
+                "geofa": {
+                  "type": "object",
+                  "properties": {
+                    "qualification": {
+                      "type": "object",
+                      "properties": {
+                        "count": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 49000
+                        },
+                        "sha256": {
+                          "type": "string",
+                          "pattern": "^[a-f0-9]{64}$"
+                        }
+                      },
+                      "required": [
+                        "count",
+                        "sha256"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
                 },
                 "pagination": {
                   "anyOf": [

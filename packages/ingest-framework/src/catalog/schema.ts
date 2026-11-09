@@ -188,6 +188,18 @@ export const endpointSchema = z
     method: z.enum(["GET", "POST"]).optional(),
     body: z.string().optional(),
     headers: z.record(z.string(), z.string()).optional(),
+    geofa: z
+      .object({
+        qualification: z
+          .object({
+            count: z.number().int().nonnegative().max(49000),
+            sha256: z.string().regex(/^[a-f0-9]{64}$/),
+          })
+          .strict()
+          .optional(),
+      })
+      .strict()
+      .optional(),
     pagination: z
       .union([
         z

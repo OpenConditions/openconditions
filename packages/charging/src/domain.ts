@@ -17,6 +17,7 @@ import { parseDatex2, parseDatex2Status } from "./formats/datex2.js";
 import { parseDigitraffic, parseDigitrafficStatus } from "./formats/digitraffic.js";
 import { parseEipa, parseEipaStatus } from "./formats/eipa.js";
 import { parseEvroam } from "./formats/evroam.js";
+import { parseGeofa } from "./formats/geofa.js";
 import { parseIrve, parseIrveStatus } from "./formats/irve.js";
 import { parseKeco, parseKecoStatus } from "./formats/keco.js";
 import { CHARGING_LAYOUT_FORMATS, parseLayout } from "./formats/layout.js";
@@ -91,6 +92,10 @@ const FORMATS: FeedFormat<ChargingCatalogFeed>[] = [
   ),
   sites("overpass", parseOverpassCharging),
   sites("bnetza", parseBnetza),
+  {
+    ...sites("geofa", parseGeofa),
+    produces: { kinds: ["charging_site", "evse", "connector"], properties: [] },
+  },
   // The static consolidation, and the dynamic one's status per charge point.
   sites("irve", parseIrve, { main: { required: true }, status: liveStatus }, parseIrveStatus),
   // The stations, and the electric networks list that names their networks.
