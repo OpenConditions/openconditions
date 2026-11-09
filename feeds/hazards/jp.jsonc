@@ -52,7 +52,7 @@
       "terms": {
         "url": "https://www.jma.go.jp/jma/en/copyright.html",
         "reviewedAt": "2026-11-09",
-        "note": "JMA adopts Public Data License 1.0 and permits CC BY 4.0 as an alternative. Third-party rights require separate clearance. Native wording and authority are retained; OpenConditions is responsible for normalization. XML reuse notice: https://xml.kishou.go.jp/considerationforxml.pdf. No independent forecasts or warnings. Observed-report coverage is incomplete: rolling-index absence never means all-clear. Unknown offices and uncleared upstream authorities withhold the whole poll. No GIS geometry.",
+        "note": "JMA adopts Public Data License 1.0 and permits CC BY 4.0 as an alternative. Third-party rights require separate clearance. Native wording and authority are retained; OpenConditions is responsible for normalization. XML reuse notice: https://xml.kishou.go.jp/considerationforxml.pdf. No independent forecasts or warnings. Observed-report coverage is incomplete: rolling-index absence never means all-clear. Unknown offices and uncleared upstream authorities withhold the affected warning unit while preserving its last-good state. Independently qualified units can publish. No GIS geometry.",
       },
     },
   ],
