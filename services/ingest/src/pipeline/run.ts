@@ -431,6 +431,30 @@ export function createOpenlrClient(): MapMatchClient | null {
  * closes it as an error on the way out, so no attempt stays `running`.
  */
 export async function runSource(src: CatalogFeed, deps: RunDeps): Promise<RunResult> {
+  if (src.format === "smhi-metobs" && src.disabled) {
+    return {
+      count: 0,
+      durationMs: 0,
+      outcome: "missing_configuration",
+      error: `SMHI qualification gate: ${src.disabled.reason}`,
+    };
+  }
+  // SMHI's eight-parameter publication is atomic, including its held acquisition state.
+  const previousRoles =
+    src.format === "smhi-metobs" && deps.roles
+      ? Object.fromEntries(
+          Object.entries(deps.roles).map(([key, value]) => [
+            key,
+            value instanceof Map ? new Map(value) : { ...value },
+          ]),
+        )
+      : undefined;
+  const restoreRoles = () => {
+    if (!previousRoles || !deps.roles) return;
+    for (const key of Object.keys(deps.roles))
+      delete (deps.roles as unknown as Record<string, unknown>)[key];
+    Object.assign(deps.roles, previousRoles);
+  };
   const attemptAt = deps.now();
   const due = rolesDue(src, deps.roles, Date.parse(attemptAt));
   if (due.length === 0) return { count: 0, durationMs: 0, notDue: true };
@@ -440,8 +464,11 @@ export async function runSource(src: CatalogFeed, deps: RunDeps): Promise<RunRes
     closed: false,
   };
   try {
-    return await runAttempt(src, deps, attempt, due);
+    const result = await runAttempt(src, deps, attempt, due);
+    if (result.error || result.outcome === "partial") restoreRoles();
+    return result;
   } catch (err) {
+    restoreRoles();
     if (!attempt.closed) {
       await upsertSourceStatus(deps.sql, src.id, {
         freshnessWindowSec: src.freshnessWindowSec,
@@ -994,6 +1021,8 @@ async function runAttempt(
       acceptFetch = () => {
         for (const accept of accepts) accept();
       };
+      if (warnings.length > 0 && src.format === "smhi-metobs")
+        throw new Error(`SMHI incomplete acquisition: ${warnings.join("; ")}`);
       if (warnings.length > 0) warning = warnings.join("; ");
     } catch (err) {
       return failFetch(err);
@@ -1493,6 +1522,7 @@ async function finishFeaturePoll(
       now: deps.now(),
       model: writeModel(deps.model),
       statesComplete: poll.statesComplete,
+      atomicCoherence: src.format === "smhi-metobs",
       ...(poll.warning ? { warning: poll.warning } : {}),
     });
     poll.attempt.closed = true;
@@ -1547,6 +1577,7 @@ async function finishStatusPoll(
   try {
     published = await publishReadings(deps.sql, src, {
       observations,
+      atomicCoherence: src.format === "smhi-metobs",
       rejected: output.rejected + skippedRecords(skipped),
       poll: poll.identity,
       durationMs: Date.now() - poll.start,
