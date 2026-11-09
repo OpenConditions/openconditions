@@ -267,6 +267,50 @@ test("enabled partial catalogue retains missing groups on shrink", async () => {
   for (const row of heldReadings) expect(row.reading.validUntil).toBeUndefined();
 });
 
+test("partial present-group shrink never exposes readings for removed components", async () => {
+  const partial = {
+    ...source,
+    id: "partial-view-drivebc",
+    snapshot: { ...source.snapshot!, minimumRecords: 1 },
+  };
+  await syncSources(db.sql, [feed, partial]);
+  const deps = { sql: db.sql, lookup, now: () => now, fetch: serve(bytes) };
+  expect((await runSource(partial, deps)).error).toBeUndefined();
+  const shortened = Buffer.from(
+    bytes
+      .toString("utf8")
+      .split("\n")
+      .filter((line) => !line.startsWith("521,"))
+      .join("\n"),
+  );
+  expect((await runSource(partial, { ...deps, fetch: serve(shortened) })).error).toBeUndefined();
+  const id = `oc:feature:${partial.id}:520`;
+  const held =
+    await db.sql`SELECT reading FROM conditions.observation_latest WHERE feature_id = ${id}`;
+  expect(held).toHaveLength(2);
+  for (const row of held) expect(row.reading.validUntil).toBeUndefined();
+  for (const canonical of [false, true]) {
+    for (const expand of ["latest", "components,latest"]) {
+      const response = await app.inject({
+        url: `/features?kind=camera&expand=${expand}&canonical=${canonical ? 1 : 0}&bbox=-140,48,-114,61&limit=1000`,
+      });
+      expect(response.statusCode, response.body).toBe(200);
+      const body = response.json() as Body;
+      if (!canonical) {
+        expect(body.latest[id]?.map((r) => r.componentKey)).toEqual(["520"]);
+      }
+      for (const feature of body.records) {
+        if (expand.includes("components")) {
+          const keys = new Set(feature.components.map((c) => c.key));
+          for (const reading of body.latest[feature.id] ?? []) {
+            expect(keys.has(reading.componentKey)).toBe(true);
+          }
+        }
+      }
+    }
+  }
+});
+
 test.skipIf(!process.env.OC348_CAPTURE)(
   "full captured inventory qualifies through the worker and public API",
   async () => {
