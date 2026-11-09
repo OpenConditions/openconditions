@@ -21,11 +21,12 @@ const ELEMENTS = new Set(
 const reviewed = new WeakMap<JmaReport, string>();
 const restricted =
   /転載禁止|無断転載|再配布禁止|利用禁止|第三者|著作権|出典|提供元|情報提供|資料提供|出所|共同発表|copyright|all rights reserved|not for redistribution|provided by|courtesy|attribution|©|credit|licen[cs]e/i;
+export class JmaRightsError extends Error {}
 function office(value: unknown): void {
   if (typeof value !== "string" || !OFFICES.has(value.trim()))
-    throw new Error("JMA: unreviewed publishing/editorial/embedded office; poll withheld");
+    throw new JmaRightsError("JMA: unreviewed publishing/editorial/embedded office; poll withheld");
 }
-/** Whole-poll withholding: run before lifecycle changes, including releases and cancellations. */
+/** Admission applies equally to reports, corrections, releases and cancellations. */
 export function assertJmaRights(report: JmaReport): void {
   office(report.publishingOffice);
   office(report.editorialOffice);
@@ -33,7 +34,7 @@ export function assertJmaRights(report: JmaReport): void {
   const visit = (value: unknown, parent = "") => {
     if (typeof value === "string") {
       if (restricted.test(value))
-        throw new Error("JMA: unreviewed embedded credit or restriction; poll withheld");
+        throw new JmaRightsError("JMA: unreviewed embedded credit or restriction; poll withheld");
       return;
     }
     if (Array.isArray(value)) {
@@ -47,9 +48,9 @@ export function assertJmaRights(report: JmaReport): void {
       if (key === "?xml") continue;
       if (key === "PublishingOffice" || key === "EditorialOffice") office(child);
       if (!key.startsWith("@_") && key !== "#text" && !ELEMENTS.has(key))
-        throw new Error("JMA: unreviewed native element/credit; poll withheld");
+        throw new JmaRightsError("JMA: unreviewed native element/credit; poll withheld");
       if (key.startsWith("@_") && /rights|credit|copyright|licen[cs]e|source|author/i.test(key))
-        throw new Error("JMA: unreviewed native rights attribute; poll withheld");
+        throw new JmaRightsError("JMA: unreviewed native rights attribute; poll withheld");
       visit(child, key);
     }
   };

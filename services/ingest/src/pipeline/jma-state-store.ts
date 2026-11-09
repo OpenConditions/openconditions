@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { applyJmaAreaReports, type JmaAreaState, type JmaReport } from "@openconditions/hazards";
 import type postgres from "postgres";
+import { admitJmaWarnings, type JmaWithheld } from "./jma-admission.js";
 
 interface PackedState extends Omit<JmaPersistentState, "native"> {
   version: 2;
@@ -16,6 +17,7 @@ export function unpackJmaState(value: JmaPersistentState | PackedState): JmaPers
     return r;
   };
   return {
+    withheld: value.withheld,
     lastSuccess: value.lastSuccess,
     coverage: value.coverage,
     gap: value.gap,
@@ -34,7 +36,8 @@ function pack(state: JmaPersistentState): PackedState {
   // Refuse cardinality overflow before hashing or serializing large shared reports.
   if (
     Object.keys(state.native.areas).length > 20000 ||
-    Object.keys(state.native.products).length > 4096
+    Object.keys(state.native.products).length > 4096 ||
+    Object.keys(state.withheld ?? {}).length > 4096
   )
     throw new Error("JMA: lifecycle state bound exceeded; retaining last good publication");
   const reports: Record<string, JmaReport> = {};
@@ -49,6 +52,7 @@ function pack(state: JmaPersistentState): PackedState {
   };
   const packed: PackedState = {
     version: 2,
+    withheld: state.withheld,
     lastSuccess: state.lastSuccess,
     coverage: state.coverage,
     gap: state.gap,
@@ -77,6 +81,7 @@ export interface JmaInitializationReceipt {
   payloadHashes: string[];
 }
 export interface JmaPersistentState {
+  withheld?: JmaWithheld;
   initialization?: JmaInitializationReceipt;
   native: JmaAreaState;
   lastSuccess: number;
@@ -96,6 +101,7 @@ export async function reconcileJmaIn<T>(
   gap: boolean,
   publish: (tx: postgres.TransactionSql, state: JmaPersistentState) => Promise<T>,
   initialization?: JmaInitializationReceipt,
+  rightsScopedWarnings = false,
 ): Promise<T> {
   return sql.begin(async (tx) => {
     await tx`SELECT pg_advisory_xact_lock(hashtext(${source}))`;
@@ -125,9 +131,13 @@ export async function reconcileJmaIn<T>(
         initialization.payloadHashes.some((h) => !/^[a-f0-9]{64}$/.test(h)))
     )
       throw new Error("JMA: invalid initialization receipt");
-    const native = applyJmaAreaReports(base, eligible);
+    const admitted = rightsScopedWarnings
+      ? admitJmaWarnings(base, previous?.withheld ?? {}, eligible)
+      : { native: applyJmaAreaReports(base, eligible), withheld: previous?.withheld };
+    const { native, withheld } = admitted;
     const next: JmaPersistentState = {
       native,
+      withheld,
       initialization: previous?.initialization ?? initialization,
       lastSuccess: at,
       coverage: "incomplete",

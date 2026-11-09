@@ -63,7 +63,7 @@ export async function runJma(
   if (result.reports.some(({ report }) => Date.parse(report.controlAt) > at + 60_000))
     throw new Error("JMA: future report revision clock");
   // Check incoming cancellations/releases as well as all retained native material.
-  for (const { report } of result.reports) assertJmaRights(report);
+  if (!warnings) for (const { report } of result.reports) assertJmaRights(report);
   if (held) {
     const native = unpackJmaState(held.value).native;
     for (const report of new Set([
@@ -123,6 +123,7 @@ export async function runJma(
           payloadHashes: result.payloadHashes,
         }
       : undefined,
+    warnings,
   );
   attempt.closed = true;
   const c = summary.counts.situation;
