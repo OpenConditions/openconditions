@@ -112,7 +112,12 @@ export async function fetchGeofa(
       const rows = geofaFeatures([buffer]);
       for (const row of rows) {
         const id = (row["properties"] as Record<string, unknown>)?.["objekt_id"];
-        if (typeof id !== "string" || order.compare(id, previous) <= 0)
+        if (
+          typeof id !== "string" ||
+          !id ||
+          order.compare(id, previous) < 0 ||
+          (id === previous && !config.nonWithdrawing)
+        )
           throw new Error("GeoFA: repeated or unordered identity");
         previous = id;
       }

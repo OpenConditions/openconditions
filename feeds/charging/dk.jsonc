@@ -26,14 +26,11 @@
         "reviewedAt": "2026-11-07",
         "note": "CC BY 4.0 covers GeoFA geographical subject data; linked credit required. Website/secretariat privacy policy is not an EVSE-data privacy guarantee. Linked media, contact, case data and external tariffs are excluded.",
       },
-      "disabled": {
-        "since": "2026-11-07",
-        "reason": "2026-11-09 sorted traversal matched 35830 rows but only 35825 unique IDs; repeated page boundaries and conflicting EVSE identities fail acquisition/parser gates. Non-withdrawing operation is implemented; live publication is not qualified.",
-      },
       "extrasFederate": false,
       "extrasAllow": [
         "objekt_id",
         "versions_id",
+        "geofaVersions",
         "systid_fra",
         "systid_til",
         "oprettet",

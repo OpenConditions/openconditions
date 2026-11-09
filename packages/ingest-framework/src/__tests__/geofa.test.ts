@@ -166,3 +166,20 @@ test("GeoFA reconciles the qualified 2000-row page size and rejects a server cap
     fetchEndpoint(feed, "main", (async () => response(data.slice(0, 500))) as typeof fetch),
   ).rejects.toThrow(/incomplete/);
 });
+
+test("non-withdrawing offsets accept repeated IDs for parser integrity reconciliation", async () => {
+  const data = [
+    rows[0]!,
+    { ...rows[0]!, properties: { ...rows[0]!.properties, versions_id: "v2" } },
+  ];
+  const feed = qualified(data);
+  feed.endpoints["main"]!.geofa = { nonWithdrawing: true } as never;
+  const fetcher = (async (input: RequestInfo | URL) =>
+    new URL(String(input)).searchParams.has("resultType")
+      ? new Response('<wfs:FeatureCollection numberMatched="2"/>')
+      : response(data)) as typeof fetch;
+  expect((await fetchEndpoint(feed, "main", fetcher)).status).toBe("fetched");
+  await expect(
+    fetchEndpoint(qualified(data), "main", (async () => response(data)) as typeof fetch),
+  ).rejects.toThrow(/repeated/);
+});

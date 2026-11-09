@@ -121,8 +121,21 @@ test.each(["2026-02-30", "2026-01-01T12:00:00", "nonsense"])(
   "invalid administrative date %s refuses the snapshot",
   (gyldig_fra) => expect(() => parse([row({ gyldig_fra })])).toThrow(/validity/),
 );
-test("duplicate facility identities fail the entire snapshot", () =>
-  expect(() => parse([row(), row()])).toThrow(/duplicate/));
+test("strict snapshot still rejects duplicate facility identities", () => {
+  const feed = catalogFeed("dk-geofa-charging");
+  feed.endpoints["main"]!.geofa = {};
+  expect(() =>
+    chargingDomain.formats["geofa"]!.parse(
+      feed,
+      {
+        main: [
+          Buffer.from(JSON.stringify({ type: "FeatureCollection", features: [row(), row()] })),
+        ],
+      },
+      parseContext("2026-11-09T06:00:00Z"),
+    ),
+  ).toThrow(/duplicate/);
+});
 
 test("bounded real GeoFA captures seal in both CRSs and respect exclusions", () => {
   for (const name of ["unsorted4326", "unsorted25832", "twoids", "planned", "bicycles"]) {
@@ -247,4 +260,90 @@ test("non-withdrawing GeoFA inventory expires at the earlier static TTL or Copen
     fetchedAt: at,
     expiresAt: "2026-10-25T23:00:00.000Z",
   });
+});
+
+const parsePartial = (features: ReturnType<typeof row>[]) => {
+  const feed = catalogFeed("dk-geofa-charging");
+  feed.endpoints["main"]!.geofa = { nonWithdrawing: true };
+  return chargingDomain.formats["geofa"]!.parse(
+    feed,
+    {
+      main: [Buffer.from(JSON.stringify({ type: "FeatureCollection", features }))],
+    },
+    parseContext("2026-11-09T06:00:00Z"),
+  );
+};
+test("partial inventory preserves every agreeing version without selecting a revision", () => {
+  const rows = [row(), row({ versions_id: "v2" })];
+  const out = parsePartial(rows);
+  expect(out.features).toHaveLength(1);
+  expect(out.features[0]?.["extras"]).toMatchObject({ geofaVersions: ["v1", "v2"] });
+  expect(out.features[0]?.["provenance"]).not.toHaveProperty("recordVersion");
+  expect(out.features).toEqual(parsePartial([...rows].reverse()).features);
+  expect(sealFailures(out.features)).toEqual([]);
+  expect(() => parsePartial([row(), row({ versions_id: "v2", antal_ladepunkter: 3 })])).toThrow(
+    /conflicting facility/,
+  );
+});
+test("partial inventory suppresses components for all ambiguous owners including unresolved claims", () => {
+  const rows = [
+    row(),
+    row({ objekt_id: "b", antal_ladepunkter: 8 }),
+    row({ objekt_id: "c", internationalt_id: "DK*SPA*E3", internationalt_id1: "DK*SPA*E4" }),
+  ];
+  const out = parsePartial(rows);
+  expect(out.features).toHaveLength(3);
+  expect(out.features.slice(0, 2).map((f) => f["components"] ?? [])).toEqual([[], []]);
+  expect(out.features[2]?.["components"]).toHaveLength(2);
+  expect(out.features).toEqual(parsePartial([...rows].reverse()).features);
+  expect(sealFailures(out.features)).toEqual([]);
+});
+
+test("equivalent spellings within one facility remain unresolved", () => {
+  const out = parsePartial([
+    row({ internationalt_id: "DK*SPA*E1", internationalt_id1: "dkspae1" }),
+  ]);
+  expect(out.features[0]?.["components"] ?? []).toEqual([]);
+});
+
+test("all five captured duplicate facilities preserve agreeing payloads and both revisions", () => {
+  const features = JSON.parse(fixture("geofa/agreeing-versions.json").toString()).features;
+  const out = parsePartial(features);
+  expect(out.features).toHaveLength(5);
+  for (const f of out.features) {
+    expect((f["extras"] as Record<string, unknown>)["geofaVersions"]).toHaveLength(2);
+    expect(f["provenance"]).not.toHaveProperty("recordVersion");
+  }
+  expect(out.features).toEqual(parsePartial([...features].reverse()).features);
+  expect(sealFailures(out.features)).toEqual([]);
+});
+
+test("agreeing coordinates in different CRSs cannot coalesce a facility", () => {
+  const feed = catalogFeed("dk-geofa-charging");
+  feed.endpoints["main"]!.geofa = { nonWithdrawing: true };
+  const bodies = ["EPSG:4326", "EPSG:25832"].map((name) =>
+    Buffer.from(
+      JSON.stringify({
+        type: "FeatureCollection",
+        crs: { properties: { name } },
+        features: [row()],
+      }),
+    ),
+  );
+  expect(() =>
+    chargingDomain.formats["geofa"]!.parse(
+      feed,
+      { main: bodies },
+      parseContext("2026-11-09T06:00:00Z"),
+    ),
+  ).toThrow(/CRS/);
+});
+
+test("version reconciliation rejects changed geometry or physical identity", () => {
+  const changed = row({ versions_id: "v2" });
+  changed.geometry.coordinates = [[12.1, 55]];
+  expect(() => parsePartial([row(), changed])).toThrow(/conflicting facility/);
+  expect(() =>
+    parsePartial([row(), row({ versions_id: "v2", internationalt_id: "DK*SPA*E3" })]),
+  ).toThrow(/conflicting facility/);
 });

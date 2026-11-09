@@ -53,7 +53,7 @@ export function parseGeofa(
 ): ParseOutput {
   const out = emptyParseOutput();
   const seen = new Set<string>();
-  const evseOwners = new Set<string>();
+  const evseOwners = new Map<string, Set<string>>();
   const buffers = payloads["main"] ?? [];
   const features = geofaFeatures(buffers);
   const q = feed.endpoints?.["main"]?.geofa?.qualification;
@@ -61,25 +61,77 @@ export function parseGeofa(
     throw new Error("GeoFA: unqualified publication");
   const nonWithdrawing = feed.endpoints?.["main"]?.geofa?.nonWithdrawing === true;
   out.qualifiedFeatureSnapshot = q !== undefined && !nonWithdrawing;
-  for (const body of buffers) {
-    const doc = JSON.parse(body.toString("utf8"));
+  const documents = buffers.map((body) => JSON.parse(body.toString("utf8")));
+  if (
+    nonWithdrawing &&
+    new Set(documents.map((doc) => doc.crs?.properties?.name ?? "EPSG:4326")).size > 1
+  )
+    throw new Error("GeoFA: mixed acquisition CRS");
+  const versions = new Map<string, string[]>();
+  const unique = new Map<string, Record<string, unknown>>();
+  const identity = (id: string) => id.replaceAll("*", "").toUpperCase();
+  const eligible = (p: Record<string, unknown>) =>
+    ["off_kode", "statuskode", "ladefacilitet_type_kode", "tilgaengelighed_type_kode"].every(
+      (k, i) => p[k] === [1, 3, 1, 1][i],
+    );
+  const idsFor = (p: Record<string, unknown>) =>
+    Array.from({ length: 6 }, (_, i) => text(p[`internationalt_id${i || ""}`])).filter(
+      (x): x is string => x !== undefined,
+    );
+  // Validate/coalesce all versions before making any ownership assertion. The digest
+  // compares every projected field except the explicitly retained version evidence.
+  for (const feature of features) {
+    if (!isRecord(feature) || !isRecord(feature["properties"]))
+      throw new Error("GeoFA: malformed feature");
+    const p = feature["properties"];
+    const id = text(p["objekt_id"]);
+    if (!id) throw new Error("GeoFA: missing objekt_id");
+    const prior = unique.get(id);
+    if (prior) {
+      if (!nonWithdrawing) throw new Error("GeoFA: duplicate objekt_id");
+      const withoutVersion = (f: Record<string, unknown>) => ({
+        ...f,
+        properties: { ...(f["properties"] as Record<string, unknown>), versions_id: null },
+      });
+      if (geofaDigest([withoutVersion(prior)]) !== geofaDigest([withoutVersion(feature)]))
+        throw new Error("GeoFA: conflicting facility versions");
+      const v = text(p["versions_id"]);
+      if (v) versions.get(id)!.push(v);
+    } else {
+      unique.set(id, feature);
+      versions.set(id, text(p["versions_id"]) ? [String(p["versions_id"])] : []);
+    }
+  }
+  for (const [id, feature] of unique) {
+    const p = feature["properties"] as Record<string, unknown>;
+    if (!eligible(p)) continue;
+    const from = day(p["gyldig_fra"]);
+    const until = day(p["gyldig_til"], true);
+    if (from !== undefined && until !== undefined && from >= until)
+      throw new Error("GeoFA: reversed validity");
+    if (
+      (from !== undefined && Date.parse(ctx.fetchedAt) < from) ||
+      (until !== undefined && Date.parse(ctx.fetchedAt) >= until)
+    )
+      continue;
+    for (const raw of idsFor(p)) {
+      const key = identity(raw);
+      const owners = evseOwners.get(key) ?? new Set<string>();
+      owners.add(id);
+      evseOwners.set(key, owners);
+    }
+  }
+  for (const doc of documents) {
     const crs = doc.crs?.properties?.name;
     if (crs !== undefined && !/CRS84$|EPSG(?::|::)4326$|EPSG(?::|::)25832$/.test(crs))
       throw new Error("GeoFA: unsupported CRS");
     const project = reprojectorFor(crs);
     for (const feature of doc.features) {
-      if (!isRecord(feature) || !isRecord(feature["properties"]))
-        throw new Error("GeoFA: malformed feature");
       const p = feature["properties"];
-      const id = text(p["objekt_id"]);
-      if (!id || seen.has(id)) throw new Error("GeoFA: duplicate or missing objekt_id");
+      const id = text(p["objekt_id"])!;
+      if (seen.has(id)) continue;
       seen.add(id);
-      if (
-        !["off_kode", "statuskode", "ladefacilitet_type_kode", "tilgaengelighed_type_kode"].every(
-          (k, i) => p[k] === [1, 3, 1, 1][i],
-        )
-      )
-        continue;
+      if (!eligible(p)) continue;
       const from = day(p["gyldig_fra"]);
       const until = day(p["gyldig_til"], true);
       if (from !== undefined && until !== undefined && from >= until)
@@ -106,17 +158,19 @@ export function parseGeofa(
       const xy = project ? project(coords as [number, number]) : (coords as [number, number]);
       const point = placeAt(xy[1], xy[0]);
       if (!point) throw new Error("GeoFA: unplaceable point");
-      const ids = Array.from({ length: 6 }, (_, i) =>
-        text(p[`internationalt_id${i || ""}`]),
-      ).filter((x): x is string => x !== undefined);
+      const ids = idsFor(p);
       const distinct = [...new Set(ids)].sort();
       const count = p["antal_ladepunkter"];
+      const ambiguous = ids.some((raw) => (evseOwners.get(identity(raw))?.size ?? 0) > 1);
+      if (ambiguous && !nonWithdrawing) throw new Error("GeoFA: conflicting EVSE identity");
       const resolved =
         typeof count === "number" &&
         Number.isInteger(count) &&
         count > 0 &&
         count === ids.length &&
-        distinct.length === ids.length;
+        distinct.length === ids.length &&
+        new Set(ids.map(identity)).size === ids.length &&
+        !ambiguous;
       if (!resolved) recordSkipped(feed.id, "unknown_value");
       const lifecycle =
         p["planstatus_kode"] === 1
@@ -128,9 +182,6 @@ export function parseGeofa(
         throw new Error("GeoFA: conflicting EVSE component key");
       const evses: EvseInput[] = resolved
         ? distinct.map((id) => {
-            if (evseOwners.has(id.replaceAll("*", "").toUpperCase()))
-              throw new Error("GeoFA: conflicting EVSE identity");
-            evseOwners.add(id.replaceAll("*", "").toUpperCase());
             // A facility-wide plug label cannot assign connectors among several EVSEs.
             const standard = /^type\s*2$/i.test(text(p["stiktype"]) ?? "")
               ? "IEC_62196_T2"
@@ -173,11 +224,19 @@ export function parseGeofa(
           expiresAt: new Date(expiresAt).toISOString(),
         };
       }
-      if (text(p["versions_id"]))
-        (draft["provenance"] as Record<string, unknown>)["recordVersion"] = p["versions_id"];
+      const sourceVersions = [...new Set(versions.get(id))].sort();
+      if (sourceVersions.length === 1)
+        (draft["provenance"] as Record<string, unknown>)["recordVersion"] = sourceVersions[0];
       draft["extras"] = Object.fromEntries(
-        ALLOW.filter((k) => p[k] !== undefined && p[k] !== null).map((k) => [k, p[k]]),
+        ALLOW.filter(
+          (k) =>
+            p[k] !== undefined &&
+            p[k] !== null &&
+            (k !== "versions_id" || sourceVersions.length === 1),
+        ).map((k) => [k, p[k]]),
       );
+      if (sourceVersions.length > 1)
+        (draft["extras"] as Record<string, unknown>)["geofaVersions"] = sourceVersions;
       out.features.push(draft);
     }
   }
