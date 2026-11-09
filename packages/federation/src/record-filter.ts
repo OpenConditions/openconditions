@@ -12,7 +12,7 @@ import {
   publicRecords,
   withoutReporter,
 } from "@openconditions/ingest-framework";
-import { federationEligible, type RecordClass } from "@openconditions/model";
+import { contentHash, federationEligible, type RecordClass } from "@openconditions/model";
 import type { Geometry } from "geojson";
 import { intersectsBbox } from "./bbox.js";
 import type { OutboxOperation } from "./outbox.js";
@@ -136,10 +136,17 @@ export function federatedSnapshot<T extends FederatedRecord>(
   opts: { federateExtras: boolean },
 ): T | undefined {
   if (!federationEligible(record)) return undefined;
-  const stripped = withoutReporter(record);
-  if (opts.federateExtras || stripped.extras === undefined) return stripped;
-  const { extras: _extras, ...rest } = stripped;
-  return rest as T;
+  let stripped = withoutReporter(record);
+  if (!opts.federateExtras && stripped.extras !== undefined) {
+    const { extras: _extras, ...rest } = stripped;
+    stripped = rest as T;
+  }
+  return stripped !== record && stripped.contentHash !== undefined
+    ? ({
+        ...stripped,
+        contentHash: contentHash(stripped as unknown as Record<string, unknown>),
+      } as T)
+    : stripped;
 }
 
 /** When a record was last stated: an observation's reading, else the publisher's or the fetch's time. */

@@ -66,7 +66,11 @@ export interface ParseOutput {
     statesComplete: boolean;
     sourcePublishedAt?: string;
   };
+  /** Explicit false preserves absent features and display series until provider qualification. */
+  featuresComplete?: boolean;
   situations: RecordDraft[];
+  /** False withholds absence-based withdrawal; omitted preserves the format's established complete publication. Independent of received-row accounting. */
+  situationsComplete?: boolean;
   features: RecordDraft[];
   observations: RecordDraft[];
   offers: RecordDraft[];

@@ -227,7 +227,8 @@ export class UnlocatableRetainedError extends Error {}
  * Writes one poll's situations of an event feed and closes its attempt, in
  * one transaction under the source's lock, so the records, their revisions,
  * their binding work and the source status commit together. The snapshot is
- * complete: a stored situation it no longer holds is withdrawn, except that a
+ * complete unless `situationsComplete` is false: a stored situation it no longer
+ * holds is withdrawn only for a complete poll, except that a
  * situation still published but unplaceable this poll (`unlocatable`) is never
  * ended or stripped of an unplaceable record's effects by it — such a poll
  * fails as a whole instead, keeping the last good publication. A draft that
@@ -239,6 +240,7 @@ export async function publishSituations(
   src: Pick<CatalogFeed, "id" | "freshnessWindowSec">,
   input: {
     situations: readonly RecordDraft[];
+    situationsComplete?: boolean;
     unlocatable?: readonly string[];
     /** Local ids of the records behind `unlocatable`; a stored effect's id begins with its record's. */
     unlocatableRecords?: readonly string[];
@@ -272,14 +274,25 @@ export async function publishSituations(
           `(${unlocatable.length} unlocatable in source ${src.id})`,
       );
     }
-    const summary = await writeSnapshotIn(tx, src.id, { situations }, writeContext(input));
+    const summary = await writeSnapshotIn(
+      tx,
+      src.id,
+      { situations },
+      {
+        ...writeContext(input),
+        complete: { feature: true, situation: input.situationsComplete ?? true, offer: true },
+      },
+    );
     const [{ live }] = await tx<{ live: number }[]>`
       SELECT count(*)::int AS live FROM conditions.situation
        WHERE source_id = ${src.id} AND tombstoned_at IS NULL`;
     const counts = summary.counts.situation;
     await upsertSourceStatus(tx, src.id, {
       freshnessWindowSec: src.freshnessWindowSec,
-      outcome: situations.length === 0 ? "complete_empty" : "changed",
+      outcome:
+        situations.length === 0 && input.situationsComplete !== false
+          ? "complete_empty"
+          : "changed",
       attemptAt: input.poll.at,
       networkValidated: true,
       durationMs: input.durationMs,
@@ -434,6 +447,7 @@ export async function publishFeatures(
     warning?: string;
     /** Every role's states are in the output: a polled series it does not state has ended. */
     statesComplete?: boolean;
+    featuresComplete?: boolean;
   },
 ): Promise<{ summary: WriteSummary; counts: PublicationCounts }> {
   const cache = latestCache.begin(src.id);
@@ -459,7 +473,8 @@ export async function publishFeatures(
       {
         ...writeContext(input),
         complete: {
-          feature: output.publication?.featuresComplete ?? true,
+          feature:
+            input.featuresComplete !== false && (output.publication?.featuresComplete ?? true),
           offer: output.publication?.offersComplete ?? true,
         },
         statesComplete:

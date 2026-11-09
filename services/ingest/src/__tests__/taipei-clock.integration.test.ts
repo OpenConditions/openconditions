@@ -11,6 +11,7 @@ import Fastify from "fastify";
 import { afterEach, beforeEach, expect, it } from "vitest";
 import { registerApiRoutes } from "../api/routes.js";
 import { registerScope } from "../api/scope.js";
+import { publishFeatures, writeModel } from "../pipeline/publish.js";
 import { createRoleState, runSource } from "../pipeline/run.js";
 import { repoFeed } from "./helpers/catalog.js";
 
@@ -178,3 +179,38 @@ it("serializes concurrent acceptance of the same source clock", async () => {
   expect(new Date(state!.source_published_at).toISOString()).toBe("2026-11-07T08:05:00.000Z");
   expect(Number(state!.publication_revision)).toBe(2);
 });
+
+it.each([
+  [false, true],
+  [true, false],
+])(
+  "retains absent parking when transport completeness is %s and parser authority is %s",
+  async (featuresComplete, parserComplete) => {
+    expect((await poll()).count).toBeGreaterThan(0);
+    const before =
+      await db.sql`SELECT id FROM conditions.feature WHERE source_id=${base.id} AND tombstoned_at IS NULL ORDER BY id`;
+    expect(before).toHaveLength(5);
+    await publishFeatures(db.sql, base, {
+      output: {
+        features: [],
+        observations: [],
+        offers: [],
+        publication: {
+          featuresComplete: parserComplete,
+          offersComplete: false,
+          statesComplete: false,
+        },
+      },
+      featuresComplete,
+      statesComplete: true,
+      rejected: 0,
+      poll: { id: 100000, at: now },
+      durationMs: 0,
+      now,
+      model: writeModel(),
+    });
+    expect(
+      await db.sql`SELECT id FROM conditions.feature WHERE source_id=${base.id} AND tombstoned_at IS NULL ORDER BY id`,
+    ).toEqual(before);
+  },
+);
