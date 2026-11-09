@@ -59,6 +59,8 @@ export type StatusIndex = ReadonlyMap<string, readonly StatusSubject[]>;
 
 /** What one poll of a feed parsed into, per record class. */
 export interface ParseOutput {
+  /** False when the provider's current-snapshot contract is not qualified; the worker must retain last-good publication. */
+  snapshotQualified?: boolean;
   situations: RecordDraft[];
   features: RecordDraft[];
   observations: RecordDraft[];

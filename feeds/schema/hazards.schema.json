@@ -69,6 +69,7 @@
               "gdacs",
               "hms",
               "meteoalarm",
+              "nsw-rfs",
               "nws",
               "slstr-frp",
               "usgs",
@@ -1066,6 +1067,10 @@
               "since"
             ],
             "additionalProperties": false
+          },
+          "rfsCurrentSnapshotQualified": {
+            "description": "Enable only after independently qualifying the RFS complete current snapshot contract, including empty/withdrawal behavior",
+            "type": "boolean"
           }
         },
         "required": [
