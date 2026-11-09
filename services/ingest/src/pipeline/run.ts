@@ -27,6 +27,7 @@ import {
   heldBytes,
   holdPayload,
   makeAuthorizedFetch,
+  type ParseContext,
   recordSkipped,
   redactSecrets,
   redactUrl,
@@ -543,7 +544,7 @@ async function runAttempt(
   }
   steps.lap("reference");
 
-  const ctx = { fetchedAt: attemptAt, cadenceSec: src.cadenceSec, reference };
+  const ctx: ParseContext = { fetchedAt: attemptAt, cadenceSec: src.cadenceSec, reference };
   let acceptFetch: (() => void) | undefined;
   let snapshotInspection: SnapshotInspection | undefined;
   // Whether any data payload had bytes: a streamed body is taken to have.
@@ -891,6 +892,8 @@ async function runAttempt(
           return { count: 0, durationMs: Date.now() - start, outcome: "partial", error };
         }
         if (result.status === "fetched") {
+          if (result.publicationExpiresAt !== undefined)
+            ctx.publicationExpiresAt = result.publicationExpiresAt;
           accepts.push(result.accept);
           if (result.bodyFreshness === "acquired") acquiredRoles.add(role);
         }

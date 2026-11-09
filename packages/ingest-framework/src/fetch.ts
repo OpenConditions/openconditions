@@ -123,6 +123,8 @@ export type KeptItems = ReadonlyMap<string, KeptItem>;
 
 /** What a fetch that answered carries besides its status. */
 interface FetchedPayloads {
+  /** Transport-derived upper bound for Caltrans publication, never source revision authority. */
+  publicationExpiresAt?: string;
   /** Every parsed body (including walk dependencies) was acquired in this call; held/304 copies are not acquisition evidence. */
   bodyFreshness: "acquired" | "held";
   /** The payloads to parse. */
@@ -1183,7 +1185,48 @@ export async function fetchEndpoint(
   opts: FetchOptions = {},
 ): Promise<FetchResult> {
   const unzip = feedEndpoint(feed, role).unzip;
-  const result = await fetchRole(feed, role, baseFetch, opts);
+  // CMS verification has a finite lifetime even when an intermediary supplies
+  // a successful response. Keep this policy local to the accepted CMS scope.
+  const at = opts.at ?? Date.now();
+  const started = performance.now();
+  const lifetime = (feed.freshnessWindowSec ?? 900) * 1000;
+  let expires = at + lifetime;
+  const cmsFetch: FetchFn = async (url, init) => {
+    const requestAt = at + performance.now() - started;
+    const headers = new Headers(init?.headers);
+    headers.set("Cache-Control", "no-cache");
+    const response = await baseFetch(url, { ...init, headers, cache: "no-cache" });
+    // Conditional validation keeps the established no-renewal path. It does
+    // not turn a held body into a newly verified display.
+    if (!response.ok) return response;
+    const age = response.headers.get("age");
+    const date = response.headers.get("date");
+    if (age !== null) {
+      if (!/^\d+$/.test(age) || !Number.isSafeInteger(Number(age)))
+        throw new Error("Caltrans transport freshness: malformed Age");
+      // Age plus response delay (RFC 9111): anchor at request start, so
+      // network/body time cannot grant extra verification lifetime.
+      expires = Math.min(expires, requestAt + lifetime - Number(age) * 1000);
+    }
+    if (date !== null) {
+      const instant = Date.parse(date);
+      if (!Number.isFinite(instant) || new Date(instant).toUTCString() !== date)
+        throw new Error("Caltrans transport freshness: malformed Date");
+      // Future server clocks never extend the local lifetime. Last-Modified
+      // and ETags are deliberately absent from this calculation.
+      expires = Math.min(expires, instant + lifetime);
+    }
+    if (expires <= at + performance.now() - started)
+      throw new Error("Caltrans transport freshness: stale response");
+    return response;
+  };
+  const cms = feed.format === "caltrans-cms";
+  const result = await fetchRole(feed, role, cms ? cmsFetch : baseFetch, opts);
+  if (cms && (result.status === "fetched" || result.status === "partial")) {
+    if (expires <= at + performance.now() - started)
+      throw new Error("Caltrans transport freshness: expired during acquisition");
+    result.publicationExpiresAt = new Date(expires).toISOString();
+  }
   return unzip ? unzipped(result, unzip) : result;
 }
 

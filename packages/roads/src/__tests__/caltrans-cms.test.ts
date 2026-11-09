@@ -170,3 +170,15 @@ it("retains D7 same-name devices by their publisher road position, stable when r
       .sort(),
   );
 });
+
+it("caps feature and observation expiry at the transport bound", () => {
+  const out = parseCaltransCms(
+    feed,
+    { main: [Buffer.from(JSON.stringify({ data: [rows[0]] }))] },
+    { ...ctx, publicationExpiresAt: "2026-11-07T08:10:00Z" },
+  );
+  expect(out.features[0]).toMatchObject({ freshness: { expiresAt: "2026-11-07T08:10:00.000Z" } });
+  expect(out.observations[0]).toMatchObject({
+    freshness: { expiresAt: "2026-11-07T08:10:00.000Z" },
+  });
+});

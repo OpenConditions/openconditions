@@ -59,7 +59,10 @@ export function parseCaltransCms(
   const freshness = {
     fetchedAt: ctx.fetchedAt,
     expiresAt: new Date(
-      Date.parse(ctx.fetchedAt) + (feed.freshnessWindowSec ?? 900) * 1000,
+      Math.min(
+        Date.parse(ctx.fetchedAt) + (feed.freshnessWindowSec ?? 900) * 1000,
+        ctx.publicationExpiresAt === undefined ? Infinity : Date.parse(ctx.publicationExpiresAt),
+      ),
     ).toISOString(),
   };
   for (const row of doc["data"]) {
