@@ -498,8 +498,8 @@ importers:
         specifier: 2.0.0
         version: 2.0.0
       '@tufjs/models':
-        specifier: 5.0.1
-        version: 5.0.1
+        specifier: 5.0.2
+        version: 5.0.2
       http-message-signatures:
         specifier: 1.0.6
         version: 1.0.6
@@ -2475,6 +2475,10 @@ packages:
 
   '@tufjs/models@5.0.1':
     resolution: {integrity: sha512-wacy5twbJk36R0dTcGE3qmPNNH095bFselAYNrVCzf0Byd0t3+Qzk3+3gn/rHGP10FuHBVk4swg4aczr1c2z/g==}
+    engines: {node: ^22.22.2 || ^24.15.0 || >=26.0.0}
+
+  '@tufjs/models@5.0.2':
+    resolution: {integrity: sha512-YzKuFwBcH+m4/YIN0magcH5AjgYVnNFUGhP14vCs+Ckanqz86dDn6K0anjjb730Iu6SSqjzXQCo3FzVqYyT+wg==}
     engines: {node: ^22.22.2 || ^24.15.0 || >=26.0.0}
 
   '@turbo/darwin-64@2.11.10':
@@ -4972,6 +4976,11 @@ snapshots:
   '@tufjs/canonical-json@2.0.0': {}
 
   '@tufjs/models@5.0.1':
+    dependencies:
+      '@tufjs/canonical-json': 2.0.0
+      minimatch: 11.0.3
+
+  '@tufjs/models@5.0.2':
     dependencies:
       '@tufjs/canonical-json': 2.0.0
       minimatch: 11.0.3
