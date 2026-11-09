@@ -42,6 +42,58 @@
           "homepage": "https://www.digitraffic.fi/en/road-traffic/"
         }
       ]
+    },
+    "vehicles/us": {
+      "$schema": "../schema/vehicles.schema.json",
+      "feeds": [
+        {
+          "subdivision": "ia",
+          "operator": "iowadot",
+          "product": "maintenance",
+          "name": "Iowa DOT selected moving maintenance trucks",
+          "format": "iowa-avl",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://services.arcgis.com/8lRhdTsQyJpO52F1/arcgis/rest/services/AVL_Direct_View/FeatureServer/0/query?where=1%3D1&outFields=OBJECTID,LABEL,HEADING,VELOCITY,ACTIVE_MATERIAL,ROUTE_NAME,MODIFIEDDT&outSR=4326&resultRecordCount=500&orderByFields=OBJECTID&f=json",
+              "pagination": {
+                "arcgis": true,
+                "skipParam": "resultOffset",
+                "pageSize": 500,
+                "recordsPath": "features",
+                "maxPages": 10
+              },
+              "cadenceSec": 120
+            }
+          },
+          "freshnessWindowSec": 600,
+          "extrasFederate": false,
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "Iowa Department of Transportation - Office of Maintenance. CC BY 4.0. https://www.arcgis.com/home/item.html?id=20a0c10c06a54240b5f2893e0187e22c . Normalized by OpenConditions (coordinates, units and field selection). No endorsement implied. Provided as is; see https://iowadot.gov/policies-statements/terms-use for disclaimer.",
+          "terms": {
+            "url": "https://iowadot.gov/policies-statements/terms-use",
+            "reviewedAt": "2026-11-07"
+          },
+          "privacyUrl": "https://iowadot.gov/policies-statements/privacy-policy",
+          "homepage": "https://www.arcgis.com/home/item.html?id=20a0c10c06a54240b5f2893e0187e22c",
+          "coverage": {
+            "countries": [
+              "US-IA"
+            ],
+            "bbox": [
+              -96.7,
+              40.3,
+              -90,
+              43.6
+            ]
+          },
+          "disabled": {
+            "reason": "Awaiting bounded current nonempty and LABEL continuity qualification; empty selected sets are healthy but do not qualify identity.",
+            "since": "2026-11-08"
+          }
+        }
+      ]
     }
   },
   "feeds": [
@@ -116,6 +168,82 @@
       },
       "cadenceSec": 60,
       "country": "FI"
+    },
+    {
+      "subdivision": "ia",
+      "operator": "iowadot",
+      "product": "maintenance",
+      "name": "Iowa DOT selected moving maintenance trucks",
+      "format": "iowa-avl",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://services.arcgis.com/8lRhdTsQyJpO52F1/arcgis/rest/services/AVL_Direct_View/FeatureServer/0/query?where=1%3D1&outFields=OBJECTID,LABEL,HEADING,VELOCITY,ACTIVE_MATERIAL,ROUTE_NAME,MODIFIEDDT&outSR=4326&resultRecordCount=500&orderByFields=OBJECTID&f=json",
+          "pagination": {
+            "arcgis": true,
+            "skipParam": "resultOffset",
+            "pageSize": 500,
+            "recordsPath": "features",
+            "maxPages": 10
+          },
+          "cadenceSec": 120
+        }
+      },
+      "freshnessWindowSec": 600,
+      "extrasFederate": false,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Iowa Department of Transportation - Office of Maintenance. CC BY 4.0. https://www.arcgis.com/home/item.html?id=20a0c10c06a54240b5f2893e0187e22c . Normalized by OpenConditions (coordinates, units and field selection). No endorsement implied. Provided as is; see https://iowadot.gov/policies-statements/terms-use for disclaimer.",
+      "terms": {
+        "url": "https://iowadot.gov/policies-statements/terms-use",
+        "reviewedAt": "2026-11-07"
+      },
+      "privacyUrl": "https://iowadot.gov/policies-statements/privacy-policy",
+      "homepage": "https://www.arcgis.com/home/item.html?id=20a0c10c06a54240b5f2893e0187e22c",
+      "coverage": {
+        "countries": [
+          "US-IA"
+        ],
+        "bbox": [
+          -96.7,
+          40.3,
+          -90,
+          43.6
+        ]
+      },
+      "disabled": {
+        "reason": "Awaiting bounded current nonempty and LABEL continuity qualification; empty selected sets are healthy but do not qualify identity.",
+        "since": "2026-11-08"
+      },
+      "id": "us-ia-iowadot-maintenance",
+      "domain": "vehicles",
+      "region": "us",
+      "file": "feeds/vehicles/us.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": true,
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "changeNotice": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://iowadot.gov/policies-statements/terms-use",
+        "reviewedAt": "2026-11-07"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
+      },
+      "restricted": false,
+      "cadenceSec": 120,
+      "country": "US"
     }
   ]
 }

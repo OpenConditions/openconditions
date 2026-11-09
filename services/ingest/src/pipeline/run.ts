@@ -439,9 +439,23 @@ export async function runSource(src: CatalogFeed, deps: RunDeps): Promise<RunRes
     at: attemptAt,
     closed: false,
   };
+  // Candidate cadence and held bytes become authoritative only with publication.
+  const previousRoles =
+    deps.roles && formatOf(src).atomicMeasurements ? structuredClone(deps.roles) : undefined;
+  const restoreRoles = () => {
+    if (deps.roles && previousRoles) {
+      const failing = deps.roles.failing;
+      for (const key of Object.keys(deps.roles))
+        delete (deps.roles as unknown as Record<string, unknown>)[key];
+      Object.assign(deps.roles, previousRoles, { failing });
+    }
+  };
   try {
-    return await runAttempt(src, deps, attempt, due);
+    const result = await runAttempt(src, deps, attempt, due);
+    if (result.error || (result.rejected ?? 0) > 0) restoreRoles();
+    return result;
   } catch (err) {
+    restoreRoles();
     if (!attempt.closed) {
       await upsertSourceStatus(deps.sql, src.id, {
         freshnessWindowSec: src.freshnessWindowSec,
@@ -1358,9 +1372,12 @@ async function finishEventPoll(
 async function finishFlowPoll(
   poll: PollContext,
   parse: FlowOutput,
-  format: Pick<FeedFormat, "mayBeEmpty" | "restatesTransient">,
+  format: Pick<FeedFormat, "mayBeEmpty" | "restatesTransient" | "atomicMeasurements">,
   skipped: SkipCounts,
 ): Promise<RunResult> {
+  if (format.atomicMeasurements && skippedRecords(skipped) > 0) {
+    return fail(poll, "error", "atomic measurements: malformed source records");
+  }
   const mayBeEmpty = format.mayBeEmpty === true;
   const { src, deps } = poll;
   let output = parse;
@@ -1410,6 +1427,7 @@ async function finishFlowPoll(
       output: stamped,
       situationsComplete: baselinesLoaded,
       restatesTransient: format.restatesTransient === true && poll.statesComplete,
+      atomic: format.atomicMeasurements === true,
       rejected: skippedRecords(skipped),
       poll: poll.identity,
       durationMs: Date.now() - poll.start,

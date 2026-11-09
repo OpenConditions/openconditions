@@ -349,6 +349,7 @@ export async function publishFlows(
   src: Pick<CatalogFeed, "id" | "freshnessWindowSec">,
   input: {
     output: FlowOutput;
+    atomic?: boolean;
     /** Whether the poll could derive congestion at all; default true. */
     situationsComplete?: boolean;
     /** The poll restates every transient reading in effect: one it does not restate has ended. */
@@ -379,6 +380,12 @@ export async function publishFlows(
         latestCache: cache,
       },
     );
+    if (
+      input.atomic &&
+      (summary.rejected.length > 0 || summary.observations.withheld !== undefined)
+    ) {
+      throw new Error("atomic measurements: canonical rejection or withholding");
+    }
     const [live] = await tx<{ features: number; situations: number }[]>`
       SELECT (SELECT count(*)::int FROM conditions.feature
                WHERE source_id = ${src.id} AND tombstoned_at IS NULL) AS features,
