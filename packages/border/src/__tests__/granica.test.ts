@@ -170,3 +170,27 @@ it.each([
 ])("refuses changed units and incomplete or ambiguous class structure", (change) => {
   expect(() => read(change(html()))).toThrow(/granica/);
 });
+
+it("matches the independently transcribed six-queue oracle from the November 9 capture", () => {
+  const out = read(
+    fixture("granica-2026-11-09.html.txt").toString("utf8"),
+    "2026-11-09T18:26:35.741Z",
+  );
+  expect(sealFailures([...out.features, ...out.observations])).toEqual([]);
+  expect(out.observations.map((o) => o["result"])).toEqual(
+    [120, 600, 0, 180, 0, 780].map((waitMinutes) => ({
+      type: "structured",
+      schema: "border_wait",
+      v: 1,
+      value: { v: 1, status: waitMinutes === 0 ? "no_delay" : "delay", waitMinutes },
+    })),
+  );
+  expect(out.observations.map((o) => o["phenomenonTime"])).toEqual(
+    ["18:00", "18:00", "18:01", "18:01", "18:22", "18:22"].map((t) => ({
+      instant: `2026-11-09T${t}:00Z`,
+    })),
+  );
+  expect(out.observations.map((o) => (o["freshness"] as { expiresAt: string }).expiresAt)).toEqual(
+    ["20:00", "20:00", "20:01", "20:01", "20:22", "20:22"].map((t) => `2026-11-09T${t}:00Z`),
+  );
+});

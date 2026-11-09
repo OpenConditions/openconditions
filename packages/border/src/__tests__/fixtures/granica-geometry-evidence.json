@@ -17,21 +17,27 @@
       "unit": "401060",
       "entity": "Q11828640",
       "revision": "2534365161",
-      "coordinateLocation": "49°57'17.300 N, 23°6'50.500 E",
-      "transport": "indexed Wikidata entity page",
-      "url": "https://www.wikidata.org/w/index.php?title=Q11828640&oldid=2534365161",
-      "directEntityRefresh": "HTTP 403; not claimed current direct API proof",
-      "coordinateReference": "imported from Polish Wikipedia; structured CC0 statement, not OSM geometry"
+      "transport": "direct entity JSON",
+      "url": "https://www.wikidata.org/wiki/Special:EntityData/Q11828640.json",
+      "coordinateReference": "imported from Polish Wikipedia; structured CC0 statement, not OSM geometry",
+      "longitude": 23.11402777777778,
+      "latitude": 49.95480555555555,
+      "retrievedAt": "2026-11-09T18:26:35.995289+00:00",
+      "sha256": "c369f25c2d806829f561fc115b86dd4fac61b2d709254958d68fab8f67d21bb3",
+      "priorDirectEntityRefresh": "HTTP 403; not claimed current direct API proof"
     },
     {
       "unit": "303020",
       "entity": "Q11828626",
       "revision": "2537047440",
-      "coordinateLocation": "50°16'35.760 N, 23°35'18.600 E",
-      "transport": "indexed Wikidata entity page",
-      "url": "https://www.wikidata.org/w/index.php?title=Q11828626&oldid=2537047440",
-      "directEntityRefresh": "HTTP 403; not claimed current direct API proof",
-      "coordinateReference": "imported from Polish Wikipedia; distinct from railway Q11828627"
+      "transport": "direct entity JSON",
+      "url": "https://www.wikidata.org/wiki/Special:EntityData/Q11828626.json",
+      "coordinateReference": "imported from Polish Wikipedia; distinct from railway Q11828627",
+      "longitude": 23.5885,
+      "latitude": 50.2766,
+      "retrievedAt": "2026-11-09T18:26:36.423573+00:00",
+      "sha256": "45d04fcc81882ed77e0ce8bdba1771f244b117b4a15e3ca192cdf4479ce65050",
+      "priorDirectEntityRefresh": "HTTP 403; not claimed current direct API proof"
     }
   ]
 }

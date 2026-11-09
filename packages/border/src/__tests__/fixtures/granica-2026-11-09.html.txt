@@ -1,0 +1,82 @@
+<table class="border-table">
+    <tr>
+    <td colspan="2" rowspan="2">
+		<div class="row align-items-center">
+			<div class="col-4"><img src="/images/flaga_Ukrainy.png" width="60px" alt="obrazek  flaga państwa  Ukraina"/></div>
+			<div class="col-4"><strong>Ukraina</strong><br/>	
+			WYJAZD Z RP</div>
+			<div class="col-4">
+			<strong>Stan na:</strong><br/>2026-11-9			</div>
+		</div>
+	</td>
+    <td colspan="4" align="center" class="niebieski">IAS Lublin</td>
+    <td colspan="5" align="center" class="niebieski">IAS Rzeszów</td>
+    </tr>
+    <tr> 
+	   <td align="center"><strong>&nbsp;Dorohusk&nbsp;</strong></td>
+	   <td align="center"><strong>&nbsp;Zosin&nbsp;</strong></td>
+		<td align="center"><strong>&nbsp;Dołhobyczów&nbsp;</strong></td>
+		<td align="center"><strong>&nbsp;Hrebenne&nbsp;</strong></td>
+		<td align="center"><strong>&nbsp;Budomierz&nbsp;</strong></td>
+		<td align="center"><strong>&nbsp;Korczowa&nbsp;</strong></td>
+		<td align="center"><strong>&nbsp;Medyka&nbsp;</strong></td>
+		<td align="center"><strong>&nbsp;Malhowice&nbsp;</strong></td>
+		<td align="center"><strong>&nbsp;Krościenko&nbsp;</strong></td>
+	</th>
+  </tr>
+<tr><td class="p-3" colspan="2"><img src="/images/ciezarowka.png" alt="obrazek  samochody CIĘŻAROWE" width="60px"/><span align="right" class="p-3">Szacunkowy czas oczekiwania na rozpoczęcie odprawy [h]</span></td>				<td align="center" class="dane1" >&nbsp;>7,5T DMC&nbsp;<br/>28:00&nbsp;</td>
+				<td align="center" class="dane" >&nbsp;≤7,5T DMC&nbsp;<br/>2:00&nbsp;</td>
+				<td align="center" class="dane1" >&nbsp;≤7,5T DMC&nbsp;<br/>0:00&nbsp;</td>
+				<td align="center" class="dane" >&nbsp;>7,5T DMC&nbsp;<br/>13:00&nbsp;</td>
+				<td align="center" class="dane1" >&nbsp;≤7,5T DMC&nbsp;<br/>0:00&nbsp;</td>
+				<td align="center" class="dane1" >&nbsp;>7,5T DMC&nbsp;<br/>3:00&nbsp;</td>
+				<td align="center" class="dane1" >&nbsp;>7,5T DMC&nbsp;<br/>10:00&nbsp;</td>
+				<td align="center" class="dane1" bgcolor="#CCCCCC">&nbsp;</td><!--malhowice-->
+				<td align="center" class="dane1" >&nbsp;≤7,5T DMC&nbsp;<br/>0:00&nbsp;</td>
+				</tr><tr><td class="p-3" colspan="2"><img src="/images/autokar.png" alt="obrazek  AUTOKARY" width="60px"/><span align="right" class="p-3">Szacunkowy czas oczekiwania na rozpoczęcie odprawy [h]</span></td>				<td align="center" class="dane" >0:00&nbsp;</td>
+				<td align="center" class="dane"  >0:00&nbsp;</td>
+				<td align="center" class="dane1" >0:00&nbsp;</td>
+				<td align="center" class="dane"  >0:00&nbsp;</td>
+				<td align="center" class="dane1" >0:00&nbsp;</td>
+				<td align="center" class="dane1" >0:00&nbsp;</td>
+				<td align="center" class="dane1" >2:00&nbsp;</td>
+				<td align="center" class="dane1" >0:00&nbsp;</td>
+				<td align="center" class="dane1" >0:00&nbsp;</td>
+				
+				</tr><tr><td class="p-3" colspan="2"><img src="/images/osobowy.png" alt="obrazek  samochody OSOBOWE" width="60px"/><span align="right" class="p-3">Szacunkowy czas oczekiwania na rozpoczęcie odprawy [h]</span></td>				<td align="center" class="dane"  bgcolor="#CCCCCC">&nbsp;</td>
+				<td align="center" class="dane"  >0:00&nbsp;</td>
+				<td align="center" class="dane1" >0:00&nbsp;</td>
+				<td align="center" class="dane"  >0:00&nbsp;</td>
+				<td align="center" class="dane1" >0:00&nbsp;</td>
+				<td align="center" class="dane1" >0:00&nbsp;</td>
+				<td align="center" class="dane1" >2:00&nbsp;</td>
+				<td align="center" class="dane1" >0:00&nbsp;</td>
+				<td align="center" class="dane1" >0:00&nbsp;</td>
+				
+				</tr>								<!--	<tr><td class="opis">Szacunkowy czas oczekiwania na rozpoczęcie odprawy [h] - TaxFree&nbsp;</td>
+					<td align="center" class="dane"  bgcolor="#CCCCCC">&nbsp;</td>
+					<td align="center" class="dane"  >0:00&nbsp;</td>
+					<td align="center" class="dane"  >0:00&nbsp;</td>
+					<td align="center" class="dane"  >0:00&nbsp;</td>
+					<td align="center" class="dane1" >0:00&nbsp;</td>
+					<td align="center" class="dane1" >0:00&nbsp;</td>
+					<td align="center" class="dane1" >2:00 &nbsp;</td>
+					<td align="center" class="dane1" >0:00&nbsp;</td>
+					
+					<td align="center" class="dane1" >0:00&nbsp;</td>
+					</tr>-->
+					</tr><tr>
+<td colspan="2" align="right" class="niebieski p-2">
+Godzina aktualizacji:
+</td>
+<td align="center" class="niebieski"> 18:48</td>
+<td align="center" class="niebieski"> 17:08</td>
+<td align="center" class="niebieski"> 19:07</td>
+<td align="center" class="niebieski"> 19:22</td>
+<td align="center" class="niebieski"> 19:03</td>
+<td align="center" class="niebieski"> 19:01</td>
+<td align="center" class="niebieski"> 19:00</td>
+<td align="center" class="niebieski"> 18:59</td>
+<td align="center" class="niebieski"> 18:56</td>
+</tr>
+</table>

@@ -29,7 +29,7 @@
     ],
     "wikidata": "Q11828640",
     "lon": 23.11402777777778,
-    "lat": 49.95480555555556,
+    "lat": 49.95480555555555,
     "countries": [
       "PL",
       "UA"
@@ -38,8 +38,8 @@
     "cbp": [],
     "cbsa": [],
     "revision": "2534365161",
-    "retrievedAt": "2026-11-08",
-    "evidence": "indexed-entity-page"
+    "retrievedAt": "2026-11-09T18:26:35.995289+00:00",
+    "evidence": "entity-json"
   },
   {
     "unit": "303020",
@@ -59,7 +59,7 @@
     "cbp": [],
     "cbsa": [],
     "revision": "2537047440",
-    "retrievedAt": "2026-11-08",
-    "evidence": "indexed-entity-page"
+    "retrievedAt": "2026-11-09T18:26:36.423573+00:00",
+    "evidence": "entity-json"
   }
 ]
