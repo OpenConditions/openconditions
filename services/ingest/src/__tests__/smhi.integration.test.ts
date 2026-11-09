@@ -8,7 +8,7 @@ import {
 import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import { weatherDomain } from "@openconditions/weather";
 import Fastify, { type FastifyInstance } from "fastify";
-import { afterAll, beforeAll, expect, test } from "vitest";
+import { afterAll, beforeAll, expect, test, vi } from "vitest";
 import { registerApiRoutes } from "../api/routes.js";
 import { registerScope } from "../api/scope.js";
 import { createParseProcess } from "../pipeline/parse-process.js";
@@ -60,11 +60,15 @@ const upstream = (async (url: string | URL | Request, init?: RequestInit) => {
             ? '"revision"'
             : '"captured"',
       "cache-control": role === "status" ? "max-age=600" : "max-age=60",
+      ...(failure === "stale" ? { age: "1866", date: "Mon, 09 Nov 2026 14:23:38 GMT" } : {}),
     },
   });
 }) as typeof fetch;
-const poll = () =>
-  runSource(feed, {
+let httpClock = Date.now();
+const poll = () => {
+  // Synthetic HTTP spacing is independent of the immutable fixture measurement clock.
+  httpClock += 3600000;
+  return runSource(feed, {
     sql: db.sql,
     fetch: upstream,
     roles,
@@ -73,6 +77,7 @@ const poll = () =>
     lookup: async () => [{ address: "93.184.216.34", family: 4 }],
     model: { registry, instanceId: "test.local" },
   });
+};
 const get = async (url: string) => {
   const r = await app.inject({ url });
   expect(r.statusCode).toBe(200);
@@ -80,6 +85,7 @@ const get = async (url: string) => {
 };
 
 beforeAll(async () => {
+  vi.spyOn(Date, "now").mockImplementation(() => httpClock);
   db = await createTestDatabase();
   await ensureObservationPartitions(db.sql, {
     classes: retentionClasses(registry),
@@ -99,6 +105,7 @@ afterAll(async () => {
   await parser.close();
   await app?.close();
   await db?.close();
+  vi.restoreAllMocks();
 });
 
 test("real worker/API publication, correction, acquisition rollback, membership retention and expiry", async () => {
@@ -171,6 +178,11 @@ test("real worker/API publication, correction, acquisition rollback, membership 
   const roleSnapshot = () =>
     JSON.stringify(roles, (_key, value) => (value instanceof Map ? [...value] : value));
   const previousRoles = roleSnapshot();
+  failure = "stale";
+  expect((await poll()).error).toMatch(/stale HTTP/);
+  expect(await stored()).toEqual(baseline);
+  expect(roleSnapshot()).toEqual(previousRoles);
+  failure = "";
   invalidName = true;
   expect((await poll()).error).toMatch(/SMHI.*reject/);
   expect(await stored()).toEqual(baseline);

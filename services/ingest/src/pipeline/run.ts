@@ -67,6 +67,7 @@ import {
 import { loadReference } from "./reference.js";
 import { resolveOpenLr } from "./resolve.js";
 import { tallyRestrictions } from "./restriction-tally.js";
+import { smhiHttpPolicy } from "./smhi-http.js";
 import { inspectSnapshotCompleteness, type SnapshotInspection } from "./snapshot-inspection.js";
 import {
   getLastRowCount,
@@ -359,7 +360,11 @@ export function pollTickSec(cadenceSec: number): number {
  */
 function rolesDue(src: CatalogFeed, roles: RoleState | undefined, now: number): string[] {
   if (!roles) return dataRoles(src);
-  return dueRoles(src, roles.lastFetchedAt, now + pollTickSec(src.cadenceSec) * 500);
+  return dueRoles(src, roles.lastFetchedAt, now + pollTickSec(src.cadenceSec) * 500).filter(
+    (role) =>
+      src.format !== "smhi-metobs" ||
+      smhiHttpPolicy(roles).ready(src.endpoints[role]?.urls ?? [], Date.now()),
+  );
 }
 
 /**
@@ -501,6 +506,7 @@ async function runAttempt(
   due: readonly string[],
 ): Promise<RunResult> {
   const start = Date.now();
+  const httpDeadline = start + 120000;
   const steps = new PollSteps(start);
   const attemptAt = attempt.at;
   const attemptId = attempt.id;
@@ -783,7 +789,12 @@ async function runAttempt(
           result = await fetchEndpoint(
             src,
             role,
-            guardedFeedFetch(deps, src.endpoints[role]?.timeoutSec),
+            src.format === "smhi-metobs"
+              ? smhiHttpPolicy(deps.roles).wrap(
+                  guardedFeedFetch(deps, src.endpoints[role]?.timeoutSec),
+                  httpDeadline,
+                )
+              : guardedFeedFetch(deps, src.endpoints[role]?.timeoutSec),
             {
               resolvers: domainOf(src).resolvers,
               env,
