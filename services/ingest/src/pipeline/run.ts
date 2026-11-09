@@ -548,6 +548,7 @@ async function runAttempt(
   let acceptFetch: (() => void) | undefined;
   let snapshotInspection: SnapshotInspection | undefined;
   let smnWindow: SmnWindow | undefined;
+  let smnRetrieval: Parameters<typeof smnMessages>[5];
   // Whether any data payload had bytes: a streamed body is taken to have.
   let heldPayload = true;
   let captureEvidence = false;
@@ -851,6 +852,7 @@ async function runAttempt(
           continue;
         }
         if (result.status === "fetched" || result.status === "partial") {
+          if (src.endpoints[role]?.smnRss) smnRetrieval = result.smnRetrieval;
           payloadHashes = [...(payloadHashes ?? []), ...result.payloads.map((p) => p.sha256)];
           if (feedCapture) {
             // The responses as received: an archive, not its entries; an
@@ -1054,8 +1056,15 @@ async function runAttempt(
     if (src.endpoints["alerts"]?.smnRss) {
       try {
         const payloads = await payloadsOf(roles);
-        smnWindow = await smnMessages(deps.sql, src, payloads["alerts"] ?? [], attemptAt);
-        smnPayloads = { ...payloads, alerts: smnWindow.messages.map((m) => m.body) };
+        smnWindow = await smnMessages(
+          deps.sql,
+          src,
+          payloads["alerts"] ?? [],
+          attemptAt,
+          attempt.id,
+          smnRetrieval,
+        );
+        smnPayloads = { ...payloads, alerts: smnWindow.parseBodies };
       } catch (err) {
         return failFetch(err);
       }
@@ -1311,7 +1320,7 @@ async function finishEventPoll(
   try {
     summary = await publishSituations(deps.sql, src, {
       situations,
-      ...(poll.smnWindow ? { smnWindow: poll.smnWindow } : {}),
+      ...(poll.smnWindow ? { smnWindow: poll.smnWindow, smnDecision: parse.smn } : {}),
       ...(unlocatableSituations
         ? {
             unlocatable: unlocatableSituations,
@@ -1349,7 +1358,7 @@ async function finishEventPoll(
   return {
     count: c.created + c.updated + c.restored,
     durationMs,
-    outcome: situations.length === 0 ? "complete_empty" : "changed",
+    outcome: parse.smn ? "partial" : situations.length === 0 ? "complete_empty" : "changed",
     activeEvents: situations.length - summary.rejected.length,
     inserted: c.created + c.restored,
     updated: c.updated,

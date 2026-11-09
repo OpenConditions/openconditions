@@ -6,19 +6,29 @@ import type postgres from "postgres";
 export interface SmnMessage {
   identifier: string;
   body: Buffer;
+  retrieval: unknown;
   retainUntil: string;
 }
 export interface SmnWindow {
   messages: SmnMessage[];
+  parseBodies: Buffer[];
   baseline: string;
+  decisionVersion: string;
 }
-const fingerprint = (rows: readonly { identifier: string; body: Buffer }[]) =>
+const fingerprint = (
+  rows: readonly { identifier: string; body: Buffer; retain_until: Date; retrieval: unknown }[],
+) =>
   createHash("sha256")
     .update(
       JSON.stringify(
         rows
-          .map((r) => [r.identifier, createHash("sha256").update(r.body).digest("hex")])
-          .sort((a, b) => a[0]!.localeCompare(b[0]!)),
+          .map((r) => [
+            r.identifier,
+            createHash("sha256").update(r.body).digest("hex"),
+            new Date(r.retain_until).toISOString(),
+            r.retrieval,
+          ])
+          .sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b))),
       ),
     )
     .digest("hex");
@@ -30,31 +40,35 @@ export async function smnMessages(
   feed: CatalogFeed,
   bodies: readonly Buffer[],
   now: string,
+  fetchId?: number,
+  retrieval: readonly {
+    sha256: string;
+    url: string;
+    headers: Record<string, string>;
+    changed: boolean;
+  }[] = [],
 ): Promise<SmnWindow> {
   const at = Date.parse(now);
   const rows = await sql<
-    { identifier: string; body: Buffer; retain_until: Date }[]
-  >`SELECT identifier, body, retain_until FROM conditions.smn_cap_message WHERE source_id=${feed.id} AND retain_until > ${now}::timestamptz ORDER BY identifier LIMIT 4097`;
+    { identifier: string; body: Buffer; retrieval: unknown; retain_until: Date }[]
+  >`SELECT identifier, body, retrieval, retain_until FROM conditions.smn_cap_message WHERE source_id=${feed.id} AND retain_until > ${now}::timestamptz ORDER BY identifier LIMIT 4097`;
+  const decision = await sql<
+    { version: string }[]
+  >`SELECT xmin::text AS version FROM conditions.smn_cap_decision WHERE source_id=${feed.id}`;
   const messages = new Map(
     rows.map((r) => [
-      r.identifier,
+      createHash("sha256").update(r.body).digest("hex"),
       {
         identifier: r.identifier,
         body: r.body,
+        retrieval: r.retrieval,
         retainUntil: new Date(r.retain_until).toISOString(),
       },
     ]),
   );
-  // The collision check covers the retained window, not just this RSS page.
-  // Until the variant/lifecycle policy is qualified, conflicting bytes must
-  // refuse atomically rather than replacing an earlier durable assertion.
-  const seen = new Map<string, Buffer>(rows.map((r) => [r.identifier, r.body]));
   for (const body of bodies) {
     const alert = readCapXml(body, true);
-    const duplicate = seen.get(alert.identifier);
-    if (duplicate && !duplicate.equals(body))
-      throw new Error("SMN: conflicting duplicate CAP identifier");
-    seen.set(alert.identifier, body);
+    const digest = createHash("sha256").update(body).digest("hex");
     const sent = Date.parse(alert.sent);
     if (!Number.isFinite(sent) || sent > at + 300000) throw new Error("SMN: invalid CAP sent");
     // Bound history, including cancels and non-public messages that can supersede public ones.
@@ -64,19 +78,47 @@ export async function smnMessages(
       if (!Number.isFinite(expires) || expires > until)
         throw new Error("SMN: CAP expiry outside qualified retention window");
     }
-    if (until > at)
-      messages.set(alert.identifier, {
+    if (until > at && !messages.has(digest))
+      messages.set(digest, {
         identifier: alert.identifier,
         body,
+        retrieval: { fetchedAt: now, sha256: digest, source: feed.id, fetchId },
         retainUntil: new Date(until).toISOString(),
       });
   }
+  for (const [digest, message] of messages) {
+    const claims = retrieval
+      .filter((r) => r.sha256 === digest)
+      .map((r) => ({ ...r, fetchedAt: now, fetchId }));
+    if (!claims.length) continue;
+    const prior = message.retrieval as Record<string, unknown>;
+    const captures = Array.isArray(prior["captures"]) ? prior["captures"] : [];
+    message.retrieval = { ...prior, captures: [...captures, ...claims] };
+  }
   if (
     messages.size > 4096 ||
-    [...messages.values()].reduce((n, m) => n + m.body.length, 0) > 32 * 1024 * 1024
+    [...messages.values()].reduce(
+      (n, m) => n + m.body.length + Buffer.byteLength(JSON.stringify(m.retrieval)),
+      0,
+    ) >
+      32 * 1024 * 1024
   )
     throw new Error("SMN: durable bulletin budget exceeded");
-  return { messages: [...messages.values()], baseline: fingerprint(rows) };
+  const parseBodies = new Map(
+    [...messages.values()].map((m) => [createHash("sha256").update(m.body).digest("hex"), m.body]),
+  );
+  for (const body of bodies) parseBodies.set(createHash("sha256").update(body).digest("hex"), body);
+  if (
+    parseBodies.size > 4096 ||
+    [...parseBodies.values()].reduce((n, b) => n + b.length, 0) > 32 * 1024 * 1024
+  )
+    throw new Error("SMN: parse bulletin budget exceeded");
+  return {
+    messages: [...messages.values()],
+    parseBodies: [...parseBodies.values()],
+    baseline: fingerprint(rows),
+    decisionVersion: decision[0]?.version ?? "absent",
+  };
 }
 
 /** Refuse a stale parse if another worker committed a message window while it parsed. */
@@ -87,9 +129,15 @@ export async function checkSmnWindow(
   now: string,
 ): Promise<void> {
   const rows = await tx<
-    { identifier: string; body: Buffer }[]
-  >`SELECT identifier, body FROM conditions.smn_cap_message WHERE source_id=${sourceId} AND retain_until > ${now}::timestamptz ORDER BY identifier`;
-  if (fingerprint(rows) !== window.baseline)
+    { identifier: string; body: Buffer; retain_until: Date; retrieval: unknown }[]
+  >`SELECT identifier, body, retain_until, retrieval FROM conditions.smn_cap_message WHERE source_id=${sourceId} AND retain_until > ${now}::timestamptz ORDER BY identifier`;
+  const decision = await tx<
+    { version: string }[]
+  >`SELECT xmin::text AS version FROM conditions.smn_cap_decision WHERE source_id=${sourceId}`;
+  if (
+    fingerprint(rows) !== window.baseline ||
+    (decision[0]?.version ?? "absent") !== window.decisionVersion
+  )
     throw new Error("SMN: concurrent bulletin changed; retry next poll");
 }
 
@@ -102,5 +150,5 @@ export async function storeSmnMessages(
 ): Promise<void> {
   await tx`DELETE FROM conditions.smn_cap_message WHERE source_id=${sourceId} AND retain_until <= ${now}::timestamptz`;
   for (const message of messages)
-    await tx`INSERT INTO conditions.smn_cap_message (source_id, identifier, body, retain_until) VALUES (${sourceId},${message.identifier},${message.body},${message.retainUntil}::timestamptz) ON CONFLICT (source_id,identifier) DO UPDATE SET body=excluded.body, retain_until=excluded.retain_until`;
+    await tx`INSERT INTO conditions.smn_cap_message (source_id, identifier, body, retrieval, retain_until) VALUES (${sourceId},${message.identifier},${message.body},${tx.json(message.retrieval as postgres.JSONValue)},${message.retainUntil}::timestamptz) ON CONFLICT (source_id,variant) DO UPDATE SET retrieval=excluded.retrieval`;
 }

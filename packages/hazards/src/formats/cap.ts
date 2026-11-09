@@ -4,10 +4,12 @@ import type {
   ParseOutput,
   RecordSkipReason,
 } from "@openconditions/ingest-framework";
+import { capReferences } from "@openconditions/model-hazards";
 import { XMLValidator } from "fast-xml-parser";
 import type { Geometry } from "geojson";
 import { capOutput } from "../cap/accounting.js";
 import type { DerivedShape } from "../cap/situations.js";
+import { smnOutput } from "../cap/smn.js";
 import type { CapAlert, CapArea } from "../cap/types.js";
 import { CapReadError, readCapXml } from "../cap/xml.js";
 import type { HazardsCatalogFeed } from "../feed-schema.js";
@@ -139,6 +141,12 @@ export function parseCap(
         throw new Error("SMN: malformed CAP XML");
       const alert = readCapXml(body, Boolean(feed.endpoints?.["alerts"]?.smnRss));
       if (feed.endpoints?.["alerts"]?.smnRss) {
+        const rawReferences = (alert.references ?? "").trim();
+        if (
+          rawReferences &&
+          capReferences(rawReferences).length !== rawReferences.split(/\s+/).length
+        )
+          throw new Error("SMN: malformed CAP references");
         const one = capOutput([alert], feed, {
           fetchedAt: ctx.fetchedAt,
           reportSkips: false,
@@ -159,6 +167,7 @@ export function parseCap(
   }
   if (bodies.length > 0 && alerts.length === 0) throw firstError;
   const geometryOf = warnCellGeometry(payloads["areas"]);
+  if (feed.endpoints?.["alerts"]?.smnRss) return smnOutput(alerts, bodies, feed, ctx.fetchedAt);
   return capOutput(alerts, feed, {
     fetchedAt: ctx.fetchedAt,
     undecoded,

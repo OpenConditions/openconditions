@@ -186,6 +186,8 @@ export type KeptItems = ReadonlyMap<string, KeptItem>;
 
 /** What a fetch that answered carries besides its status. */
 interface FetchedPayloads {
+  /** SMN original response provenance, committed only with its variant window. */
+  smnRetrieval?: (PayloadDigest & { headers: Record<string, string>; changed: boolean })[];
   /** Every parsed body (including walk dependencies) was acquired in this call; held/304 copies are not acquisition evidence. */
   bodyFreshness: "acquired" | "held";
   /** The payloads to parse. */
@@ -1350,6 +1352,11 @@ async function fetchRole(
         status: "fetched",
         validatedAtNetwork: true,
         bodyFreshness: index.changed && children.every((c) => c.changed) ? "acquired" : "held",
+        smnRetrieval: children.map((c) => ({
+          ...c.payload,
+          headers: Object.fromEntries(c.headers),
+          changed: c.changed,
+        })),
         buffers: children.map((c) => c.buffer),
         urls: links,
         payloads: [index.payload, ...children.map((c) => c.payload)],

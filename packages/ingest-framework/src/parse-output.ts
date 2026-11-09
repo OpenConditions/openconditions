@@ -71,6 +71,17 @@ export interface ParseOutput {
   statusIndex?: StatusIndex;
   /** The publisher cut its answer at a result cap: records past it are missing. */
   truncated?: boolean;
+  /** SMN rolling bulletin: explicit decisions, never absence authority. */
+  smn?: {
+    partial: true;
+    accepted: number;
+    terminal: number;
+    retained: number;
+    expired: number;
+    withheld: number;
+    diagnostics: { variant: string; reason: string; references: unknown[] }[];
+    suppress: string[];
+  };
 }
 
 /** What a status-only poll parsed into: readings, and the status records it could not use. */

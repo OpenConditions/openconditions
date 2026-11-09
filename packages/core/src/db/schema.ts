@@ -819,8 +819,17 @@ export const smnCapMessage = conditionsSchema.table(
   {
     sourceId: text("source_id").notNull(),
     identifier: text("identifier").notNull(),
+    variant: text("variant").generatedAlwaysAs(sql`encode(sha256(body), 'hex')`).notNull(),
+    retrieval: jsonb("retrieval").notNull().default(sql`'{"legacy":true}'::jsonb`),
     body: bytea("body").notNull(),
     retainUntil: timestamp("retain_until", { withTimezone: true }).notNull(),
   },
-  (t) => [primaryKey({ columns: [t.sourceId, t.identifier] })],
+  (t) => [primaryKey({ columns: [t.sourceId, t.variant] })],
 );
+
+/** The bounded latest SMN projection decision, committed with originals and public records. */
+export const smnCapDecision = conditionsSchema.table("smn_cap_decision", {
+  sourceId: text("source_id").primaryKey(),
+  decidedAt: timestamp("decided_at", { withTimezone: true }).notNull(),
+  decision: jsonb("decision").notNull(),
+});

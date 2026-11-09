@@ -147,3 +147,96 @@ it("refuses a malformed secondary hazard while generic CAP stays tolerant", () =
   };
   expect(parseCap(generic, { alerts: [mixed] }, ctx).situations).toHaveLength(1);
 });
+
+// Byte-faithful full capture; the clock is the recorded capture instant.
+it("projects every independent captured variant without fabricating reference authority", () => {
+  const alerts = Array.from({ length: 41 }, (_, n) =>
+    readFileSync(
+      new URL(
+        `./fixtures/smn/generation-20261109/ar-${String(n).padStart(3, "0")}.xml`,
+        import.meta.url,
+      ),
+    ),
+  );
+  for (const order of [alerts, [...alerts].reverse()]) {
+    const out = parseCap(
+      catalogFeed("ar-smn-alerts"),
+      { alerts: [...order, order[0]!] },
+      parseContext("2026-11-09T07:11:40Z"),
+    );
+    expect(out.situations).toHaveLength(33);
+    expect(new Set(out.situations.map((s) => s["id"])).size).toBe(33);
+    expect(out.records).toMatchObject({
+      uniqueCount: 41,
+      duplicates: 1,
+      terminal: 8,
+      accepted: 33,
+    });
+    expect(out.smn).toMatchObject({ partial: true, expired: 8, withheld: 0 });
+    expect(out.smn?.diagnostics).toHaveLength(41);
+    for (const s of out.situations) {
+      expect(s["relations"]).toBeUndefined();
+      expect(s["groupId"]).toBeUndefined();
+      expect(s["externalIds"]).toMatchObject([{ scheme: "cap", authority: "smn@smn.gob.ar" }]);
+    }
+    expect(out.observations).toEqual([]);
+  }
+});
+
+// Synthetic lifecycle sequences, built from one licensed captured message.
+it("resolves only unique exact tuples and withholds ambiguous effects and affected assertions", () => {
+  const original = body.toString();
+  const id = original.match(/<identifier>(.*?)<\/identifier>/)![1]!;
+  const sender = original.match(/<sender>(.*?)<\/sender>/)![1]!;
+  const sent = original.match(/<sent>(.*?)<\/sent>/)![1]!;
+  const variant = Buffer.from(original.replace("<instruction>", "<instruction>Otra instrucción. "));
+  expect(variant.equals(body)).toBe(false);
+  const action = (kind: string, refs: string, info = false) =>
+    Buffer.from(
+      original
+        .replace(`<identifier>${id}</identifier>`, `<identifier>${id}.action</identifier>`)
+        .replace(/<msgType>.*?<\/msgType>/, `<msgType>${kind}</msgType>`)
+        .replace(/<references>.*?<\/references>/, `<references>${refs}</references>`)
+        .replace(/<info>.*<\/info>/s, info ? original.match(/<info>.*<\/info>/s)![0]! : ""),
+    );
+  const tuple = `${sender},${id},${sent}`;
+  const parse = (alerts: Buffer[]) =>
+    parseCap(catalogFeed("ar-smn-alerts"), { alerts }, parseContext("2026-11-07T15:48:00Z"));
+  for (const kind of ["Update", "Cancel"]) {
+    const a = action(kind, tuple, kind === "Update");
+    for (const alerts of [
+      [body, a],
+      [a, body],
+    ]) {
+      const out = parse(alerts);
+      expect(out.situations).toHaveLength(kind === "Update" ? 1 : 0);
+      expect(out.smn?.withheld).toBe(0);
+      expect(out.smn?.diagnostics).toHaveLength(1);
+      if (kind === "Update") expect(out.situations[0]!["relations"]).toHaveLength(1);
+    }
+    for (const alerts of [
+      [body, variant, a],
+      [a, variant, body],
+    ]) {
+      const out = parse(alerts);
+      expect(out.situations).toEqual([]);
+      expect(out.smn?.withheld).toBe(3);
+      expect(out.records?.terminal).toBe(0);
+      expect(out.smn?.diagnostics.some((d) => d.reason === "ambiguous-lifecycle")).toBe(true);
+    }
+    const missing = parse([body, action(kind, `${sender},MISSING,${sent}`, kind === "Update")]);
+    expect(missing.situations).toHaveLength(kind === "Update" ? 2 : 1);
+    expect(missing.smn?.withheld).toBe(kind === "Cancel" ? 1 : 0);
+    const multiple = parse([
+      body,
+      action(kind, `${tuple} ${sender},MISSING,${sent}`, kind === "Update"),
+    ]);
+    expect(multiple.situations).toHaveLength(kind === "Update" ? 1 : 0);
+    expect(multiple.smn?.withheld).toBe(kind === "Cancel" ? 2 : 0);
+    const wrongSender = parse([
+      body,
+      action(kind, `other@sender,${id},${sent}`, kind === "Update"),
+    ]);
+    expect(wrongSender.situations).toHaveLength(kind === "Update" ? 2 : 1);
+  }
+});
