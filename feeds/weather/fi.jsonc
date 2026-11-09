@@ -50,6 +50,9 @@
       "privacyUrl": "https://www.digitraffic.fi/en/privacy-policy/",
     },
     {
+      // Qualified AWS/SYNOP/FMI aviation subset; rotating windows never authorize withdrawal.
+      // Four cold requests, one per warm poll: 147/day at this cadence, leaving shared-IP headroom.
+      // Precipitation remains withheld pending exact parameter-specific sentinel semantics.
       "operator": "fmi",
       "product": "weather",
       "name": "Finnish Meteorological Institute weather observations",
@@ -85,10 +88,6 @@
       "privacyUrl": "https://en.ilmatieteenlaitos.fi/data-protection",
       "coverage": {
         "countries": ["FI"],
-      },
-      "disabled": {
-        "reason": "National bbox/body limits and Finnish meteorological metadata membership remain unqualified; acquisition is also blocked in the format.",
-        "since": "2026-11-07",
       },
     },
   ],

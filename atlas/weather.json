@@ -96,10 +96,6 @@
             "countries": [
               "FI"
             ]
-          },
-          "disabled": {
-            "reason": "National bbox/body limits and Finnish meteorological metadata membership remain unqualified; acquisition is also blocked in the format.",
-            "since": "2026-11-07"
           }
         }
       ]
@@ -233,10 +229,6 @@
         "countries": [
           "FI"
         ]
-      },
-      "disabled": {
-        "reason": "National bbox/body limits and Finnish meteorological metadata membership remain unqualified; acquisition is also blocked in the format.",
-        "since": "2026-11-07"
       },
       "id": "fi-fmi-weather",
       "domain": "weather",

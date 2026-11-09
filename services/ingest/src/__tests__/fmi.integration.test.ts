@@ -28,14 +28,12 @@ let db: TestDatabase;
 let clock = "2026-11-07T01:05:00Z";
 let metadata = Buffer.from("<wfs:FeatureCollection/>");
 let observations = fixture("observations.xml");
-let requests = 0;
 const app = Fastify();
 const catalog = { feeds: [feed], disabled: [], discovered: [], sources: [feed], credentials: {} };
 const poll = () =>
   runSource(feed, {
     sql: db.sql,
     fetch: (async (input) => {
-      requests++;
       return new Response(
         String(input).includes("/stations") ? metadata.toString() : observations.toString(),
       );
@@ -64,9 +62,7 @@ afterAll(async () => {
   await db?.close();
 });
 
-test("FMI gate prevents worker requests even with catalogue disablement removed; offline worker/API retain coherent last-good subsets and expire by source time", async () => {
-  await expect(poll()).rejects.toThrow(/qualification/);
-  expect(requests).toBe(0);
+test("FMI worker/API retain coherent last-good subsets and expire by source time", async () => {
   const format = formatOf(feed);
   const gate = format.acquisitionBlocked;
   delete format.acquisitionBlocked;

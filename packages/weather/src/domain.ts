@@ -17,8 +17,6 @@ const FORMATS: FeedFormat<WeatherCatalogFeed>[] = [
     transactionalRoles: true,
     kind: "features",
     products: WEATHER_PRODUCTS,
-    acquisitionBlocked:
-      "FMI national coverage, body bounds and metadata membership require qualification before acquisition",
     produces: {
       kinds: ["weather_station", "sensor_channel"],
       properties: FMI_PARAMETERS.map((p) => p.property),

@@ -659,7 +659,7 @@ describe("feeds:check", () => {
   });
 });
 
-it("blocks unqualified FMI acquisition even if a changed catalogue enables the feed", async () => {
+it("checks the enabled qualified FMI acquisition through the ordinary checker", async () => {
   const dir = mkdtempSync(join(tmpdir(), "fmi-check-"));
   dirs.push(dir);
   mkdirSync(join(dir, "weather"));
@@ -675,7 +675,7 @@ it("blocks unqualified FMI acquisition even if a changed catalogue enables the f
   );
   const fetch = vi.fn(async () => new Response("unexpected"));
   const results = await checkFeeds({ feedsDir: dir, fetch: fetch as typeof globalThis.fetch });
-  expect(fetch).not.toHaveBeenCalled();
+  expect(fetch).toHaveBeenCalled();
   expect(results).toHaveLength(1);
-  expect(results[0]?.message).toMatch(/qualification/);
+  expect(results[0]?.message).not.toMatch(/qualification/);
 });
