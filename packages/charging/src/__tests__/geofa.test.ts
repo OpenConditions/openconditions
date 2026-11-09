@@ -439,3 +439,54 @@ test.each(["EPSG:3857", "EPSG:25832"])("request evidence cannot override declare
     ),
   ).toThrow(/CRS/);
 });
+
+test.each([
+  ["request", "GetCapabilities"],
+  ["service", "WMS"],
+  ["outputFormat", "text/xml"],
+  ["resultType", "hits"],
+  ["filter", "unrelated"],
+  ["count", "0"],
+  ["count", "2001"],
+  ["startIndex", "-1"],
+  ["startIndex", "1.5"],
+  ["startIndex", "9007199254740992"],
+])("missing CRS evidence rejects contradictory %s=%s", (key, value) => {
+  const feed = catalogFeed("dk-geofa-charging");
+  const request = new URL(feed.endpoints["main"]!.url!);
+  request.searchParams.set(key!, value!);
+  const body = Buffer.from(JSON.stringify({ type: "FeatureCollection", features: [row()] }));
+  expect(() =>
+    chargingDomain.formats["geofa"]!.parse(
+      feed,
+      { main: [body] },
+      {
+        ...parseContext("2026-11-09T06:00:00Z"),
+        payloadEvidence: { main: [digestPayload(request.href, body)] },
+      },
+    ),
+  ).toThrow(/CRS/);
+});
+
+test("missing CRS evidence permits bounded pagination and rejects duplicate query semantics", () => {
+  const feed = catalogFeed("dk-geofa-charging");
+  const body = Buffer.from(JSON.stringify({ type: "FeatureCollection", features: [row()] }));
+  const parseRequest = (request: URL) =>
+    chargingDomain.formats["geofa"]!.parse(
+      feed,
+      { main: [body] },
+      {
+        ...parseContext("2026-11-09T06:00:00Z"),
+        payloadEvidence: { main: [digestPayload(request.href, body)] },
+      },
+    );
+  const request = new URL(feed.endpoints["main"]!.url!);
+  request.searchParams.set("count", "500");
+  request.searchParams.set("startIndex", "5500");
+  expect(parseRequest(request).features).toHaveLength(1);
+  for (const key of ["request", "REQUEST", "count", "COUNT", "startIndex", "STARTINDEX"]) {
+    const duplicate = new URL(request);
+    duplicate.searchParams.append(key, key.toLowerCase() === "request" ? "GetFeature" : "1");
+    expect(() => parseRequest(duplicate)).toThrow(/CRS/);
+  }
+});

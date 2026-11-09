@@ -47,6 +47,39 @@ function day(value: unknown, next = false): number | undefined {
 }
 
 /** GeoFA's administrative inventory, without live readings or linked content. */
+/** Bind fixed request semantics; only bounded acquisition pagination may vary. */
+function matchesCrsRequest(request: URL, base: URL, pageSize: number): boolean {
+  if (
+    request.origin !== base.origin ||
+    request.pathname !== base.pathname ||
+    request.username ||
+    request.password ||
+    request.hash
+  )
+    return false;
+  const keys = new Set<string>();
+  for (const [key, value] of request.searchParams) {
+    const folded = key.toLowerCase();
+    if (keys.has(folded)) return false;
+    keys.add(folded);
+    if (key === "count" || key === "startIndex") {
+      if (!/^(0|[1-9]\d*)$/.test(value)) return false;
+      const n = Number(value);
+      if (!Number.isSafeInteger(n) || (key === "count" ? n < 1 || n > pageSize : n > 49000))
+        return false;
+    } else if (!base.searchParams.has(key) || base.searchParams.get(key) !== value) return false;
+  }
+  for (const [key, value] of base.searchParams) {
+    if (request.searchParams.get(key) !== value) return false;
+  }
+  return (
+    base.searchParams.get("service") === "WFS" &&
+    base.searchParams.get("version") === "2.0.0" &&
+    base.searchParams.get("request") === "GetFeature" &&
+    base.searchParams.get("outputFormat") === "application/json"
+  );
+}
+
 export function parseGeofa(
   feed: ChargingCatalogFeed,
   payloads: FeedPayloads,
@@ -76,8 +109,7 @@ export function parseGeofa(
       const base = new URL(configured);
       const digest = digestPayload(evidence.url, buffers[i]!);
       if (
-        request.origin !== base.origin ||
-        request.pathname !== base.pathname ||
+        !matchesCrsRequest(request, base, feed.endpoints?.["main"]?.geofa?.pageSize ?? 500) ||
         request.searchParams.get("srsName") !== "EPSG:4326" ||
         request.searchParams.get("typeNames") !== "fkg:fkg.t_5607_ladefacilitet" ||
         request.searchParams.get("sortBy") !== "objekt_id" ||
