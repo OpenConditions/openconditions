@@ -24,7 +24,8 @@ const parser = createParseProcess({ minBytes: 0 });
 let db: TestDatabase;
 let app: FastifyInstance;
 let clock = "2026-11-08T00:30:00Z";
-let failure = "";
+let failure = "stale";
+let notModified = false;
 let revision = false;
 let shrink = false;
 let wholeAbsent = false;
@@ -39,6 +40,14 @@ const upstream = (async (url: string | URL | Request, init?: RequestInit) => {
   expect(u.searchParams.get("measuringStations")).toBe("core");
   if (failure === parameter) return new Response("bad", { status: 503 });
   if (failure === "malformed" && parameter === "7") return new Response("{}");
+  if (notModified)
+    return new Response(null, {
+      status: 304,
+      headers: {
+        "cache-control": "max-age=600",
+        "last-modified": new Date(httpClock).toUTCString(),
+      },
+    });
   const raw = readFileSync(join(dir, `${parameter}-${role}.json.raw`));
   const doc = JSON.parse(raw.toString());
   if (revision && role === "status" && parameter === "1") doc.station[0].value[0].value = "9.7";
@@ -109,10 +118,7 @@ afterAll(async () => {
 });
 
 test("real worker/API publication, correction, acquisition rollback, membership retention and expiry", async () => {
-  expect((await poll()).error).toMatch(/qualification gate/);
-  expect(requested).toHaveLength(0);
-  // Fixture qualification explicitly opts in; the authored feed remains disabled.
-  delete feed.disabled;
+  expect(feed.disabled).toBeUndefined();
   const first = await poll();
   expect(first.error).toBeUndefined();
   expect(requested).toHaveLength(16);
@@ -147,6 +153,7 @@ test("real worker/API publication, correction, acquisition rollback, membership 
   expect(geo.features.length).toBeGreaterThan(180);
   const before =
     await db.sql`SELECT series_id, effective_from, reading FROM conditions.observation_latest WHERE source_id = ${feed.id} ORDER BY series_id`;
+  failure = "";
   clock = "2026-11-08T00:40:00Z";
   revision = true;
   requested.length = 0;
@@ -179,7 +186,9 @@ test("real worker/API publication, correction, acquisition rollback, membership 
     JSON.stringify(roles, (_key, value) => (value instanceof Map ? [...value] : value));
   const previousRoles = roleSnapshot();
   failure = "stale";
-  expect((await poll()).error).toMatch(/stale HTTP/);
+  invalidName = true;
+  // HTTP-stale candidates reach native validation; invalid source content still rolls back.
+  expect((await poll()).error).toMatch(/SMHI.*reject/);
   expect(await stored()).toEqual(baseline);
   expect(roleSnapshot()).toEqual(previousRoles);
   failure = "";
@@ -284,7 +293,35 @@ test("real worker/API publication, correction, acquisition rollback, membership 
   expect((await poll()).error).toMatch(/membership shrink/);
   feed.license = oldLicense;
   expect((await poll()).error).toMatch(/membership shrink/);
+  wholeAbsent = false;
+  expect((await poll()).error).toBeUndefined();
+  // A conditional 304 and byte-identical 200 keep the original source expiry.
+  for (const conditional of [true, false]) {
+    notModified = conditional;
+    delete roles.lastFetchedAt.status;
+    const repeat = await poll();
+    expect(repeat.error).toBeUndefined();
+    const live = await get(`/observations/latest?source=${feed.id}&limit=1000`);
+    expect(live.records.length).toBeGreaterThan(0);
+    expect(
+      live.records.every((r: { validUntil: string }) => r.validUntil === "2026-11-08T01:00:00Z"),
+    ).toBe(true);
+  }
+  const lastGoodReadings =
+    await db.sql`SELECT series_id, effective_from, reading FROM conditions.observation_latest WHERE source_id = ${feed.id} ORDER BY series_id`;
   clock = "2026-11-08T01:01:00Z";
+  for (const conditional of [true, false]) {
+    notModified = conditional;
+    delete roles.lastFetchedAt.status;
+    await poll();
+    expect((await get(`/observations/latest?source=${feed.id}&limit=1000`)).records).toHaveLength(
+      0,
+    );
+  }
+  notModified = false;
+  expect(
+    await db.sql`SELECT series_id, effective_from, reading FROM conditions.observation_latest WHERE source_id = ${feed.id} ORDER BY series_id`,
+  ).toEqual(lastGoodReadings);
   expect((await get(`/observations/latest?source=${feed.id}&limit=1000`)).records).toHaveLength(0);
   clock = "2026-11-08T00:50:00Z";
   expect(

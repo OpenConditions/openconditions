@@ -118,10 +118,6 @@
             "countries": [
               "SE"
             ]
-          },
-          "disabled": {
-            "reason": "Awaiting complete HTTP cache/backoff and current rights qualification for all eight parameters; captured fixtures do not grant activation.",
-            "since": "2026-11-08"
           }
         }
       ]
@@ -272,10 +268,6 @@
         "countries": [
           "SE"
         ]
-      },
-      "disabled": {
-        "reason": "Awaiting complete HTTP cache/backoff and current rights qualification for all eight parameters; captured fixtures do not grant activation.",
-        "since": "2026-11-08"
       },
       "id": "se-smhi-weather",
       "domain": "weather",

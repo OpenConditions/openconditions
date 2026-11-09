@@ -22,11 +22,17 @@ export class SmhiHttpPolicy {
           const budget = Number.isFinite(deadline)
             ? AbortSignal.timeout(Math.max(1, Math.ceil(deadline - sent)))
             : undefined;
+          const headers = new Headers(init?.headers);
+          headers.set("Cache-Control", "no-cache");
           const response = await upstream(
             input,
             budget
-              ? { ...init, signal: init?.signal ? AbortSignal.any([init.signal, budget]) : budget }
-              : init,
+              ? {
+                  ...init,
+                  headers,
+                  signal: init?.signal ? AbortSignal.any([init.signal, budget]) : budget,
+                }
+              : { ...init, headers },
           );
           const received = this.now();
           if (response.status === 429 || response.status === 503) {
@@ -49,10 +55,7 @@ export class SmhiHttpPolicy {
               maxAge && !/(?:^|,)\s*(?:no-cache|no-store)\b/i.test(cache)
                 ? Number(maxAge[1]) * 1000
                 : 0;
-            if (maxAge && currentAge >= Number(maxAge[1]) * 1000 && Number(maxAge[1]) > 0) {
-              await response.body?.cancel();
-              throw new Error("SMHI stale HTTP response (Date/Age exceeds max-age)");
-            }
+            // HTTP age limits reuse; source timestamps independently govern publication validity.
             this.failures = 0;
             this.deadlines.set(url, received + Math.max(0, lifetime - currentAge));
           } else {

@@ -62,7 +62,7 @@ test("network failure backs off", async () => {
 });
 
 test.each([200, 304])(
-  "stale %s cannot renew source status or enter conditional publication state",
+  "HTTP-stale %s remains a source candidate but grants no reusable lease",
   async (status) => {
     const now = Date.parse("2026-11-09T14:54:44Z");
     const policy = new SmhiHttpPolicy(() => now);
@@ -77,7 +77,8 @@ test.each([200, 304])(
           },
         })) as typeof fetch,
     );
-    await expect(request("https://example.com/data")).rejects.toThrow(/stale HTTP/);
+    expect((await request("https://example.com/data")).status).toBe(status);
+    expect(policy.ready(["https://example.com/data"], now)).toBe(true);
   },
 );
 
@@ -118,4 +119,27 @@ test("429 without Retry-After applies bounded exponential backoff", async () => 
   now += 600000;
   await request("https://example.com/1");
   expect(policy.ready([], now + 1199999)).toBe(false);
+});
+
+test("revalidation preserves conditional headers and caller cancellation", async () => {
+  const abort = new AbortController();
+  const request = new SmhiHttpPolicy().wrap((async (_url, init) => {
+    const headers = new Headers(init?.headers);
+    expect(headers.get("cache-control")).toBe("no-cache");
+    expect(headers.get("if-none-match")).toBe('"published"');
+    expect(headers.get("if-modified-since")).toBe("Mon, 09 Nov 2026 14:00:00 GMT");
+    expect(init?.signal).toBe(abort.signal);
+    init?.signal?.throwIfAborted();
+    return new Response("body");
+  }) as typeof fetch);
+  abort.abort();
+  await expect(
+    request("https://example.com/data", {
+      headers: {
+        "if-none-match": '"published"',
+        "if-modified-since": "Mon, 09 Nov 2026 14:00:00 GMT",
+      },
+      signal: abort.signal,
+    }),
+  ).rejects.toThrow();
 });
