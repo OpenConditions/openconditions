@@ -235,6 +235,8 @@ export interface RunDeps {
   model?: Partial<WriteModel>;
   /** Where credentials are read; defaults to `process.env`. */
   env?: Env;
+  /** Cancels PUN acquisition during scheduler shutdown. */
+  signal?: AbortSignal;
   /** The process's OAuth2 grants, which a feed with `oauth2-authorization-code` auth reads. */
   grants?: OAuthGrants;
   /**
@@ -759,6 +761,7 @@ async function runAttempt(
             guardedFeedFetch(deps, src.endpoints[role]?.timeoutSec),
             {
               resolvers: domainOf(src).resolvers,
+              ...(deps.signal ? { signal: deps.signal } : {}),
               env,
               ...(deps.grants ? { grants: deps.grants } : {}),
               at: polledAt,

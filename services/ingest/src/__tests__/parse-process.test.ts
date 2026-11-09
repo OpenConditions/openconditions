@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { setFlagsFromString } from "node:v8";
 import { runInNewContext } from "node:vm";
@@ -58,6 +59,49 @@ describe("the parse process", { timeout: 60_000 }, () => {
       ctx,
     });
     expect(held).toEqual(expected);
+  });
+
+  it("preserves PUN bundle validation and diagnostics through worker serialization", async () => {
+    const body = fixture("../../../../packages/charging/src/__tests__/fixtures/pun-uta.json");
+    const manifest = Buffer.from(
+      JSON.stringify({
+        sources: {
+          pun: {
+            status: "ok",
+            last_run: "2026-11-06T07:08:53Z",
+            files: [
+              {
+                key: "pun/092090.json",
+                size: body.length,
+                md5: createHash("md5").update(body).digest("hex"),
+              },
+            ],
+          },
+        },
+      }),
+    );
+    const feed = repoFeed("it-agid-pun-charging");
+    const main = [manifest, body, manifest];
+    const expected = formatOf(feed).parse(feed, { main }, ctx);
+    const parsed = await child.parse({
+      feed,
+      payloads: { main: main.map((data) => ({ data, gzipped: false })) },
+      ctx,
+    });
+    expect(parsed.output).toEqual(expected);
+    expect(parsed.output.observations).toEqual([]);
+    await expect(
+      child.parse({
+        feed,
+        payloads: {
+          main: [
+            { data: manifest, gzipped: false },
+            { data: body, gzipped: false },
+          ],
+        },
+        ctx,
+      }),
+    ).rejects.toMatchObject({ stage: "parse" });
   });
 
   it("inspects a complete snapshot and counts the records it drops, as the inline path does", async () => {
