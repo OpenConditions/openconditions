@@ -164,6 +164,7 @@ const FORMATS: FeedFormat<RoadFeed>[] = [
   situations("digitraffic"),
   situations("ohgo-events"),
   situations("vic-disruptions"),
+  situations("wa-webeoc"),
   measurements(
     "datex2-measured",
     { required: false, decoders: ["datex2-sites", "france-comptage-csv"] },

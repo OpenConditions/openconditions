@@ -4,6 +4,15 @@ const point = { type: "Point", coordinates: [8.68, 50.11] };
 
 /** Samples of the roads event formats and the sign format. */
 export const SAMPLES: SkipSamples = {
+  "roads/wa-webeoc": {
+    reason: "no_geometry",
+    payloads: {
+      main: JSON.stringify({
+        type: "FeatureCollection",
+        features: [{ type: "Feature", geometry: null, properties: { Id: 1, publishExt: "Yes" } }],
+      }),
+    },
+  },
   "roads/open511": {
     reason: "unknown_value",
     payloads: {

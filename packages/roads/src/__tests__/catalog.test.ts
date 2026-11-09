@@ -67,10 +67,10 @@ const AUTOBAHN_FLOW = [
 ];
 
 describe("the roads catalogue", () => {
-  test("the catalogue holds the 111 roads feeds under their new ids", () => {
+  test("the catalogue holds the 112 roads feeds under their new ids", () => {
     const { files, credentials } = repoCatalog();
     const ids = files.flatMap((f) => f.feeds.map((d) => deriveFeedId({ region: f.region, ...d })));
-    expect(ids).toHaveLength(111);
+    expect(ids).toHaveLength(112);
     expect(ids).toEqual(
       expect.arrayContaining([
         "nl-ndw-events",
@@ -104,6 +104,7 @@ describe("the roads catalogue", () => {
       [
         "ar-ba-cortes-events",
         "at-asfinag-events",
+        "au-wa-mainroads-closures-events",
         "au-nsw-livetraffic-events",
         "au-sa-trafficsa-events",
         "au-sa-trafficsa-closures-events",
