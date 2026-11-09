@@ -636,11 +636,7 @@
             "note": "Earthquake dataset metadata explicitly applies Creative Commons Attribution 3.0 New Zealand. DOI https://doi.org/10.21420/0S8P-TZ38. Policy https://www.geonet.org.nz/policy; legal code https://creativecommons.org/licenses/by/3.0/nz/legalcode. Scoped to earthquake parameters; excludes external basemaps, images, felt reports and other products."
           },
           "privacyUrl": "https://www.earthsciences.nz/privacy-policy",
-          "homepage": "https://www.geonet.org.nz/data/types/eq_catalogue",
-          "disabled": {
-            "reason": "Reconciliation contract requires independent qualification before activation; the worker also enforces this gate.",
-            "since": "2026-11-07"
-          }
+          "homepage": "https://www.geonet.org.nz/data/types/eq_catalogue"
         }
       ]
     },
@@ -1735,10 +1731,6 @@
       },
       "privacyUrl": "https://www.earthsciences.nz/privacy-policy",
       "homepage": "https://www.geonet.org.nz/data/types/eq_catalogue",
-      "disabled": {
-        "reason": "Reconciliation contract requires independent qualification before activation; the worker also enforces this gate.",
-        "since": "2026-11-07"
-      },
       "id": "nz-geonet-quakes",
       "domain": "hazards",
       "region": "nz",

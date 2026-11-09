@@ -706,7 +706,7 @@ describe("hazards fires, quakes and smoke through the pipeline", () => {
 });
 
 describe("hazards feeds in the catalogue", () => {
-  it("holds the thirteen feeds", () => {
+  it("holds the fourteen enabled feeds", () => {
     expect(HAZARDS.map((f) => f.id).sort()).toEqual([
       "ca-eccc-alerts",
       "de-dwd-alerts",
@@ -717,6 +717,7 @@ describe("hazards feeds in the catalogue", () => {
       "nasa-eonet-events",
       "nasa-firms-modis-fires",
       "nasa-firms-viirs-fires",
+      "nz-geonet-quakes",
       "us-nifc-fires",
       "us-noaa-hms-smoke",
       "us-nws-alerts",

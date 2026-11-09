@@ -348,13 +348,14 @@ export function geonetRevision(detail: Rec, history: readonly Rec[], fetchedAt: 
   return newest;
 }
 
-const clockKey = (c: Clocks) => [c.created, c.modified];
+const instantKey = (t: string | undefined) => (t === undefined ? null : ticks(t).toString());
+const clockKey = (c: Clocks) => [instantKey(c.created), instantKey(c.modified)];
 const magnitudeKey = (s: GeonetSolution) => [s.magnitude?.value, s.magnitude?.scale];
 const solutionKey = (s: GeonetSolution) =>
   JSON.stringify([
     s.id,
     s.type,
-    s.time,
+    instantKey(s.time),
     s.point,
     s.depth,
     magnitudeKey(s),
@@ -366,43 +367,59 @@ const solutionKey = (s: GeonetSolution) =>
     clockKey(s.clocks.magnitude),
   ]);
 
-/** Only an ordered event revision with non-regressing component clocks may supersede a conflict. */
+/** Componentwise partial order: an unrelated later clock cannot authorize a changed object. */
 export function geonetSelect(a: GeonetSolution | undefined, b: GeonetSolution): GeonetSolution {
   if (!a) return b;
   if (solutionKey(a) === solutionKey(b)) return a;
-  const ac = latestClock(a.clocks.event),
-    bc = latestClock(b.clocks.event);
-  if (!ac || !bc || ticks(ac) === ticks(bc)) throw new Error("Incomparable GeoNet XML revisions");
-  const [older, newer] = ticks(ac) < ticks(bc) ? [a, b] : [b, a];
-  for (const component of ["origin", "magnitude"] as const) {
-    const x = latestClock(older.clocks[component]),
-      y = latestClock(newer.clocks[component]);
-    if (
-      JSON.stringify(clockKey(older.clocks[component])) !==
-        JSON.stringify(clockKey(newer.clocks[component])) &&
-      (!x || !y || ticks(y) < ticks(x))
-    )
-      throw new Error("Conflicting GeoNet component clocks");
-  }
-  if (
-    (older.preferredOrigin !== newer.preferredOrigin ||
-      JSON.stringify([older.time, older.point, older.depth, older.reviewed]) !==
-        JSON.stringify([newer.time, newer.point, newer.depth, newer.reviewed])) &&
-    (!latestClock(older.clocks.origin) ||
-      !latestClock(newer.clocks.origin) ||
-      ticks(latestClock(newer.clocks.origin)!) <= ticks(latestClock(older.clocks.origin)!))
-  )
-    throw new Error("Unordered GeoNet origin revision");
-  if (
-    (older.preferredMagnitude !== newer.preferredMagnitude ||
-      JSON.stringify(magnitudeKey(older)) !== JSON.stringify(magnitudeKey(newer))) &&
-    (!latestClock(older.clocks.magnitude) ||
-      !latestClock(newer.clocks.magnitude) ||
-      ticks(latestClock(newer.clocks.magnitude)!) <= ticks(latestClock(older.clocks.magnitude)!))
-  )
-    throw new Error("Unordered GeoNet magnitude revision");
-  return newer;
+  const follows = (older: GeonetSolution, newer: GeonetSolution): boolean => {
+    let advanced = false;
+    for (const component of ["event", "origin", "magnitude"] as const) {
+      const x = latestClock(older.clocks[component]),
+        y = latestClock(newer.clocks[component]);
+      if (
+        JSON.stringify(clockKey(older.clocks[component])) !==
+        JSON.stringify(clockKey(newer.clocks[component]))
+      ) {
+        if (!x || !y || ticks(y) < ticks(x)) return false;
+        // Creation metadata cannot silently change under an equal update clock.
+        if (ticks(y) === ticks(x)) return false;
+        advanced = true;
+      }
+    }
+    const changed = {
+      event:
+        JSON.stringify([older.id, older.type, older.preferredOrigin, older.preferredMagnitude]) !==
+        JSON.stringify([newer.id, newer.type, newer.preferredOrigin, newer.preferredMagnitude]),
+      origin:
+        older.preferredOrigin !== newer.preferredOrigin ||
+        JSON.stringify([instantKey(older.time), older.point, older.depth, older.reviewed]) !==
+          JSON.stringify([instantKey(newer.time), newer.point, newer.depth, newer.reviewed]),
+      magnitude:
+        older.preferredMagnitude !== newer.preferredMagnitude ||
+        JSON.stringify(magnitudeKey(older)) !== JSON.stringify(magnitudeKey(newer)),
+    };
+    for (const component of ["event", "origin", "magnitude"] as const) {
+      const x = latestClock(older.clocks[component]),
+        y = latestClock(newer.clocks[component]);
+      if (changed[component] && (!x || !y || ticks(y) <= ticks(x))) return false;
+    }
+    return advanced;
+  };
+  if (follows(a, b)) return b;
+  if (follows(b, a)) return a;
+  throw new Error("Incomparable GeoNet XML revisions");
 }
+
+// The API reports modification of the returned information. Only the event and its
+// resolved preferred objects participate; clocks of unselected magnitudes never do.
+const solutionUpdate = (s: GeonetSolution): string | undefined =>
+  Object.values(s.clocks)
+    .map(latestClock)
+    .filter((t): t is string => t !== undefined)
+    .reduce<string | undefined>((a, b) => (!a || ticks(b) > ticks(a) ? b : a), undefined);
+const apiClockMatches = (api: string, xml: string): boolean =>
+  ticks(api) === ticks(xml) ||
+  (/\.\d{3}Z$/.test(api) && ticks(api) / 1_000_000n === ticks(xml) / 1_000_000n);
 
 export function geonetAddSolution(
   candidates: Map<string, GeonetSolution[]>,
@@ -442,11 +459,12 @@ export function geonetDraft(
       for (const t of [c.created, c.modified])
         if (t && ticks(t) > ticks(fetchedAt)) throw new Error("Future GeoNet XML clock");
     const update = clock(p["modificationTime"]),
-      event = latestClock(solution.clocks.event);
+      event = solutionUpdate(solution);
     // API clocks truncate XML submilliseconds; origin/coordinates are rounded on the API.
     if (
-      (update && (!event || Date.parse(update) !== Date.parse(event))) ||
-      Math.abs(Date.parse(String(p["time"])) - Date.parse(solution.time)) > 1
+      (update &&
+        (!latestClock(solution.clocks.event) || !event || !apiClockMatches(update, event))) ||
+      !apiClockMatches(String(p["time"]), solution.time)
     )
       throw new Error("GeoNet API/XML revision conflict");
     const geometry = pointGeometry(feature["geometry"]);
@@ -523,6 +541,11 @@ export function parseGeonet(
   const candidates = new Map<string, GeonetSolution[]>();
   for (const s of (payloads["solutions"] ?? []).flatMap(geonetSolutions))
     solutions.set(s.id, geonetAddSolution(candidates, s, ctx.fetchedAt));
+  // Internal durable preferred metadata accompanies original XML; it is never a rebuilt XML response.
+  for (const buffer of payloads["selected"] ?? []) {
+    const s = JSON.parse(buffer.toString("utf8")) as GeonetSolution;
+    solutions.set(s.id, geonetAddSolution(candidates, s, ctx.fetchedAt));
+  }
   const history = (payloads["history"] ?? []).flatMap(geonetFeatures);
   const out = emptyParseOutput();
   const details = (payloads["detail"] ?? []).flatMap(geonetFeatures);

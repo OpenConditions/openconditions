@@ -10,11 +10,12 @@ import {
   geonetRevision,
   geonetSolutions,
 } from "@openconditions/hazards";
-import type { CatalogFeed, RecordDraft } from "@openconditions/ingest-framework";
+import type { CatalogFeed, FeedPayloads, RecordDraft } from "@openconditions/ingest-framework";
 import { tombstoneRecords, writeSnapshotIn } from "@openconditions/storage";
 import type postgres from "postgres";
 import type { RawArchive } from "../raw/archive.js";
 import { rawTierFor } from "../raw/tiers.js";
+import type { ParseProcess } from "./parse-process.js";
 import { stampAttribution, type WriteModel } from "./publish.js";
 import { openPollAttempt, upsertSourceStatus } from "./source-status.js";
 
@@ -24,6 +25,7 @@ export const GEONET_MAX_EVENTS = 512;
 type RevisionState = Record<string, { feature?: Rec; solution?: GeonetSolution }>;
 export interface GeonetAcquisition {
   revisions: RevisionState;
+  payloads: FeedPayloads;
   drafts: RecordDraft[];
   terminal: string[];
   hashes: string[];
@@ -47,6 +49,7 @@ export async function acquireGeonet(
   let requests = 0;
   let bytes = 0;
   const hashes: string[] = [];
+  const payloads: Record<string, Buffer[]> = { solutions: [], detail: [], selected: [] };
   const request = async (
     url: string,
     accept: string,
@@ -137,6 +140,7 @@ export async function acquireGeonet(
       await window(start, middle, updated);
       await window(middle - 1000, end, updated);
     } else if (res.status === 200) {
+      payloads["solutions"]!.push(res.body);
       for (const s of geonetSolutions(res.body)) {
         add(s.id);
         solutions.set(s.id, geonetAddSolution(candidates, s, at));
@@ -191,6 +195,7 @@ export async function acquireGeonet(
         "application/xml",
       );
       if (xml.status === 200) {
+        payloads["solutions"]!.push(xml.body);
         const selected = geonetSolutions(xml.body);
         if (selected.length !== 1 || selected[0]!.id !== id)
           throw new Error("GeoNet exact-event mismatch");
@@ -198,6 +203,10 @@ export async function acquireGeonet(
       } else if (xml.status !== 204) throw new Error("GeoNet exact-event incomplete");
     }
     revisions[id] = { feature: current, solution };
+    payloads["detail"]!.push(
+      Buffer.from(JSON.stringify({ type: "FeatureCollection", features: [current] })),
+    );
+    if (solution) payloads["selected"]!.push(Buffer.from(JSON.stringify(solution)));
     const draft = geonetDraft(feed, current, solution, at);
     if (!draft) terminal.push(id);
     else if (
@@ -208,6 +217,7 @@ export async function acquireGeonet(
   }
   return {
     revisions,
+    payloads,
     drafts,
     terminal,
     hashes,
@@ -226,6 +236,7 @@ export async function runGeonet(
     model: WriteModel;
     signal?: AbortSignal;
     raw?: RawArchive;
+    parseProcess?: ParseProcess;
   },
 ): Promise<{ count: number; durationMs: number; error?: string }> {
   const started = Date.now();
@@ -260,6 +271,30 @@ export async function runGeonet(
       },
       prior?.revisions,
     );
+    const payloadBytes = Object.values(acquired.payloads)
+      .flat()
+      .reduce((n, b) => n + b.length, 0);
+    if (deps.parseProcess && payloadBytes >= deps.parseProcess.minBytes) {
+      const parsed = await deps.parseProcess.parse({
+        feed: src,
+        payloads: Object.fromEntries(
+          Object.entries(acquired.payloads).map(([role, bodies]) => [
+            role,
+            bodies.map((data) => ({ data, gzipped: false })),
+          ]),
+        ),
+        ctx: { fetchedAt: at, cadenceSec: src.cadenceSec, reference: {} },
+      });
+      // The acquisition validates durable authority; the child must reproduce the same drafts.
+      const expected = new Map(acquired.drafts.map((d) => [String(d["id"]), d]));
+      const drafts = parsed.output.situations.filter((d) => expected.has(String(d["id"])));
+      if (
+        drafts.length !== expected.size ||
+        drafts.some((d) => JSON.stringify(d) !== JSON.stringify(expected.get(String(d["id"]))))
+      )
+        throw new Error("GeoNet child/acquisition draft disagreement");
+      acquired.drafts = drafts;
+    }
     const summary = await deps.sql.begin(async (tx) => {
       await tx`SELECT pg_advisory_xact_lock(hashtext(${src.id}))`;
       const [latest] = await tx<

@@ -658,3 +658,31 @@ describe("feeds:check", () => {
     expect(md).not.toContain("lu-good-events");
   });
 });
+
+it("checks enabled GeoNet using full bounded reconciliation rather than capped discovery", async () => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date("2026-11-07T12:00:00Z"));
+  const fixture = `${process.cwd()}/packages/hazards/src/__tests__/fixtures/geonet/`;
+  const api = JSON.stringify({
+    type: "FeatureCollection",
+    features: [JSON.parse(readFileSync(`${fixture}history.geojson`, "utf8")).features[0]],
+  });
+  const xml = readFileSync(`${fixture}event.xml`);
+  const calls: string[] = [];
+  try {
+    const results = await checkFeeds({
+      feedsDir: `${process.cwd()}/feeds`,
+      files: [`${process.cwd()}/feeds/hazards/nz.jsonc`],
+      fetch: (async (url) => {
+        calls.push(String(url));
+        return new Response(String(url).includes("service.geonet") ? xml : api);
+      }) as typeof fetch,
+    });
+    expect(results).toHaveLength(1);
+    expect(results[0]).toMatchObject({ level: "ok", records: 1 });
+    expect(calls.filter((u) => u.includes("starttime="))).toHaveLength(3);
+    expect(calls.some((u) => u.includes("/history/"))).toBe(true);
+  } finally {
+    vi.useRealTimers();
+  }
+});

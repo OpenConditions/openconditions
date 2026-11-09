@@ -7,10 +7,6 @@
       "name": "GeoNet New Zealand earthquakes",
       "tier": "authoritative",
       "format": "geonet",
-      "disabled": {
-        "since": "2026-11-07",
-        "reason": "Reconciliation contract requires independent qualification before activation; the worker also enforces this gate.",
-      },
       "endpoints": {
         "recent": {
           "url": "https://api.geonet.org.nz/quake?MMI=-1",

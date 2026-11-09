@@ -216,8 +216,6 @@ export interface RunResult {
 }
 
 export interface RunDeps {
-  /** Enables only deterministic contract qualification; no runtime environment override. */
-  geonetQualification?: "contract-test";
   sql: Sql;
   fetch: typeof fetch;
   now: () => string;
@@ -435,14 +433,13 @@ export function createOpenlrClient(): MapMatchClient | null {
  */
 export async function runSource(src: CatalogFeed, deps: RunDeps): Promise<RunResult> {
   if (src.format === "geonet") {
-    if (deps.geonetQualification !== "contract-test")
-      throw new Error("GeoNet activation awaits reconciliation qualification");
     return runGeonet(src, {
       sql: deps.sql,
       fetch: feedFetch(src, deps),
       now: deps.now,
       model: writeModel(deps.model),
       raw: deps.raw,
+      parseProcess: deps.parseProcess,
     });
   }
   const attemptAt = deps.now();

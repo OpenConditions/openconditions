@@ -272,7 +272,7 @@ it("compares persisted preferred solutions independently of JSON object key orde
   expect(() => geonetSelect(persisted, solution)).toThrow("Incomparable");
 });
 
-it("preserves the captured API versus event-clock disagreement without guessing a revision", () => {
+it("joins the captured preferred-magnitude update without changing the event clock", () => {
   const current = geonetRevision(
     geonetFeatures(body("component-clock-detail.geojson"))[0]!,
     geonetFeatures(body("component-clock-history.geojson")),
@@ -282,6 +282,70 @@ it("preserves the captured API versus event-clock disagreement without guessing 
   expect(props(current)["modificationTime"]).toBe("2026-11-08T21:30:01.678Z");
   expect(solution.clocks.event.modified).toBe("2026-11-08T21:29:52.729711Z");
   expect(solution.clocks.magnitude.modified).toBe("2026-11-08T21:30:01.678579Z");
+  expect(geonetDraft(feed(), current, solution, "2026-11-09T10:00:54.987Z")).toHaveProperty(
+    "provenance.sourceUpdatedAt",
+    "2026-11-08T21:30:01.678Z",
+  );
+});
+
+it("orders a preferred magnitude update independently but rejects changed classification and regressed origin", () => {
+  const a = geonetSolutions(body("component-clock.xml"))[0]!;
+  const b = structuredClone(a);
+  b.clocks.magnitude.modified = "2026-11-08T21:30:02.678579Z";
+  b.magnitude!.value += 0.1;
+  expect(geonetSelect(a, b)).toBe(b);
+  expect(geonetSelect(b, a)).toBe(b);
+  const classified = structuredClone(b);
+  classified.type = "quarry blast";
+  expect(() => geonetSelect(a, classified)).toThrow();
+  const regressed = structuredClone(b);
+  regressed.clocks.origin.modified = "2026-11-08T21:29:51Z";
+  expect(() => geonetSelect(a, regressed)).toThrow();
+  const tied = structuredClone(a);
+  tied.magnitude!.value += 0.1;
+  expect(() => geonetSelect(a, tied)).toThrow();
+});
+it("canonicalizes equivalent instants without collapsing distinct microsecond revisions", () => {
+  const a = geonetSolutions(body("event.xml"))[0]!;
+  const b = structuredClone(a);
+  b.time += "";
+  b.clocks.event.modified = "2026-11-06T20:06:22.536381000Z";
+  expect(geonetSelect(a, b)).toBe(a);
+  b.clocks.event.modified = "2026-11-06T20:06:22.536382Z";
+  expect(geonetSelect(a, b)).toBe(b);
+});
+it("rejects stale API information and mismatched high precision rather than rounding revisions away", () => {
+  const current = geonetRevision(
+    geonetFeatures(body("component-clock-detail.geojson"))[0]!,
+    geonetFeatures(body("component-clock-history.geojson")),
+    "2026-11-09T10:00:54.987Z",
+  );
+  const solution = geonetSolutions(body("component-clock.xml"))[0]!;
+  for (const time of [
+    "2026-11-08T21:29:52.729Z",
+    "2026-11-08T21:30:01.678580Z",
+    "2026-11-08T21:30:01Z",
+  ]) {
+    props(current)["modificationTime"] = time;
+    expect(() => geonetDraft(feed(), current, solution, "2026-11-09T10:00:54.987Z")).toThrow(
+      "revision conflict",
+    );
+  }
+  props(current)["modificationTime"] = "2026-11-08T21:30:01.678579000Z";
+  expect(geonetDraft(feed(), current, solution, "2026-11-09T10:00:54.987Z")).not.toBeNull();
+});
+
+it("ignores clocks of an unselected magnitude and rejects a missing selected clock", () => {
+  const current = geonetRevision(
+    geonetFeatures(body("component-clock-detail.geojson"))[0]!,
+    geonetFeatures(body("component-clock-history.geojson")),
+    "2026-11-09T10:00:54.987Z",
+  );
+  const raw = body("component-clock.xml").toString();
+  const extra = `<magnitude publicID="smi:nz.org.geonet/unselected"><mag><value>9</value></mag><type>Mw</type><creationInfo><creationTime>2026-11-09T09:00:00Z</creationTime></creationInfo></magnitude>`;
+  const solution = geonetSolutions(Buffer.from(raw.replace("</event>", extra + "</event>")))[0]!;
+  expect(geonetDraft(feed(), current, solution, "2026-11-09T10:00:54.987Z")).not.toBeNull();
+  solution.clocks.magnitude = {};
   expect(() => geonetDraft(feed(), current, solution, "2026-11-09T10:00:54.987Z")).toThrow(
     "revision conflict",
   );

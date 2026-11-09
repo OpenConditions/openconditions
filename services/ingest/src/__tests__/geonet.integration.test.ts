@@ -17,6 +17,7 @@ import { registerApiRoutes } from "../api/routes.js";
 import { registerScope } from "../api/scope.js";
 import { sourcesOf } from "../api/sources.js";
 import { acquireGeonet } from "../pipeline/geonet.js";
+import { createParseProcess } from "../pipeline/parse-process.js";
 import { createRoleState, runSource } from "../pipeline/run.js";
 import { createRawArchive } from "../raw/archive.js";
 
@@ -112,7 +113,6 @@ const poll = () =>
     lookup,
     now: () => now,
     model: { registry, instanceId: "geonet-test" },
-    geonetQualification: "contract-test",
     raw: createRawArchive(db.sql, { dir: rawDir }),
     roles: createRoleState(),
   });
@@ -147,14 +147,24 @@ afterAll(async () => {
 }, 30_000);
 
 describe("GeoNet bounded worker and durable publication lifecycle", () => {
-  it("enforces the runtime gate as well as the disabled catalogue", async () => {
-    expect(feed.disabled).toBeDefined();
-    await expect(
-      runSource(feed, { sql: db.sql, fetch: fakeFetch, now: () => now }),
-    ).rejects.toThrow("qualification");
-    expect(sourcesOf({ sources: [feed] })).toEqual([]);
+  it("publishes the enabled catalogue through ordinary runSource without attestation", async () => {
+    expect(feed.disabled).toBeUndefined();
+    expect(sourcesOf({ sources: [feed] }).map((s) => s.id)).toContain(feed.id);
+    expect(
+      (
+        await runSource(feed, {
+          sql: db.sql,
+          fetch: fakeFetch,
+          lookup,
+          now: () => now,
+          model: { registry, instanceId: "geonet-enabled" },
+          roles: createRoleState(),
+        })
+      ).error,
+    ).toBeUndefined();
   });
   it("publishes precise canonical values and exposes credits through API/export", async () => {
+    now = "2026-11-07T12:00:01Z";
     expect((await poll()).error).toBeUndefined();
     expect((await kept()).record).toMatchObject({
       id: ID,
@@ -539,4 +549,47 @@ it("commits one durable generation when two same-clock polls race", async () => 
   expect(results.filter((r) => !r.error)).toHaveLength(1);
   expect((await kept()).tombstone_reason).toBeNull();
   expect(await cursor()).toContain("12:06:00");
+});
+
+it("runs reconciled original XML and selected detail through the normal parse child", async () => {
+  await db.sql`DELETE FROM conditions.geonet_coverage WHERE source_id = ${feed.id}`;
+  Object.assign(feature, structuredClone(captured));
+  xml = capturedXml;
+  exactXml = undefined;
+  historyRows = [];
+  noData = false;
+  noDetail = false;
+  malformedDiscovery = false;
+  now = "2026-11-08T12:07:00Z";
+  const child = createParseProcess({ minBytes: 0 });
+  let tasks = 0;
+  try {
+    const result = await runSource(feed, {
+      sql: db.sql,
+      fetch: fakeFetch,
+      lookup,
+      now: () => now,
+      model: { registry, instanceId: "geonet-child" },
+      roles: createRoleState(),
+      parseProcess: {
+        minBytes: 0,
+        get running() {
+          return child.running;
+        },
+        close: () => child.close(),
+        parse: async (task) => {
+          tasks++;
+          expect(
+            task.payloads.solutions!.some((p) => Buffer.from(p.data).toString() === capturedXml),
+          ).toBe(true);
+          return child.parse(task);
+        },
+      },
+    });
+    expect(result.error).toBeUndefined();
+    expect(tasks).toBe(1);
+    expect((await kept()).record).toHaveProperty("details.magnitude.scale", "MLv");
+  } finally {
+    await child.close();
+  }
 });
