@@ -150,5 +150,6 @@ test("redacting PUN diagnostics preserves a verifiable public content hash", () 
   };
   record.contentHash = contentHash(record as unknown as Record<string, unknown>);
   const [shown] = publicRecords([record]);
+  expect(shown).not.toHaveProperty("extras");
   expect(shown?.contentHash).toBe(contentHash(shown as unknown as Record<string, unknown>));
 });

@@ -84,21 +84,21 @@ export function publicRecords<T extends EgressRecord>(records: readonly T[]): T[
     // PUN status and extraction metadata are internal diagnostics, never live availability.
     if (stripped.provenance.sourceFormat === "pun" && stripped.extras?.["pun"] !== undefined) {
       const { pun: _pun, ...extras } = stripped.extras;
-      stripped = { ...stripped, extras } as T;
-      if (stripped.contentHash !== undefined)
-        stripped = {
-          ...stripped,
-          contentHash: contentHash(stripped as unknown as Record<string, unknown>),
-        } as T;
+      const { extras: _originalExtras, ...rest } = stripped;
+      stripped = (Object.keys(extras).length === 0 ? rest : { ...rest, extras }) as T;
     }
+    const finish = (value: T): T =>
+      value !== record && value.contentHash !== undefined
+        ? ({ ...value, contentHash: contentHash(value as unknown as Record<string, unknown>) } as T)
+        : value;
     const merged = stripped.provenance.mergedSources;
-    if (merged === undefined) return stripped;
+    if (merged === undefined) return finish(stripped);
     const clean = merged.filter((m) => isPublicLicense(m.attribution.license));
-    if (clean.length === merged.length) return stripped;
+    if (clean.length === merged.length) return finish(stripped);
     const { mergedSources: _merged, ...provenance } = stripped.provenance;
-    return {
+    return finish({
       ...stripped,
       provenance: clean.length === 0 ? provenance : { ...provenance, mergedSources: clean },
-    } as T;
+    } as T);
   });
 }
