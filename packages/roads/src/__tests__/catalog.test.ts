@@ -67,10 +67,10 @@ const AUTOBAHN_FLOW = [
 ];
 
 describe("the roads catalogue", () => {
-  test("the catalogue holds the 111 roads feeds under their new ids", () => {
+  test("the catalogue holds the 123 roads feeds under their new ids", () => {
     const { files, credentials } = repoCatalog();
     const ids = files.flatMap((f) => f.feeds.map((d) => deriveFeedId({ region: f.region, ...d })));
-    expect(ids).toHaveLength(111);
+    expect(ids).toHaveLength(123);
     expect(ids).toEqual(
       expect.arrayContaining([
         "nl-ndw-events",
@@ -200,6 +200,19 @@ describe("the roads catalogue", () => {
         "si-nap-events",
         "th-longdo-events",
         "us-wzdx-events",
+        "us-ca-caltrans-d01-signs",
+        "us-ca-caltrans-d02-signs",
+        "us-ca-caltrans-d03-signs",
+        "us-ca-caltrans-d04-signs",
+        "us-ca-caltrans-d05-signs",
+        "us-ca-caltrans-d06-signs",
+        "us-ca-caltrans-d07-signs",
+        "us-ca-caltrans-d08-signs",
+        "us-ca-caltrans-d09-signs",
+        "us-ca-caltrans-d10-signs",
+        "us-ca-caltrans-d11-signs",
+        "us-ca-caltrans-d12-signs",
+
         "us-ny-511-events",
         "us-ny-511-conditions",
         "us-ny-511-signs",

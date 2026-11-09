@@ -64,6 +64,7 @@
               "autobahn",
               "bcn-trams",
               "bonn",
+              "caltrans-cms",
               "cars",
               "cars-signs",
               "datex2",
@@ -1095,6 +1096,15 @@
               "since"
             ],
             "additionalProperties": false
+          },
+          "caltransSnapshotQualified": {
+            "type": "boolean",
+            "const": true
+          },
+          "caltransDistrict": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 12
           },
           "geojson": {
             "type": "object",
