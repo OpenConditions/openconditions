@@ -1,4 +1,4 @@
-import { mkdir, readFile, rename, stat, writeFile } from "node:fs/promises";
+import { mkdir, open, rename, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { deserialize, serialize } from "node:v8";
 import { createFetchState, type FetchState } from "@openconditions/ingest-framework";
@@ -8,9 +8,26 @@ const MAX_BYTES = 32 * 1024 * 1024;
 /** Disposable local cache: publication authority remains in PostgreSQL. */
 export async function loadAcquisitionCache(path: string, config: string) {
   try {
-    const info = await stat(path);
-    if (info.size > MAX_BYTES || Date.now() - info.mtimeMs > 86400_000) return undefined;
-    const value = deserialize(await readFile(path));
+    const file = await open(path, "r");
+    let bytes: Buffer;
+    try {
+      const info = await file.stat();
+      if (!info.isFile() || info.size > MAX_BYTES || Date.now() - info.mtimeMs > 86400_000)
+        return undefined;
+      // Read the checked descriptor, with one byte to detect growth, never an unbounded path read.
+      bytes = Buffer.alloc(info.size + 1);
+      let offset = 0;
+      while (offset < bytes.length) {
+        const { bytesRead } = await file.read(bytes, offset, bytes.length - offset, offset);
+        if (!bytesRead) break;
+        offset += bytesRead;
+      }
+      if (offset !== info.size) return undefined;
+      bytes = bytes.subarray(0, offset);
+    } finally {
+      await file.close();
+    }
+    const value = deserialize(bytes);
     if (
       value.version !== 1 ||
       value.config !== config ||

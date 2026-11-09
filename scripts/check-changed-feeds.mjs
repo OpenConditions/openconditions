@@ -102,17 +102,37 @@ function select() {
   ) {
     throw new Error("Missing or inconsistent PR event/repository/ref identity");
   }
-  const base = sha(pr.base.sha, "event base");
+  const eventBase = sha(pr.base.sha, "event base");
   const head = sha(pr.head.sha, "event head");
   const checkout = sha(env.GITHUB_SHA, "event merge");
   if (resolve(git(["rev-parse", "--show-toplevel"]).text.trim()) !== resolve(process.cwd())) {
     throw new Error("Run changed-feed checking from the checkout root");
   }
-  for (const commit of [base, head, checkout]) git(["cat-file", "-e", `${commit}^{commit}`]);
+  for (const commit of [eventBase, head, checkout]) git(["cat-file", "-e", `${commit}^{commit}`]);
   cleanCheckout(checkout);
   const parents = git(["show", "--no-patch", "--format=%P", checkout]).text.trim().split(" ");
-  if (parents.length !== 2 || parents[0] !== base || parents[1] !== head) {
-    throw new Error("Merge checkout parents do not match the exact event base/head");
+  if (parents.length !== 2 || parents[1] !== head) {
+    throw new Error("Merge checkout parents do not match the exact event head");
+  }
+  const base = sha(parents[0], "merge base");
+  if (git(["rev-parse", "--is-shallow-repository"]).text.trim() !== "false") {
+    throw new Error("Full base history is required");
+  }
+  const baseRef = `refs/remotes/origin/${pr.base.ref}`;
+  git(["check-ref-format", baseRef]);
+  const baseTip = sha(
+    git(["rev-parse", "--verify", `${baseRef}^{commit}`]).text.trim(),
+    "base tip",
+  );
+  // Checkout may use a newer target than the event snapshot. Bind that target to
+  // the fetched base branch, then diff from it so inherited main changes stay out.
+  for (const [ancestor, descendant] of [
+    [eventBase, base],
+    [base, baseTip],
+  ]) {
+    if (git(["merge-base", "--is-ancestor", ancestor, descendant], [0, 1]).status !== 0) {
+      throw new Error("Merge base is not an event-base descendant on the fetched base branch");
+    }
   }
   const diff = (scope) =>
     changes(
@@ -158,7 +178,9 @@ function select() {
   return {
     repository,
     pullRequest: event.number,
+    eventBase,
     base,
+    baseTip,
     head,
     checkout,
     files: [...new Set(files)].sort(),
