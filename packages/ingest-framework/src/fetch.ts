@@ -24,6 +24,7 @@ import { nextLinkTarget } from "./link-header.js";
 import type { OAuthGrants } from "./oauth-grant.js";
 import { digestPayload, type PayloadDigest } from "./payload.js";
 import { feedSecretValues, redactSecrets, redactUrl } from "./redact.js";
+import { SMN_INDEX, smnLinks } from "./smn-rss.js";
 import { unzipEntries } from "./zip.js";
 
 const GZIP_MAGIC_0 = 0x1f;
@@ -62,6 +63,53 @@ export function createFetchState(): FetchState {
   return { conditional: new Map(), sourceConfig: new Map(), pacers: new Map() };
 }
 
+/** Bound waits as well as I/O; always detach the listener when either settles. */
+function abortable<T>(work: Promise<T>, signal?: AbortSignal | null): Promise<T> {
+  if (!signal) return work;
+  return new Promise<T>((resolve, reject) => {
+    const abort = () => reject(signal.reason);
+    signal.addEventListener("abort", abort, { once: true });
+    work.then(
+      (value) => {
+        signal.removeEventListener("abort", abort);
+        resolve(value);
+      },
+      (error: unknown) => {
+        signal.removeEventListener("abort", abort);
+        reject(error);
+      },
+    );
+    if (signal.aborted) {
+      signal.removeEventListener("abort", abort);
+      abort();
+    }
+  });
+}
+
+async function responseBytes(res: Response, signal?: AbortSignal | null): Promise<ArrayBuffer> {
+  if (!signal || !res.body) return res.arrayBuffer();
+  const reader = res.body.getReader();
+  const chunks: Uint8Array[] = [];
+  const cancel = () => {
+    void reader.cancel(signal.reason).catch(() => {});
+  };
+  signal.addEventListener("abort", cancel, { once: true });
+  try {
+    if (signal.aborted) cancel();
+    signal.throwIfAborted();
+    while (true) {
+      const { done, value } = await abortable(reader.read(), signal);
+      signal.throwIfAborted();
+      if (done) break;
+      chunks.push(value);
+    }
+    return Uint8Array.from(Buffer.concat(chunks)).buffer;
+  } finally {
+    signal.removeEventListener("abort", cancel);
+    reader.releaseLock();
+  }
+}
+
 /** When a feed's recent requests started, and the turn the next one waits for. */
 interface Pacer {
   starts: number[];
@@ -78,21 +126,36 @@ const MINUTE_MS = 60_000;
  * page sequence finishes at the rate the publisher allows.
  */
 function pacedFetch(pacer: Pacer, perMinute: number, fetchFn: FetchFn): FetchFn {
-  const wait = async (): Promise<void> => {
-    const sinceWindow = () => Date.now() - MINUTE_MS;
-    pacer.starts = pacer.starts.filter((t) => t > sinceWindow());
-    if (pacer.starts.length >= perMinute) {
-      const delay = (pacer.starts[0] ?? 0) + MINUTE_MS - Date.now();
-      // A wait of up to a minute never holds a stopping process open.
-      await new Promise((resolve) => setTimeout(resolve, Math.max(0, delay)).unref());
-      pacer.starts = pacer.starts.filter((t) => t > sinceWindow());
-    }
-    pacer.starts.push(Date.now());
-  };
   return (async (...args: Parameters<FetchFn>) => {
+    const signal = args[1]?.signal;
+    const wait = async () => {
+      signal?.throwIfAborted();
+      const prune = () => {
+        pacer.starts = pacer.starts.filter((t) => t > Date.now() - MINUTE_MS);
+      };
+      prune();
+      if (pacer.starts.length >= perMinute) {
+        const delay = Math.max(0, (pacer.starts[0] ?? 0) + MINUTE_MS - Date.now());
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        try {
+          await abortable(
+            new Promise<void>((resolve) => {
+              timer = setTimeout(resolve, delay).unref();
+            }),
+            signal,
+          );
+        } finally {
+          clearTimeout(timer);
+        }
+        prune();
+      }
+      signal?.throwIfAborted();
+      pacer.starts.push(Date.now());
+    };
     const mine = pacer.turn.then(wait);
     pacer.turn = mine.catch(() => {});
-    await mine;
+    await abortable(mine, signal);
+    signal?.throwIfAborted();
     return fetchFn(...args);
   }) as FetchFn;
 }
@@ -280,7 +343,7 @@ async function fetchOne(
     // subscription id — is also scrubbed, not just its query-string copy.
     throw new Error(`HTTP ${res.status} fetching ${redact(redactUrl(url))}`);
   }
-  const arrayBuf = await res.arrayBuffer();
+  const arrayBuf = await responseBytes(res, init?.signal);
   const raw = Buffer.from(arrayBuf);
   const buffer = isGzip(raw)
     ? decodedFromGzip(await boundedGunzip(raw, MAX_DECOMPRESSED_BYTES), raw)
@@ -1227,6 +1290,84 @@ async function fetchRole(
       state.pacers.set(feed.id, pacer);
     }
     fetchFn = pacedFetch(pacer, perMinute, authorized);
+  }
+
+  if (endpoint.smnRss) {
+    if (feed.domain !== "hazards" || feed.format !== "cap" || role !== "alerts" || feed.snapshot)
+      throw new Error("SMN: requires rolling hazards CAP alerts without snapshot authority");
+    const kind = endpoint.smnRss;
+    // Stage validators: a failed child or refused publication must not advance them.
+    const prefix = `${feed.id}#${role}\0`;
+    const staged: FetchState = {
+      ...state,
+      conditional: new Map(
+        [...state.conditional]
+          .filter(([key]) => key.startsWith(prefix))
+          .map(([key, value]) => [key.slice(prefix.length), value]),
+      ),
+    };
+    const deadline = Date.now() + 120000;
+    const controller = new AbortController();
+    const timeoutError = new Error("SMN: acquisition time budget exceeded");
+    const timer = setTimeout(() => controller.abort(timeoutError), 120000).unref();
+    const checkDeadline = () => {
+      if (Date.now() >= deadline) controller.abort(timeoutError);
+      controller.signal.throwIfAborted();
+    };
+    const acquire = async (url: string) => {
+      checkDeadline();
+      const result = await abortable(
+        fetchOne(
+          url,
+          fetchFn,
+          { redirect: "error", signal: controller.signal },
+          staged,
+          true,
+          redact,
+        ),
+        controller.signal,
+      );
+      checkDeadline();
+      return result;
+    };
+    try {
+      const index = await acquire(SMN_INDEX[kind]);
+      const links = smnLinks(index.buffer, kind, at);
+      if (kind === "acp" && links.length > 0)
+        throw new Error("SMN: active ACP payloads require qualification");
+      const children: Awaited<ReturnType<typeof fetchOne>>[] = [];
+      let bytes = index.buffer.length;
+      // Serial requests respect the shared feed pacer and bound provider fan-out.
+      for (const url of links) {
+        const child = await acquire(url);
+        bytes += child.buffer.length;
+        if (child.buffer.length > 1024 * 1024 || bytes > 16 * 1024 * 1024)
+          throw new Error("SMN: CAP byte budget exceeded");
+        children.push(child);
+      }
+      checkDeadline();
+      return {
+        status: "fetched",
+        validatedAtNetwork: true,
+        bodyFreshness: index.changed && children.every((c) => c.changed) ? "acquired" : "held",
+        buffers: children.map((c) => c.buffer),
+        urls: links,
+        payloads: [index.payload, ...children.map((c) => c.payload)],
+        responses: [index.buffer, ...children.map((c) => c.buffer)],
+        partitions: { succeeded: links.length + 1, failed: 0, total: links.length + 1 },
+        accept: () => {
+          for (const key of state.conditional.keys())
+            if (key.startsWith(prefix)) state.conditional.delete(key);
+          for (const url of [SMN_INDEX[kind], ...links]) {
+            const value = staged.conditional.get(url);
+            if (value) state.conditional.set(prefix + url, value);
+          }
+        },
+      };
+    } finally {
+      clearTimeout(timer);
+      controller.abort(timeoutError);
+    }
   }
 
   if (feed.catalog) {

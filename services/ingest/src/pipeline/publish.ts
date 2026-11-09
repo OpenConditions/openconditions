@@ -21,6 +21,7 @@ import {
   writeSnapshotIn,
 } from "@openconditions/storage";
 import type postgres from "postgres";
+import { checkSmnWindow, type SmnWindow, storeSmnMessages } from "./smn-messages.js";
 import { upsertSourceStatus } from "./source-status.js";
 
 type Sql = postgres.Sql;
@@ -239,6 +240,7 @@ export async function publishSituations(
   src: Pick<CatalogFeed, "id" | "freshnessWindowSec">,
   input: {
     situations: readonly RecordDraft[];
+    smnWindow?: SmnWindow;
     unlocatable?: readonly string[];
     /** Local ids of the records behind `unlocatable`; a stored effect's id begins with its record's. */
     unlocatableRecords?: readonly string[];
@@ -272,7 +274,13 @@ export async function publishSituations(
           `(${unlocatable.length} unlocatable in source ${src.id})`,
       );
     }
+    if (input.smnWindow) await checkSmnWindow(tx, src.id, input.smnWindow, input.now);
     const summary = await writeSnapshotIn(tx, src.id, { situations }, writeContext(input));
+    if (input.smnWindow) {
+      if (summary.rejected.length > 0)
+        throw new Error("SMN: canonical rejection refuses the entire bulletin");
+      await storeSmnMessages(tx, src.id, input.smnWindow.messages, input.now);
+    }
     const [{ live }] = await tx<{ live: number }[]>`
       SELECT count(*)::int AS live FROM conditions.situation
        WHERE source_id = ${src.id} AND tombstoned_at IS NULL`;

@@ -272,6 +272,13 @@
                   ],
                   "additionalProperties": false
                 },
+                "smnRss": {
+                  "type": "string",
+                  "enum": [
+                    "ar",
+                    "acp"
+                  ]
+                },
                 "unzip": {
                   "type": "object",
                   "properties": {

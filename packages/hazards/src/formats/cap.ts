@@ -4,6 +4,7 @@ import type {
   ParseOutput,
   RecordSkipReason,
 } from "@openconditions/ingest-framework";
+import { XMLValidator } from "fast-xml-parser";
 import type { Geometry } from "geojson";
 import { capOutput } from "../cap/accounting.js";
 import type { DerivedShape } from "../cap/situations.js";
@@ -131,8 +132,26 @@ export function parseCap(
   let firstError: unknown;
   for (const body of bodies) {
     try {
-      alerts.push(readCapXml(body));
+      if (
+        feed.endpoints?.["alerts"]?.smnRss &&
+        XMLValidator.validate(body.toString("utf8")) !== true
+      )
+        throw new Error("SMN: malformed CAP XML");
+      const alert = readCapXml(body, Boolean(feed.endpoints?.["alerts"]?.smnRss));
+      if (feed.endpoints?.["alerts"]?.smnRss) {
+        const one = capOutput([alert], feed, {
+          fetchedAt: ctx.fetchedAt,
+          reportSkips: false,
+          rejectMalformed: true,
+        });
+        if ((one.records?.accepted ?? 0) === 0 && one.records?.terminal !== 1)
+          throw new Error("SMN: unusable CAP message refuses the bulletin");
+        if (alert.restriction || (alert.info ?? []).some((i) => (i.resource ?? []).length > 0))
+          throw new Error("SMN: unreviewed product rights or resources");
+      }
+      alerts.push(alert);
     } catch (error) {
+      if (feed.endpoints?.["alerts"]?.smnRss) throw error;
       firstError ??= error;
       const reason = error instanceof CapReadError ? error.reason : "malformed";
       undecoded[reason] = (undecoded[reason] ?? 0) + 1;
