@@ -149,9 +149,13 @@ export function parseCap(
           throw new Error("SMN: malformed CAP references");
         // Expiry is not validation: malformed hazards must never gain lifecycle
         // authority merely because ordinary CAP accounting treats them as terminal.
-        const validation = capDrafts(alert, feed, { fetchedAt: ctx.fetchedAt });
-        if ((validation.skipped.malformed ?? 0) > 0)
-          throw new Error("SMN: unusable CAP hazard refuses the bulletin");
+        for (const info of alert.info ?? []) {
+          const validation = capDrafts({ ...alert, info: [info] }, feed, {
+            fetchedAt: ctx.fetchedAt,
+          });
+          if ((validation.skipped.malformed ?? 0) > 0)
+            throw new Error("SMN: unusable CAP hazard refuses the bulletin");
+        }
         const one = capOutput([alert], feed, {
           fetchedAt: ctx.fetchedAt,
           reportSkips: false,

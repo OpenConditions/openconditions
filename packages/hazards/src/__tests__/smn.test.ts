@@ -257,3 +257,22 @@ it.each(["severity", "urgency", "certainty"])(
     expect(() => parseCap(generic, { alerts: [Buffer.from(xml)] }, ctx)).not.toThrow();
   },
 );
+
+it.each([false, true])(
+  "validates each expired SMN info before grouping (reverse=%s)",
+  (reverse) => {
+    const xml = body.toString();
+    const info = xml.match(/<info>.*<\/info>/s)![0]!;
+    const bad = info.replace(/<event>.*?<\/event>/s, "<event></event>");
+    const infos = reverse ? bad + info : info + bad;
+    const grouped = Buffer.from(xml.replace(info, infos));
+    const feed = catalogFeed("ar-smn-alerts");
+    const ctx = parseContext("2026-11-09T07:11:40Z");
+    expect(() => parseCap(feed, { alerts: [grouped] }, ctx)).toThrow("unusable");
+    const generic = {
+      ...feed,
+      endpoints: { alerts: { url: "https://example.org/cap", cadenceSec: 180 } },
+    };
+    expect(() => parseCap(generic, { alerts: [grouped] }, ctx)).not.toThrow();
+  },
+);

@@ -408,72 +408,84 @@ it("bounds variants by count and combined original/provenance bytes before publi
 });
 
 // Synthetic expired malformed update must not acquire authority over a valid warning.
-it("refuses expired malformed lifecycle actions without changing durable or public last-good state", async () => {
-  const db = await createTestDatabase();
-  const parser = createParseProcess({ minBytes: 1 });
-  const registry = buildRegistry(productionModules);
-  const feed = { ...repoFeed("ar-smn-alerts"), requestLimits: undefined };
-  const original = readFileSync(new URL("ar-000.xml", dir), "utf8");
-  const base = readCapXml(Buffer.from(original), true);
-  let body = Buffer.from(
-    original
-      .replace(/<msgType>.*?<\/msgType>/, "<msgType>Alert</msgType>")
-      .replace(/<references>.*?<\/references>/s, "<references></references>"),
-  );
-  let version = "v1";
-  const child = "https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_synthetic.xml";
-  const fetch = (async (input: string | URL | Request) =>
-    new Response(
-      String(input).endsWith("AR.php")
-        ? `<rss version="2.0"><channel><lastBuildDate>${new Date(at).toUTCString()}</lastBuildDate><copyright>Licencia CC BY 4.0</copyright><item><link>${child}</link></item></channel></rss>`
-        : body,
-      { headers: { etag: version } },
-    )) as typeof globalThis.fetch;
-  const tick = () =>
-    runSource(feed, {
-      sql: db.sql,
-      fetch,
-      now: () => at,
-      lookup: async () => [{ address: "93.184.216.34", family: 4 }],
-      model: { registry, instanceId: "test.local" },
-      roles: createRoleState(),
-      parseProcess: parser,
-    });
-  const originals = () => db.sql`SELECT * FROM conditions.smn_cap_message ORDER BY variant`;
-  const rows = () => db.sql`SELECT id,record,tombstoned_at FROM conditions.situation ORDER BY id`;
-  const decisions = () => db.sql`SELECT * FROM conditions.smn_cap_decision`;
-  const app = Fastify();
-  registerScope(app, "synthetic-expired-malformed");
-  registerApiRoutes(app, db.sql, { registry, now: () => new Date(at), catalog: REPO_CATALOG });
-  try {
-    expect((await tick()).error).toBeUndefined();
-    const before = {
-      originals: await originals(),
-      rows: await rows(),
-      decisions: await decisions(),
-    };
-    const api = await app.inject({ url: "/situations?domain=hazards&kind=alert" });
-    expect(JSON.parse(api.body).records).toHaveLength(1);
-    body = Buffer.from(
+it.each(["severity", "grouped-event"])(
+  "refuses expired malformed %s lifecycle actions without changing durable or public last-good state",
+  async (mode) => {
+    const db = await createTestDatabase();
+    const parser = createParseProcess({ minBytes: 1 });
+    const registry = buildRegistry(productionModules);
+    const feed = { ...repoFeed("ar-smn-alerts"), requestLimits: undefined };
+    const original = readFileSync(new URL("ar-000.xml", dir), "utf8");
+    const base = readCapXml(Buffer.from(original), true);
+    let body = Buffer.from(
       original
-        .replace(/<identifier>.*?<\/identifier>/, "<identifier>synthetic-bad-update</identifier>")
-        .replace(
-          /<references>.*?<\/references>/s,
-          `<references>${base.sender},${base.identifier},${base.sent}</references>`,
-        )
-        .replace(/<expires>.*?<\/expires>/, "<expires>2026-11-09T06:00:00Z</expires>")
-        .replace(/<severity>.*?<\/severity>/, "<severity>INVALID</severity>"),
+        .replace(/<msgType>.*?<\/msgType>/, "<msgType>Alert</msgType>")
+        .replace(/<references>.*?<\/references>/s, "<references></references>"),
     );
-    version = "v2";
-    expect((await tick()).error).toBeDefined();
-    expect(await originals()).toEqual(before.originals);
-    expect(await rows()).toEqual(before.rows);
-    expect(await decisions()).toEqual(before.decisions);
-    const after = await app.inject({ url: "/situations?domain=hazards&kind=alert" });
-    expect(JSON.parse(after.body).records).toEqual(JSON.parse(api.body).records);
-  } finally {
-    await parser.close();
-    await app.close();
-    await db.close();
-  }
-});
+    let version = "v1";
+    const child = "https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_synthetic.xml";
+    const fetch = (async (input: string | URL | Request) =>
+      new Response(
+        String(input).endsWith("AR.php")
+          ? `<rss version="2.0"><channel><lastBuildDate>${new Date(at).toUTCString()}</lastBuildDate><copyright>Licencia CC BY 4.0</copyright><item><link>${child}</link></item></channel></rss>`
+          : body,
+        { headers: { etag: version } },
+      )) as typeof globalThis.fetch;
+    const tick = () =>
+      runSource(feed, {
+        sql: db.sql,
+        fetch,
+        now: () => at,
+        lookup: async () => [{ address: "93.184.216.34", family: 4 }],
+        model: { registry, instanceId: "test.local" },
+        roles: createRoleState(),
+        parseProcess: parser,
+      });
+    const originals = () => db.sql`SELECT * FROM conditions.smn_cap_message ORDER BY variant`;
+    const rows = () => db.sql`SELECT id,record,tombstoned_at FROM conditions.situation ORDER BY id`;
+    const decisions = () => db.sql`SELECT * FROM conditions.smn_cap_decision`;
+    const app = Fastify();
+    registerScope(app, "synthetic-expired-malformed");
+    registerApiRoutes(app, db.sql, { registry, now: () => new Date(at), catalog: REPO_CATALOG });
+    try {
+      expect((await tick()).error).toBeUndefined();
+      const before = {
+        originals: await originals(),
+        rows: await rows(),
+        decisions: await decisions(),
+      };
+      const api = await app.inject({ url: "/situations?domain=hazards&kind=alert" });
+      expect(JSON.parse(api.body).records).toHaveLength(1);
+      body = Buffer.from(
+        original
+          .replace(/<identifier>.*?<\/identifier>/, "<identifier>synthetic-bad-update</identifier>")
+          .replace(
+            /<references>.*?<\/references>/s,
+            `<references>${base.sender},${base.identifier},${base.sent}</references>`,
+          )
+          .replace(/<expires>.*?<\/expires>/, "<expires>2026-11-09T06:00:00Z</expires>")
+          .replace(/<severity>.*?<\/severity>/, "<severity>INVALID</severity>"),
+      );
+      if (mode === "grouped-event") {
+        const xml = body
+          .toString()
+          .replace("<severity>INVALID</severity>", "<severity>Moderate</severity>");
+        const info = xml.match(/<info>.*<\/info>/s)![0]!;
+        body = Buffer.from(
+          xml.replace(info, info + info.replace(/<event>.*?<\/event>/s, "<event></event>")),
+        );
+      }
+      version = "v2";
+      expect((await tick()).error).toBeDefined();
+      expect(await originals()).toEqual(before.originals);
+      expect(await rows()).toEqual(before.rows);
+      expect(await decisions()).toEqual(before.decisions);
+      const after = await app.inject({ url: "/situations?domain=hazards&kind=alert" });
+      expect(JSON.parse(after.body).records).toEqual(JSON.parse(api.body).records);
+    } finally {
+      await parser.close();
+      await app.close();
+      await db.close();
+    }
+  },
+);
