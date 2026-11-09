@@ -1,0 +1,54 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "id": "2101-06-16-1158-azmp-hlx-AUTO-swob.xml",
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-63.317, 44.267, 0.0] },
+      "properties": {
+        "id": "2101-06-16-1158-azmp-hlx-AUTO-swob.xml",
+        "dataset": "dfo-observation-atmospheric-marine-moored_buoy-1.0-ascii",
+        "data_pvdr-value": "DFO",
+        "msc_id-value": "DFO_AZMP-HLX",
+        "date_tm-value": "2101-06-16T11:58:16.000Z",
+        "obs_date_tm": "2101-06-16T11:58:16.000Z",
+        "processed_date_tm": "2026-05-12T12:50:08.909Z"
+      }
+    }
+  ],
+  "numberMatched": 14060259,
+  "numberReturned": 1,
+  "links": [
+    {
+      "type": "application/geo+json",
+      "rel": "self",
+      "title": "This document as GeoJSON",
+      "href": "https://api.weather.gc.ca/collections/swob-realtime/items?f=json&sortby=-date_tm-value&limit=1&properties=id,dataset,data_pvdr-value,msc_id-value,date_tm-value,obs_date_tm,processed_date_tm"
+    },
+    {
+      "rel": "alternate",
+      "type": "application/ld+json",
+      "title": "This document as RDF (JSON-LD)",
+      "href": "https://api.weather.gc.ca/collections/swob-realtime/items?f=jsonld&sortby=-date_tm-value&limit=1&properties=id,dataset,data_pvdr-value,msc_id-value,date_tm-value,obs_date_tm,processed_date_tm"
+    },
+    {
+      "type": "text/html",
+      "rel": "alternate",
+      "title": "This document as HTML",
+      "href": "https://api.weather.gc.ca/collections/swob-realtime/items?f=html&sortby=-date_tm-value&limit=1&properties=id,dataset,data_pvdr-value,msc_id-value,date_tm-value,obs_date_tm,processed_date_tm"
+    },
+    {
+      "type": "application/geo+json",
+      "rel": "next",
+      "title": "Items (next)",
+      "href": "https://api.weather.gc.ca/collections/swob-realtime/items?offset=1&sortby=-date_tm-value&limit=1&properties=id,dataset,data_pvdr-value,msc_id-value,date_tm-value,obs_date_tm,processed_date_tm"
+    },
+    {
+      "type": "application/json",
+      "title": "SWOB - Real-Time Data",
+      "rel": "collection",
+      "href": "https://api.weather.gc.ca/collections/swob-realtime"
+    }
+  ],
+  "timeStamp": "2026-11-08T02:08:03.484049Z"
+}

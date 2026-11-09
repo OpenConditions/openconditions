@@ -1,3 +1,4 @@
+import { deserialize, serialize } from "node:v8";
 import type { RawTier } from "@openconditions/core/server";
 import type {
   CatalogFeed,
@@ -313,7 +314,11 @@ export function feedFetch(
   const timeoutSec = role === undefined ? undefined : src.endpoints[role]?.timeoutSec;
   return makeAuthorizedFetch(
     src,
-    guardedFeedFetch(deps, timeoutSec),
+    guardedFeedFetch(
+      deps,
+      timeoutSec,
+      role === undefined ? undefined : src.endpoints[role]?.maxResponseBytes,
+    ),
     deps.env ?? process.env,
     Date.now,
     deps.grants,
@@ -330,8 +335,10 @@ export function feedFetch(
 export function guardedFeedFetch(
   deps: { fetch: typeof fetch; lookup?: LookupFn },
   timeoutSec?: number,
+  maxResponseBytes?: number,
 ): typeof fetch {
   const opts = guardOptionsFromEnv();
+  if (maxResponseBytes !== undefined) opts.maxBytes = Math.min(opts.maxBytes, maxResponseBytes);
   if (timeoutSec !== undefined) opts.timeoutMs = Math.max(opts.timeoutMs, timeoutSec * 1000);
   return guardedFetch(deps.fetch, opts, {}, deps.lookup);
 }
@@ -431,6 +438,17 @@ export function createOpenlrClient(): MapMatchClient | null {
  * closes it as an error on the way out, so no attempt stays `running`.
  */
 export async function runSource(src: CatalogFeed, deps: RunDeps): Promise<RunResult> {
+  const priorRoles =
+    formatOf(src).atomicCandidate && deps.roles
+      ? (deserialize(serialize(deps.roles)) as RoleState)
+      : undefined;
+  const restoreRoles = () => {
+    if (priorRoles && deps.roles) {
+      for (const key of Object.keys(deps.roles))
+        delete (deps.roles as unknown as Record<string, unknown>)[key];
+      Object.assign(deps.roles, priorRoles);
+    }
+  };
   const attemptAt = deps.now();
   const due = rolesDue(src, deps.roles, Date.parse(attemptAt));
   if (due.length === 0) return { count: 0, durationMs: 0, notDue: true };
@@ -440,8 +458,11 @@ export async function runSource(src: CatalogFeed, deps: RunDeps): Promise<RunRes
     closed: false,
   };
   try {
-    return await runAttempt(src, deps, attempt, due);
+    const result = await runAttempt(src, deps, attempt, due);
+    if (result.error !== undefined) restoreRoles();
+    return result;
   } catch (err) {
+    restoreRoles();
     if (!attempt.closed) {
       await upsertSourceStatus(deps.sql, src.id, {
         freshnessWindowSec: src.freshnessWindowSec,
@@ -568,6 +589,7 @@ async function runAttempt(
     ...(acceptFetch ? { acceptFetch } : {}),
     ...(warning ? { warning } : {}),
     statesComplete: !leftOut,
+    atomicCandidate: format.atomicCandidate === true,
   });
   const finish = (parse: ParseOutput): Promise<RunResult> => {
     const poll = pollContext();
@@ -756,7 +778,11 @@ async function runAttempt(
           result = await fetchEndpoint(
             src,
             role,
-            guardedFeedFetch(deps, src.endpoints[role]?.timeoutSec),
+            guardedFeedFetch(
+              deps,
+              src.endpoints[role]?.timeoutSec,
+              src.endpoints[role]?.maxResponseBytes,
+            ),
             {
               resolvers: domainOf(src).resolvers,
               env,
@@ -1162,6 +1188,7 @@ interface PollContext {
   warning?: string;
   /** Every data role's states are in the parse: none was left out. */
   statesComplete: boolean;
+  atomicCandidate: boolean;
 }
 
 /** Records a failure that keeps the last good publication, and the run's result for it. */
@@ -1493,6 +1520,8 @@ async function finishFeaturePoll(
       now: deps.now(),
       model: writeModel(deps.model),
       statesComplete: poll.statesComplete,
+      atomicCandidate: poll.atomicCandidate,
+      observationRevisions: parse.observationRevisions,
       ...(poll.warning ? { warning: poll.warning } : {}),
     });
     poll.attempt.closed = true;
@@ -1547,6 +1576,8 @@ async function finishStatusPoll(
   try {
     published = await publishReadings(deps.sql, src, {
       observations,
+      atomicCandidate: poll.atomicCandidate,
+      observationRevisions: output.observationRevisions,
       rejected: output.rejected + skippedRecords(skipped),
       poll: poll.identity,
       durationMs: Date.now() - poll.start,
