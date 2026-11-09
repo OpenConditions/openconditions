@@ -27,13 +27,11 @@
       "attribution": "Contains information licensed under the Open Government Licence – British Columbia.",
       "homepage": "https://catalogue.data.gov.bc.ca/dataset/bc-highwaycams",
       "privacyUrl": "https://www2.gov.bc.ca/gov/content/home/privacy",
-      "disabled": {
-        "reason": "Inventory deletion/completeness qualification pending; enable only with a qualified CSV snapshot contract. Product and current-still reuse rights are resolved.",
-        "since": "2026-11-07",
-      },
+      // Monthly catalogue has no formal deletion contract. Missing groups remain last-good;
+      // views of a present group are replaced by that group's current CSV rows.
       "snapshot": {
-        "completeness": "complete",
-        "qualification": "pending",
+        "completeness": "partial",
+        "qualification": "qualified",
         "minimumRecords": 1000,
         "csv": true,
       },

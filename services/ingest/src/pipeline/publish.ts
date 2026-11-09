@@ -428,7 +428,7 @@ export async function publishFlows(
  */
 export async function publishFeatures(
   sql: Sql,
-  src: Pick<CatalogFeed, "id" | "freshnessWindowSec">,
+  src: Pick<CatalogFeed, "id" | "freshnessWindowSec" | "snapshot">,
   input: {
     output: Pick<ParseOutput, "features" | "observations" | "offers">;
     rejected: number;
@@ -452,7 +452,7 @@ export async function publishFeatures(
       { features: output.features, observations: output.observations, offers: output.offers },
       {
         ...writeContext(input),
-        complete: { feature: true, offer: true },
+        complete: src.snapshot?.completeness === "partial" ? false : { feature: true, offer: true },
         statesComplete: input.statesComplete === true,
         latestCache: cache,
       },

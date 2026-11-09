@@ -14,7 +14,12 @@ const source = repoFeed("ca-bc-drivebc-cameras");
 const feed = {
   ...source,
   disabled: undefined,
-  snapshot: { ...source.snapshot!, qualification: "qualified" as const, minimumRecords: 1 },
+  snapshot: {
+    ...source.snapshot!,
+    completeness: "complete" as const,
+    qualification: "qualified" as const,
+    minimumRecords: 1,
+  },
 };
 const capturedBytes = readFileSync(
   new URL("../../../../packages/cameras/src/__tests__/fixtures/ca-bc-drivebc.csv", import.meta.url),
@@ -126,7 +131,10 @@ test("actual pipeline publishes public view credits and keeps last good inventor
   expect(sources.body).toContain("LicenseRef-OGL-BC");
   const held =
     await db.sql`SELECT id, revision, content_hash FROM conditions.feature WHERE source_id = ${feed.id} ORDER BY id`;
-  const pending = await runSource({ ...feed, snapshot: source.snapshot }, deps);
+  const pending = await runSource(
+    { ...feed, snapshot: { ...source.snapshot!, qualification: "pending" } },
+    deps,
+  );
   expect(pending.error).toMatch(/qualification pending/);
   const empty = await runSource(feed, { ...deps, fetch: serve(Buffer.from("id,cam_group\n")) });
   expect(empty.error).toBeDefined();
@@ -235,3 +243,45 @@ test("an explicit unapproved upstream licence is retained for operators but reje
   expect(body.records.find((r) => r.id === id)).toBeDefined();
   expect(body.latest[id]).toHaveLength(2);
 });
+
+test("enabled partial catalogue retains missing groups on shrink", async () => {
+  expect(source.disabled).toBeUndefined();
+  expect(source.snapshot?.completeness).toBe("partial");
+  const partial = {
+    ...source,
+    id: "partial-drivebc",
+    snapshot: { ...source.snapshot!, minimumRecords: 1 },
+  };
+  await syncSources(db.sql, [feed, partial]);
+  const deps = { sql: db.sql, lookup, now: () => now, fetch: serve(bytes) };
+  expect((await runSource(partial, deps)).error).toBeUndefined();
+  const lines = bytes.toString("utf8").split("\n");
+  const shortened = Buffer.from(lines.filter((line) => line.split(",")[1] !== "520").join("\n"));
+  expect((await runSource(partial, { ...deps, fetch: serve(shortened) })).error).toBeUndefined();
+  const [held] =
+    await db.sql`SELECT tombstone_reason FROM conditions.feature WHERE id = 'oc:feature:partial-drivebc:520'`;
+  expect(held?.tombstone_reason).toBeNull();
+});
+
+test.skipIf(!process.env.OC348_CAPTURE)(
+  "full captured inventory qualifies through the worker and public API",
+  async () => {
+    const capture = process.env.OC348_CAPTURE;
+    if (!capture) return;
+    const liveBytes = readFileSync(capture);
+    const deps = { sql: db.sql, lookup, now: () => now, fetch: serve(liveBytes) };
+    const result = await runSource(source, deps);
+    expect(result.error).toBeUndefined();
+    expect(result.rejected).toBe(0);
+    const [counts] =
+      await db.sql`SELECT count(*)::int AS n FROM conditions.feature WHERE source_id = ${source.id} AND tombstoned_at IS NULL`;
+    expect(counts?.n).toBe(487);
+    const response = await app.inject({
+      url: "/features?kind=camera&expand=components,latest&bbox=-140,48,-114,61&limit=1000",
+    });
+    expect(response.statusCode, response.body).toBe(200);
+    expect(response.body).toContain("LicenseRef-OGL-BC");
+    expect(response.body).not.toContain('"imageAt"');
+    expect(response.body).not.toContain('"refreshSec"');
+  },
+);

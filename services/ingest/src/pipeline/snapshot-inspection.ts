@@ -94,7 +94,11 @@ export function inspectSnapshotCompleteness(
     if (records.length < (contract.minimumRecords ?? 1)) {
       throw new Error("snapshot completeness: CSV below qualified minimum record count");
     }
-    return { complete: true, inputRecords: records.length, completeEmpty: false };
+    return {
+      complete: contract.completeness === "complete",
+      inputRecords: records.length,
+      completeEmpty: false,
+    };
   }
   if (contract.recordElement) {
     let inputRecords = 0;

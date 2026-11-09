@@ -91,8 +91,8 @@
             }
           },
           "snapshot": {
-            "completeness": "complete",
-            "qualification": "pending",
+            "completeness": "partial",
+            "qualification": "qualified",
             "minimumRecords": 1000,
             "csv": true
           },
@@ -115,10 +115,6 @@
             "countries": [
               "CA-BC"
             ]
-          },
-          "disabled": {
-            "reason": "Inventory deletion/completeness qualification pending; enable only with a qualified CSV snapshot contract. Product and current-still reuse rights are resolved.",
-            "since": "2026-11-07"
           },
           "layout": {
             "lon": "longitude",
@@ -1719,8 +1715,8 @@
         }
       },
       "snapshot": {
-        "completeness": "complete",
-        "qualification": "pending",
+        "completeness": "partial",
+        "qualification": "qualified",
         "minimumRecords": 1000,
         "csv": true
       },
@@ -1743,10 +1739,6 @@
         "countries": [
           "CA-BC"
         ]
-      },
-      "disabled": {
-        "reason": "Inventory deletion/completeness qualification pending; enable only with a qualified CSV snapshot contract. Product and current-still reuse rights are resolved.",
-        "since": "2026-11-07"
       },
       "layout": {
         "lon": "longitude",

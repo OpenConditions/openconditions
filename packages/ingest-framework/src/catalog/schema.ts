@@ -423,7 +423,7 @@ export const feedBaseShape = {
     .optional(),
   snapshot: z
     .object({
-      completeness: z.literal("complete"),
+      completeness: z.enum(["complete", "partial"]),
       /** Pending qualification forbids publication, even if a local layer enables the feed. */
       qualification: z.enum(["pending", "qualified"]).optional(),
       minimumRecords: z.number().int().positive().optional(),
@@ -437,6 +437,9 @@ export const feedBaseShape = {
     })
     .strict()
     .superRefine((snapshot, ctx) => {
+      if (snapshot.completeness === "partial" && !snapshot.csv) {
+        ctx.addIssue({ code: "custom", message: "partial snapshot requires CSV validation" });
+      }
       if (
         snapshot.csv &&
         (snapshot.recordsPath || snapshot.recordElement || snapshot.totalCountPath)

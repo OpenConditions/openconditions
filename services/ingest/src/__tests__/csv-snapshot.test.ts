@@ -35,3 +35,12 @@ describe("qualified CSV inventory publication", () => {
     });
   });
 });
+
+test("partial CSV validates input without granting withdrawal authority", () => {
+  expect(
+    inspectSnapshotCompleteness(
+      { snapshot: { completeness: "partial", csv: true, minimumRecords: 2 } },
+      [Buffer.from("id\n1\n2\n")],
+    ),
+  ).toEqual({ complete: false, inputRecords: 2, completeEmpty: false });
+});

@@ -661,7 +661,10 @@
             "properties": {
               "completeness": {
                 "type": "string",
-                "const": "complete"
+                "enum": [
+                  "complete",
+                  "partial"
+                ]
               },
               "qualification": {
                 "type": "string",
