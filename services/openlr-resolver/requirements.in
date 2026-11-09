@@ -9,6 +9,6 @@ openlr==1.0.1
 openlr-dereferencer==1.2.0
 shapely==2.2.0
 geographiclib==2.1
-psycopg[binary]==3.3.6
+psycopg[binary]==3.3.8
 psycopg-pool==3.3.3
 osmium==4.3.2
