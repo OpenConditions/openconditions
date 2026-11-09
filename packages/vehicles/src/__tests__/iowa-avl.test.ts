@@ -110,3 +110,20 @@ describe("Iowa AVL", () => {
     expect(() => parse(doc)).toThrow();
   });
 });
+
+test("enabled Iowa catalogue is qualified by bounded nonempty cohorts", () => {
+  expect(catalogFeed("us-ia-iowadot-maintenance").disabled).toBeUndefined();
+  const first = JSON.parse(fixture("iowa-live-1.json.txt").toString());
+  const second = JSON.parse(fixture("iowa-live-2.json.txt").toString());
+  expect(first.features).toHaveLength(39);
+  expect(second.features).toHaveLength(39);
+  expect(
+    new Set(first.features.map((f: { attributes: { LABEL: string } }) => f.attributes.LABEL)).size,
+  ).toBe(39);
+  const one = parse(first, "2026-11-09T17:28:41.000Z");
+  const two = parse(second, "2026-11-09T17:31:04.534Z");
+  expect(one.features.map((f) => f["id"])).toEqual(two.features.map((f) => f["id"]));
+  expect(one.observations).toHaveLength(39);
+  expect(two.observations).toHaveLength(39);
+  expect(sealFailures([...two.features, ...two.observations])).toEqual([]);
+});

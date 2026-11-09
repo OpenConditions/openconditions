@@ -87,10 +87,6 @@
               -90,
               43.6
             ]
-          },
-          "disabled": {
-            "reason": "Awaiting bounded current nonempty and LABEL continuity qualification; empty selected sets are healthy but do not qualify identity.",
-            "since": "2026-11-08"
           }
         }
       ]
@@ -210,10 +206,6 @@
           -90,
           43.6
         ]
-      },
-      "disabled": {
-        "reason": "Awaiting bounded current nonempty and LABEL continuity qualification; empty selected sets are healthy but do not qualify identity.",
-        "since": "2026-11-08"
       },
       "id": "us-ia-iowadot-maintenance",
       "domain": "vehicles",

@@ -33,10 +33,6 @@
       "attribution": "Iowa Department of Transportation - Office of Maintenance. CC BY 4.0. https://www.arcgis.com/home/item.html?id=20a0c10c06a54240b5f2893e0187e22c . Normalized by OpenConditions (coordinates, units and field selection). No endorsement implied. Provided as is; see https://iowadot.gov/policies-statements/terms-use for disclaimer.",
       "homepage": "https://www.arcgis.com/home/item.html?id=20a0c10c06a54240b5f2893e0187e22c",
       "privacyUrl": "https://iowadot.gov/policies-statements/privacy-policy",
-      "disabled": {
-        "since": "2026-11-08",
-        "reason": "Awaiting bounded current nonempty and LABEL continuity qualification; empty selected sets are healthy but do not qualify identity.",
-      },
     },
   ],
 }
