@@ -1,12 +1,8 @@
 import { createHash } from "node:crypto";
-import {
-  type JmaFamily,
-  type JmaReport,
-  jmaDataUrl,
-  readJmaIndex,
-  readJmaReport,
-} from "@openconditions/hazards";
+import { setImmediate as yieldTurn } from "node:timers/promises";
+import { type JmaFamily, type JmaReport, jmaDataUrl } from "@openconditions/hazards";
 import { guardedFetch, type LookupFn } from "@openconditions/ingest-framework";
+import { closeJmaNative, type JmaNativeSession, jmaNative } from "./jma-native-process.js";
 
 export interface JmaDownload {
   body: string;
@@ -32,18 +28,42 @@ const INDEXES = new Set(
   ["extra.xml", "extra_l.xml", "eqvol.xml", "eqvol_l.xml"].map((n) => BASE + n),
 );
 const MAX_BYTES = 8_000_000;
+// Reserve room for the largest next response before touching cache or transport.
+// The same budget covers both warning channels, indexes and retained native reports.
+export const JMA_TRANSIENT_BYTES = 16_000_000;
+export interface JmaInputBudget {
+  used: number;
+}
 export const JMA_DAILY_BYTES = 8_000_000_000;
 
 /** Network policy is fixed here, including a zero-redirect DNS-pinned egress guard. */
 export class JmaAcquisition {
+  private readonly native: JmaNativeSession;
   private readonly fetch: typeof fetch;
+  private retire?: NodeJS.Timeout;
+  async close(): Promise<void> {
+    clearTimeout(this.retire);
+    await closeJmaNative(this.native);
+  }
+  private idle(): void {
+    this.native.child?.unref();
+    this.native.child?.channel?.unref();
+    this.retire = setTimeout(() => {
+      void this.close();
+    }, 1000);
+    this.retire.unref();
+  }
   constructor(
     private readonly store: JmaDownloadStore,
     private readonly egress: string,
     private readonly now: () => number = Date.now,
     transport?: typeof fetch,
     lookup?: LookupFn,
+    nativeEntry?: URL,
+    private readonly session?: JmaNativeSession,
   ) {
+    this.native = session ?? {};
+    this.native.entry ??= nativeEntry;
     if (!egress.trim()) throw new Error("JMA: shared egress identity required");
     this.fetch = guardedFetch(
       transport,
@@ -53,17 +73,23 @@ export class JmaAcquisition {
     );
   }
   async read(url: string, signal: AbortSignal): Promise<Buffer> {
-    return (await this.readDocument(url, signal)).body;
+    clearTimeout(this.retire);
+    try {
+      return (await this.readDocument(url, signal, { used: 0 })).body;
+    } finally {
+      await closeJmaNative(this.native);
+    }
   }
   private async readDocument(
     url: string,
     signal: AbortSignal,
+    budget: JmaInputBudget,
   ): Promise<{ body: Buffer; acquiredAt: number; networkValidated: boolean }> {
     // One retry for transient transport/5xx failures, inside the caller's deadline.
     // Each attempt owns a fresh reservation; an uncertain failure is never refunded.
     for (let attempt = 0; ; attempt++) {
       try {
-        return await this.readOnce(url, signal);
+        return await this.readOnce(url, signal, budget);
       } catch (error) {
         if (
           attempt >= 1 ||
@@ -92,7 +118,12 @@ export class JmaAcquisition {
   private async readOnce(
     url: string,
     signal: AbortSignal,
+    budget: JmaInputBudget,
   ): Promise<{ body: Buffer; acquiredAt: number; networkValidated: boolean }> {
+    await yieldTurn();
+    signal.throwIfAborted();
+    if (budget.used + MAX_BYTES > JMA_TRANSIENT_BYTES)
+      throw new Error("JMA: aggregate transient input ceiling");
     if (!INDEXES.has(url)) jmaDataUrl(url);
     return this.store.withUrl(url, async (held, save) => {
       signal.throwIfAborted();
@@ -109,9 +140,22 @@ export class JmaAcquisition {
       const interval = url.endsWith("_l.xml") ? 3_600_000 : 60_000;
       if (held && index && (!Number.isFinite(held.checkedAt) || held.checkedAt > at + 60_000))
         throw new Error("JMA: invalid index transport check time");
+      const cached = () => {
+        if (!held || held.body.length > Math.ceil(MAX_BYTES / 3) * 4)
+          throw new Error("JMA: cached payload byte ceiling");
+        const bytes = Buffer.byteLength(held.body, "base64");
+        if (budget.used + bytes > JMA_TRANSIENT_BYTES)
+          throw new Error("JMA: aggregate transient input ceiling");
+        const body = Buffer.from(held.body, "base64");
+        if (body.length > MAX_BYTES) throw new Error("JMA: cached payload byte ceiling");
+        if (budget.used + body.length > JMA_TRANSIENT_BYTES)
+          throw new Error("JMA: aggregate transient input ceiling");
+        budget.used += body.length;
+        return body;
+      };
       if (held && (!index || at - held.checkedAt < interval))
         return {
-          body: Buffer.from(held.body, "base64"),
+          body: cached(),
           acquiredAt: held.acquiredAt ?? held.checkedAt,
           networkValidated: false,
         };
@@ -147,9 +191,11 @@ export class JmaAcquisition {
         if (response.status === 304) {
           complete = true;
           if (!held) throw new Error("JMA: cold 304");
+          const body = cached();
+          signal.throwIfAborted();
           await save({ ...held, acquiredAt: held.acquiredAt ?? held.checkedAt, checkedAt: at });
           return {
-            body: Buffer.from(held.body, "base64"),
+            body,
             acquiredAt: held.acquiredAt ?? held.checkedAt,
             networkValidated: true,
           };
@@ -171,7 +217,10 @@ export class JmaAcquisition {
             }
             received += part.value.byteLength;
             if (received > MAX_BYTES) throw new Error("JMA: payload byte ceiling");
+            budget.used += part.value.byteLength;
             chunks.push(Buffer.from(part.value));
+            await yieldTurn();
+            signal.throwIfAborted();
           }
         } finally {
           await reader.cancel().catch(() => {});
@@ -180,14 +229,41 @@ export class JmaAcquisition {
         const body = Buffer.concat(chunks);
         // Cache only complete, usable documents; every selected payload is decoded before publication.
         if (index) {
-          const updated = Date.parse(readJmaIndex(body, []).updated);
+          const updated = Date.parse(
+            (
+              await jmaNative(
+                { kind: "index", body: body.toString("base64"), families: [] },
+                signal,
+                this.native,
+              )
+            ).updated,
+          );
           if (updated > at + 60_000) throw new Error("JMA: future index publication");
           if (
             held &&
-            updated < Date.parse(readJmaIndex(Buffer.from(held.body, "base64"), []).updated)
+            updated <
+              Date.parse(
+                (
+                  await jmaNative(
+                    { kind: "index", body: cached().toString("base64"), families: [] },
+                    signal,
+                    this.native,
+                  )
+                ).updated,
+              )
           )
             throw new Error("JMA: backward index publication");
-        } else readJmaReport(body, jmaDataUrl(url).family as JmaFamily);
+        } else
+          await jmaNative(
+            {
+              kind: "report",
+              body: body.toString("base64"),
+              family: jmaDataUrl(url).family as JmaFamily,
+            },
+            signal,
+            this.native,
+          );
+        signal.throwIfAborted();
         await save({
           body: body.toString("base64"),
           checkedAt: at,
@@ -210,40 +286,65 @@ export class JmaAcquisition {
     families: readonly JmaFamily[],
     lastSuccess: number | undefined,
     signal: AbortSignal,
+    budget: JmaInputBudget = { used: 0 },
   ): Promise<{
     reports: { url: string; report: JmaReport }[];
     gap: boolean;
     networkValidated: boolean;
     payloadHashes: string[];
   }> {
-    const deadline = AbortSignal.any([signal, AbortSignal.timeout(120_000)]);
-    const at = this.now();
-    const gap = lastSuccess === undefined || at - lastSuccess > 600_000;
-    const urls = new Set<string>();
-    let networkValidated = true;
-    const payloadHashes: string[] = [];
-    for (const suffix of gap ? ["_l", ""] : [""]) {
-      const document = await this.readDocument(`${BASE}${channel}${suffix}.xml`, deadline);
-      networkValidated &&= document.networkValidated;
-      const index = readJmaIndex(document.body, families);
-      if (Date.parse(index.updated) > at + 60_000) throw new Error("JMA: future index publication");
-      for (const url of index.urls) urls.add(url);
+    clearTimeout(this.retire);
+    try {
+      const deadline = AbortSignal.any([signal, AbortSignal.timeout(120_000)]);
+      const at = this.now();
+      const gap = lastSuccess === undefined || at - lastSuccess > 600_000;
+      const urls = new Set<string>();
+      let networkValidated = true;
+      const payloadHashes: string[] = [];
+      for (const suffix of gap ? ["_l", ""] : [""]) {
+        const document = await this.readDocument(
+          `${BASE}${channel}${suffix}.xml`,
+          deadline,
+          budget,
+        );
+        networkValidated &&= document.networkValidated;
+        const index = await jmaNative(
+          { kind: "index", body: document.body.toString("base64"), families },
+          deadline,
+          this.native,
+        );
+        if (Date.parse(index.updated) > at + 60_000)
+          throw new Error("JMA: future index publication");
+        for (const url of index.urls) urls.add(url);
+      }
+      if (urls.size > 1000) throw new Error("JMA: poll payload count ceiling");
+      const reports: { url: string; report: JmaReport }[] = [];
+      // Serial downloads bound concurrency and stop the entire poll on any unusable selected document.
+      for (const url of [...urls].sort()) {
+        const { body, acquiredAt } = await this.readDocument(url, deadline, budget);
+        payloadHashes.push(createHash("sha256").update(body).digest("hex"));
+        reports.push({
+          url,
+          report: {
+            ...(await jmaNative(
+              {
+                kind: "report",
+                body: body.toString("base64"),
+                family: jmaDataUrl(url).family as JmaFamily,
+              },
+              deadline,
+              this.native,
+            )),
+            messageUrl: url,
+            acquiredAt: new Date(acquiredAt).toISOString(),
+          },
+        });
+      }
+      if (!this.session) this.idle();
+      return { reports, gap, networkValidated, payloadHashes };
+    } catch (error) {
+      await this.close();
+      throw error;
     }
-    if (urls.size > 1000) throw new Error("JMA: poll payload count ceiling");
-    const reports: { url: string; report: JmaReport }[] = [];
-    // Serial downloads bound concurrency and stop the entire poll on any unusable selected document.
-    for (const url of [...urls].sort()) {
-      const { body, acquiredAt } = await this.readDocument(url, deadline);
-      payloadHashes.push(createHash("sha256").update(body).digest("hex"));
-      reports.push({
-        url,
-        report: {
-          ...readJmaReport(body, jmaDataUrl(url).family as JmaFamily),
-          messageUrl: url,
-          acquiredAt: new Date(acquiredAt).toISOString(),
-        },
-      });
-    }
-    return { reports, gap, networkValidated, payloadHashes };
   }
 }

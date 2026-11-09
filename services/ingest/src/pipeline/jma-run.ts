@@ -1,8 +1,9 @@
-import { assertJmaRights, JMA_FAMILIES, jmaSituations } from "@openconditions/hazards";
+import { JMA_FAMILIES } from "@openconditions/hazards";
 import type { CatalogFeed } from "@openconditions/ingest-framework";
 import { writeSnapshotIn } from "@openconditions/storage";
 import { JmaAcquisition } from "./jma-acquisition.js";
 import { jmaDownloadStore } from "./jma-download-store.js";
+import { type JmaNativeSession, jmaNative } from "./jma-native-process.js";
 import { type JmaPersistentState, reconcileJmaIn, unpackJmaState } from "./jma-state-store.js";
 import { stampAttribution, writeContext, writeModel } from "./publish.js";
 import type { RunDeps, RunResult } from "./run.js";
@@ -34,98 +35,108 @@ export async function runJma(
     { value: JmaPersistentState }[]
   >`SELECT value FROM conditions.jma_state WHERE source = ${src.id}`;
   const at = Date.parse(attempt.at);
+  const native: JmaNativeSession = { entry: deps.jmaNativeEntry };
   const acquisition = new JmaAcquisition(
     jmaDownloadStore(deps.sql),
     egress,
     () => Date.parse(deps.now()),
     deps.fetch,
     deps.lookup,
+    undefined,
+    native,
   );
   const signal = AbortSignal.timeout(120_000);
-  const result = await acquisition.poll(
-    warnings ? "extra" : "eqvol",
-    JMA_FAMILIES.filter((f) => (warnings ? f.startsWith("VPWW") : f.startsWith("VXSE"))),
-    held ? unpackJmaState(held.value).lastSuccess : undefined,
-    signal,
-  );
-  if (warnings) {
-    const volcanic = await acquisition.poll(
-      "eqvol",
-      ["VFVO50"],
+  const budget = { used: 0 };
+  try {
+    const result = await acquisition.poll(
+      warnings ? "extra" : "eqvol",
+      JMA_FAMILIES.filter((f) => (warnings ? f.startsWith("VPWW") : f.startsWith("VXSE"))),
       held ? unpackJmaState(held.value).lastSuccess : undefined,
       signal,
+      budget,
     );
-    result.reports.push(...volcanic.reports);
-    result.gap ||= volcanic.gap;
-    result.networkValidated &&= volcanic.networkValidated;
-    result.payloadHashes.push(...volcanic.payloadHashes);
-  }
-  if (result.reports.some(({ report }) => Date.parse(report.controlAt) > at + 60_000))
-    throw new Error("JMA: future report revision clock");
-  // Check incoming cancellations/releases as well as all retained native material.
-  if (!warnings) for (const { report } of result.reports) assertJmaRights(report);
-  if (held) {
-    const native = unpackJmaState(held.value).native;
-    for (const report of new Set([
-      ...Object.values(native.products),
-      ...Object.values(native.areas).map((area) => area.report),
-    ]))
-      assertJmaRights(report);
-  }
-  const summary = await reconcileJmaIn(
-    deps.sql,
-    src.id,
-    result.reports.map((r) => r.report),
-    at,
-    result.gap,
-    async (tx, state) => {
-      const drafts = jmaSituations(src, state.native, attempt.at).map((d) =>
-        stampAttribution(d, src, new Date(at)),
+    if (warnings) {
+      const volcanic = await acquisition.poll(
+        "eqvol",
+        ["VFVO50"],
+        held ? unpackJmaState(held.value).lastSuccess : undefined,
+        signal,
+        budget,
       );
-      const summary = await writeSnapshotIn(
-        tx,
-        src.id,
-        { situations: drafts },
-        writeContext({
-          poll: { id: attempt.id, at: attempt.at },
-          now: attempt.at,
-          model: writeModel(deps.model),
-        }),
-      );
-      if (summary.rejected.length)
-        throw new Error("JMA: canonical draft validation failed; poll rolled back");
-      const counts = summary.counts.situation;
-      await upsertSourceStatus(tx, src.id, {
-        freshnessWindowSec: src.freshnessWindowSec,
-        attemptId: attempt.id,
-        attemptAt: attempt.at,
-        outcome: "partial",
-        networkValidated: result.networkValidated,
-        payloadHashes: result.payloadHashes,
-        error: "JMA rolling-index coverage incomplete",
-        publication: {
-          activeEvents: drafts.length,
-          rowCount: drafts.length,
-          inserted: counts.created + counts.restored,
-          updated: counts.updated,
-          deleted: counts.withdrawn,
-          rejected: 0,
-        },
-      });
-      return summary;
-    },
-    warnings
-      ? {
-          source: src.id,
-          at: new Date(at).toISOString(),
-          coverage: "incomplete",
-          method: "rolling-index-observed-reports",
+      result.reports.push(...volcanic.reports);
+      result.gap ||= volcanic.gap;
+      result.networkValidated &&= volcanic.networkValidated;
+      result.payloadHashes.push(...volcanic.payloadHashes);
+    }
+    signal.throwIfAborted();
+    if (result.reports.some(({ report }) => Date.parse(report.controlAt) > at + 60_000))
+      throw new Error("JMA: future report revision clock");
+    const summary = await reconcileJmaIn(
+      deps.sql,
+      src.id,
+      result.reports.map((r) => r.report),
+      at,
+      result.gap,
+      async (tx, _state, packed) => {
+        const drafts = (
+          await jmaNative(
+            { kind: "situations", source: src, state: packed, at: attempt.at },
+            signal,
+            native,
+          )
+        ).map((d) => stampAttribution(d, src, new Date(at)));
+        await acquisition.close();
+        signal.throwIfAborted();
+        const summary = await writeSnapshotIn(
+          tx,
+          src.id,
+          { situations: drafts },
+          writeContext({
+            poll: { id: attempt.id, at: attempt.at },
+            now: attempt.at,
+            model: writeModel(deps.model),
+          }),
+        );
+        if (summary.rejected.length)
+          throw new Error("JMA: canonical draft validation failed; poll rolled back");
+        const counts = summary.counts.situation;
+        await upsertSourceStatus(tx, src.id, {
+          freshnessWindowSec: src.freshnessWindowSec,
+          attemptId: attempt.id,
+          attemptAt: attempt.at,
+          outcome: "partial",
+          networkValidated: result.networkValidated,
           payloadHashes: result.payloadHashes,
-        }
-      : undefined,
-    warnings,
-  );
-  attempt.closed = true;
-  const c = summary.counts.situation;
-  return { count: c.created + c.restored + c.updated, durationMs: Date.now() - start };
+          error: "JMA rolling-index coverage incomplete",
+          publication: {
+            activeEvents: drafts.length,
+            rowCount: drafts.length,
+            inserted: counts.created + counts.restored,
+            updated: counts.updated,
+            deleted: counts.withdrawn,
+            rejected: 0,
+          },
+        });
+        signal.throwIfAborted();
+        return summary;
+      },
+      warnings
+        ? {
+            source: src.id,
+            at: new Date(at).toISOString(),
+            coverage: "incomplete",
+            method: "rolling-index-observed-reports",
+            payloadHashes: result.payloadHashes,
+          }
+        : undefined,
+      warnings,
+      signal,
+      native,
+    );
+    attempt.closed = true;
+    const c = summary.counts.situation;
+    return { count: c.created + c.restored + c.updated, durationMs: Date.now() - start };
+  } finally {
+    await acquisition.close();
+  }
 }

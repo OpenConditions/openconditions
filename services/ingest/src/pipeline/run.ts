@@ -216,6 +216,8 @@ export interface RunResult {
 }
 
 export interface RunDeps {
+  /** Native child entry override, matching ParseProcess entry injection for built-runtime tests. */
+  jmaNativeEntry?: URL;
   sql: Sql;
   fetch: typeof fetch;
   now: () => string;

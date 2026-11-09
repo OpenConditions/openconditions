@@ -1,9 +1,15 @@
 import { createHash } from "node:crypto";
-import { applyJmaAreaReports, type JmaAreaState, type JmaReport } from "@openconditions/hazards";
+import {
+  applyJmaAreaReports,
+  assertJmaRights,
+  type JmaAreaState,
+  type JmaReport,
+} from "@openconditions/hazards";
 import type postgres from "postgres";
 import { admitJmaWarnings, type JmaWithheld } from "./jma-admission.js";
+import { type JmaNativeSession, type JmaNativeTask, jmaNative } from "./jma-native-process.js";
 
-interface PackedState extends Omit<JmaPersistentState, "native"> {
+export interface PackedState extends Omit<JmaPersistentState, "native"> {
   version: 2;
   reports: Record<string, JmaReport>;
   products: Record<string, string>;
@@ -32,7 +38,7 @@ export function unpackJmaState(value: JmaPersistentState | PackedState): JmaPers
     },
   };
 }
-function pack(state: JmaPersistentState): PackedState {
+export function packJmaState(state: JmaPersistentState): PackedState {
   // Refuse cardinality overflow before hashing or serializing large shared reports.
   if (
     Object.keys(state.native.areas).length > 20000 ||
@@ -99,54 +105,90 @@ export async function reconcileJmaIn<T>(
   reports: readonly JmaReport[],
   at: number,
   gap: boolean,
-  publish: (tx: postgres.TransactionSql, state: JmaPersistentState) => Promise<T>,
+  publish: (
+    tx: postgres.TransactionSql,
+    state: JmaPersistentState,
+    packed: PackedState,
+  ) => Promise<T>,
   initialization?: JmaInitializationReceipt,
   rightsScopedWarnings = false,
+  signal: AbortSignal = AbortSignal.timeout(120_000),
+  session?: JmaNativeSession,
 ): Promise<T> {
   return sql.begin(async (tx) => {
     await tx`SELECT pg_advisory_xact_lock(hashtext(${source}))`;
     const [held] = await tx<
       { value: JmaPersistentState | PackedState }[]
     >`SELECT value FROM conditions.jma_state WHERE source = ${source}`;
-    const previous = held ? unpackJmaState(held.value) : undefined;
-    if (previous && at < previous.lastSuccess) throw new Error("JMA: stale poll cannot commit");
-    // Thirty-day publication horizon, longer than the long index. Removing old
-    // quake tombstones is safe only because reports behind this floor are ignored.
-    const floor = at - 30 * 86_400_000;
-    const base = previous?.native ?? { products: {}, areas: {} };
-    base.products = Object.fromEntries(
-      Object.entries(base.products).filter(
-        ([, r]) => !r.family.startsWith("VXSE") || Date.parse(r.controlAt) >= floor,
-      ),
+    signal.throwIfAborted();
+    const packed = await jmaNative(
+      {
+        kind: "state",
+        source,
+        previous: held?.value,
+        reports,
+        at,
+        gap,
+        initialization,
+        warnings: rightsScopedWarnings,
+      },
+      signal,
+      session,
     );
-    const eligible = reports.filter(
-      (r) => !r.family.startsWith("VXSE") || Date.parse(r.controlAt) >= floor,
-    );
-    if (
-      initialization &&
-      (initialization.source !== source ||
-        initialization.at !== new Date(at).toISOString() ||
-        initialization.coverage !== "incomplete" ||
-        initialization.method !== "rolling-index-observed-reports" ||
-        initialization.payloadHashes.some((h) => !/^[a-f0-9]{64}$/.test(h)))
-    )
-      throw new Error("JMA: invalid initialization receipt");
-    const admitted = rightsScopedWarnings
-      ? admitJmaWarnings(base, previous?.withheld ?? {}, eligible)
-      : { native: applyJmaAreaReports(base, eligible), withheld: previous?.withheld };
-    const { native, withheld } = admitted;
-    const next: JmaPersistentState = {
-      native,
-      withheld,
-      initialization: previous?.initialization ?? initialization,
-      lastSuccess: at,
-      coverage: "incomplete",
-      gap: gap || (previous?.gap ?? false),
-    };
-    const packed = pack(next);
-    const result = await publish(tx, next);
+    signal.throwIfAborted();
+    const next = unpackJmaState(packed);
+    const result = await publish(tx, next, packed);
+    signal.throwIfAborted();
     await tx`INSERT INTO conditions.jma_state (source, value) VALUES (${source}, ${tx.json(packed as unknown as postgres.JSONValue)})
       ON CONFLICT (source) DO UPDATE SET value = EXCLUDED.value`;
+    signal.throwIfAborted();
     return result;
   }) as Promise<T>;
+}
+
+export function materializeJma(task: Extract<JmaNativeTask, { kind: "state" }>): PackedState {
+  const { source, reports, at, gap, initialization, warnings } = task;
+  const previous = task.previous ? unpackJmaState(task.previous) : undefined;
+  if (previous && at < previous.lastSuccess) throw new Error("JMA: stale poll cannot commit");
+  if (previous)
+    for (const report of new Set([
+      ...Object.values(previous.native.products),
+      ...Object.values(previous.native.areas).map((a) => a.report),
+    ]))
+      assertJmaRights(report);
+  if (!warnings) for (const report of reports) assertJmaRights(report);
+  // Thirty-day publication horizon, longer than the long index. Removing old
+  // quake tombstones is safe only because reports behind this floor are ignored.
+  const floor = at - 30 * 86_400_000;
+  const base = previous?.native ?? { products: {}, areas: {} };
+  base.products = Object.fromEntries(
+    Object.entries(base.products).filter(
+      ([, r]) => !r.family.startsWith("VXSE") || Date.parse(r.controlAt) >= floor,
+    ),
+  );
+  const eligible = reports.filter(
+    (r) => !r.family.startsWith("VXSE") || Date.parse(r.controlAt) >= floor,
+  );
+  if (
+    initialization &&
+    (initialization.source !== source ||
+      initialization.at !== new Date(at).toISOString() ||
+      initialization.coverage !== "incomplete" ||
+      initialization.method !== "rolling-index-observed-reports" ||
+      initialization.payloadHashes.some((h) => !/^[a-f0-9]{64}$/.test(h)))
+  )
+    throw new Error("JMA: invalid initialization receipt");
+  const admitted = warnings
+    ? admitJmaWarnings(base, previous?.withheld ?? {}, eligible)
+    : { native: applyJmaAreaReports(base, eligible), withheld: previous?.withheld };
+  const { native, withheld } = admitted;
+  const next: JmaPersistentState = {
+    native,
+    withheld,
+    initialization: previous?.initialization ?? initialization,
+    lastSuccess: at,
+    coverage: "incomplete",
+    gap: gap || (previous?.gap ?? false),
+  };
+  return packJmaState(next);
 }

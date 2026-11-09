@@ -764,6 +764,7 @@ describe("JMA durable worker publication", () => {
       sql,
       now: () => clock,
       lookup: fakeLookup,
+      jmaNativeEntry: new URL("../../dist/jma-native-child.js", import.meta.url),
       model: { registry, instanceId: "test.local" },
       env: { OPENCONDITIONS_JMA_EGRESS_ID: "jma-api-test" },
       fetch: (async (input) => {
@@ -845,6 +846,7 @@ describe("JMA durable worker publication", () => {
       sql,
       now: () => clock,
       lookup: fakeLookup,
+      jmaNativeEntry: new URL("../../dist/jma-native-child.js", import.meta.url),
       model: { registry, instanceId: "test.local" },
       env: { OPENCONDITIONS_JMA_EGRESS_ID: "jma-api-test" },
       fetch: (async (input) =>
@@ -962,6 +964,7 @@ describe("JMA durable worker publication", () => {
       sql,
       now: () => clock,
       lookup: fakeLookup,
+      jmaNativeEntry: new URL("../../dist/jma-native-child.js", import.meta.url),
       model: { registry, instanceId: "test.local" },
       env: {
         OPENCONDITIONS_JMA_EGRESS_ID: "warning-test",
@@ -1150,6 +1153,7 @@ describe("JMA durable worker publication", () => {
         sql,
         now: () => clock,
         lookup: fakeLookup,
+        jmaNativeEntry: new URL("../../dist/jma-native-child.js", import.meta.url),
         model: { registry, instanceId: "test.local" },
         env: {
           OPENCONDITIONS_JMA_EGRESS_ID: "mixed",
@@ -1252,6 +1256,36 @@ describe("JMA durable worker publication", () => {
           true,
         ),
       ).rejects.toThrow("forced publication rollback");
+      const controller = new AbortController();
+      const publicBefore = await records();
+      const outboxBefore = JSON.stringify(
+        (await readOutbox(sql, { limit: 500, now: clock })).orderedItems,
+      );
+      const statusBefore =
+        await sql`SELECT * FROM conditions.source_status WHERE source=${feed.id}`;
+      await expect(
+        reconcileJmaIn(
+          sql,
+          feed.id,
+          [terminal],
+          Date.parse("2026-11-09T12:02:00Z"),
+          true,
+          async (tx) => {
+            await tx`UPDATE conditions.source_status SET last_outcome='failed' WHERE source=${feed.id}`;
+            controller.abort(new Error("controlled transaction cancellation"));
+          },
+          undefined,
+          true,
+          controller.signal,
+        ),
+      ).rejects.toThrow("controlled transaction cancellation");
+      expect(await records()).toEqual(publicBefore);
+      expect(
+        JSON.stringify((await readOutbox(sql, { limit: 500, now: clock })).orderedItems),
+      ).toEqual(outboxBefore);
+      expect(await sql`SELECT * FROM conditions.source_status WHERE source=${feed.id}`).toEqual(
+        statusBefore,
+      );
       const [afterRollback] =
         await sql`SELECT value FROM conditions.jma_state WHERE source=${feed.id}`;
       expect(afterRollback!.value).toEqual(beforeRollback!.value);
@@ -1295,6 +1329,7 @@ describe("JMA durable worker publication", () => {
       sql,
       now: () => clock,
       lookup: fakeLookup,
+      jmaNativeEntry: new URL("../../dist/jma-native-child.js", import.meta.url),
       model: { registry, instanceId: "test.local" },
       env: { OPENCONDITIONS_JMA_EGRESS_ID: "rights-test" },
       fetch: fetcher as typeof fetch,
@@ -1429,6 +1464,7 @@ describe("JMA retained operational byte qualification", () => {
       sql,
       now: () => clock,
       lookup: fakeLookup,
+      jmaNativeEntry: new URL("../../dist/jma-native-child.js", import.meta.url),
       model: { registry, instanceId: "test.local" },
       env: {
         OPENCONDITIONS_JMA_EGRESS_ID: "retained-operational",

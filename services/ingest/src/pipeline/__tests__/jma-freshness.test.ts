@@ -22,6 +22,7 @@ function setup(response: () => Response) {
     () => clock,
     transport,
     async () => [{ address: "93.184.216.34", family: 4 }],
+    new URL("../../../dist/jma-native-child.js", import.meta.url),
   );
   return {
     acquisition,
