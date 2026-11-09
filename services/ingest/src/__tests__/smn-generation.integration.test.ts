@@ -133,3 +133,89 @@ it("refuses the complete real generation with conflicting CAP identities without
     await db.close();
   }
 });
+
+// Synthetic poll sequencing over unchanged captured XML: this is not an observed provider sequence.
+for (const order of [
+  ["ar-000.xml", "ar-011.xml"],
+  ["ar-011.xml", "ar-000.xml"],
+]) {
+  it(`preserves original bytes, canonical records and validators across restart and conflicting poll ${order.join(" -> ")}`, async () => {
+    const db = await createTestDatabase();
+    let parser = createParseProcess({ minBytes: 1 });
+    const registry = buildRegistry(productionModules);
+    const feed = { ...repoFeed("ar-smn-alerts"), requestLimits: undefined };
+    const app = Fastify();
+    const originals = order.map((name) => readFileSync(new URL(name, dir)));
+    let body = originals[0]!;
+    let version = "v1";
+    const conditional: (string | null)[] = [];
+    const child = "https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_test.xml";
+    const fetch = (async (input: string | URL | Request, init?: RequestInit) => {
+      conditional.push(new Headers(init?.headers).get("if-none-match"));
+      return new Response(
+        String(input).endsWith("AR.php")
+          ? `<rss version="2.0"><channel><lastBuildDate>${new Date(at).toUTCString()}</lastBuildDate><copyright>Licencia CC BY 4.0</copyright><item><link>${child}</link></item></channel></rss>`
+          : body,
+        { headers: { etag: version } },
+      );
+    }) as typeof globalThis.fetch;
+    const tick = () =>
+      runSource(feed, {
+        sql: db.sql,
+        fetch,
+        now: () => at,
+        lookup: async () => [{ address: "93.184.216.34", family: 4 }],
+        model: { registry, instanceId: "test.local" },
+        roles: createRoleState(),
+        parseProcess: parser,
+      });
+    const rows = () =>
+      db.sql`SELECT id, record FROM conditions.situation WHERE source_id=${feed.id} AND tombstoned_at IS NULL ORDER BY id`;
+    const durable = () =>
+      db.sql`SELECT identifier, body, retain_until FROM conditions.smn_cap_message WHERE source_id=${feed.id} ORDER BY identifier`;
+    registerScope(app, "test-operator-token-351-collision");
+    registerApiRoutes(app, db.sql, { registry, now: () => new Date(at), catalog: REPO_CATALOG });
+    try {
+      expect(readCapXml(originals[0]!, true).identifier).toBe(
+        readCapXml(originals[1]!, true).identifier,
+      );
+      expect(originals[0]!.equals(originals[1]!)).toBe(false);
+      expect((await tick()).error).toBeUndefined();
+      const before = await rows();
+      const stored = await durable();
+      expect(stored).toHaveLength(1);
+      expect(stored[0]!.body).toEqual(originals[0]);
+      const apiBefore = await app.inject({
+        method: "GET",
+        url: "/situations?domain=hazards&kind=alert&limit=100",
+      });
+      expect(JSON.parse(apiBefore.body).records).toHaveLength(1);
+      // A new parser and fresh role state ensure the protection is durable, not process memory.
+      await parser.close();
+      parser = createParseProcess({ minBytes: 1 });
+      expect((await tick()).error).toBeUndefined();
+      expect(await durable()).toEqual(stored);
+      body = originals[1]!;
+      version = "v2";
+      expect((await tick()).error).toContain("conflicting duplicate CAP identifier");
+      expect(await durable()).toEqual(stored);
+      expect(await rows()).toEqual(before);
+      expect((await tick()).error).toContain("conflicting duplicate CAP identifier");
+      expect(conditional.slice(-4)).toEqual(["v1", "v1", "v1", "v1"]);
+      const apiAfter = await app.inject({
+        method: "GET",
+        url: "/situations?domain=hazards&kind=alert&limit=100",
+      });
+      expect(JSON.parse(apiAfter.body).records).toEqual(JSON.parse(apiBefore.body).records);
+      body = originals[0]!;
+      version = "v1";
+      expect((await tick()).error).toBeUndefined();
+      expect(await durable()).toEqual(stored);
+      expect(await rows()).toEqual(before);
+    } finally {
+      await parser.close();
+      await app.close();
+      await db.close();
+    }
+  });
+}

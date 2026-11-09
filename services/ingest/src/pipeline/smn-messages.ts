@@ -45,7 +45,10 @@ export async function smnMessages(
       },
     ]),
   );
-  const seen = new Map<string, Buffer>();
+  // The collision check covers the retained window, not just this RSS page.
+  // Until the variant/lifecycle policy is qualified, conflicting bytes must
+  // refuse atomically rather than replacing an earlier durable assertion.
+  const seen = new Map<string, Buffer>(rows.map((r) => [r.identifier, r.body]));
   for (const body of bodies) {
     const alert = readCapXml(body, true);
     const duplicate = seen.get(alert.identifier);
