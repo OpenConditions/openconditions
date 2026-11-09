@@ -1,0 +1,1171 @@
+{
+	"data":
+	[
+		{
+			"cms":
+			{
+				"index": "V70",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "5",
+					"locationName":   "70 - EB RTE 41 AT CHOLAME (PM 53.5)",
+					"nearbyPlace":    "Shandon",
+					"longitude":      "-120.302275",
+					"latitude":       "35.71768",
+					"elevation":      "1151",
+					"direction":      "East",
+					"county":         "San Luis Obispo",
+					"route":          "SR-46",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "53.469",
+					"alignment":      "",
+					"milepost":       "45.531"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:03:21"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V71",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "5",
+					"locationName":   "71 - NB 101 at 154 in Santa Barbara",
+					"nearbyPlace":    "Santa Barbara",
+					"longitude":      "-119.754137",
+					"latitude":       "34.439817",
+					"elevation":      "196",
+					"direction":      "North",
+					"county":         "Santa Barbara",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "18.02",
+					"alignment":      "",
+					"milepost":       "100.9"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-03",
+						"messageTime": "16:15:33"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V72",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "5",
+					"locationName":   "72 - SB 101 at 154 near Los Olivos",
+					"nearbyPlace":    "Buellton",
+					"longitude":      "-120.158411",
+					"latitude":       "34.687913",
+					"elevation":      "787",
+					"direction":      "South",
+					"county":         "Santa Barbara",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "63.14",
+					"alignment":      "",
+					"milepost":       "0"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "15:59:39"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V73",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "5",
+					"locationName":   "73 - WB 46 west of 101 in Paso Robles",
+					"nearbyPlace":    "Paso Robles",
+					"longitude":      "-120.700379",
+					"latitude":       "35.588729",
+					"elevation":      "807",
+					"direction":      "West",
+					"county":         "San Luis Obispo",
+					"route":          "SR-46",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "21.7",
+					"alignment":      "",
+					"milepost":       "21.55"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "16:36:20"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V74",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "5",
+					"locationName":   "74 - NB 101 South of Prado Road in San Luis Obispo",
+					"nearbyPlace":    "San Luis Obispo",
+					"longitude":      "-120.678578",
+					"latitude":       "35.250258",
+					"elevation":      "121",
+					"direction":      "North",
+					"county":         "San Luis Obispo",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "26.35",
+					"alignment":      "",
+					"milepost":       "199.9"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:03:26"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V75",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "5",
+					"locationName":   "75 - SB 101 North of SR-46 East in Paso Robles",
+					"nearbyPlace":    "Paso Robles",
+					"longitude":      "-120.696458",
+					"latitude":       "35.670401",
+					"elevation":      "711",
+					"direction":      "South",
+					"county":         "San Luis Obispo",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "60.13",
+					"alignment":      "",
+					"milepost":       "233.62"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:05:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V76",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "5",
+					"locationName":   "76 - NB 1 South of SR-46 West in Cambria",
+					"nearbyPlace":    "Cayucos",
+					"longitude":      "-121.041334",
+					"latitude":       "35.522426",
+					"elevation":      "127",
+					"direction":      "North",
+					"county":         "San Luis Obispo",
+					"route":          "SR-1",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "45.6",
+					"alignment":      "",
+					"milepost":       "214.69"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "16:36:18"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V77",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "5",
+					"locationName":   "77 - NB 101 at Las Positas in SB",
+					"nearbyPlace":    "Santa Barbara",
+					"longitude":      "-119.733545",
+					"latitude":       "34.428136",
+					"elevation":      "183",
+					"direction":      "North",
+					"county":         "Santa Barbara",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "16.54",
+					"alignment":      "",
+					"milepost":       "99.43"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:03:34"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V78",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "5",
+					"locationName":   "78 - SB 101 south of  Los Alamos PM 65.2",
+					"nearbyPlace":    "Santa Maria",
+					"longitude":      "-120.178333",
+					"latitude":       "34.709918",
+					"elevation":      "967",
+					"direction":      "South",
+					"county":         "Santa Barbara",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "65.12",
+					"alignment":      "",
+					"milepost":       "147.69"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:05:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V79",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "5",
+					"locationName":   "79 - SB Carmel River Bridge on Hwy 1",
+					"nearbyPlace":    "Carmel",
+					"longitude":      "-121.912046",
+					"latitude":       "36.536764",
+					"elevation":      "19",
+					"direction":      "South",
+					"county":         "Monterey",
+					"route":          "SR-1",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "72.41",
+					"alignment":      "",
+					"milepost":       "315.53"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "16:36:15"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V80",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "5",
+					"locationName":   "80 - WB 68 At Portola Rd (OH) MON",
+					"nearbyPlace":    "Salinas",
+					"longitude":      "-121.689094",
+					"latitude":       "36.614619",
+					"elevation":      "72",
+					"direction":      "West",
+					"county":         "Monterey",
+					"route":          "SR-68",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "16.37",
+					"alignment":      "",
+					"milepost":       "16.58"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:05:02"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V81",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "5",
+					"locationName":   "81 - SB 101 North of 156 W (OH) MON",
+					"nearbyPlace":    "Salinas",
+					"longitude":      "-121.6442",
+					"latitude":       "36.810897",
+					"elevation":      "262",
+					"direction":      "South",
+					"county":         "Monterey",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "97.55",
+					"alignment":      "",
+					"milepost":       "338.12"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:05:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V82",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "5",
+					"locationName":   "82 - NB 101 South of Hwy 156 E (OH) SBT",
+					"nearbyPlace":    "San Juan Bautista",
+					"longitude":      "-121.598227",
+					"latitude":       "36.858961",
+					"elevation":      "341",
+					"direction":      "North",
+					"county":         "San Benito",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "1.95",
+					"alignment":      "R",
+					"milepost":       "343.83"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:05:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V83",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "5",
+					"locationName":   "83 - SB 101 North of Hwy 156 E (OH)SBT",
+					"nearbyPlace":    "San Juan Bautista",
+					"longitude":      "-121.569175",
+					"latitude":       "36.876286",
+					"elevation":      "200",
+					"direction":      "South",
+					"county":         "San Benito",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "4.26",
+					"alignment":      "",
+					"milepost":       "346.02"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "17:25:02"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V84",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "5",
+					"locationName":   "84 - NB US101 S of Niblick Rd",
+					"nearbyPlace":    "Paso Robles",
+					"longitude":      "-120.691029",
+					"latitude":       "35.611653",
+					"elevation":      "751",
+					"direction":      "North",
+					"county":         "San Luis Obispo",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "55.69",
+					"alignment":      "",
+					"milepost":       "229.18"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:05:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V85",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "5",
+					"locationName":   "85 - NB US101 S of Sala Rd",
+					"nearbyPlace":    "Salinas",
+					"longitude":      "-121.659769",
+					"latitude":       "36.743155",
+					"elevation":      "111",
+					"direction":      "North",
+					"county":         "Monterey",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "92.15",
+					"alignment":      "",
+					"milepost":       "332.71"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:04:07"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V86",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "5",
+					"locationName":   "86 - SB 101 South of Tefft St",
+					"nearbyPlace":    "Nipomo",
+					"longitude":      "-120.46845",
+					"latitude":       "35.02162",
+					"elevation":      "305",
+					"direction":      "South",
+					"county":         "San Luis Obispo",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "3.455",
+					"alignment":      "L",
+					"milepost":       "177.165"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:04:12"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V87",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "5",
+					"locationName":   "87 - NB 101 North of Donovan Rd",
+					"nearbyPlace":    "Santa Maria",
+					"longitude":      "-120.42507",
+					"latitude":       "34.97141",
+					"elevation":      "236",
+					"direction":      "North",
+					"county":         "Santa Barbara",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "89.977",
+					"alignment":      "R",
+					"milepost":       "172.725"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:04:15"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V88",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "5",
+					"locationName":   "88 - SB 101 San Anselmo Rd",
+					"nearbyPlace":    "Atascadero",
+					"longitude":      "-120.68865",
+					"latitude":       "35.50072",
+					"elevation":      "882",
+					"direction":      "South",
+					"county":         "San Luis Obispo",
+					"route":          "US-101",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "47.272",
+					"alignment":      "L",
+					"milepost":       "220.915"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:04:18"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V89",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "5",
+					"locationName":   "89 - WB 46 Union Rd",
+					"nearbyPlace":    "Paso Robles",
+					"longitude":      "-120.64828",
+					"latitude":       "35.64476",
+					"elevation":      "777",
+					"direction":      "West",
+					"county":         "San Luis Obispo",
+					"route":          "SR-46",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "31.861",
+					"alignment":      "L",
+					"milepost":       "23.923"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:04:24"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V90",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "5",
+					"locationName":   "90 - EB SR 246 Edison St",
+					"nearbyPlace":    "Santa Barbara",
+					"longitude":      "-120.07542",
+					"latitude":       "34.610557",
+					"elevation":      "600",
+					"direction":      "East",
+					"county":         "Santa Barbara",
+					"route":          "SR-246",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "33.481",
+					"alignment":      "R",
+					"milepost":       "24.773"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:05:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V91",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "5",
+					"locationName":   "91 - NB SR1 Hearst Castle Rd",
+					"nearbyPlace":    "San Simeon",
+					"longitude":      "-121.18938",
+					"latitude":       "35.645565",
+					"elevation":      "55",
+					"direction":      "North",
+					"county":         "San Luis Obispo",
+					"route":          "SR-1",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "58.066",
+					"alignment":      "L",
+					"milepost":       "219.405"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-05",
+						"messageTime": "15:25:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		}
+	]
+}

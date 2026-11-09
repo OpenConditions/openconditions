@@ -59,6 +59,8 @@ export type StatusIndex = ReadonlyMap<string, readonly StatusSubject[]>;
 
 /** What one poll of a feed parsed into, per record class. */
 export interface ParseOutput {
+  /** Explicit false preserves absent features and display series until provider qualification. */
+  featuresComplete?: boolean;
   situations: RecordDraft[];
   /** False withholds absence-based withdrawal; omitted preserves the format's established complete publication. Independent of received-row accounting. */
   situationsComplete?: boolean;

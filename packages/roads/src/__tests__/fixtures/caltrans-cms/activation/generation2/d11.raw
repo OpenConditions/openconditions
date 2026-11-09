@@ -1,0 +1,4245 @@
+{
+	"data":
+	[
+		{
+			"cms":
+			{
+				"index": "1106510",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district":       "Not Reported",
+					"locationName":   "001-SB 163 JNO CLAIREMONT MESA BLVD",
+					"nearbyPlace":    "CCTV034",
+					"longitude":      "-117.140592",
+					"latitude":       "32.833337",
+					"elevation":      "0",
+					"direction":      "South",
+					"county":         "San Diego County",
+					"route":          "SR-163",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "8.88",
+					"alignment":      "L",
+					"milepost":       "8.28"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "10:38:11"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1126201",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district":       "Not Reported",
+					"locationName":   "003-EB 8 WO WILLOWS RD",
+					"nearbyPlace":    "None",
+					"longitude":      "-116.693724",
+					"latitude":       "32.838457",
+					"elevation":      "0",
+					"direction":      "East",
+					"county":         "San Diego County",
+					"route":          "I-8",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "33.59",
+					"alignment":      "R",
+					"milepost":       "35.54"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:09:08"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1106506",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district":       "Not Reported",
+					"locationName":   "005-WB 8 JWO W MAIN ST",
+					"nearbyPlace":    "None",
+					"longitude":      "-116.978069",
+					"latitude":       "32.791321",
+					"elevation":      "0",
+					"direction":      "West",
+					"county":         "San Diego County",
+					"route":          "I-8",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "14.35",
+					"alignment":      "L",
+					"milepost":       "16.31"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "10:36:32"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1106505",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district":       "Not Reported",
+					"locationName":   "006-NB 5 @ J ST",
+					"nearbyPlace":    "CCTV021",
+					"longitude":      "-117.147389",
+					"latitude":       "32.709320",
+					"elevation":      "0",
+					"direction":      "North",
+					"county":         "San Diego County",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "14.73",
+					"alignment":      "R",
+					"milepost":       "14.43"
+				},
+				"inService": "False",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2024-11-06",
+						"messageTime": "13:37:54"
+					},
+					"display":     "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1106508",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district":       "Not Reported",
+					"locationName":   "007-SB 15 JNO MIRAMAR WY",
+					"nearbyPlace":    "CCTV040",
+					"longitude":      "-117.109988",
+					"latitude":       "32.882304",
+					"elevation":      "0",
+					"direction":      "South",
+					"county":         "San Diego County",
+					"route":          "I-15",
+					"routeSuffix":    "",
+					"postmilePrefix": "M",
+					"postmile":       "13.47",
+					"alignment":      "L",
+					"milepost":       "13.71"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:58"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1107724",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district":       "Not Reported",
+					"locationName":   "008-SB 5 JNO CARMEL MTN RD UC",
+					"nearbyPlace":    "CCTV051",
+					"longitude":      "-117.237046",
+					"latitude":       "32.919683",
+					"elevation":      "0",
+					"direction":      "South",
+					"county":         "San Diego County",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "32.01",
+					"alignment":      "L",
+					"milepost":       "31.67"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:59"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1126980",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district":       "Not Reported",
+					"locationName":   "009-WB 54 WO WOODMAN AVE",
+					"nearbyPlace":    "None",
+					"longitude":      "-117.048739",
+					"latitude":       "32.667851",
+					"elevation":      "0",
+					"direction":      "West",
+					"county":         "San Diego County",
+					"route":          "SR-54",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "3.54",
+					"alignment":      "L",
+					"milepost":       "3.53"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:58"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1107726",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district":       "Not Reported",
+					"locationName":   "010-NB 5 JSO L ST (CHULA VISTA)",
+					"nearbyPlace":    "CCTV327",
+					"longitude":      "-117.090768",
+					"latitude":       "32.612696",
+					"elevation":      "0",
+					"direction":      "North",
+					"county":         "San Diego County",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "6.63",
+					"alignment":      "R",
+					"milepost":       "6.33"
+				},
+				"inService": "False",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-14",
+						"messageTime": "11:53:55"
+					},
+					"display":     "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1107727",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district":       "Not Reported",
+					"locationName":   "011-NB 805 JSO E/H ST",
+					"nearbyPlace":    "None",
+					"longitude":      "-117.048054",
+					"latitude":       "32.635856",
+					"elevation":      "0",
+					"direction":      "North",
+					"county":         "San Diego County",
+					"route":          "I-805",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "6.64",
+					"alignment":      "R",
+					"milepost":       "6.49"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:58"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1107728",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district":       "Not Reported",
+					"locationName":   "012-EB 52 JWO GENESEE AVE",
+					"nearbyPlace":    "CCTV110",
+					"longitude":      "-117.205600",
+					"latitude":       "32.846718",
+					"elevation":      "0",
+					"direction":      "East",
+					"county":         "San Diego County",
+					"route":          "SR-52",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "2.14",
+					"alignment":      "R",
+					"milepost":       "2.14"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:58"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1107729",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "013-WB 52 JEO SANTO RD",
+					"nearbyPlace": "None",
+					"longitude": "-117.092455",
+					"latitude": "32.842056",
+					"elevation": "0",
+					"direction": "West",
+					"county": "San Diego County",
+					"route": "SR-52",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "9",
+					"alignment": "L",
+					"milepost": "9"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:58"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1106511",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "014-NB 805 JSO IMPERIAL AVE",
+					"nearbyPlace": "None",
+					"longitude": "-117.094520",
+					"latitude": "32.702599",
+					"elevation": "0",
+					"direction": "North",
+					"county": "San Diego County",
+					"route": "I-805",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "12.23",
+					"alignment": "R",
+					"milepost": "12.08"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "10:37:59"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1106507",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "015-NB 15 JNO SR94 INTERCHANGE",
+					"nearbyPlace": "CCTV078",
+					"longitude": "-117.115507",
+					"latitude": "32.722917",
+					"elevation": "0",
+					"direction": "North",
+					"county": "San Diego County",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "2.68",
+					"alignment": "R",
+					"milepost": "2.28"
+				},
+				"inService": "False",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2025-11-17",
+						"messageTime": "04:04:16"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1106512",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "016-SB 805 JNO EL CAJON BLVD",
+					"nearbyPlace": "CCTV070",
+					"longitude": "-117.126649",
+					"latitude": "32.759141",
+					"elevation": "0",
+					"direction": "South",
+					"county": "San Diego County",
+					"route": "I-805",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "16.71",
+					"alignment": "L",
+					"milepost": "16.56"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:09:03"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1112929",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "017-SB 5 JNO IMPERIAL AVE",
+					"nearbyPlace": "CCTV021",
+					"longitude": "-117.147851",
+					"latitude": "32.707761",
+					"elevation": "0",
+					"direction": "South",
+					"county": "San Diego County",
+					"route": "I-5",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "14.63",
+					"alignment": "L",
+					"milepost": "14.32"
+				},
+				"inService": "False",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2023-09-12",
+						"messageTime": "06:03:41"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1112930",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "018-NB 5 JNO 28TH ST",
+					"nearbyPlace": "CCTV023",
+					"longitude": "-117.137640",
+					"latitude": "32.698002",
+					"elevation": "0",
+					"direction": "North",
+					"county": "San Diego County",
+					"route": "I-5",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "13.69",
+					"alignment": "R",
+					"milepost": "13.38"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:57"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1125442",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "019-WB 8 @ HOTEL CIRCLE",
+					"nearbyPlace": "CCTV005",
+					"longitude": "-117.175938",
+					"latitude": "32.759455",
+					"elevation": "0",
+					"direction": "West",
+					"county": "San Diego County",
+					"route": "I-8",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "1.68",
+					"alignment": "L",
+					"milepost": "3.64"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "10:14:38"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1107736",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "020-WB 94 JEO KELTON RD",
+					"nearbyPlace": "CCTV112",
+					"longitude": "-117.075822",
+					"latitude": "32.724266",
+					"elevation": "0",
+					"direction": "West",
+					"county": "San Diego County",
+					"route": "SR-94",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "5.83",
+					"alignment": "L",
+					"milepost": "4.42"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:58"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1114081",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "021-WB 8 @ WARING RD",
+					"nearbyPlace": "CCTV218",
+					"longitude": "-117.086587",
+					"latitude": "32.781310",
+					"elevation": "0",
+					"direction": "West",
+					"county": "San Diego County",
+					"route": "I-8",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "7.14",
+					"alignment": "L",
+					"milepost": "9.1"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "11:04:04"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1115250",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "022-SB 15 @ EL NORTE (ESCONDIDO)",
+					"nearbyPlace": "CCTV382, CCTV383",
+					"longitude": "-117.104857",
+					"latitude": "33.145698",
+					"elevation": "0",
+					"direction": "South",
+					"county": "San Diego County",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "32.8",
+					"alignment": "L",
+					"milepost": "33.05"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:59"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1106518",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "023-SB 805 @ ORANGE AVE OC",
+					"nearbyPlace": "None",
+					"longitude": "-117.036428",
+					"latitude": "32.605933",
+					"elevation": "0",
+					"direction": "South",
+					"county": "San Diego County",
+					"route": "I-805",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "4.43",
+					"alignment": "L",
+					"milepost": "4.28"
+				},
+				"inService": "False",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-15",
+						"messageTime": "10:21:34"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1107732",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "024-NB 5 @ JNO TAMARACK AVE OC",
+					"nearbyPlace": "None",
+					"longitude": "-117.337760",
+					"latitude": "33.155121",
+					"elevation": "0",
+					"direction": "North",
+					"county": "San Diego County",
+					"route": "I-5",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "49.27",
+					"alignment": "R",
+					"milepost": "48.97"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:28:27"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "SR-78 6 MIN",
+						"phase1Line2": "SR-76 10 MIN",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1114633",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "025-EB 8 @ TAYLOR ST",
+					"nearbyPlace": "CCTV015",
+					"longitude": "-117.190619",
+					"latitude": "32.759926",
+					"elevation": "0",
+					"direction": "East",
+					"county": "San Diego County",
+					"route": "I-8",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "0.81",
+					"alignment": "R",
+					"milepost": "2.77"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:57"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1107730",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "026-NB 5 JNO MILE OF CARS (NC)",
+					"nearbyPlace": "None",
+					"longitude": "-117.109309",
+					"latitude": "32.663695",
+					"elevation": "0",
+					"direction": "North",
+					"county": "San Diego County",
+					"route": "I-5",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "10.31",
+					"alignment": "R",
+					"milepost": "10.01"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:58"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1116823",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "027-SB 5 @ VIA DE LA VALLE",
+					"nearbyPlace": "None",
+					"longitude": "-117.253232",
+					"latitude": "32.979417",
+					"elevation": "0",
+					"direction": "South",
+					"county": "San Diego County",
+					"route": "I-5",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "36.24",
+					"alignment": "L",
+					"milepost": "35.91"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:28:52"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "I-8 16 MIN",
+						"phase1Line2": "SR-94 20 MIN",
+						"phase1Line3": "SR-54 26 MIN"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1117650",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "028-NB 5 @ OLD TOWN AVE",
+					"nearbyPlace": "CCTV011",
+					"longitude": "-117.187446",
+					"latitude": "32.745031",
+					"elevation": "0",
+					"direction": "North",
+					"county": "San Diego County",
+					"route": "I-5",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "18.64",
+					"alignment": "R",
+					"milepost": "18.34"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:57"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1122081",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "029-NB 15 JNO MIRAMAR RD [EXP]",
+					"nearbyPlace": "CCTV040",
+					"longitude": "-117.115770",
+					"latitude": "32.895972",
+					"elevation": "0",
+					"direction": "North",
+					"county": "San Diego County",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "14.48",
+					"alignment": "R",
+					"milepost": "14.74"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:58"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1117651",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "030-NB 15 @ AERO DR",
+					"nearbyPlace": "CCTV061",
+					"longitude": "-117.113754",
+					"latitude": "32.810355",
+					"elevation": "0",
+					"direction": "North",
+					"county": "San Diego County",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "8.36",
+					"alignment": "R",
+					"milepost": "8.54"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:09:01"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1118958",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "031-NB 805 @ SORRENTO VLY RD",
+					"nearbyPlace": "CCTV149",
+					"longitude": "-117.207332",
+					"latitude": "32.891624",
+					"elevation": "0",
+					"direction": "North",
+					"county": "San Diego County",
+					"route": "I-805",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "27.18",
+					"alignment": "R",
+					"milepost": "27.03"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "12:06:29"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1118281",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "032-NB 5 JNO LA JOLLA VLG DR",
+					"nearbyPlace": "None",
+					"longitude": "-117.228220",
+					"latitude": "32.880038",
+					"elevation": "0",
+					"direction": "North",
+					"county": "San Diego County",
+					"route": "I-5",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "28.97",
+					"alignment": "R",
+					"milepost": "27.67"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "12:06:32"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1120458",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "033-NB 805 SO UNIVERSITY AVE",
+					"nearbyPlace": "CCTV067",
+					"longitude": "-117.114445",
+					"latitude": "32.737781",
+					"elevation": "0",
+					"direction": "North",
+					"county": "San Diego County",
+					"route": "I-805",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "15.05",
+					"alignment": "R",
+					"milepost": "14.9"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "11:04:14"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1120574",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "034-SB 5 JNO HARBOR DR (OCN)",
+					"nearbyPlace": "None",
+					"longitude": "-117.391075",
+					"latitude": "33.217788",
+					"elevation": "0",
+					"direction": "South",
+					"county": "San Diego County",
+					"route": "I-5",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "54.93",
+					"alignment": "L",
+					"milepost": "54.6"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "13:29:46"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1120658",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "035-NB 15 JNO SR56 [EXP]",
+					"nearbyPlace": "CCTV044, CCTV045",
+					"longitude": "-117.092987",
+					"latitude": "32.968093",
+					"elevation": "0",
+					"direction": "North",
+					"county": "San Diego County",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "19.74",
+					"alignment": "R",
+					"milepost": "19.99"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:58"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1120832",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "036-NB 15 JNO CAMINO DEL NORTE [EXP]",
+					"nearbyPlace": "CCTV081",
+					"longitude": "-117.082684",
+					"latitude": "32.998961",
+					"elevation": "0",
+					"direction": "North",
+					"county": "San Diego County",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "22.02",
+					"alignment": "R",
+					"milepost": "22.28"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:58"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1120660",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "037-SB 15 JNO CAMINO DEL NORTE [EXP]",
+					"nearbyPlace": "None",
+					"longitude": "-117.082933",
+					"latitude": "32.999498",
+					"elevation": "0",
+					"direction": "South",
+					"county": "San Diego County",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "M",
+					"postmile": "22.05",
+					"alignment": "L",
+					"milepost": "22.29"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:58"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1120661",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "038-SB 15 JNO RANCHO BERNARDO RD [EXP]",
+					"nearbyPlace": "CCTV085",
+					"longitude": "-117.076060",
+					"latitude": "33.037903",
+					"elevation": "0",
+					"direction": "South",
+					"county": "San Diego County",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "M",
+					"postmile": "24.74",
+					"alignment": "L",
+					"milepost": "24.99"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:58"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1120662",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "039-NB 15 JNO RANCHO BERNARDO RD [EXP]",
+					"nearbyPlace": "None",
+					"longitude": "-117.074952",
+					"latitude": "33.039458",
+					"elevation": "0",
+					"direction": "North",
+					"county": "San Diego County",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "24.87",
+					"alignment": "R",
+					"milepost": "25.12"
+				},
+				"inService": "False",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2023-04-29",
+						"messageTime": "16:05:32"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1120663",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "040-SB 15 JNO VIA RANCHO PKWY [EXP]",
+					"nearbyPlace": "CCTV088",
+					"longitude": "-117.070541",
+					"latitude": "33.074970",
+					"elevation": "0",
+					"direction": "South",
+					"county": "San Diego County",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "M",
+					"postmile": "27.37",
+					"alignment": "L",
+					"milepost": "27.62"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:58"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1121172",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "041-NB 15 JSO MIRAMAR WY [EXP]",
+					"nearbyPlace": "CCTV038",
+					"longitude": "-117.107187",
+					"latitude": "32.875163",
+					"elevation": "0",
+					"direction": "North",
+					"county": "San Diego County",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "12.95",
+					"alignment": "R",
+					"milepost": "13.21"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:58"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1121314",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "042-SB 15 JSO MIRAMAR RD [EXP]",
+					"nearbyPlace": "CCTV040",
+					"longitude": "-117.112778",
+					"latitude": "32.887360",
+					"elevation": "0",
+					"direction": "South",
+					"county": "San Diego County",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "M",
+					"postmile": "13.85",
+					"alignment": "L",
+					"milepost": "14.1"
+				},
+				"inService": "False",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-08",
+						"messageTime": "08:38:37"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1121456",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "043-EB 52 JWO CUYAMACA ST",
+					"nearbyPlace": "CCTV117",
+					"longitude": "-116.990928",
+					"latitude": "32.835622",
+					"elevation": "0",
+					"direction": "East",
+					"county": "San Diego County",
+					"route": "SR-52",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "15.7",
+					"alignment": "R",
+					"milepost": "15.7"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:58"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1121457",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "044-WB 52 @ CUYAMACA ST",
+					"nearbyPlace": "CCTV119",
+					"longitude": "-116.982392",
+					"latitude": "32.833017",
+					"elevation": "0",
+					"direction": "West",
+					"county": "San Diego County",
+					"route": "SR-52",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "16.24",
+					"alignment": "L",
+					"milepost": "16.24"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:59"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1121475",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "045-NB 15 NO SR52 [EXP]",
+					"nearbyPlace": "None",
+					"longitude": "-117.114958",
+					"latitude": "32.853650",
+					"elevation": "0",
+					"direction": "North",
+					"county": "San Diego County",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "M",
+					"postmile": "11.37",
+					"alignment": "R",
+					"milepost": "11.63"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:58"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1121513",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "046-NB 163 JNO SR52 [EXP]",
+					"nearbyPlace": "None",
+					"longitude": "-117.114852",
+					"latitude": "32.856434",
+					"elevation": "0",
+					"direction": "North",
+					"county": "San Diego County",
+					"route": "SR-163",
+					"routeSuffix": "",
+					"postmilePrefix": "M",
+					"postmile": "11.55",
+					"alignment": "R",
+					"milepost": "11.81"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "01:14:48"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1121958",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "047-NB 15 JNO MIRA MESA BLVD [EXP]",
+					"nearbyPlace": "CCTV041",
+					"longitude": "-117.115688",
+					"latitude": "32.918693",
+					"elevation": "0",
+					"direction": "North",
+					"county": "San Diego County",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "16.05",
+					"alignment": "R",
+					"milepost": "16.3"
+				},
+				"inService": "False",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-08",
+						"messageTime": "09:48:43"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1121966",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "048-SB 15 JNO MIRA MESA BLVD [EXP]",
+					"nearbyPlace": "CCTV042",
+					"longitude": "-117.115726",
+					"latitude": "32.921494",
+					"elevation": "0",
+					"direction": "South",
+					"county": "San Diego County",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "M",
+					"postmile": "16.24",
+					"alignment": "L",
+					"milepost": "16.49"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:58"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1122080",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "049-SB 15 JSO MERCY RD [EXP]",
+					"nearbyPlace": "CCTV042",
+					"longitude": "-117.113002",
+					"latitude": "32.932290",
+					"elevation": "0",
+					"direction": "South",
+					"county": "San Diego County",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "M",
+					"postmile": "17",
+					"alignment": "L",
+					"milepost": "17.25"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:58"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1121553",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "050-NB 15 JNO MERCY RD",
+					"nearbyPlace": "CCTV042",
+					"longitude": "-117.110765",
+					"latitude": "32.937376",
+					"elevation": "0",
+					"direction": "North",
+					"county": "San Diego County",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "17.37",
+					"alignment": "R",
+					"milepost": "17.63"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:59"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1121479",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "051-SB 15 JSO POWAY RD [EXP]",
+					"nearbyPlace": "CCTV043",
+					"longitude": "-117.109144",
+					"latitude": "32.943711",
+					"elevation": "0",
+					"direction": "South",
+					"county": "San Diego County",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "M",
+					"postmile": "17.82",
+					"alignment": "L",
+					"milepost": "18.06"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:58"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1122445",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "052-SB 15 JSO SR56 [EXP]",
+					"nearbyPlace": "CCTV044",
+					"longitude": "-117.099083",
+					"latitude": "32.960221",
+					"elevation": "0",
+					"direction": "South",
+					"county": "San Diego County",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "M",
+					"postmile": "19.1",
+					"alignment": "L",
+					"milepost": "19.35"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:58"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1121960",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "053-NB 15 JSO CITRACADO PKWY",
+					"nearbyPlace": "CCTV088",
+					"longitude": "-117.079058",
+					"latitude": "33.089422",
+					"elevation": "0",
+					"direction": "North",
+					"county": "San Diego County",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "28.5",
+					"alignment": "R",
+					"milepost": "18.76"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:59"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1121962",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "054-SB 15 JNO CITRACADO PKWY [EXP]",
+					"nearbyPlace": "CCTV089",
+					"longitude": "-117.085113",
+					"latitude": "33.094438",
+					"elevation": "0",
+					"direction": "South",
+					"county": "San Diego County",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "28.99",
+					"alignment": "L",
+					"milepost": "29.24"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:58"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1121964",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "055-SB 15 NO VALLEY PKWY [EXP]",
+					"nearbyPlace": "CCTV090",
+					"longitude": "-117.102913",
+					"latitude": "33.121696",
+					"elevation": "0",
+					"direction": "South",
+					"county": "San Diego County",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "31.13",
+					"alignment": "L",
+					"milepost": "31.37"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:58"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1125254",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "056-WB 905 @ CALIENTE AVE",
+					"nearbyPlace": "CCTV245",
+					"longitude": "-117.013986",
+					"latitude": "32.566778",
+					"elevation": "0",
+					"direction": "West",
+					"county": "San Diego County",
+					"route": "SR-905",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "6.73",
+					"alignment": "L",
+					"milepost": "3.89"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:59"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1125430",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "057-SB 15 JNO SR76",
+					"nearbyPlace": "None",
+					"longitude": "-117.159374",
+					"latitude": "33.341941",
+					"elevation": "0",
+					"direction": "South",
+					"county": "San Diego County",
+					"route": "I-15",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "47.22",
+					"alignment": "L",
+					"milepost": "47.47"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:59"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1125512",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "058-EB 56 WO CARMEL MTN RD",
+					"nearbyPlace": "None",
+					"longitude": "-117.147751",
+					"latitude": "32.954854",
+					"elevation": "0",
+					"direction": "East",
+					"county": "San Diego County",
+					"route": "SR-56",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "6.52",
+					"alignment": "R",
+					"milepost": "6.52"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:59"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1125513",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "059-WB 56 WO CARMEL VLY RD",
+					"nearbyPlace": "CCTV135",
+					"longitude": "-117.201995",
+					"latitude": "32.949852",
+					"elevation": "0",
+					"direction": "West",
+					"county": "San Diego County",
+					"route": "SR-56",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "2.63",
+					"alignment": "L",
+					"milepost": "2.63"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:59"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1100060",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "060-EB 905 @ LA MEDIA RD",
+					"nearbyPlace": "None",
+					"longitude": "-116.965063",
+					"latitude": "32.564006",
+					"elevation": "0",
+					"direction": "East",
+					"county": "San Diego County",
+					"route": "SR-905",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "9.64",
+					"alignment": "R",
+					"milepost": "6.8"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "05:47:05"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1106513",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "061-NB 805 JNO I-8 INTERCHANGE",
+					"nearbyPlace": "CCTV058",
+					"longitude": "-117.137559",
+					"latitude": "32.779956",
+					"elevation": "0",
+					"direction": "North",
+					"county": "San Diego County",
+					"route": "I-805",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "18.29",
+					"alignment": "R",
+					"milepost": "18.14"
+				},
+				"inService": "False",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2025-11-18",
+						"messageTime": "03:20:44"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1106514",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "062-SB 805 JNO CLAIREMONT MESA BLVD",
+					"nearbyPlace": "None",
+					"longitude": "-117.171268",
+					"latitude": "32.835801",
+					"elevation": "0",
+					"direction": "South",
+					"county": "San Diego County",
+					"route": "I-805",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "22.74",
+					"alignment": "L",
+					"milepost": "22.59"
+				},
+				"inService": "False",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "1969-12-30",
+						"messageTime": "06:00:00"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1106509",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "063-NB 163 JSO GENESEE AVE",
+					"nearbyPlace": "None",
+					"longitude": "-117.160560",
+					"latitude": "32.786839",
+					"elevation": "0",
+					"direction": "North",
+					"county": "San Diego County",
+					"route": "SR-163",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "5.46",
+					"alignment": "R",
+					"milepost": "4.91"
+				},
+				"inService": "False",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2024-07-06",
+						"messageTime": "09:00:22"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1126765",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "064-EB 8 @ DOGWOOD RD OC",
+					"nearbyPlace": "None",
+					"longitude": "-115.535296",
+					"latitude": "32.773721",
+					"elevation": "0",
+					"direction": "East",
+					"county": "Imperial County",
+					"route": "I-8",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "39.18",
+					"alignment": "R",
+					"milepost": "118.51"
+				},
+				"inService": "False",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "1969-12-30",
+						"messageTime": "00:00:00"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1126766",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "065-WB 8 @ DOGWOOD RD OC",
+					"nearbyPlace": "CCTV320, CCTV321",
+					"longitude": "-115.523705",
+					"latitude": "32.774200",
+					"elevation": "0",
+					"direction": "West",
+					"county": "Imperial County",
+					"route": "I-8",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "39.17",
+					"alignment": "L",
+					"milepost": "116.52"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:59"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1127035",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "066-NB 67 @ WINTER GARDENS BLVD",
+					"nearbyPlace": "CCTV225",
+					"longitude": "-116.932109",
+					"latitude": "32.858017",
+					"elevation": "0",
+					"direction": "North",
+					"county": "San Diego County",
+					"route": "SR-67",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "4.82",
+					"alignment": "R",
+					"milepost": "4.82"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "15:01:43"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1100067",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "067-SB 67 JNO SCRIPPS POWAY PKWY",
+					"nearbyPlace": "CCTV229",
+					"longitude": "-116.972507",
+					"latitude": "32.963101",
+					"elevation": "0",
+					"direction": "South",
+					"county": "San Diego County",
+					"route": "SR-67",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "14.11",
+					"alignment": "L",
+					"milepost": "13.59"
+				},
+				"inService": "False",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-05-14",
+						"messageTime": "15:45:16"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1100068",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "068-NB 67 JSO POWAY RD",
+					"nearbyPlace": "CCTV228, CCTV229",
+					"longitude": "-116.970257",
+					"latitude": "32.968970",
+					"elevation": "0",
+					"direction": "North",
+					"county": "San Diego County",
+					"route": "SR-67",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "14.51",
+					"alignment": "R",
+					"milepost": "13.99"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:59"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1127033",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "069-EB 8 WO LAKE MURRAY BLVD",
+					"nearbyPlace": "CCTV212",
+					"longitude": "-117.052646",
+					"latitude": "32.776685",
+					"elevation": "0",
+					"direction": "East",
+					"county": "San Diego County",
+					"route": "I-8",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "9.16",
+					"alignment": "R",
+					"milepost": "11.12"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:58"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1126991",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "070-EB 8 @ LOS COCHES RD E",
+					"nearbyPlace": "None",
+					"longitude": "-116.892769",
+					"latitude": "32.835406",
+					"elevation": "0",
+					"direction": "East",
+					"county": "San Diego County",
+					"route": "I-8",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "20.94",
+					"alignment": "R",
+					"milepost": "22.89"
+				},
+				"inService": "False",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2023-07-17",
+						"messageTime": "19:03:51"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1126992",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "071-WB 8 @ LOS COCHES RD E",
+					"nearbyPlace": "None",
+					"longitude": "-116.892786",
+					"latitude": "32.835455",
+					"elevation": "0",
+					"direction": "West",
+					"county": "San Diego County",
+					"route": "I-8",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "20.94",
+					"alignment": "L",
+					"milepost": "22.9"
+				},
+				"inService": "False",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2023-07-17",
+						"messageTime": "19:03:51"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1127205",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "072-NB 125 JSO TROY ST",
+					"nearbyPlace": "CCTV528, CCTV529",
+					"longitude": "-117.015123",
+					"latitude": "32.732057",
+					"elevation": "0",
+					"direction": "North",
+					"county": "San Diego County",
+					"route": "SR-125",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "11.83",
+					"alignment": "R",
+					"milepost": "13.93"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-23",
+						"messageTime": "13:36:28"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1127205",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "073-NB 5 SO LEUCADIA BLVD",
+					"nearbyPlace": "None",
+					"longitude": "-117.289700",
+					"latitude": "33.057500",
+					"elevation": "0",
+					"direction": "North",
+					"county": "San Diego County",
+					"route": "I-5",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "42.17",
+					"alignment": "",
+					"milepost": "42.17"
+				},
+				"inService": "False",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2025-10-11",
+						"messageTime": "14:37:14"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1126734",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "600-SB 5 JNO SR905 (vCMS)",
+					"nearbyPlace": "None",
+					"longitude": "-117.081978",
+					"latitude": "32.575805",
+					"elevation": "0",
+					"direction": "South",
+					"county": "San Diego County",
+					"route": "I-5",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "4.02",
+					"alignment": "L",
+					"milepost": "3.72"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:57"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1126735",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "601-SB 805 @ SR905 (vCMS)",
+					"nearbyPlace": "None",
+					"longitude": "-117.039341",
+					"latitude": "32.574635",
+					"elevation": "0",
+					"direction": "South",
+					"county": "San Diego County",
+					"route": "I-805",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "2.59",
+					"alignment": "L",
+					"milepost": "2.44"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:57"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1126759",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "602-EB 8 @ DOGWOOD RD (vCMS)",
+					"nearbyPlace": "None",
+					"longitude": "-115.531089",
+					"latitude": "32.773383",
+					"elevation": "0",
+					"direction": "East",
+					"county": "Imperial County",
+					"route": "I-8",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "38.96",
+					"alignment": "L",
+					"milepost": "116.3"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:57"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1127203",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "603-NB 86 @ BRAWLEY (vCMS)",
+					"nearbyPlace": "None",
+					"longitude": "-115.520086",
+					"latitude": "32.978871",
+					"elevation": "0",
+					"direction": "North",
+					"county": "Imperial County",
+					"route": "SR-86",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "20.62",
+					"alignment": "R",
+					"milepost": "21.75"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:57"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1127204",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "604-EB 98 @ CALEXICO (vCMS)",
+					"nearbyPlace": "None",
+					"longitude": "-115.498687",
+					"latitude": "32.681360",
+					"elevation": "0",
+					"direction": "East",
+					"county": "Imperial County",
+					"route": "SR-98",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "1.21",
+					"alignment": "R",
+					"milepost": "1.07"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:57"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1127205",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "605-EB 8 EO MANZANITA RD (vCMS)",
+					"nearbyPlace": "None",
+					"longitude": "-116.313178",
+					"latitude": "32.693761",
+					"elevation": "0",
+					"direction": "East",
+					"county": "San Diego County",
+					"route": "I-8",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "64.2",
+					"alignment": "R",
+					"milepost": "64.2"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:57"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1100314",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "606-EB 8 WO I-5 INTERCHANGE (vCMS)",
+					"nearbyPlace": "None",
+					"longitude": "-117.216591",
+					"latitude": "32.757861",
+					"elevation": "0",
+					"direction": "East",
+					"county": "San Diego County",
+					"route": "I-8",
+					"routeSuffix": "",
+					"postmilePrefix": "L",
+					"postmile": "1.63",
+					"alignment": "R",
+					"milepost": "1.23"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:57"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1127205",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "607-EB 905 @ CALIENTE AVE (vCMS)",
+					"nearbyPlace": "None",
+					"longitude": "-117.015037",
+					"latitude": "32.566146",
+					"elevation": "0",
+					"direction": "East",
+					"county": "San Diego County",
+					"route": "SR-905",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "6.73",
+					"alignment": "R",
+					"milepost": "3.89"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:57"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1127206",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:53"
+				},
+				"location":
+				{
+					"district": "Not Reported",
+					"locationName": "608-EB 905 @ LA MEDIA RD (vCMS)",
+					"nearbyPlace": "None",
+					"longitude": "-116.966371",
+					"latitude": "32.563975",
+					"elevation": "0",
+					"direction": "East",
+					"county": "San Diego County",
+					"route": "SR-905",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "9.68",
+					"alignment": "",
+					"milepost": "6.8"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "19:08:57"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DRIVE SOBER",
+						"phase1Line2": "NOT WRONG WAY",
+						"phase1Line3": "DON'T RUIN LIVES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		}
+	]
+}

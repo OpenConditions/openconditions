@@ -7,9 +7,9 @@ import { SITUATION_FORMAT_CODES, situationParserOf } from "../parse.js";
 
 describe("road source formats", () => {
   it("declares a format for every parser", () => {
-    // The sign list is the one features format: signs are devices, not situations or flow.
+    // Sign devices have dedicated feature formats.
     expect(Object.keys(roadsDomain.formats).sort()).toEqual(
-      [...SITUATION_FORMAT_CODES, ...FLOW_FORMAT_CODES, "cars-signs"].sort(),
+      [...SITUATION_FORMAT_CODES, ...FLOW_FORMAT_CODES, "cars-signs", "caltrans-cms"].sort(),
     );
   });
 
