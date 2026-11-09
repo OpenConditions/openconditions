@@ -61,6 +61,8 @@ export type StatusIndex = ReadonlyMap<string, readonly StatusSubject[]>;
 export interface ParseOutput {
   /** False when the provider's current-snapshot contract is not qualified; the worker must retain last-good publication. */
   snapshotQualified?: boolean;
+  /** False denies absence-based withdrawal; drafts must carry finite source-bounded expiry. */
+  situationsComplete?: boolean;
   situations: RecordDraft[];
   features: RecordDraft[];
   observations: RecordDraft[];

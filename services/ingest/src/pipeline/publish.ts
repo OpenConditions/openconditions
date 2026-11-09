@@ -239,6 +239,7 @@ export async function publishSituations(
   src: Pick<CatalogFeed, "id" | "freshnessWindowSec">,
   input: {
     situations: readonly RecordDraft[];
+    situationsComplete?: boolean;
     unlocatable?: readonly string[];
     /** Local ids of the records behind `unlocatable`; a stored effect's id begins with its record's. */
     unlocatableRecords?: readonly string[];
@@ -272,14 +273,22 @@ export async function publishSituations(
           `(${unlocatable.length} unlocatable in source ${src.id})`,
       );
     }
-    const summary = await writeSnapshotIn(tx, src.id, { situations }, writeContext(input));
+    const summary = await writeSnapshotIn(
+      tx,
+      src.id,
+      { situations },
+      { ...writeContext(input), complete: { situation: input.situationsComplete ?? true } },
+    );
     const [{ live }] = await tx<{ live: number }[]>`
       SELECT count(*)::int AS live FROM conditions.situation
        WHERE source_id = ${src.id} AND tombstoned_at IS NULL`;
     const counts = summary.counts.situation;
     await upsertSourceStatus(tx, src.id, {
       freshnessWindowSec: src.freshnessWindowSec,
-      outcome: situations.length === 0 ? "complete_empty" : "changed",
+      outcome:
+        situations.length === 0 && input.situationsComplete !== false
+          ? "complete_empty"
+          : "changed",
       attemptAt: input.poll.at,
       networkValidated: true,
       durationMs: input.durationMs,

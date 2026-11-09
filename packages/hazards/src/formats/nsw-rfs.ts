@@ -258,12 +258,14 @@ export function parseNswRfs(
     throw new Error("RFS: unsupported distribution");
   text(root, "distributionID");
   const objects = root.filter((n) => "contentObject" in n);
+  if (objects.length === 0) throw new Error("RFS: unqualified empty generation");
   if (objects.length > 2000) throw new Error("RFS: incident limit");
   const out: ParseOutput = {
     situations: [],
     features: [],
     observations: [],
     offers: [],
+    situationsComplete: false,
     snapshotQualified: feed.rfsCurrentSnapshotQualified === true,
   };
   let terminal = 0;
@@ -351,6 +353,7 @@ export function parseNswRfs(
       if (
         ![
           "Planned Event",
+          "Burn off",
           "Haystack fire",
           "Other",
           "Fire Alarm",
@@ -396,6 +399,8 @@ export function parseNswRfs(
     if (Object.values(result.skipped).some((n) => n > 0) || result.drafts.length !== 1)
       throw new Error("RFS: incomplete semantic acceptance");
     const draft = result.drafts[0]!;
+    // Message ids change on reissue; partial publication replaces the same incident row.
+    draft["id"] = `oc:situation:${feed.id}:${alert.incidents}`;
 
     const location = draft["location"] as Record<string, unknown>;
     location["fuzziness"] = /unmapped incident/i.test(
@@ -409,6 +414,8 @@ export function parseNswRfs(
   for (const alert of candidates) {
     for (const ref of capReferences(typeof alert.references === "string" ? alert.references : "")) {
       const parent = byId.get(ref.identifier);
+      if (alert.msgType === "Cancel" && !parent)
+        throw new Error("RFS: unverified cancellation target");
       if (parent && (parent.incidents !== alert.incidents || parent.sent !== ref.sent))
         throw new Error("RFS: conflicting incident reference");
     }

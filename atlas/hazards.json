@@ -22,7 +22,7 @@
           "attribution": "© State of New South Wales (NSW Rural Fire Service). For current information go to www.rfs.nsw.gov.au. Current Incidents, https://www.rfs.nsw.gov.au/fire-information/fires-near-me; CC BY 3.0 AU, https://creativecommons.org/licenses/by/3.0/au/. Modified by OpenConditions: CAP conversion, fire filtering and incident anchors; polygons omitted. No endorsement implied.",
           "terms": {
             "url": "https://www.rfs.nsw.gov.au/fire-information/fires-near-me",
-            "reviewedAt": "2026-11-07",
+            "reviewedAt": "2026-11-09",
             "note": "Accepted exact-product interpretation: Current Incidents expressly licenses reuse under CC BY 3.0 AU; Data.NSW corroborates the exact CAP product. This product licence prevails over contradictory generic unaltered-copying/commercial-distribution wording; the feed-page distribution reservation remains relevant to access, without revoking compliant licensed reuse. Preserve notices and modification credit. Branding, BOM products and expressly restricted third-party content are excluded. ControlAuthority identifies operational responsibility, not copyright ownership."
           },
           "privacyUrl": "https://www.rfs.nsw.gov.au/about-us/privacy",
@@ -38,11 +38,7 @@
               -28.1
             ]
           },
-          "disabled": {
-            "reason": "Complete current snapshot and empty/withdrawal behavior require independent provider qualification; worker publication gate remains enforced",
-            "since": "2026-11-07"
-          },
-          "rfsCurrentSnapshotQualified": false
+          "rfsCurrentSnapshotQualified": true
         }
       ]
     },
@@ -843,7 +839,7 @@
       "attribution": "© State of New South Wales (NSW Rural Fire Service). For current information go to www.rfs.nsw.gov.au. Current Incidents, https://www.rfs.nsw.gov.au/fire-information/fires-near-me; CC BY 3.0 AU, https://creativecommons.org/licenses/by/3.0/au/. Modified by OpenConditions: CAP conversion, fire filtering and incident anchors; polygons omitted. No endorsement implied.",
       "terms": {
         "url": "https://www.rfs.nsw.gov.au/fire-information/fires-near-me",
-        "reviewedAt": "2026-11-07",
+        "reviewedAt": "2026-11-09",
         "note": "Accepted exact-product interpretation: Current Incidents expressly licenses reuse under CC BY 3.0 AU; Data.NSW corroborates the exact CAP product. This product licence prevails over contradictory generic unaltered-copying/commercial-distribution wording; the feed-page distribution reservation remains relevant to access, without revoking compliant licensed reuse. Preserve notices and modification credit. Branding, BOM products and expressly restricted third-party content are excluded. ControlAuthority identifies operational responsibility, not copyright ownership."
       },
       "privacyUrl": "https://www.rfs.nsw.gov.au/about-us/privacy",
@@ -859,11 +855,7 @@
           -28.1
         ]
       },
-      "disabled": {
-        "reason": "Complete current snapshot and empty/withdrawal behavior require independent provider qualification; worker publication gate remains enforced",
-        "since": "2026-11-07"
-      },
-      "rfsCurrentSnapshotQualified": false,
+      "rfsCurrentSnapshotQualified": true,
       "id": "au-nsw-rfs-alerts",
       "domain": "hazards",
       "region": "au",
@@ -881,7 +873,7 @@
       },
       "evidence": {
         "url": "https://www.rfs.nsw.gov.au/fire-information/fires-near-me",
-        "reviewedAt": "2026-11-07"
+        "reviewedAt": "2026-11-09"
       },
       "permissions": {
         "display": "yes",

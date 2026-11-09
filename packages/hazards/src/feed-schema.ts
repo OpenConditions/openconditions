@@ -2,7 +2,7 @@ import { type CatalogFeed, feedBaseShape } from "@openconditions/ingest-framewor
 import { z } from "zod";
 
 /**
- * Raw per-field shape of a hazards feed, including the RFS qualification gate.
+ * Raw per-field shape of a hazards feed, including the RFS bounded-publication qualification gate.
  * Formats read fixed publisher shapes rather than configurable mappings.
  */
 export const hazardsFeedShape = {
@@ -11,7 +11,7 @@ export const hazardsFeedShape = {
     .boolean()
     .optional()
     .describe(
-      "Enable only after independently qualifying the RFS complete current snapshot contract, including empty/withdrawal behavior",
+      "Enable qualified RFS incident/text/anchor publication with finite source expiry; never grants absence-based withdrawal",
     ),
 } as const;
 

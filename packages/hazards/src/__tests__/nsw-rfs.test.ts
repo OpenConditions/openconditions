@@ -107,14 +107,6 @@ test("duplicates have an explicit disposition; conflicting versions reject", () 
   ).toThrow(/conflicting/);
 });
 
-test("empty and successful subsets never qualify themselves for withdrawal", () => {
-  const xml = body.toString().replace(/<contentObject>[\s\S]*?<\/contentObject>/g, "");
-  const out = parse(Buffer.from(xml));
-  expect(out.records).toMatchObject({ inputCount: 0, accepted: 0 });
-  expect(out.snapshotQualified).toBe(false);
-  expect(parse().snapshotQualified).toBe(false);
-});
-
 test("rejects unaccounted wrapper content rather than accepting an apparent empty/subset", () => {
   const xml = body
     .toString()
@@ -281,9 +273,34 @@ test("accepts a constructed longer acyclic equal-time native revision chain", ()
   );
   const out = parse(Buffer.from(xml));
   expect(out.situations).toHaveLength(17);
-  expect(out.situations.filter((s) => String(s["id"]).includes("cycle-"))).toHaveLength(1);
-  expect(out.situations.find((s) => String(s["id"]).endsWith(":cycle-0"))).toMatchObject({
+  expect(
+    out.situations.filter((s) => JSON.stringify(s["externalIds"]).includes("cycle-")),
+  ).toHaveLength(1);
+  expect(
+    out.situations.find((s) => JSON.stringify(s["externalIds"]).includes("cycle-0")),
+  ).toMatchObject({
     groupId: "nsw-rfs:webmaster@rfs.nsw.gov.au:684655",
   });
+  expect(sealFailures(out.situations)).toEqual([]);
+});
+
+test("bounded mode uses incident identity and never grants absence authority", () => {
+  const out = parse();
+  expect(out.situationsComplete).toBe(false);
+  for (const s of out.situations)
+    expect(s["id"]).toBe(
+      `oc:situation:au-nsw-rfs-alerts:${String(s["groupId"]).split(":").at(-1)}`,
+    );
+});
+test("rejects empty generations without asserting withdrawal", () => {
+  expect(() =>
+    parse(Buffer.from(body.toString().replace(/<contentObject>[\s\S]*?<\/contentObject>/g, ""))),
+  ).toThrow(/empty/);
+});
+
+test("accounts and seals every in-scope message of the 9 November provider capture", () => {
+  const raw = readFileSync(new URL("./fixtures/nsw-rfs-activation.xml", import.meta.url));
+  const out = parse(raw, "2026-11-09T09:10:49Z");
+  expect(out.records).toMatchObject({ inputCount: 23, accepted: 11, terminal: 12 });
   expect(sealFailures(out.situations)).toEqual([]);
 });

@@ -1,0 +1,101 @@
+[
+  {
+    "identifier": "2026-11-09T17:02:00.0000000:684841",
+    "incident": "684841",
+    "sent": "2026-11-09T17:02:00+11:00",
+    "effective": "2026-11-09T17:02:00+11:00",
+    "expires": "2026-11-10T20:08:45+11:00",
+    "instruction": "A fire has started There is no immediate danger. Stay up to date in case the situation changes",
+    "coordinates": [148.087612, -31.7787319999999]
+  },
+  {
+    "identifier": "2026-11-09T19:55:00.0000000:684858",
+    "incident": "684858",
+    "sent": "2026-11-09T19:55:00+11:00",
+    "effective": "2026-11-09T19:55:00+11:00",
+    "expires": "2026-11-10T20:08:45+11:00",
+    "instruction": "A fire has started There is no immediate danger. Stay up to date in case the situation changes",
+    "coordinates": [147.474731445, -32.868015289]
+  },
+  {
+    "identifier": "2026-11-09T16:39:00.0000000:684743",
+    "incident": "684743",
+    "sent": "2026-11-09T16:39:00+11:00",
+    "effective": "2026-11-09T16:39:00+11:00",
+    "expires": "2026-11-10T20:08:45+11:00",
+    "instruction": "A fire has started There is no immediate danger. Stay up to date in case the situation changes",
+    "coordinates": [152.259658814, -28.5804969399999]
+  },
+  {
+    "identifier": "2026-11-09T16:16:00.0000000:684843",
+    "incident": "684843",
+    "sent": "2026-11-09T16:16:00+11:00",
+    "effective": "2026-11-09T16:16:00+11:00",
+    "expires": "2026-11-10T20:08:45+11:00",
+    "instruction": "Unknown",
+    "coordinates": [150.409904482, -29.1674516639999]
+  },
+  {
+    "identifier": "2026-11-09T18:53:00.0000000:684326",
+    "incident": "684326",
+    "sent": "2026-11-09T18:53:00+11:00",
+    "effective": "2026-11-09T18:53:00+11:00",
+    "expires": "2026-11-10T20:08:45+11:00",
+    "instruction": "Unknown",
+    "coordinates": [151.141654014, -30.62417511]
+  },
+  {
+    "identifier": "2026-11-09T19:04:00.0000000:684879",
+    "incident": "684879",
+    "sent": "2026-11-09T19:04:00+11:00",
+    "effective": "2026-11-09T19:04:00+11:00",
+    "expires": "2026-11-10T20:08:45+11:00",
+    "instruction": "Unknown",
+    "coordinates": [152.54974, -29.11107]
+  },
+  {
+    "identifier": "2026-11-09T16:34:00.0000000:684839",
+    "incident": "684839",
+    "sent": "2026-11-09T16:34:00+11:00",
+    "effective": "2026-11-09T16:34:00+11:00",
+    "expires": "2026-11-10T20:08:45+11:00",
+    "instruction": "Unknown",
+    "coordinates": [150.774, -33.4050999999999]
+  },
+  {
+    "identifier": "2026-11-09T16:13:00.0000000:684842",
+    "incident": "684842",
+    "sent": "2026-11-09T16:13:00+11:00",
+    "effective": "2026-11-09T16:13:00+11:00",
+    "expires": "2026-11-10T20:08:45+11:00",
+    "instruction": "Unknown",
+    "coordinates": [149.161659, -33.206199]
+  },
+  {
+    "identifier": "2026-11-09T15:38:00.0000000:683824",
+    "incident": "683824",
+    "sent": "2026-11-09T15:38:00+11:00",
+    "effective": "2026-11-09T15:38:00+11:00",
+    "expires": "2026-11-10T20:08:45+11:00",
+    "instruction": "Unknown",
+    "coordinates": [150.670394898, -35.071166992]
+  },
+  {
+    "identifier": "2026-11-09T17:58:00.0000000:684860",
+    "incident": "684860",
+    "sent": "2026-11-09T17:58:00+11:00",
+    "effective": "2026-11-09T17:58:00+11:00",
+    "expires": "2026-11-10T20:08:45+11:00",
+    "instruction": "Unknown",
+    "coordinates": [151.42527771, -32.83700943]
+  },
+  {
+    "identifier": "2026-11-09T19:26:00.0000000:684883",
+    "incident": "684883",
+    "sent": "2026-11-09T19:26:00+11:00",
+    "effective": "2026-11-09T19:26:00+11:00",
+    "expires": "2026-11-10T20:08:45+11:00",
+    "instruction": "Unknown",
+    "coordinates": [146.278812, -34.553906]
+  }
+]

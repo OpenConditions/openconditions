@@ -1069,7 +1069,7 @@
             "additionalProperties": false
           },
           "rfsCurrentSnapshotQualified": {
-            "description": "Enable only after independently qualifying the RFS complete current snapshot contract, including empty/withdrawal behavior",
+            "description": "Enable qualified RFS incident/text/anchor publication with finite source expiry; never grants absence-based withdrawal",
             "type": "boolean"
           }
         },
