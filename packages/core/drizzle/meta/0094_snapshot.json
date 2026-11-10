@@ -1,6 +1,6 @@
 {
-  "id": "e6e4486d-4d8a-4934-90ac-a24d10cdfd9b",
-  "prevId": "ed463097-bbb5-4a11-8fbc-ebed72bd96dc",
+  "id": "aaddd309-92cd-4835-92d3-263fee55294a",
+  "prevId": "97143600-94cf-4be9-b4e2-01fe08ae752c",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -5518,37 +5518,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "conditions.smn_cap_decision": {
-      "name": "smn_cap_decision",
-      "schema": "conditions",
-      "columns": {
-        "source_id": {
-          "name": "source_id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "decided_at": {
-          "name": "decided_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "decision": {
-          "name": "decision",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
     "conditions.smn_cap_message": {
       "name": "smn_cap_message",
       "schema": "conditions",
@@ -5564,23 +5533,6 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
-        },
-        "variant": {
-          "name": "variant",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "generated": {
-            "as": "encode(sha256(body), 'hex')",
-            "type": "stored"
-          }
-        },
-        "retrieval": {
-          "name": "retrieval",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{\"legacy\":true}'::jsonb"
         },
         "body": {
           "name": "body",
@@ -5598,11 +5550,11 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "smn_cap_message_source_id_variant_pk": {
-          "name": "smn_cap_message_source_id_variant_pk",
+        "smn_cap_message_source_id_identifier_pk": {
+          "name": "smn_cap_message_source_id_identifier_pk",
           "columns": [
             "source_id",
-            "variant"
+            "identifier"
           ]
         }
       },
@@ -5868,6 +5820,12 @@
         },
         "freshness_deadline": {
           "name": "freshness_deadline",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_published_at": {
+          "name": "source_published_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false

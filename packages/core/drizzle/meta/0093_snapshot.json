@@ -1,5 +1,5 @@
 {
-  "id": "ed463097-bbb5-4a11-8fbc-ebed72bd96dc",
+  "id": "97143600-94cf-4be9-b4e2-01fe08ae752c",
   "prevId": "975f1678-b6d3-4483-b24f-e3233700e8b0",
   "version": "7",
   "dialect": "postgresql",
@@ -5518,51 +5518,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "conditions.smn_cap_message": {
-      "name": "smn_cap_message",
-      "schema": "conditions",
-      "columns": {
-        "source_id": {
-          "name": "source_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "identifier": {
-          "name": "identifier",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "body": {
-          "name": "body",
-          "type": "bytea",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "retain_until": {
-          "name": "retain_until",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "smn_cap_message_source_id_identifier_pk": {
-          "name": "smn_cap_message_source_id_identifier_pk",
-          "columns": [
-            "source_id",
-            "identifier"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
     "conditions.source_poll_attempt": {
       "name": "source_poll_attempt",
       "schema": "conditions",
@@ -5820,6 +5775,12 @@
         },
         "freshness_deadline": {
           "name": "freshness_deadline",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_published_at": {
+          "name": "source_published_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false

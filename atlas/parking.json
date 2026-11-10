@@ -1518,6 +1518,52 @@
         }
       ]
     },
+    "parking/no": {
+      "$schema": "../schema/parking.schema.json",
+      "feeds": [
+        {
+          "operator": "vegvesen",
+          "product": "parking",
+          "name": "Statens vegvesen national parking register inventory",
+          "format": "vegvesen-parkreg",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://parkreg-open.atlas.vegvesen.no/ws/no/vegvesen/veg/parkeringsomraade/parkeringsregisteret/v1/parkeringsomraade?datafelter=alle",
+              "cadenceSec": 86400,
+              "budget": {
+                "maxBytes": 268435456,
+                "deadlineSec": 120
+              }
+            },
+            "inventory": {
+              "url": "https://parkreg-open.atlas.vegvesen.no/ws/no/vegvesen/veg/parkeringsomraade/parkeringsregisteret/v1/parkeringsomraade?datafelter=kart",
+              "cadenceSec": 86400,
+              "budget": {
+                "maxBytes": 16777216,
+                "deadlineSec": 45
+              }
+            }
+          },
+          "freshnessWindowSec": 172800,
+          "rawRetention": "none",
+          "license": "NLOD-2.0",
+          "licenseUrl": "https://data.norge.no/nlod/no/2.0",
+          "attribution": "Inneholder data under Norsk lisens for offentlige data (NLOD) tilgjengeliggjort av Statens vegvesen. Normalisert av OpenConditions.",
+          "terms": {
+            "url": "https://dataut.vegvesen.no/dataset/parkeringsregisteret",
+            "reviewedAt": "2026-11-09",
+            "note": "Product metadata assigns NLOD; the national catalogue identifies NLOD 2.0. Structured inventory only; no contacts, assessment prose, PDFs or images. OpenConditions normalizes current versions and capacity totals."
+          },
+          "privacyUrl": "https://www.vegvesen.no/om-oss/om-organisasjonen/personvern/",
+          "homepage": "https://dataut.vegvesen.no/dataset/parkeringsregisteret",
+          "parkreg": {
+            "qualified": true,
+            "acquisitionSha256": "52966b9770373cd188badb38495e13517483c560a1f977e719fd389e0465caac"
+          }
+        }
+      ]
+    },
     "parking/sg": {
       "$schema": "../schema/parking.schema.json",
       "feeds": [
@@ -1550,6 +1596,48 @@
             "note": "Redistribution allowed with the licence notice and link. No rights pass to downstream sub-licensees; re-users must take the licence from data.gov.sg. Availability API: 60 requests/minute per API key."
           },
           "privacyUrl": "https://data.gov.sg/privacy-and-terms"
+        }
+      ]
+    },
+    "parking/tw": {
+      "$schema": "../schema/parking.schema.json",
+      "feeds": [
+        {
+          "subdivision": "tpe",
+          "operator": "pma",
+          "product": "parking",
+          "name": "Taipei off-street parking inventory and category availability",
+          "format": "taipei",
+          "tier": "authoritative",
+          "endpoints": {
+            "sites": {
+              "url": "https://tcgbusfs.blob.core.windows.net/blobtcmsv/TCMSV_alldesc.xml",
+              "cadenceSec": 86400
+            },
+            "status": {
+              "url": "https://tcgbusfs.blob.core.windows.net/blobtcmsv/TCMSV_allavailable.xml",
+              "cadenceSec": 300
+            }
+          },
+          "freshnessWindowSec": 1800,
+          "license": "OGDL-Taiwan-1.0",
+          "licenseUrl": "https://data.gov.tw/license",
+          "attribution": "臺北市停車管理工程處 2026 臺北市停車場資訊V2／剩餘停車位數V2；依政府資料開放授權條款第1版釋出 (https://data.gov.tw/license)",
+          "terms": {
+            "url": "https://data.gov.tw/dataset/128435",
+            "reviewedAt": "2026-11-09",
+            "note": "Dataset-specific OGDL 1.0 redistribution grant confirmed. Enabled partial inventory and five-category availability with source expiry; no snapshot withdrawal authority. Heavy motorcycles retained in raw XML only; five canonical categories, reserved counts overlap vehicle totals. Cadences are operator choices, not a publisher SLA or quota."
+          },
+          "privacyUrl": "https://data.gov.tw/privacy",
+          "homepage": "https://data.gov.tw/dataset/128435",
+          "coverage": {
+            "countries": [
+              "TW-TPE"
+            ]
+          },
+          "taipei": {
+            "qualifiedSnapshot": false
+          }
         }
       ]
     },
@@ -3927,6 +4015,81 @@
       "country": "NL"
     },
     {
+      "operator": "vegvesen",
+      "product": "parking",
+      "name": "Statens vegvesen national parking register inventory",
+      "format": "vegvesen-parkreg",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://parkreg-open.atlas.vegvesen.no/ws/no/vegvesen/veg/parkeringsomraade/parkeringsregisteret/v1/parkeringsomraade?datafelter=alle",
+          "cadenceSec": 86400,
+          "budget": {
+            "maxBytes": 268435456,
+            "deadlineSec": 120
+          }
+        },
+        "inventory": {
+          "url": "https://parkreg-open.atlas.vegvesen.no/ws/no/vegvesen/veg/parkeringsomraade/parkeringsregisteret/v1/parkeringsomraade?datafelter=kart",
+          "cadenceSec": 86400,
+          "budget": {
+            "maxBytes": 16777216,
+            "deadlineSec": 45
+          }
+        }
+      },
+      "freshnessWindowSec": 172800,
+      "rawRetention": "none",
+      "license": "NLOD-2.0",
+      "licenseUrl": "https://data.norge.no/nlod/no/2.0",
+      "attribution": "Inneholder data under Norsk lisens for offentlige data (NLOD) tilgjengeliggjort av Statens vegvesen. Normalisert av OpenConditions.",
+      "terms": {
+        "url": "https://dataut.vegvesen.no/dataset/parkeringsregisteret",
+        "reviewedAt": "2026-11-09",
+        "note": "Product metadata assigns NLOD; the national catalogue identifies NLOD 2.0. Structured inventory only; no contacts, assessment prose, PDFs or images. OpenConditions normalizes current versions and capacity totals."
+      },
+      "privacyUrl": "https://www.vegvesen.no/om-oss/om-organisasjonen/personvern/",
+      "homepage": "https://dataut.vegvesen.no/dataset/parkeringsregisteret",
+      "parkreg": {
+        "qualified": true,
+        "acquisitionSha256": "52966b9770373cd188badb38495e13517483c560a1f977e719fd389e0465caac"
+      },
+      "id": "no-vegvesen-parking",
+      "domain": "parking",
+      "region": "no",
+      "file": "feeds/parking/no.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": true,
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "changeNotice": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://dataut.vegvesen.no/dataset/parkeringsregisteret",
+        "reviewedAt": "2026-11-09"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "NO"
+        ]
+      },
+      "cadenceSec": 86400,
+      "country": "NO"
+    },
+    {
       "operator": "hdb",
       "product": "parking",
       "name": "HDB car parks",
@@ -3990,6 +4153,72 @@
       },
       "cadenceSec": 300,
       "country": "SG"
+    },
+    {
+      "subdivision": "tpe",
+      "operator": "pma",
+      "product": "parking",
+      "name": "Taipei off-street parking inventory and category availability",
+      "format": "taipei",
+      "tier": "authoritative",
+      "endpoints": {
+        "sites": {
+          "url": "https://tcgbusfs.blob.core.windows.net/blobtcmsv/TCMSV_alldesc.xml",
+          "cadenceSec": 86400
+        },
+        "status": {
+          "url": "https://tcgbusfs.blob.core.windows.net/blobtcmsv/TCMSV_allavailable.xml",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 1800,
+      "license": "OGDL-Taiwan-1.0",
+      "licenseUrl": "https://data.gov.tw/license",
+      "attribution": "臺北市停車管理工程處 2026 臺北市停車場資訊V2／剩餘停車位數V2；依政府資料開放授權條款第1版釋出 (https://data.gov.tw/license)",
+      "terms": {
+        "url": "https://data.gov.tw/dataset/128435",
+        "reviewedAt": "2026-11-09",
+        "note": "Dataset-specific OGDL 1.0 redistribution grant confirmed. Enabled partial inventory and five-category availability with source expiry; no snapshot withdrawal authority. Heavy motorcycles retained in raw XML only; five canonical categories, reserved counts overlap vehicle totals. Cadences are operator choices, not a publisher SLA or quota."
+      },
+      "privacyUrl": "https://data.gov.tw/privacy",
+      "homepage": "https://data.gov.tw/dataset/128435",
+      "coverage": {
+        "countries": [
+          "TW-TPE"
+        ]
+      },
+      "taipei": {
+        "qualifiedSnapshot": false
+      },
+      "id": "tw-tpe-pma-parking",
+      "domain": "parking",
+      "region": "tw",
+      "file": "feeds/parking/tw.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": true,
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "changeNotice": false,
+        "retention": true,
+        "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://data.gov.tw/dataset/128435",
+        "reviewedAt": "2026-11-09"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
+      },
+      "restricted": false,
+      "cadenceSec": 300,
+      "country": "TW"
     }
   ]
 }

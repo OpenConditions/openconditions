@@ -365,11 +365,11 @@ it("upgrades the existing one-ID durable table without changing its original byt
     await db.sql`DROP TABLE conditions.smn_cap_decision`;
     await db.sql`DROP TABLE conditions.smn_cap_message`;
     const migrations = new URL("../../../../packages/core/drizzle/", import.meta.url);
-    await db.sql.unsafe(readFileSync(new URL("0093_smn_cap_message.sql", migrations), "utf8"));
+    await db.sql.unsafe(readFileSync(new URL("0094_smn_cap_message.sql", migrations), "utf8"));
     const original = readFileSync(new URL("ar-000.xml", dir));
     const alert = readCapXml(original, true);
     await db.sql`INSERT INTO conditions.smn_cap_message(source_id,identifier,body,retain_until) VALUES ('legacy',${alert.identifier},${original},'2026-11-15T23:13:22Z')`;
-    const migration = readFileSync(new URL("0094_glorious_adam_destine.sql", migrations), "utf8");
+    const migration = readFileSync(new URL("0095_glorious_adam_destine.sql", migrations), "utf8");
     for (const statement of migration.split("--> statement-breakpoint"))
       await db.sql.unsafe(statement);
     const rows =

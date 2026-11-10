@@ -2,6 +2,11 @@ import type { SkipSamples } from "./sample.js";
 
 /** Samples of the formats whose parsers record their skips. */
 export const SAMPLES: SkipSamples = {
+  "roads/caltrans-cms": {
+    reason: "malformed",
+    feed: { caltransDistrict: 12 },
+    payloads: { main: JSON.stringify({ data: [{ cms: {} }] }) },
+  },
   "parking/parkapi-v3": {
     reason: "no_geometry",
     payloads: {

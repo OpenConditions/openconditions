@@ -89,6 +89,7 @@ test("chargingDomain registers its formats with their roles and what they produc
     cynap: main,
     chargy: main,
     evroam: main,
+    geofa: main,
     keco: {
       main: { required: true },
       status: { ...live, accumulatesSince: "main", changesWindowSec: 600 },
@@ -104,6 +105,7 @@ test("chargingDomain registers its formats with their roles and what they produc
       servicetimes: { required: false },
     },
     ocm: main,
+    pun: main,
   });
   // Every format with a live status role reads it alone too.
   expect(
@@ -115,10 +117,14 @@ test("chargingDomain registers its formats with their roles and what they produc
     expect(format.id).toBe(code);
     expect(format.kind).toBe("features");
     expect(format.products).toEqual(["charging"]);
-    expect(format.produces).toEqual({
-      kinds: ["charging_site", "evse", "connector", "energy_tariff"],
-      properties: ["charging.evse_status", "charging.connector_status"],
-    });
+    expect(format.produces).toEqual(
+      code === "pun" || code === "geofa"
+        ? { kinds: ["charging_site", "evse", "connector"], properties: [] }
+        : {
+            kinds: ["charging_site", "evse", "connector", "energy_tariff"],
+            properties: ["charging.evse_status", "charging.connector_status"],
+          },
+    );
   }
 });
 
@@ -185,6 +191,10 @@ test("a layout feed without a charging mapping is a lint issue", () => {
 test("a format without a payload parses to nothing", () => {
   const ctx = { fetchedAt: "2026-10-06T06:00:00Z", cadenceSec: 300, reference: {} };
   for (const format of Object.values(chargingDomain.formats)) {
+    if (format.id === "pun") {
+      expect(() => format.parse({} as never, {}, ctx)).toThrow("complete acquired generation");
+      continue;
+    }
     const out = format.parse({} as never, {}, ctx);
     expect(out.features).toEqual([]);
     expect(out.observations).toEqual([]);

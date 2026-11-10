@@ -19,6 +19,10 @@ const flow = (retention: boolean | null) =>
   testFeed({ rights: rights(retention), product: "flow", format: "datex2-measured" });
 
 describe("rawTierFor", () => {
+  it("can retain normalized records without archiving excluded raw material", () => {
+    expect(rawTierFor(events(true, { rawRetention: "none" }), "feed")).toBeUndefined();
+    expect(rawTierFor(events(null, { rawRetention: "none" }), "reference")).toBeUndefined();
+  });
   it("keeps nothing of a source whose terms forbid retention", () => {
     expect(rawTierFor(events(false), "feed")).toBeUndefined();
     expect(rawTierFor(events(false), "reference")).toBeUndefined();

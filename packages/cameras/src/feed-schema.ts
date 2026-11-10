@@ -126,6 +126,8 @@ export const camerasMappingSchema = z.strictObject({
   groupBy: fieldRef.optional(),
   /** The view's key within its camera; `0` by default. */
   viewKey: fieldRef.optional(),
+  /** Fail a snapshot when duplicate view IDs disagree instead of choosing by row order. */
+  rejectConflictingViews: z.literal(true).optional(),
   name: fieldRef.optional(),
   /** The language of the source's texts (BCP 47). */
   lang: z.string().min(2),
@@ -179,6 +181,8 @@ export const camerasMappingSchema = z.strictObject({
     .optional(),
   /** The publisher's page of the camera. */
   detailUrl: fieldRef.optional(),
+  /** Row-specific image credit, retained beside the feed licence. */
+  credit: fieldRef.optional(),
   /**
    * What the images' licence allows. Unlike the rest of the mapping, every
    * format reads it: a layout feed must state it, and a format with its own

@@ -82,6 +82,7 @@ export const ROADS_SOURCE_FORMATS = [
   "bonn",
   "cars",
   "cars-signs",
+  "caltrans-cms",
   "datex2-elaborated",
   "datex2-locations",
   "datex2-measured",
@@ -111,6 +112,7 @@ export const ROADS_SOURCE_FORMATS = [
   "trafikverket",
   "trafikverket-flow",
   "vic-disruptions",
+  "wa-webeoc",
   "webtris",
   "webtris-sites",
   "wzdx",
@@ -120,7 +122,14 @@ export const ROADS_SOURCE_FORMATS = [
  * The camera wire formats roads adds beyond the ones its event and flow
  * parsers already read (`digitraffic`, `ibi511`, `trafikverket`, `hk-td`).
  */
-export const CAMERA_SOURCE_FORMATS = ["windy", "tfl", "nps", "tripcheck", "cars-cctv"] as const;
+export const CAMERA_SOURCE_FORMATS = [
+  "windy",
+  "tfl",
+  "nps",
+  "tripcheck",
+  "cars-cctv",
+  "quebec-cameras",
+] as const;
 
 type DatexVocabulary = typeof DATEX2_V3 | typeof DATEX2_V2;
 

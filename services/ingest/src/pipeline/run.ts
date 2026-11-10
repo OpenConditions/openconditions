@@ -27,6 +27,7 @@ import {
   heldBytes,
   holdPayload,
   makeAuthorizedFetch,
+  type ParseContext,
   recordSkipped,
   redactSecrets,
   redactUrl,
@@ -236,6 +237,8 @@ export interface RunDeps {
   model?: Partial<WriteModel>;
   /** Where credentials are read; defaults to `process.env`. */
   env?: Env;
+  /** Cancels PUN acquisition during scheduler shutdown. */
+  signal?: AbortSignal;
   /** The process's OAuth2 grants, which a feed with `oauth2-authorization-code` auth reads. */
   grants?: OAuthGrants;
   /**
@@ -360,7 +363,8 @@ export function pollTickSec(cadenceSec: number): number {
  */
 function rolesDue(src: CatalogFeed, roles: RoleState | undefined, now: number): string[] {
   if (!roles) return dataRoles(src);
-  return dueRoles(src, roles.lastFetchedAt, now + pollTickSec(src.cadenceSec) * 500);
+  const due = dueRoles(src, roles.lastFetchedAt, now + pollTickSec(src.cadenceSec) * 500);
+  return due.length > 0 && src.rawRetention === "none" ? dataRoles(src) : due;
 }
 
 /**
@@ -433,6 +437,12 @@ export function createOpenlrClient(): MapMatchClient | null {
  */
 export async function runSource(src: CatalogFeed, deps: RunDeps): Promise<RunResult> {
   const attemptAt = deps.now();
+  if (src.rawRetention === "none" && deps.roles !== undefined) {
+    deps.roles.payloads = {};
+    deps.roles.urls = {};
+    deps.roles.items = {};
+    deps.roles.answers = {};
+  }
   const due = rolesDue(src, deps.roles, Date.parse(attemptAt));
   if (due.length === 0) return { count: 0, durationMs: 0, notDue: true };
   const attempt: PollAttempt = {
@@ -482,9 +492,14 @@ async function runAttempt(
   // every poll fact recorded after it (the raw-payload
   // identity an archived blob will be filed under).
   let payloadHashes: string[] | undefined;
+  let sourceClockNetworkValidated = false;
   const recordStatus = async (update: SourceStatusUpdate) => {
     await upsertSourceStatus(deps.sql, src.id, {
       ...update,
+      ...(format.sourceClock ? { attemptAt } : {}),
+      ...(format.sourceClock
+        ? { publicationFresh: false, networkValidated: sourceClockNetworkValidated }
+        : {}),
       attemptId,
       ...(payloadHashes ? { payloadHashes } : {}),
     });
@@ -544,7 +559,16 @@ async function runAttempt(
   }
   steps.lap("reference");
 
-  const ctx = { fetchedAt: attemptAt, cadenceSec: src.cadenceSec, reference };
+  const payloadEvidence: Record<
+    string,
+    readonly import("@openconditions/ingest-framework").PayloadDigest[]
+  > = {};
+  const ctx: ParseContext = {
+    fetchedAt: attemptAt,
+    cadenceSec: src.cadenceSec,
+    reference,
+    payloadEvidence,
+  };
   let acceptFetch: (() => void) | undefined;
   let snapshotInspection: SnapshotInspection | undefined;
   let smnWindow: SmnWindow | undefined;
@@ -629,7 +653,8 @@ async function runAttempt(
     /** The URL of each fresh payload, same order. */
     const freshUrls: Record<string, readonly string[]> = {};
     const accepts: (() => void)[] = [];
-    const keepPayloads = deps.roles !== undefined && dataRoles(src).length > 1;
+    const keepPayloads =
+      deps.roles !== undefined && dataRoles(src).length > 1 && src.rawRetention !== "none";
     /** The data roles whose payloads changed this poll. */
     let fetched: string[] = [];
     const acquiredRoles = new Set<string>();
@@ -686,6 +711,7 @@ async function runAttempt(
       const endpoint = src.endpoints[role];
       if (
         deps.roles === undefined ||
+        src.rawRetention === "none" ||
         endpoint?.fanout !== "tolerant" ||
         endpoint.urls === undefined ||
         endpoint.each !== undefined
@@ -763,6 +789,7 @@ async function runAttempt(
             guardedFeedFetch(deps, src.endpoints[role]?.timeoutSec),
             {
               resolvers: domainOf(src).resolvers,
+              ...(deps.signal ? { signal: deps.signal } : {}),
               env,
               ...(deps.grants ? { grants: deps.grants } : {}),
               at: polledAt,
@@ -835,7 +862,12 @@ async function runAttempt(
         }
         // The walk's kept items are renewed even when its snapshot is refused:
         // they are the publisher's answers, and the next poll builds on them.
-        if (result.status === "partial" && deps.roles && result.kept) {
+        if (
+          src.rawRetention !== "none" &&
+          result.status === "partial" &&
+          deps.roles &&
+          result.kept
+        ) {
           deps.roles.items[role] = result.kept;
         }
         if (result.status === "partial" && eachPartial) {
@@ -868,7 +900,8 @@ async function runAttempt(
           }
           // The items kept are the role's own cache of the publisher's
           // answers, renewed whatever becomes of this poll.
-          if (deps.roles && result.kept) deps.roles.items[role] = result.kept;
+          if (src.rawRetention !== "none" && deps.roles && result.kept)
+            deps.roles.items[role] = result.kept;
         }
         if (result.status === "no-endpoint") {
           await recordStatus({
@@ -896,12 +929,15 @@ async function runAttempt(
           return { count: 0, durationMs: Date.now() - start, outcome: "partial", error };
         }
         if (result.status === "fetched") {
+          if (result.publicationExpiresAt !== undefined)
+            ctx.publicationExpiresAt = result.publicationExpiresAt;
           accepts.push(result.accept);
           if (result.bodyFreshness === "acquired") acquiredRoles.add(role);
         }
         if (result.status === "fetched" || result.status === "partial") {
           fresh[role] = result.buffers;
           freshUrls[role] = result.urls;
+          if (src.format === "geofa") payloadEvidence[role] = result.payloads;
         }
         answered++;
         renewed.add(role);
@@ -983,7 +1019,8 @@ async function runAttempt(
         });
         return { count: 0, durationMs: Date.now() - start, outcome: "failed", error };
       }
-      if (fetched.length === 0) {
+      sourceClockNetworkValidated = answered > 0 && warnings.length === 0;
+      if (fetched.length === 0 && !format.sourceClock) {
         await recordStatus({
           freshnessWindowSec: src.freshnessWindowSec,
           outcome: "validated_unchanged",
@@ -1321,6 +1358,7 @@ async function finishEventPoll(
     summary = await publishSituations(deps.sql, src, {
       situations,
       ...(poll.smnWindow ? { smnWindow: poll.smnWindow, smnDecision: parse.smn } : {}),
+      situationsComplete: parse.situationsComplete ?? true,
       ...(unlocatableSituations
         ? {
             unlocatable: unlocatableSituations,
@@ -1493,18 +1531,43 @@ async function finishFeaturePoll(
   skipped: SkipCounts,
 ): Promise<RunResult> {
   const { src, deps } = poll;
-  if (heldPayload && parse.features.length === 0) {
+  const nonWithdrawing =
+    src.format === "geofa" && src.endpoints["main"]?.geofa?.nonWithdrawing === true;
+  if (src.format === "geofa" && !parse.qualifiedFeatureSnapshot && !nonWithdrawing)
+    return fail(poll, "failed", "GeoFA: publication qualification required");
+  if (parse.featureSnapshotComplete && poll.warning !== undefined) {
+    return fail(
+      poll,
+      "failed",
+      "qualified feature snapshot requires successful acquisition of every role",
+    );
+  }
+  if (
+    heldPayload &&
+    parse.features.length === 0 &&
+    !parse.featureSnapshotComplete &&
+    !(src.format === "geofa" && parse.qualifiedFeatureSnapshot) &&
+    parse.featuresComplete !== true
+  ) {
     const error =
       "features feed produced zero features from a non-empty payload — skipping the write to keep the last good publication";
     console.warn(`[ingest] ${src.id}: ${error}`);
     return fail(poll, "failed", error);
   }
-  const shrunk = await shrinkTripped(deps.sql, src.id, parse.features.length, deps.now());
+  if (parse.publication?.sourcePublishedAt !== undefined) {
+    if (!poll.statesComplete || poll.warning)
+      return fail(poll, "failed", "source-clock snapshot requires successful current roles");
+  }
+  const shrunk =
+    nonWithdrawing || (parse.featuresComplete === true && parse.features.length === 0)
+      ? undefined
+      : await shrinkTripped(deps.sql, src.id, parse.features.length, deps.now());
   if (shrunk) return failShrunk(poll, "features", "features", parse.features.length, shrunk);
 
   const stampOne = attributionStamp(src, new Date(poll.attempt.at));
   const stamp = (drafts: readonly RecordDraft[]) => drafts.map((d) => stampOne(d));
   const output = {
+    ...(parse.publication ? { publication: parse.publication } : {}),
     features: stamp(parse.features),
     observations: stamp(parse.observations),
     offers: stamp(parse.offers),
@@ -1519,7 +1582,8 @@ async function finishFeaturePoll(
       durationMs: Date.now() - poll.start,
       now: deps.now(),
       model: writeModel(deps.model),
-      statesComplete: poll.statesComplete,
+      statesComplete: poll.statesComplete && parse.featuresComplete !== false,
+      featuresComplete: nonWithdrawing ? false : parse.featuresComplete,
       ...(poll.warning ? { warning: poll.warning } : {}),
     });
     poll.attempt.closed = true;

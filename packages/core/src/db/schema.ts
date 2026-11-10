@@ -42,6 +42,7 @@ export const sourceStatus = conditionsSchema.table("source_status", {
   lastSuccessAt: timestamp("last_success_at", { withTimezone: true }),
   lastNetworkSuccessAt: timestamp("last_network_success_at", { withTimezone: true }),
   freshnessDeadline: timestamp("freshness_deadline", { withTimezone: true }),
+  sourcePublishedAt: timestamp("source_published_at", { withTimezone: true }),
   lastPublicationAt: timestamp("last_publication_at", { withTimezone: true }),
   publicationRevision: bigint("publication_revision", { mode: "number" }).notNull().default(0),
   lastOutcome: text("last_outcome"),
