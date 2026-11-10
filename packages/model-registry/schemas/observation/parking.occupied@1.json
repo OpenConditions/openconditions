@@ -453,6 +453,7 @@
             "irwin",
             "nwcg:unique_fire_id",
             "usgs:event",
+            "geonet:event",
             "gdacs:event",
             "glide",
             "gvp:volcano"
@@ -2027,6 +2028,7 @@
             "effis",
             "hms",
             "usgs",
+            "geonet",
             "eonet",
             "gdacs"
           ]

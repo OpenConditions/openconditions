@@ -703,6 +703,61 @@
         }
       ]
     },
+    "hazards/nz": {
+      "$schema": "../schema/hazards.schema.json",
+      "feeds": [
+        {
+          "operator": "geonet",
+          "product": "quakes",
+          "name": "GeoNet New Zealand earthquakes",
+          "format": "geonet",
+          "tier": "authoritative",
+          "endpoints": {
+            "recent": {
+              "url": "https://api.geonet.org.nz/quake?MMI=-1",
+              "headers": {
+                "Accept": "application/vnd.geo+json;version=2"
+              },
+              "cadenceSec": 600
+            },
+            "detail": {
+              "url": "https://api.geonet.org.nz/quake/{item}",
+              "headers": {
+                "Accept": "application/vnd.geo+json;version=2"
+              },
+              "cadenceSec": 600
+            },
+            "history": {
+              "url": "https://api.geonet.org.nz/quake/history/{item}",
+              "headers": {
+                "Accept": "application/vnd.geo+json;version=2"
+              },
+              "cadenceSec": 600
+            },
+            "solutions": {
+              "url": "https://service.geonet.org.nz/fdsnws/event/1/query",
+              "cadenceSec": 600
+            }
+          },
+          "freshnessWindowSec": 1800,
+          "extrasAllow": [
+            "geonetQuality",
+            "geonetLocality",
+            "geonetLocalityMmi"
+          ],
+          "license": "LicenseRef-CC-BY-3.0-NZ",
+          "licenseUrl": "https://creativecommons.org/licenses/by/3.0/nz/",
+          "attribution": "Earth Sciences New Zealand / GeoNet; earthquake catalogue DOI 10.21420/0S8P-TZ38 GNS Science. (1970). New Zealand Earthquake Catalogue [Data set]. GNS Science, GeoNet. https://doi.org/10.21420/0S8P-TZ38. GeoNet programme sponsors: NHC, Earth Sciences NZ, LINZ, NEMA and MBIE. Modified: normalized earthquake parameters; locality MMI is a calculated estimate. CC BY 3.0 NZ. Accuracy and completeness disclaimer: https://www.geonet.org.nz/disclaimer",
+          "terms": {
+            "url": "https://data.gns.cri.nz/metadata/srv/api/records/5105fdeb-f314-4d6e-8e09-bf5308278e03/formatters/xml",
+            "reviewedAt": "2026-11-07",
+            "note": "Earthquake dataset metadata explicitly applies Creative Commons Attribution 3.0 New Zealand. DOI https://doi.org/10.21420/0S8P-TZ38. Policy https://www.geonet.org.nz/policy; legal code https://creativecommons.org/licenses/by/3.0/nz/legalcode. Scoped to earthquake parameters; excludes external basemaps, images, felt reports and other products."
+          },
+          "privacyUrl": "https://www.earthsciences.nz/privacy-policy",
+          "homepage": "https://www.geonet.org.nz/data/types/eq_catalogue"
+        }
+      ]
+    },
     "hazards/us": {
       "$schema": "../schema/hazards.schema.json",
       "feeds": [
@@ -1939,6 +1994,90 @@
       },
       "restricted": false,
       "cadenceSec": 600
+    },
+    {
+      "operator": "geonet",
+      "product": "quakes",
+      "name": "GeoNet New Zealand earthquakes",
+      "format": "geonet",
+      "tier": "authoritative",
+      "endpoints": {
+        "recent": {
+          "url": "https://api.geonet.org.nz/quake?MMI=-1",
+          "headers": {
+            "Accept": "application/vnd.geo+json;version=2"
+          },
+          "cadenceSec": 600
+        },
+        "detail": {
+          "url": "https://api.geonet.org.nz/quake/{item}",
+          "headers": {
+            "Accept": "application/vnd.geo+json;version=2"
+          },
+          "cadenceSec": 600
+        },
+        "history": {
+          "url": "https://api.geonet.org.nz/quake/history/{item}",
+          "headers": {
+            "Accept": "application/vnd.geo+json;version=2"
+          },
+          "cadenceSec": 600
+        },
+        "solutions": {
+          "url": "https://service.geonet.org.nz/fdsnws/event/1/query",
+          "cadenceSec": 600
+        }
+      },
+      "freshnessWindowSec": 1800,
+      "extrasAllow": [
+        "geonetQuality",
+        "geonetLocality",
+        "geonetLocalityMmi"
+      ],
+      "license": "LicenseRef-CC-BY-3.0-NZ",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/nz/",
+      "attribution": "Earth Sciences New Zealand / GeoNet; earthquake catalogue DOI 10.21420/0S8P-TZ38 GNS Science. (1970). New Zealand Earthquake Catalogue [Data set]. GNS Science, GeoNet. https://doi.org/10.21420/0S8P-TZ38. GeoNet programme sponsors: NHC, Earth Sciences NZ, LINZ, NEMA and MBIE. Modified: normalized earthquake parameters; locality MMI is a calculated estimate. CC BY 3.0 NZ. Accuracy and completeness disclaimer: https://www.geonet.org.nz/disclaimer",
+      "terms": {
+        "url": "https://data.gns.cri.nz/metadata/srv/api/records/5105fdeb-f314-4d6e-8e09-bf5308278e03/formatters/xml",
+        "reviewedAt": "2026-11-07",
+        "note": "Earthquake dataset metadata explicitly applies Creative Commons Attribution 3.0 New Zealand. DOI https://doi.org/10.21420/0S8P-TZ38. Policy https://www.geonet.org.nz/policy; legal code https://creativecommons.org/licenses/by/3.0/nz/legalcode. Scoped to earthquake parameters; excludes external basemaps, images, felt reports and other products."
+      },
+      "privacyUrl": "https://www.earthsciences.nz/privacy-policy",
+      "homepage": "https://www.geonet.org.nz/data/types/eq_catalogue",
+      "id": "nz-geonet-quakes",
+      "domain": "hazards",
+      "region": "nz",
+      "file": "feeds/hazards/nz.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": true,
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "changeNotice": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://data.gns.cri.nz/metadata/srv/api/records/5105fdeb-f314-4d6e-8e09-bf5308278e03/formatters/xml",
+        "reviewedAt": "2026-11-07"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "NZ"
+        ]
+      },
+      "cadenceSec": 600,
+      "country": "NZ"
     },
     {
       "operator": "nws",

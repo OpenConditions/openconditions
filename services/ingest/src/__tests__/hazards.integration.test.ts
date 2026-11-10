@@ -719,7 +719,7 @@ describe("hazards fires, quakes and smoke through the pipeline", () => {
 });
 
 describe("hazards feeds in the catalogue", () => {
-  it("holds the fifteen enabled feeds", () => {
+  it("holds the sixteen enabled feeds", () => {
     expect(HAZARDS.map((f) => f.id).sort()).toEqual([
       "ar-smn-alerts",
       "au-nsw-rfs-alerts",
@@ -732,6 +732,7 @@ describe("hazards feeds in the catalogue", () => {
       "nasa-eonet-events",
       "nasa-firms-modis-fires",
       "nasa-firms-viirs-fires",
+      "nz-geonet-quakes",
       "us-nifc-fires",
       "us-noaa-hms-smoke",
       "us-nws-alerts",

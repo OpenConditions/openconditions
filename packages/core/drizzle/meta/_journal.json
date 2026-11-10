@@ -680,6 +680,13 @@
       "when": 1794273434226,
       "tag": "0096_small_tigra",
       "breakpoints": true
+    },
+    {
+      "idx": 97,
+      "version": "7",
+      "when": 1794273434227,
+      "tag": "0097_geonet_coverage",
+      "breakpoints": true
     }
   ]
 }

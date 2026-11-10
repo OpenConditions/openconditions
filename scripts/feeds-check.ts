@@ -30,6 +30,7 @@ import {
   type BodyStreamFactory,
   bodyStreamFrom,
 } from "../services/ingest/src/pipeline/body-stream.js";
+import { acquireGeonet } from "../services/ingest/src/pipeline/geonet.js";
 import { streamFeed } from "../services/ingest/src/pipeline/measured-data.js";
 import { loadReference } from "../services/ingest/src/pipeline/reference.js";
 import { digestOnlyTee } from "../services/ingest/src/raw/stream-tee.js";
@@ -194,6 +195,22 @@ async function checkFeed(
   const redact = (s: string) => redactSecrets(redactUrl(s), secrets);
   const fetchFn = makeAuthorizedFetch(feed, baseFetch, env);
   const warnings: string[] = [];
+  if (feed.format === "geonet") {
+    try {
+      const started = performance.now();
+      const acquired = await acquireGeonet(feed, fetchFn, new Date().toISOString(), []);
+      return result("ok", undefined, acquired.drafts.length, {
+        rejected: 0,
+        terminal: acquired.terminal.length,
+        bytes: Object.values(acquired.payloads)
+          .flat()
+          .reduce((sum, b) => sum + b.length, 0),
+        parseMs: Math.round(performance.now() - started),
+      });
+    } catch (err) {
+      return result("error", redact(errorText(err)));
+    }
+  }
 
   const reference: Record<string, unknown> = {};
   for (const [role, endpoint] of Object.entries(feed.endpoints)) {

@@ -48,6 +48,7 @@ import { rawTierFor } from "../raw/tiers.js";
 import { loadBaselineMap } from "./baseline-store.js";
 import { bindRecords } from "./bind-records.js";
 import { bodyStreamFrom } from "./body-stream.js";
+import { runGeonet } from "./geonet.js";
 import { streamFeed } from "./measured-data.js";
 import { type ParseGate, payloadBytes } from "./parse-gate.js";
 import { type ParseProcess, ParseProcessError } from "./parse-process.js";
@@ -436,6 +437,16 @@ export function createOpenlrClient(): MapMatchClient | null {
  * closes it as an error on the way out, so no attempt stays `running`.
  */
 export async function runSource(src: CatalogFeed, deps: RunDeps): Promise<RunResult> {
+  if (src.format === "geonet") {
+    return runGeonet(src, {
+      sql: deps.sql,
+      fetch: feedFetch(src, deps),
+      now: deps.now,
+      model: writeModel(deps.model),
+      raw: deps.raw,
+      parseProcess: deps.parseProcess,
+    });
+  }
   const attemptAt = deps.now();
   if (src.rawRetention === "none" && deps.roles !== undefined) {
     deps.roles.payloads = {};

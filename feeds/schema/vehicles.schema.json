@@ -873,6 +873,7 @@
             "type": "string",
             "minLength": 1,
             "enum": [
+              "LicenseRef-CC-BY-3.0-NZ",
               "NOASSERTION",
               "CC0-1.0",
               "CC-BY-4.0",
