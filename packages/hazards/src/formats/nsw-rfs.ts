@@ -361,6 +361,7 @@ export function parseNswRfs(
       if (
         ![
           "Planned Event",
+          "Hazard Reduction",
           "Burn off",
           "Haystack fire",
           "Other",
