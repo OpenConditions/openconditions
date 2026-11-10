@@ -1,5 +1,5 @@
 {
-  "id": "9019b642-1438-4bac-924b-fc0c03ce3cde",
+  "id": "97143600-94cf-4be9-b4e2-01fe08ae752c",
   "prevId": "975f1678-b6d3-4483-b24f-e3233700e8b0",
   "version": "7",
   "dialect": "postgresql",
@@ -4414,63 +4414,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "conditions.nsw_rfs_clock": {
-      "name": "nsw_rfs_clock",
-      "schema": "conditions",
-      "columns": {
-        "source_id": {
-          "name": "source_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "incident_id": {
-          "name": "incident_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "sent": {
-          "name": "sent",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "published": {
-          "name": "published",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "content": {
-          "name": "content",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "expiry": {
-          "name": "expiry",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "nsw_rfs_clock_source_id_incident_id_pk": {
-          "name": "nsw_rfs_clock_source_id_incident_id_pk",
-          "columns": [
-            "source_id",
-            "incident_id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
     "conditions.on_demand_fetch": {
       "name": "on_demand_fetch",
       "schema": "conditions",
@@ -5832,6 +5775,12 @@
         },
         "freshness_deadline": {
           "name": "freshness_deadline",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_published_at": {
+          "name": "source_published_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false

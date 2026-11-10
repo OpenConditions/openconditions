@@ -1,0 +1,64 @@
+{
+  "type": "FeatureCollection",
+  "name": "fkg.t_5607_ladefacilitet",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "objekt_id": "1fed1a6a-add1-11ed-94b7-06206ad47459",
+        "versions_id": "4b0d139c-da3e-11f1-9591-27e2602306c9",
+        "systid_fra": "2026-11-07T00:00:37.684Z",
+        "oprettet": "2023-02-16T08:08:41.332Z",
+        "statuskode": 3,
+        "off_kode": 1,
+        "ladefacilitet_type_kode": 1,
+        "tilgaengelighed_type_kode": 1,
+        "internationalt_id": "",
+        "internationalt_id1": "",
+        "internationalt_id2": "",
+        "internationalt_id3": "",
+        "internationalt_id4": "",
+        "internationalt_id5": "",
+        "antal_ladepunkter": 1,
+        "stiktype": "",
+        "planstatus_kode": 2
+      },
+      "geometry": {
+        "type": "MultiPoint",
+        "coordinates": [[9.561474138962202, 56.12683725263499]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "objekt_id": "5949f1fc-adef-11ed-ad01-06206ad47459",
+        "versions_id": "48321fa0-da3e-11f1-9591-27e2602306c9",
+        "systid_fra": "2026-11-07T00:00:37.684Z",
+        "oprettet": "2023-02-16T11:45:00.411Z",
+        "statuskode": 3,
+        "off_kode": 1,
+        "ladefacilitet_type_kode": 1,
+        "tilgaengelighed_type_kode": 1,
+        "internationalt_id": "",
+        "internationalt_id1": "",
+        "internationalt_id2": "",
+        "internationalt_id3": "",
+        "internationalt_id4": "",
+        "internationalt_id5": "",
+        "antal_ladepunkter": 1,
+        "stiktype": "",
+        "planstatus_kode": 2
+      },
+      "geometry": {
+        "type": "MultiPoint",
+        "coordinates": [[9.5851525881268, 56.308138442274995]]
+      }
+    }
+  ]
+}

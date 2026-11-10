@@ -664,6 +664,10 @@
                 "type": "string",
                 "format": "uri"
               },
+              "credit": {
+                "type": "string",
+                "minLength": 1
+              },
               "imageRedistribution": {
                 "type": "string",
                 "enum": [
@@ -2331,6 +2335,7 @@
             "bonn",
             "cars",
             "cars-signs",
+            "caltrans-cms",
             "datex2-elaborated",
             "datex2-locations",
             "datex2-measured",
@@ -2360,6 +2365,7 @@
             "trafikverket",
             "trafikverket-flow",
             "vic-disruptions",
+            "wa-webeoc",
             "webtris",
             "webtris-sites",
             "wzdx",
@@ -2368,6 +2374,7 @@
             "nps",
             "tripcheck",
             "cars-cctv",
+            "quebec-cameras",
             "digitraffic-weather",
             "parkapi-v3",
             "datex2-light",
@@ -2376,8 +2383,10 @@
             "sbb",
             "opendatahub",
             "hdb",
+            "taipei",
             "utmc",
             "tfnsw",
+            "vegvesen-parkreg",
             "ocpi",
             "oicp",
             "bnetza",
@@ -2388,9 +2397,11 @@
             "cynap",
             "chargy",
             "evroam",
+            "geofa",
             "keco",
             "tdx",
             "ocm",
+            "pun",
             "tankerkoenig",
             "econtrol",
             "prix-carburants",

@@ -137,4 +137,12 @@ export const hazardsDomain: IngestDomain<HazardsCatalogFeed> =
     feedShape: hazardsFeedShape,
     formats: Object.fromEntries(FORMATS.map((format) => [format.id, format])),
     resolvers: [],
+    lintFeed: (feed) => {
+      const mode = feed.endpoints["alerts"]?.smnRss;
+      if (mode === "acp" && !feed.disabled)
+        return ["SMN ACP requires a real active CAP capture before activation"];
+      if (mode && (feed.format !== "cap" || feed.snapshot))
+        return ["SMN RSS requires rolling CAP acquisition without complete-snapshot authority"];
+      return [];
+    },
   });

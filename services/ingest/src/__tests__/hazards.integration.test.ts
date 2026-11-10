@@ -719,8 +719,9 @@ describe("hazards fires, quakes and smoke through the pipeline", () => {
 });
 
 describe("hazards feeds in the catalogue", () => {
-  it("holds the fourteen feeds", () => {
+  it("holds the fifteen enabled feeds", () => {
     expect(HAZARDS.map((f) => f.id).sort()).toEqual([
+      "ar-smn-alerts",
       "au-nsw-rfs-alerts",
       "ca-eccc-alerts",
       "de-dwd-alerts",

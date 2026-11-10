@@ -29,6 +29,8 @@ export interface SourceStatusUpdate {
   outcome: SourcePollOutcome | "success" | "error";
   attemptAt?: string;
   networkValidated?: boolean;
+  /** False when transport validation cannot renew publisher freshness. Legacy polls default to true. */
+  publicationFresh?: boolean;
   publication?: PublicationFacts;
   durationMs?: number;
   error?: string;
@@ -132,6 +134,7 @@ export async function upsertSourceStatus(
   const outcome = normalizedOutcome(update);
   const networkValidated =
     update.networkValidated ?? (update.outcome === "success" || outcome === "validated_unchanged");
+  const fresh = networkValidated && update.publicationFresh !== false;
   const publication =
     update.publication ??
     (update.rowCount != null
@@ -181,9 +184,9 @@ export async function upsertSourceStatus(
       last_inserted, last_updated, last_deleted, last_rejected, last_duration_ms,
       consecutive_failures, last_error, last_error_at, updated_at
     ) VALUES (
-      ${sourceId}, ${attemptedAt}, ${networkValidated ? attemptedAt : null},
+      ${sourceId}, ${attemptedAt}, ${fresh ? attemptedAt : null},
       ${networkValidated ? attemptedAt : null},
-      ${networkValidated ? attemptedAt : null}::timestamptz + (${update.freshnessWindowSec} * interval '1 second'),
+      ${fresh ? attemptedAt : null}::timestamptz + (${update.freshnessWindowSec} * interval '1 second'),
       ${publication ? attemptedAt : null}, ${publication ? 1 : 0}, ${outcome},
       ${update.freshnessWindowSec}, ${publication?.rowCount ?? publication?.activeEvents ?? null},
       ${publication?.activeEvents ?? null}, ${publication?.inserted ?? null},
@@ -203,11 +206,11 @@ export async function upsertSourceStatus(
         AND (conditions.source_status.last_network_success_at IS NULL
           OR excluded.last_network_success_at >= conditions.source_status.last_network_success_at)
         THEN excluded.last_network_success_at ELSE conditions.source_status.last_network_success_at END,
-      last_success_at = CASE WHEN excluded.last_network_success_at IS NOT NULL
+      last_success_at = CASE WHEN excluded.last_success_at IS NOT NULL
         AND (conditions.source_status.last_network_success_at IS NULL
           OR excluded.last_network_success_at >= conditions.source_status.last_network_success_at)
-        THEN excluded.last_network_success_at ELSE conditions.source_status.last_success_at END,
-      freshness_deadline = CASE WHEN excluded.last_network_success_at IS NOT NULL
+        THEN excluded.last_success_at ELSE conditions.source_status.last_success_at END,
+      freshness_deadline = CASE WHEN excluded.last_success_at IS NOT NULL
         AND (conditions.source_status.last_network_success_at IS NULL
           OR excluded.last_network_success_at >= conditions.source_status.last_network_success_at)
         THEN excluded.freshness_deadline ELSE conditions.source_status.freshness_deadline END,

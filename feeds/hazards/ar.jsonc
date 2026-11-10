@@ -1,0 +1,64 @@
+{
+  "$schema": "../schema/hazards.schema.json",
+  "feeds": [
+    {
+      "operator": "smn",
+      "product": "alerts",
+      "name": "SMN Argentina weather warnings",
+      "format": "cap",
+      "tier": "authoritative",
+      "endpoints": {
+        "alerts": {
+          "url": "https://ssl.smn.gob.ar/CAP/AR.php",
+          "smnRss": "ar",
+          "cadenceSec": 180,
+        },
+      },
+      "requestLimits": { "perMinute": 120 },
+      "freshnessWindowSec": 900,
+      "coverage": { "countries": ["AR"] },
+      "license": "LicenseRef-CC-BY-2.5-AR",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.5/ar/",
+      "terms": {
+        "url": "https://www.argentina.gob.ar/normativa/361173_disp25_pdf/archivo",
+        "reviewedAt": "2026-11-07",
+        "note": "Disposición 25/2022, sections 2 and 4A: SMN-authored CAP uses CC BY 2.5 Argentina. RSS separately declares CC BY 4.0. Third-party resources are outside this grant and are not fetched. The rolling RSS index is not complete absence authority.",
+      },
+      "attribution": "Fuente: Servicio Meteorológico Nacional (SMN), República Argentina; normalizado por OpenConditions",
+      "homepage": "https://www.smn.gob.ar/",
+      "privacyUrl": "https://www.argentina.gob.ar/terminos-y-condiciones",
+    },
+    {
+      "operator": "smn",
+      "qualifier": "acp",
+      "product": "alerts",
+      "name": "SMN Argentina short-term warnings (unqualified)",
+      "format": "cap",
+      "tier": "authoritative",
+      "endpoints": {
+        "alerts": {
+          "url": "https://ssl.smn.gob.ar/feeds/CAP/avisocortoplazo/rss_acpCAP.xml",
+          "smnRss": "acp",
+          "cadenceSec": 180,
+        },
+      },
+      "requestLimits": { "perMinute": 120 },
+      "freshnessWindowSec": 900,
+      "coverage": { "countries": ["AR"] },
+      "license": "LicenseRef-CC-BY-2.5-AR",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.5/ar/",
+      "terms": {
+        "url": "https://www.argentina.gob.ar/normativa/361173_disp25_pdf/archivo",
+        "reviewedAt": "2026-11-07",
+        "note": "Disposición 25/2022, sections 2 and 4A: SMN-authored CAP uses CC BY 2.5 Argentina. RSS separately declares CC BY 4.0. Third-party resources are outside this grant and are not fetched. The rolling RSS index is not complete absence authority.",
+      },
+      "attribution": "Fuente: Servicio Meteorológico Nacional (SMN), República Argentina; normalizado por OpenConditions",
+      "disabled": {
+        "reason": "A real active ACP CAP capture and lifecycle qualification are required before enabling this separate product. Only the no-warning RSS sentinel has been captured.",
+        "since": "2026-11-07",
+      },
+      "homepage": "https://www.smn.gob.ar/",
+      "privacyUrl": "https://www.argentina.gob.ar/terminos-y-condiciones",
+    },
+  ],
+}

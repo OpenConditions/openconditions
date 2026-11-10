@@ -1,0 +1,573 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="https://ssl.smn.gob.ar/CAP/estilo_ar.xsl"?>
+
+<rss xmlns:geo="http://www.w3.org/2003/01/geo/wgs84_pos#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+
+<channel>
+
+<title>Ultimos Avisos publicados por el Servicio Meteorologico Nacional (SMN) de Argentina</title>
+
+<link>https://ssl.smn.gob.ar/CAP/AR.php</link>
+
+<description>Ultimos Avisos publicados por el Servicio Meteorologico Nacional (SMN) de Argentina</description>
+
+<dc:publisher>Servicio Meteorologico Nacional (SMN) de Argentina</dc:publisher>
+
+<language>es</language>
+
+<copyright>Copyright 2025 SMN | Derechos de autor, Servicio Meteorologico Nacional (SMN). Licencia CC BY 4.0.</copyright>
+
+<atom:link href="https://ssl.smn.gob.ar/CAP/AR.php" rel="self" type="application/rss+xml"/>
+
+<pubDate>Sat, 07 Nov 2026 15:47:45 GMT</pubDate>
+
+<lastBuildDate>Sat, 07 Nov 2026 15:47:45 GMT</lastBuildDate>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090330_Viento_Llanura_alertas_alertas_4.xml</link>
+
+
+<description>El área será afectada por vientos del sector sur, con velocidades entre 30 y 45 km/h con ráfagas que pueden alcanzar los 70 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090330_Viento_Llanura_alertas_alertas_4.xml</guid>
+
+<pubDate>Sat, 07 Nov 2026 15:00:02 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090330_Viento_Llanura_alertas_alertas_5.xml</link>
+
+
+<description>El área será afectada por vientos del sector sur, con velocidades entre 30 y 45 km/h con ráfagas que pueden alcanzar los 70 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090330_Viento_Llanura_alertas_alertas_5.xml</guid>
+
+<pubDate>Sat, 07 Nov 2026 15:00:02 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090330_Viento_Llanura_alertas_alertas_6.xml</link>
+
+
+<description>El área será afectada por vientos del sector sur, con velocidades entre 30 y 45 km/h con ráfagas que pueden alcanzar los 70 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090330_Viento_Llanura_alertas_alertas_6.xml</guid>
+
+<pubDate>Sat, 07 Nov 2026 15:00:02 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090330_Viento_Llanura_alertas_alertas_3.xml</link>
+
+
+<description>El área será afectada por vientos del sector sur, con velocidades entre 30 y 45 km/h con ráfagas que pueden alcanzar los 70 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090330_Viento_Llanura_alertas_alertas_3.xml</guid>
+
+<pubDate>Sat, 07 Nov 2026 15:00:02 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090330_Viento_Llanura_alertas_alertas_2.xml</link>
+
+
+<description>El área será afectada por vientos del sector sur, con velocidades entre 30 y 45 km/h con ráfagas que pueden alcanzar los 70 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090330_Viento_Llanura_alertas_alertas_2.xml</guid>
+
+<pubDate>Sat, 07 Nov 2026 15:00:02 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090330_Viento_Cordillera_alertas_alertas_2.xml</link>
+
+
+<description>El área será afectada por vientos del sector sur con velocidades entre 40 y 60 km/h con ráfagas que pueden alcanzar los 80 km/h, pudiendo ser superadas de forma puntual.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090330_Viento_Cordillera_alertas_alertas_2.xml</guid>
+
+<pubDate>Sat, 07 Nov 2026 15:00:02 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090330_Viento_Llanura_alertas_alertas_1.xml</link>
+
+
+<description>El área será afectada por vientos del sector sur, con velocidades entre 30 y 45 km/h con ráfagas que pueden alcanzar los 70 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090330_Viento_Llanura_alertas_alertas_1.xml</guid>
+
+<pubDate>Sat, 07 Nov 2026 15:00:02 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090330_Viento_Llanura_alertas_alertas_7.xml</link>
+
+
+<description>El área será afectada por vientos del sector sur, con velocidades entre 30 y 45 km/h con ráfagas que pueden alcanzar los 70 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090330_Viento_Llanura_alertas_alertas_7.xml</guid>
+
+<pubDate>Sat, 07 Nov 2026 15:00:02 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090330_Viento_Llanura_alertas_alertas_8.xml</link>
+
+
+<description>El área será afectada por vientos del sector sur, con velocidades entre 30 y 45 km/h con ráfagas que pueden alcanzar los 70 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090330_Viento_Llanura_alertas_alertas_8.xml</guid>
+
+<pubDate>Sat, 07 Nov 2026 15:00:02 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090330_Viento_Patagonia_alertas_alertas_5.xml</link>
+
+
+<description>El área será afectada por vientos del sector oeste con velocidades entre 40 y 60 km/h, y ráfagas que pueden alcanzar los 90 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090330_Viento_Patagonia_alertas_alertas_5.xml</guid>
+
+<pubDate>Sat, 07 Nov 2026 15:00:02 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090330_Viento_Patagonia_alertas_alertas_6.xml</link>
+
+
+<description>El área será afectada por vientos del sector oeste con velocidades entre 40 y 60 km/h, y ráfagas que pueden alcanzar los 90 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090330_Viento_Patagonia_alertas_alertas_6.xml</guid>
+
+<pubDate>Sat, 07 Nov 2026 15:00:02 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090330_Viento_Patagonia_alertas_alertas_4.xml</link>
+
+
+<description>El área será afectada por vientos del sector oeste con velocidades entre 40 y 60 km/h, y ráfagas que pueden alcanzar los 90 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090330_Viento_Patagonia_alertas_alertas_4.xml</guid>
+
+<pubDate>Sat, 07 Nov 2026 15:00:02 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090330_Viento_Patagonia_alertas_alertas_3.xml</link>
+
+
+<description>El área será afectada por vientos del sector oeste con velocidades entre 40 y 60 km/h, y ráfagas que pueden alcanzar los 90 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090330_Viento_Patagonia_alertas_alertas_3.xml</guid>
+
+<pubDate>Sat, 07 Nov 2026 15:00:02 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090330_Viento_Patagonia_alertas_alertas_1.xml</link>
+
+
+<description>El área será afectada por vientos del sector oeste con velocidades entre 40 y 60 km/h, y ráfagas que pueden alcanzar los 90 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090330_Viento_Patagonia_alertas_alertas_1.xml</guid>
+
+<pubDate>Sat, 07 Nov 2026 15:00:02 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090330_Viento_Patagonia_alertas_alertas_2.xml</link>
+
+
+<description>El área será afectada por vientos del sector oeste con velocidades entre 40 y 60 km/h, y ráfagas que pueden alcanzar los 90 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090330_Viento_Patagonia_alertas_alertas_2.xml</guid>
+
+<pubDate>Sat, 07 Nov 2026 15:00:02 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090330_Viento_Cordillera_alertas_alertas_1.xml</link>
+
+
+<description>El área será afectada por vientos del sector sur con velocidades entre 40 y 60 km/h con ráfagas que pueden alcanzar los 80 km/h, pudiendo ser superadas de forma puntual.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090330_Viento_Cordillera_alertas_alertas_1.xml</guid>
+
+<pubDate>Sat, 07 Nov 2026 15:00:02 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Tormentas</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090329_Tormenta_Patagonia_alertas_alertas_8.xml</link>
+
+
+<description>El área será afectada por tormentas aisladas, algunas localmente fuertes o puntualmente severas. Las mismas podrán estar acompañadas por fuertes precipitaciones en cortos períodos, granizo y ráfagas intensas. Se esperan valores de precipitación acumulada entre 20 y 50 mm, que pueden ser superados en forma puntual.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090329_Tormenta_Patagonia_alertas_alertas_8.xml</guid>
+
+<pubDate>Sat, 07 Nov 2026 15:00:02 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Tormentas</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090329_Tormenta_Llanura_alertas_alertas_6.xml</link>
+
+
+<description>El área será afectada por tormentas aisladas, algunas localmente fuertes o puntualmente severas. Las mismas podrán estar acompañadas por fuertes precipitaciones en cortos períodos, granizo y ráfagas intensas. Se esperan valores de precipitación acumulada entre 20 y 50 mm, que pueden ser superados en forma puntual.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090329_Tormenta_Llanura_alertas_alertas_6.xml</guid>
+
+<pubDate>Sat, 07 Nov 2026 15:00:02 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Tormentas</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090329_Tormenta_Llanura_alertas_alertas_7.xml</link>
+
+
+<description>El área será afectada por tormentas aisladas, algunas localmente fuertes o puntualmente severas. Las mismas podrán estar acompañadas por fuertes precipitaciones en cortos períodos, granizo y ráfagas intensas. Se esperan valores de precipitación acumulada entre 20 y 50 mm, que pueden ser superados en forma puntual.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090329_Tormenta_Llanura_alertas_alertas_7.xml</guid>
+
+<pubDate>Sat, 07 Nov 2026 15:00:02 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Tormentas</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090329_Tormenta_Llanura_alertas_alertas_5.xml</link>
+
+
+<description>El área será afectada por tormentas aisladas, algunas localmente fuertes o puntualmente severas. Las mismas podrán estar acompañadas por fuertes precipitaciones en cortos períodos, granizo y ráfagas intensas. Se esperan valores de precipitación acumulada entre 20 y 50 mm, que pueden ser superados en forma puntual.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090329_Tormenta_Llanura_alertas_alertas_5.xml</guid>
+
+<pubDate>Sat, 07 Nov 2026 15:00:02 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Tormentas</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090329_Tormenta_Llanura_alertas_alertas_4.xml</link>
+
+
+<description>El área será afectada por tormentas fuertes, algunas severas. Las mismas pueden estar acompañadas por abundantes precipitaciones, granizo de diversos tamaños, ráfagas intensas que pueden exceder los 90 km/h y frecuente actividad eléctrica. Se esperan valores de precipitación acumulada entre 50 y 90 mm, que pueden ser superados de manera puntual.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090329_Tormenta_Llanura_alertas_alertas_4.xml</guid>
+
+<pubDate>Sat, 07 Nov 2026 15:00:02 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Tormentas</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090329_Tormenta_Llanura_alertas_alertas_2.xml</link>
+
+
+<description>El área será afectada por tormentas fuertes, algunas severas. Las mismas pueden estar acompañadas por abundantes precipitaciones, granizo de diversos tamaños, ráfagas intensas que pueden exceder los 90 km/h y frecuente actividad eléctrica. Se esperan valores de precipitación acumulada entre 50 y 90 mm, que pueden ser superados de manera puntual.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090329_Tormenta_Llanura_alertas_alertas_2.xml</guid>
+
+<pubDate>Sat, 07 Nov 2026 15:00:02 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Tormentas</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090329_Tormenta_Llanura_alertas_alertas_3.xml</link>
+
+
+<description>El área será afectada por tormentas fuertes, algunas severas. Las mismas pueden estar acompañadas por abundantes precipitaciones, granizo de diversos tamaños, ráfagas intensas que pueden exceder los 90 km/h y frecuente actividad eléctrica. Se esperan valores de precipitación acumulada entre 50 y 90 mm, que pueden ser superados de manera puntual.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090329_Tormenta_Llanura_alertas_alertas_3.xml</guid>
+
+<pubDate>Sat, 07 Nov 2026 15:00:02 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Tormentas</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090329_Tormenta_Llanura_alertas_alertas_8.xml</link>
+
+
+<description>El área será afectada por tormentas aisladas, algunas localmente fuertes o puntualmente severas. Las mismas podrán estar acompañadas por fuertes precipitaciones en cortos períodos, granizo y ráfagas intensas. Se esperan valores de precipitación acumulada entre 20 y 50 mm, que pueden ser superados en forma puntual.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090329_Tormenta_Llanura_alertas_alertas_8.xml</guid>
+
+<pubDate>Sat, 07 Nov 2026 15:00:02 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Tormentas</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090329_Tormenta_Patagonia_alertas_alertas_1.xml</link>
+
+
+<description>El área será afectada por tormentas fuertes, algunas severas. Las mismas pueden estar acompañadas por abundantes precipitaciones, granizo de diversos tamaños, ráfagas intensas que pueden exceder los 90 km/h y frecuente actividad eléctrica. Se esperan valores de precipitación acumulada entre 50 y 90 mm, que pueden ser superados de manera puntual.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090329_Tormenta_Patagonia_alertas_alertas_1.xml</guid>
+
+<pubDate>Sat, 07 Nov 2026 15:00:02 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Tormentas</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090329_Tormenta_Patagonia_alertas_alertas_6.xml</link>
+
+
+<description>El área será afectada por tormentas aisladas, algunas localmente fuertes o puntualmente severas. Las mismas podrán estar acompañadas por fuertes precipitaciones en cortos períodos, granizo y ráfagas intensas. Se esperan valores de precipitación acumulada entre 20 y 50 mm, que pueden ser superados en forma puntual.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090329_Tormenta_Patagonia_alertas_alertas_6.xml</guid>
+
+<pubDate>Sat, 07 Nov 2026 15:00:02 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Tormentas</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090329_Tormenta_Patagonia_alertas_alertas_7.xml</link>
+
+
+<description>El área será afectada por tormentas aisladas, algunas localmente fuertes o puntualmente severas. Las mismas podrán estar acompañadas por fuertes precipitaciones en cortos períodos, granizo y ráfagas intensas. Se esperan valores de precipitación acumulada entre 20 y 50 mm, que pueden ser superados en forma puntual.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090329_Tormenta_Patagonia_alertas_alertas_7.xml</guid>
+
+<pubDate>Sat, 07 Nov 2026 15:00:02 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Tormentas</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090329_Tormenta_Patagonia_alertas_alertas_5.xml</link>
+
+
+<description>El área será afectada por tormentas aisladas, algunas localmente fuertes o puntualmente severas. Las mismas podrán estar acompañadas por fuertes precipitaciones en cortos períodos, granizo y ráfagas intensas. Se esperan valores de precipitación acumulada entre 20 y 50 mm, que pueden ser superados en forma puntual.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090329_Tormenta_Patagonia_alertas_alertas_5.xml</guid>
+
+<pubDate>Sat, 07 Nov 2026 15:00:02 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Tormentas</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090329_Tormenta_Patagonia_alertas_alertas_4.xml</link>
+
+
+<description>El área será afectada por tormentas fuertes, algunas severas. Las mismas pueden estar acompañadas por abundantes precipitaciones, granizo de diversos tamaños, ráfagas intensas que pueden exceder los 90 km/h y frecuente actividad eléctrica. Se esperan valores de precipitación acumulada entre 50 y 90 mm, que pueden ser superados de manera puntual.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090329_Tormenta_Patagonia_alertas_alertas_4.xml</guid>
+
+<pubDate>Sat, 07 Nov 2026 15:00:02 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Tormentas</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090329_Tormenta_Patagonia_alertas_alertas_2.xml</link>
+
+
+<description>El área será afectada por tormentas fuertes, algunas severas. Las mismas pueden estar acompañadas por abundantes precipitaciones, granizo de diversos tamaños, ráfagas intensas que pueden exceder los 90 km/h y frecuente actividad eléctrica. Se esperan valores de precipitación acumulada entre 50 y 90 mm, que pueden ser superados de manera puntual.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090329_Tormenta_Patagonia_alertas_alertas_2.xml</guid>
+
+<pubDate>Sat, 07 Nov 2026 15:00:02 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Tormentas</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090329_Tormenta_Patagonia_alertas_alertas_3.xml</link>
+
+
+<description>El área será afectada por tormentas fuertes, algunas severas. Las mismas pueden estar acompañadas por abundantes precipitaciones, granizo de diversos tamaños, ráfagas intensas que pueden exceder los 90 km/h y frecuente actividad eléctrica. Se esperan valores de precipitación acumulada entre 50 y 90 mm, que pueden ser superados de manera puntual.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090329_Tormenta_Patagonia_alertas_alertas_3.xml</guid>
+
+<pubDate>Sat, 07 Nov 2026 15:00:02 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Tormentas</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090329_Tormenta_Llanura_alertas_alertas_1.xml</link>
+
+
+<description>El área será afectada por tormentas fuertes, algunas severas. Las mismas pueden estar acompañadas por abundantes precipitaciones, granizo de diversos tamaños, ráfagas intensas que pueden exceder los 90 km/h y frecuente actividad eléctrica. Se esperan valores de precipitación acumulada entre 50 y 90 mm, que pueden ser superados de manera puntual.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090329_Tormenta_Llanura_alertas_alertas_1.xml</guid>
+
+<pubDate>Sat, 07 Nov 2026 15:00:02 GMT</pubDate>
+
+</item>
+
+
+</channel>
+
+</rss>

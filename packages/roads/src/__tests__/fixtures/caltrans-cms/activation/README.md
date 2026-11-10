@@ -1,0 +1,7 @@
+# Caltrans CMS activation captures
+
+Two bounded generations of the official twelve district JSON endpoints were acquired on November 9, 2026. Each district's second request followed the end of its first by more than 300 seconds. Each generation contains 1,017 rows and accepts 1,013 California signs: D01–D12 counts are 28, 42, 107, 189, 22, 118, 145, 94, 15, 107, 80 and 66. Two District 2 placeholders and invalid positions in District 3 and District 12 are excluded without guessed repairs.
+
+The `.raw` files preserve provider bytes. Each generation's `capture.json` records request URL, UTC start/end, elapsed time, HTTP status/headers, byte length, SHA-256 and raw row count. Every body, ETag, Last-Modified and record clock changed between generations; identity tuples did not change. Display objects changed in districts 3, 4, 7, 8, 11 and 12. No unchanged body was treated as evidence of a provider refresh. Source record time is distinct from message-change time.
+
+The activation receipt and pre-request budgets are retained outside source at `/Users/florian/.codex/research/openconditions-feed-prs-20261107/activation/issue-344/`. The local worker/API suite replays these actual bytes through the production catalogue and registry. Synthetic blank/offline/unknown, failure and qualified-empty controls are labelled in the tests; they do not assert that a provider deletion event was observed. These sequential district reads are not an atomic statewide snapshot or a physical census.

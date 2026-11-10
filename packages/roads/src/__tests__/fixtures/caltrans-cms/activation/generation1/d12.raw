@@ -1,0 +1,3556 @@
+{
+	"data":
+	[
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district":       "12",
+					"locationName":   "ZCMS 93 - TUSTIN RANCH 28.54 N5",
+					"nearbyPlace":    "TUSTIN",
+					"longitude":      "-117.807835",
+					"latitude":       "33.728279",
+					"elevation":      "0",
+					"direction":      "North",
+					"county":         "Orange",
+					"route":          "I-5",
+					"routeSuffix":    "S",
+					"postmilePrefix": "C",
+					"postmile":       "28.6",
+					"alignment":      "L",
+					"milepost":       "28.6"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-06-18",
+						"messageTime": "06:42:15"
+					},
+					"display":     "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district":       "12",
+					"locationName":   "ZCMS 15 - Tustin Ranch OC 28.33 S5",
+					"nearbyPlace":    "TUSTIN",
+					"longitude":      "-117.805105",
+					"latitude":       "33.726017",
+					"elevation":      "0",
+					"direction":      "South",
+					"county":         "Orange",
+					"route":          "I-5",
+					"routeSuffix":    "S",
+					"postmilePrefix": "C",
+					"postmile":       "28.3",
+					"alignment":      "L",
+					"milepost":       "28.29"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-05-06",
+						"messageTime": "07:05:43"
+					},
+					"display":     "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district":       "12",
+					"locationName":   "TMC TEST Modem - CMS 49 -alvin",
+					"nearbyPlace":    "Orange County",
+					"longitude":      "-0.117775",
+					"latitude":       "33.700419",
+					"elevation":      "0",
+					"direction":      "North",
+					"county":         "Orange",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "1",
+					"alignment":      "L",
+					"milepost":       "1"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-05",
+						"messageTime": "09:02:40"
+					},
+					"display":     "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district":       "12",
+					"locationName":   "TMC Test Modem-CMS 45 (solarmax)",
+					"nearbyPlace":    "ORANGE COUNTY",
+					"longitude":      "-117.775052",
+					"latitude":       "33.700419",
+					"elevation":      "0",
+					"direction":      "North",
+					"county":         "Orange",
+					"route":          "I-5",
+					"routeSuffix":    "S",
+					"postmilePrefix": "C",
+					"postmile":       "1",
+					"alignment":      "L",
+					"milepost":       "1"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2025-11-06",
+						"messageTime": "18:35:11"
+					},
+					"display":     "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district":       "12",
+					"locationName":   "CMS 99 - YORBA LINDA BLVD 18.4 S57",
+					"nearbyPlace":    "FULLERTON",
+					"longitude":      "-117.880911",
+					"latitude":       "33.889996",
+					"elevation":      "0",
+					"direction":      "South",
+					"county":         "Orange",
+					"route":          "SR-57",
+					"routeSuffix":    "S",
+					"postmilePrefix": "C",
+					"postmile":       "18.42",
+					"alignment":      "L",
+					"milepost":       "19.09"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "22:00:02"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district":       "12",
+					"locationName":   "CMS 98 - HARBOR ST. 8.2 E22",
+					"nearbyPlace":    "GARDEN GROVE",
+					"longitude":      "-117.913433",
+					"latitude":       "33.769954",
+					"elevation":      "0",
+					"direction":      "East",
+					"county":         "Orange",
+					"route":          "SR-22",
+					"routeSuffix":    "S",
+					"postmilePrefix": "C",
+					"postmile":       "8.4",
+					"alignment":      "L",
+					"milepost":       "8.39"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "16:18:56"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "EB 91 AT 241",
+						"phase1Line2": "75 MIN DELAY",
+						"phase1Line3": "USE ALT ROUTE"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district":       "12",
+					"locationName":   "CMS 97 - KATELLA 15.16 S55",
+					"nearbyPlace":    "ORANGE",
+					"longitude":      "-117.832169",
+					"latitude":       "33.808726",
+					"elevation":      "0",
+					"direction":      "South",
+					"county":         "Orange",
+					"route":          "SR-55",
+					"routeSuffix":    "S",
+					"postmilePrefix": "C",
+					"postmile":       "14.73",
+					"alignment":      "L",
+					"milepost":       "14.71"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "22:00:00"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district":       "12",
+					"locationName":   "CMS 96 - KRAEMER BLVD 7.13 E91 (WAN)",
+					"nearbyPlace":    "ANAHEIM",
+					"longitude":      "-117.859246",
+					"latitude":       "33.846778",
+					"elevation":      "0",
+					"direction":      "East",
+					"county":         "Orange",
+					"route":          "SR-91",
+					"routeSuffix":    "S",
+					"postmilePrefix": "C",
+					"postmile":       "7.35",
+					"alignment":      "L",
+					"milepost":       "10.98"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-07-20",
+						"messageTime": "14:52:11"
+					},
+					"display":     "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district":       "12",
+					"locationName":   "CMS 95 - EL TORO 18.59 N5",
+					"nearbyPlace":    "ORANGE COUNTY",
+					"longitude":      "-117.706026",
+					"latitude":       "33.613790",
+					"elevation":      "0",
+					"direction":      "North",
+					"county":         "Orange",
+					"route":          "I-5",
+					"routeSuffix":    "S",
+					"postmilePrefix": "C",
+					"postmile":       "19",
+					"alignment":      "L",
+					"milepost":       "19"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "22:01:57"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "NB 241 TO EB 91",
+						"phase1Line2": "CONNECTOR CLSD",
+						"phase1Line3": "USE ALT ROUTE"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district":       "12",
+					"locationName":   "CMS 94 - DYER ROAD (WAN) 8.22 N55",
+					"nearbyPlace":    "ORANGE COUNTY",
+					"longitude":      "-117.847764",
+					"latitude":       "33.712284",
+					"elevation":      "0",
+					"direction":      "North",
+					"county":         "Orange",
+					"route":          "SR-55",
+					"routeSuffix":    "S",
+					"postmilePrefix": "C",
+					"postmile":       "8.51",
+					"alignment":      "L",
+					"milepost":       "8.51"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2024-05-28",
+						"messageTime": "14:45:45"
+					},
+					"display":     "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 92 - 17TH ST. 32.44 S5",
+					"nearbyPlace": "SANTA ANA",
+					"longitude": "-117.862197",
+					"latitude": "33.759499",
+					"elevation": "0",
+					"direction": "South",
+					"county": "Orange",
+					"route": "I-5",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "32.4",
+					"alignment": "L",
+					"milepost": "32.4"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "22:00:02"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 91 - STATE COLLEGE 35.16 N5",
+					"nearbyPlace": "ANAHEIM",
+					"longitude": "-117.889152",
+					"latitude": "33.791536",
+					"elevation": "0",
+					"direction": "North",
+					"county": "Orange",
+					"route": "I-5",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "35.81",
+					"alignment": "L",
+					"milepost": "35.81"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-10",
+						"messageTime": "21:30:00"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 90 - BROADWAY 38.72 S5",
+					"nearbyPlace": "ANAHEIM",
+					"longitude": "-117.930172",
+					"latitude": "33.830018",
+					"elevation": "0",
+					"direction": "South",
+					"county": "Orange",
+					"route": "I-5",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "38.68",
+					"alignment": "L",
+					"milepost": "38.68"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:23:19"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "MINUTES TO:",
+						"phase1Line2": "RTE 55 10",
+						"phase1Line3": "RTE 405 18"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 89 - MACARTHUR BLVD 7.69 S405",
+					"nearbyPlace": "IRVINE",
+					"longitude": "-117.851469",
+					"latitude": "33.679910",
+					"elevation": "0",
+					"direction": "South",
+					"county": "Orange",
+					"route": "I-405",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "7.399",
+					"alignment": "L",
+					"milepost": "7.17"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "02:13:23"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 88 - IRVINE CENTER DRIVE 0.85 N405",
+					"nearbyPlace": "IRVINE",
+					"longitude": "-117.745494",
+					"latitude": "33.647898",
+					"elevation": "0",
+					"direction": "North",
+					"county": "Orange",
+					"route": "I-405",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "0.854",
+					"alignment": "L",
+					"milepost": "0.62"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:23:18"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "MINUTES TO:",
+						"phase1Line2": "RTE 55 14",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 87 - CULVER 6.15 N405",
+					"nearbyPlace": "IRVINE",
+					"longitude": "-117.819957",
+					"latitude": "33.671032",
+					"elevation": "0",
+					"direction": "North",
+					"county": "Orange",
+					"route": "I-405",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "6.15",
+					"alignment": "L",
+					"milepost": "5.92"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "22:00:02"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 86 - HARBOR 12.81 S405",
+					"nearbyPlace": "COSTA MESA",
+					"longitude": "-117.928341",
+					"latitude": "33.692599",
+					"elevation": "0",
+					"direction": "South",
+					"county": "Orange",
+					"route": "I-405",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "11.92",
+					"alignment": "L",
+					"milepost": "11.69"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "22:00:02"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 85 - 17th ST 11.71 N55",
+					"nearbyPlace": "SANTA ANA",
+					"longitude": "-117.830846",
+					"latitude": "33.758631",
+					"elevation": "0",
+					"direction": "North",
+					"county": "Orange",
+					"route": "SR-55",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "11.7",
+					"alignment": "L",
+					"milepost": "11.68"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "16:18:56"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "EB 91 AT 241",
+						"phase1Line2": "75 MIN DELAY",
+						"phase1Line3": "USE ALT ROUTE"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 84 - MAGNOLIA AT 22 5.01 W22",
+					"nearbyPlace": "GARDEN GROVE",
+					"longitude": "-117.969411",
+					"latitude": "33.766028",
+					"elevation": "0",
+					"direction": "West",
+					"county": "Orange",
+					"route": "SR-22",
+					"routeSuffix": "S",
+					"postmilePrefix": "R",
+					"postmile": "4.6",
+					"alignment": "L",
+					"milepost": "4.59"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "22:00:02"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 83 - SEAL BEACH 21.92 S405",
+					"nearbyPlace": "SEAL BEACH",
+					"longitude": "-118.062356",
+					"latitude": "33.774516",
+					"elevation": "0",
+					"direction": "South",
+					"county": "Orange",
+					"route": "I-405",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "21.9",
+					"alignment": "L",
+					"milepost": "21.67"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "22:00:02"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 82 - LAKEVIEW 10.19 W91",
+					"nearbyPlace": "ANAHEIM",
+					"longitude": "-117.813408",
+					"latitude": "33.852181",
+					"elevation": "0",
+					"direction": "West",
+					"county": "Orange",
+					"route": "SR-91",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "10.31",
+					"alignment": "L",
+					"milepost": "13.98"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-15",
+						"messageTime": "08:08:19"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 81 - ACACIA 4.61 E91",
+					"nearbyPlace": "ANAHEIM",
+					"longitude": "-117.900748",
+					"latitude": "33.853741",
+					"elevation": "0",
+					"direction": "East",
+					"county": "Orange",
+					"route": "SR-91",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "4.75",
+					"alignment": "L",
+					"milepost": "8.38"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "16:18:58"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "EB 91 AT 241",
+						"phase1Line2": "75 MIN DELAY",
+						"phase1Line3": "USE ALT ROUTE"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 80 -HOLDER ST 1.46 E91",
+					"nearbyPlace": "ANAHEIM",
+					"longitude": "-118.018117",
+					"latitude": "33.855712",
+					"elevation": "0",
+					"direction": "East",
+					"county": "Orange",
+					"route": "SR-91",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "1.47",
+					"alignment": "L",
+					"milepost": "5.1"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "16:07:26"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "EB 91 AT 241",
+						"phase1Line2": "75 MINS DELAY",
+						"phase1Line3": "USE ALT ROUTE"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 79 - WAGNER AVE. 13.91 N57",
+					"nearbyPlace": "ANAHEIM",
+					"longitude": "-117.875876",
+					"latitude": "33.825279",
+					"elevation": "0",
+					"direction": "North",
+					"county": "Orange",
+					"route": "SR-57",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "13.9",
+					"alignment": "L",
+					"milepost": "14.57"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-12",
+						"messageTime": "10:50:58"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 78 - WAGNER AVE. 13.93 S57",
+					"nearbyPlace": "ANAHEIM",
+					"longitude": "-117.876132",
+					"latitude": "33.825539",
+					"elevation": "0",
+					"direction": "South",
+					"county": "Orange",
+					"route": "SR-57",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "13.92",
+					"alignment": "L",
+					"milepost": "14.59"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "08:58:32"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 77 - CAMBRIDGE ST. 12.42 W22",
+					"nearbyPlace": "SANTA ANA",
+					"longitude": "-117.843447",
+					"latitude": "33.776605",
+					"elevation": "0",
+					"direction": "West",
+					"county": "Orange",
+					"route": "SR-22",
+					"routeSuffix": "S",
+					"postmilePrefix": "R",
+					"postmile": "12.4",
+					"alignment": "L",
+					"milepost": "12.49"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:23:17"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "MINUTES TO:",
+						"phase1Line2": "RTE 5 3",
+						"phase1Line3": "RTE 405 12"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 76 - JEFFREY 4.05 S405",
+					"nearbyPlace": "IRVINE",
+					"longitude": "-117.796783",
+					"latitude": "33.663382",
+					"elevation": "0",
+					"direction": "South",
+					"county": "Orange",
+					"route": "I-405",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "4",
+					"alignment": "L",
+					"milepost": "3.77"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "19:18:35"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "S-5 AT CO LINE",
+						"phase1Line2": "SINGLE LANE ONLY",
+						"phase1Line3": "MON 10PM-5AM"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 75 - JEFFREY P&R (WAN) 24.79 S5",
+					"nearbyPlace": "IRVINE",
+					"longitude": "-117.766898",
+					"latitude": "33.687096",
+					"elevation": "0",
+					"direction": "South",
+					"county": "Orange",
+					"route": "I-5",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "24.99",
+					"alignment": "L",
+					"milepost": "24.99"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "22:00:02"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 74 - VISTA HERMOSA 4 N5",
+					"nearbyPlace": "SAN CLEMENTE",
+					"longitude": "-117.630047",
+					"latitude": "33.444636",
+					"elevation": "0",
+					"direction": "North",
+					"county": "Orange",
+					"route": "I-5",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "4",
+					"alignment": "L",
+					"milepost": "4"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "22:01:55"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "NB 241 TO EB 91",
+						"phase1Line2": "CONNECTOR CLSD",
+						"phase1Line3": "USE ALT ROUTE"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 73 - LOS ALISOS 17.97 S5",
+					"nearbyPlace": "LAGUNA HILLS",
+					"longitude": "-117.698000",
+					"latitude": "33.607939",
+					"elevation": "0",
+					"direction": "South",
+					"county": "Orange",
+					"route": "I-5",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "17.9",
+					"alignment": "L",
+					"milepost": "17.9"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "19:18:38"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "S-5 AT CO LINE",
+						"phase1Line2": "SINGLE LANE ONLY",
+						"phase1Line3": "MON 10PM-5AM"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 72 - WARNER AVE-(WAN) 8.64 S55",
+					"nearbyPlace": "SANTA ANA",
+					"longitude": "-117.843503",
+					"latitude": "33.717287",
+					"elevation": "0",
+					"direction": "South",
+					"county": "Orange",
+					"route": "SR-55",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "8.6",
+					"alignment": "L",
+					"milepost": "8.6"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "1969-12-29",
+						"messageTime": "13:00:00"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 71 - MAGNOLIA ST 15.17 N405",
+					"nearbyPlace": "FOUNTAIN VALLEY",
+					"longitude": "-117.971303",
+					"latitude": "33.719807",
+					"elevation": "0",
+					"direction": "North",
+					"county": "Orange",
+					"route": "I-405",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "15.2",
+					"alignment": "L",
+					"milepost": "14.97"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "17:12:21"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 70 - PAULARINO 5.69 S55",
+					"nearbyPlace": "COSTA MESA",
+					"longitude": "-117.875711",
+					"latitude": "33.684028",
+					"elevation": "0",
+					"direction": "South",
+					"county": "Orange",
+					"route": "SR-55",
+					"routeSuffix": "S",
+					"postmilePrefix": "R",
+					"postmile": "5.6",
+					"alignment": "L",
+					"milepost": "5.6"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "22:00:02"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 69 - E of Imperial 13.04 E91",
+					"nearbyPlace": "ANAHEIM",
+					"longitude": "-117.767503",
+					"latitude": "33.864820",
+					"elevation": "0",
+					"direction": "East",
+					"county": "Orange",
+					"route": "SR-91",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "13.1",
+					"alignment": "L",
+					"milepost": "16.73"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-22",
+						"messageTime": "07:36:29"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 66 - CHAPMAN AVE 11.15 N57",
+					"nearbyPlace": "ORANGE",
+					"longitude": "-117.879643",
+					"latitude": "33.786466",
+					"elevation": "0",
+					"direction": "North",
+					"county": "Orange",
+					"route": "SR-57",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "11.2",
+					"alignment": "L",
+					"milepost": "11.87"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "16:18:58"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "EB 91 AT 241",
+						"phase1Line2": "75 MIN DELAY",
+						"phase1Line3": "USE ALT ROUTE"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 65 - SANTA CLARA 12.31 S55",
+					"nearbyPlace": "TUSTIN",
+					"longitude": "-117.831390",
+					"latitude": "33.767417",
+					"elevation": "0",
+					"direction": "South",
+					"county": "Orange",
+					"route": "SR-55",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "12.3",
+					"alignment": "L",
+					"milepost": "12.28"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "22:00:02"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 63 - YORBA LINDA18.24 N57",
+					"nearbyPlace": "FULLERTON",
+					"longitude": "-117.880251",
+					"latitude": "33.887567",
+					"elevation": "0",
+					"direction": "North",
+					"county": "Orange",
+					"route": "SR-57",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "18.42",
+					"alignment": "L",
+					"milepost": "19.09"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "22:00:02"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 57 - 17TH ST. 32.36 N5",
+					"nearbyPlace": "SANTA ANA",
+					"longitude": "-117.860378",
+					"latitude": "33.759163",
+					"elevation": "0",
+					"direction": "North",
+					"county": "Orange",
+					"route": "I-5",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "32.46",
+					"alignment": "L",
+					"milepost": "32.46"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "16:18:56"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "EB 91 AT 241",
+						"phase1Line2": "75 MIN DELAY",
+						"phase1Line3": "USE ALT ROUTE"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 55 - EUCLID 2.12 W91",
+					"nearbyPlace": "ANAHEIM",
+					"longitude": "-117.943856",
+					"latitude": "33.854383",
+					"elevation": "0",
+					"direction": "West",
+					"county": "Orange",
+					"route": "SR-91",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "2.2",
+					"alignment": "L",
+					"milepost": "5.87"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-07-25",
+						"messageTime": "22:30:26"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 54 - ARTESIA ST. 44.25 S5",
+					"nearbyPlace": "BUENA PARK",
+					"longitude": "-118.009610",
+					"latitude": "33.872844",
+					"elevation": "0",
+					"direction": "South",
+					"county": "Orange",
+					"route": "I-5",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "44",
+					"alignment": "L",
+					"milepost": "44"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "22:00:02"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 53 - BROOKHURST ST. 40.03 N5",
+					"nearbyPlace": "ANAHEIM",
+					"longitude": "-117.949014",
+					"latitude": "33.840176",
+					"elevation": "0",
+					"direction": "North",
+					"county": "Orange",
+					"route": "I-5",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "40.7",
+					"alignment": "L",
+					"milepost": "40.7"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "00:24:44"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "VINCENT THOMAS",
+						"phase1Line2": "BRIDGE CLOSED",
+						"phase1Line3": "USE ALT ROUTE"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 52 - SEAL BEACH 22.45 N405",
+					"nearbyPlace": "SEAL BEACH",
+					"longitude": "-118.071593",
+					"latitude": "33.774703",
+					"elevation": "0",
+					"direction": "North",
+					"county": "Orange",
+					"route": "I-405",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "21",
+					"alignment": "L",
+					"milepost": "20.77"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "00:24:15"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "VINCENT THOMAS",
+						"phase1Line2": "BRIDGE CLOSED",
+						"phase1Line3": "USE ALT ROUTE"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 51 - WARDLOW-(WAN) 0.81 S605",
+					"nearbyPlace": "ORANGE COUNTY",
+					"longitude": "-118.081694",
+					"latitude": "33.818010",
+					"elevation": "0",
+					"direction": "South",
+					"county": "Orange",
+					"route": "Not Reported",
+					"routeSuffix": "S",
+					"postmilePrefix": "R",
+					"postmile": "0.78",
+					"alignment": "L",
+					"milepost": "0.78"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:01:23"
+					},
+					"display": "2 Pages (Extended)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "OTHER ON",
+						"phase1Line2": "SB SR-605",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 46 - BROOKHURST ST 5.72 E22",
+					"nearbyPlace": "GARDEN GROVE",
+					"longitude": "-117.956588",
+					"latitude": "33.765632",
+					"elevation": "0",
+					"direction": "East",
+					"county": "Orange",
+					"route": "SR-22",
+					"routeSuffix": "S",
+					"postmilePrefix": "R",
+					"postmile": "5.72",
+					"alignment": "L",
+					"milepost": "5.71"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "22:00:01"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 44 - KATELLA 36.40 S5",
+					"nearbyPlace": "ANAHEIM",
+					"longitude": "-117.904037",
+					"latitude": "33.804372",
+					"elevation": "0",
+					"direction": "South",
+					"county": "Orange",
+					"route": "I-5",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "36.4",
+					"alignment": "L",
+					"milepost": "36.39"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "13:31:28"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 40 - MEATS 16.11 N55",
+					"nearbyPlace": "ORANGE",
+					"longitude": "-117.831721",
+					"latitude": "33.822589",
+					"elevation": "0",
+					"direction": "North",
+					"county": "Orange",
+					"route": "SR-55",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "16",
+					"alignment": "L",
+					"milepost": "15.98"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "16:20:42"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "EB 91 AT 241",
+						"phase1Line2": "75 MIN DELAY",
+						"phase1Line3": "USE ALT ROUTE"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 37 - COAL CANYON 17.82 W91",
+					"nearbyPlace": "ORANGE COUNTY",
+					"longitude": "-117.689287",
+					"latitude": "33.873401",
+					"elevation": "0",
+					"direction": "West",
+					"county": "Orange",
+					"route": "SR-91",
+					"routeSuffix": "S",
+					"postmilePrefix": "R",
+					"postmile": "17.8",
+					"alignment": "L",
+					"milepost": "21.47"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-22",
+						"messageTime": "12:19:06"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 35 - ANTONIO PKWY 2.32 E74 (WAN)",
+					"nearbyPlace": "SAN JUAN CAPISTRANO",
+					"longitude": "-117.624423",
+					"latitude": "33.519072",
+					"elevation": "0",
+					"direction": "East",
+					"county": "Orange",
+					"route": "SR-74",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "2.4",
+					"alignment": "L",
+					"milepost": "2.4"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "22:00:03"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 34 - SO_WILDLIFE 20.66 S73",
+					"nearbyPlace": "IRVINE",
+					"longitude": "-117.818940",
+					"latitude": "33.614959",
+					"elevation": "0",
+					"direction": "South",
+					"county": "Orange",
+					"route": "SR-73",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "20.66",
+					"alignment": "L",
+					"milepost": "10.66"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "19:18:35"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "S-5 AT CO LINE",
+						"phase1Line2": "SINGLE LANE ONLY",
+						"phase1Line3": "MON 10PM-5AM"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 33 - N/O-JAMBOREE 24.95 N73",
+					"nearbyPlace": "IRVINE",
+					"longitude": "-117.867196",
+					"latitude": "33.656933",
+					"elevation": "0",
+					"direction": "North",
+					"county": "Orange",
+					"route": "SR-73",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "24.95",
+					"alignment": "L",
+					"milepost": "14.95"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "22:00:01"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 32 - Laguna_Hills 14.77 N73",
+					"nearbyPlace": "ORANGE COUNTY",
+					"longitude": "-117.725755",
+					"latitude": "33.584258",
+					"elevation": "0",
+					"direction": "North",
+					"county": "Orange",
+					"route": "SR-73",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "14.76",
+					"alignment": "L",
+					"milepost": "4.76"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "22:00:01"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 31 - AEROPUERTO 8.01 N5",
+					"nearbyPlace": "SAN JUAN CAPISTRANO",
+					"longitude": "-117.669208",
+					"latitude": "33.481912",
+					"elevation": "0",
+					"direction": "North",
+					"county": "Orange",
+					"route": "I-5",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "7.84",
+					"alignment": "L",
+					"milepost": "7.84"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "22:01:55"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "NB 241 TO EB 91",
+						"phase1Line2": "CONNECTOR CLSD",
+						"phase1Line3": "USE ALT ROUTE"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 30 - Ortega Hwy 10.18 S5",
+					"nearbyPlace": "SAN JUAN CAPISTRANO",
+					"longitude": "-117.661676",
+					"latitude": "33.510287",
+					"elevation": "0",
+					"direction": "South",
+					"county": "Orange",
+					"route": "I-5",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "10.55",
+					"alignment": "L",
+					"milepost": "10.55"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "11:21:39"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "S-5 AT CO LINE",
+						"phase1Line2": "SINGLE LANE ONLY",
+						"phase1Line3": "MON 10PM-5AM"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 25 - Springdale 1.72 E22",
+					"nearbyPlace": "GARDEN GROVE",
+					"longitude": "-118.023891",
+					"latitude": "33.774091",
+					"elevation": "0",
+					"direction": "East",
+					"county": "Orange",
+					"route": "SR-22",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "1.72",
+					"alignment": "L",
+					"milepost": "1.71"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "22:00:01"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 24 -  County Line 0.37 N5",
+					"nearbyPlace": "SAN CLEMENTE",
+					"longitude": "-117.596030",
+					"latitude": "33.401507",
+					"elevation": "0",
+					"direction": "North",
+					"county": "Orange",
+					"route": "I-5",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "0.36",
+					"alignment": "L",
+					"milepost": "0.33"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "22:01:55"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "NB 241 TO EB 91",
+						"phase1Line2": "CONNECTOR CLSD",
+						"phase1Line3": "USE ALT ROUTE"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 23 - Edwards 18.72 S405",
+					"nearbyPlace": "WESTMINSTER",
+					"longitude": "-118.016730",
+					"latitude": "33.754362",
+					"elevation": "0",
+					"direction": "South",
+					"county": "Orange",
+					"route": "I-405",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "18.7",
+					"alignment": "L",
+					"milepost": "18.47"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "22:00:01"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 21 - Lambert Rd 21.53 S57",
+					"nearbyPlace": "ORANGE COUNTY",
+					"longitude": "-117.878636",
+					"latitude": "33.935174",
+					"elevation": "0",
+					"direction": "South",
+					"county": "Orange",
+					"route": "SR-57",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "21.5",
+					"alignment": "L",
+					"milepost": "22.17"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "22:00:01"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 20 - Placentia OH 16.88 S57",
+					"nearbyPlace": "PLACENTIA",
+					"longitude": "-117.879539",
+					"latitude": "33.868110",
+					"elevation": "0",
+					"direction": "South",
+					"county": "Orange",
+					"route": "SR-57",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "16.9",
+					"alignment": "L",
+					"milepost": "17.57"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "22:00:01"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 19 - Orangewood Ave 11.88 S57",
+					"nearbyPlace": "ORANGE",
+					"longitude": "-117.877911",
+					"latitude": "33.796619",
+					"elevation": "0",
+					"direction": "South",
+					"county": "Orange",
+					"route": "SR-57",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "11.9",
+					"alignment": "L",
+					"milepost": "12.57"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-01-13",
+						"messageTime": "19:30:16"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 18 - Baker Street 5.37 N55",
+					"nearbyPlace": "COSTA MESA",
+					"longitude": "-117.878733",
+					"latitude": "33.680226",
+					"elevation": "0",
+					"direction": "North",
+					"county": "Orange",
+					"route": "SR-55",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "5.3",
+					"alignment": "L",
+					"milepost": "5.3"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "16:19:03"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "EB 91 AT 241",
+						"phase1Line2": "75 MIN DELAY",
+						"phase1Line3": "USE ALT ROUTE"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 17 - Santa Isabella 3.24 N55",
+					"nearbyPlace": "COSTA MESA",
+					"longitude": "-117.903236",
+					"latitude": "33.657144",
+					"elevation": "0",
+					"direction": "North",
+					"county": "Orange",
+					"route": "SR-55",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "2.6",
+					"alignment": "L",
+					"milepost": "2.6"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "16:19:03"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "EB 91 AT 241",
+						"phase1Line2": "75 MIN DELAY",
+						"phase1Line3": "USE ALT ROUTE"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 16 - Cambridge Street 12.28 E22",
+					"nearbyPlace": "SANTA ANA",
+					"longitude": "-117.845678",
+					"latitude": "33.775567",
+					"elevation": "0",
+					"direction": "East",
+					"county": "Orange",
+					"route": "SR-22",
+					"routeSuffix": "S",
+					"postmilePrefix": "R",
+					"postmile": "12.4",
+					"alignment": "L",
+					"milepost": "12.49"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "16:18:56"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "EB 91 AT 241",
+						"phase1Line2": "75 MIN DELAY",
+						"phase1Line3": "USE ALT ROUTE"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 14 - Yale OC (WAN) 25.8 N5",
+					"nearbyPlace": "IRVINE",
+					"longitude": "-117.774886",
+					"latitude": "33.700516",
+					"elevation": "0",
+					"direction": "North",
+					"county": "Orange",
+					"route": "I-5",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "25.8",
+					"alignment": "L",
+					"milepost": "25.8"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "16:18:57"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "EB 91 AT 241",
+						"phase1Line2": "75 MIN DELAY",
+						"phase1Line3": "USE ALT ROUTE"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 13 - 405 fwy 21.14 N5",
+					"nearbyPlace": "LAKE FOREST",
+					"longitude": "-117.733210",
+					"latitude": "33.642777",
+					"elevation": "0",
+					"direction": "North",
+					"county": "Orange",
+					"route": "I-5",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "20.2",
+					"alignment": "L",
+					"milepost": "20.2"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "08:00:20"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "NB 241 TO EB 91",
+						"phase1Line2": "CONNECTOR CLSD",
+						"phase1Line3": "USE ALT ROUTE"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 12 - Crown Valley Pkwy 14.57 S5",
+					"nearbyPlace": "MISSION VIEJO",
+					"longitude": "-117.672141",
+					"latitude": "33.570683",
+					"elevation": "0",
+					"direction": "South",
+					"county": "Orange",
+					"route": "I-5",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "14.5",
+					"alignment": "L",
+					"milepost": "14.5"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "19:18:35"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "S-5 AT CO LINE",
+						"phase1Line2": "SINGLE LANE ONLY",
+						"phase1Line3": "MON 10PM-5AM"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 11 - Avery Pkwy 12.87 N5",
+					"nearbyPlace": "MISSION VIEJO",
+					"longitude": "-117.672799",
+					"latitude": "33.546094",
+					"elevation": "0",
+					"direction": "North",
+					"county": "Orange",
+					"route": "I-5",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "12.9",
+					"alignment": "L",
+					"milepost": "12.9"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "16:18:56"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "EB 91 AT 241",
+						"phase1Line2": "75 MIN DELAY",
+						"phase1Line3": "USE ALT ROUTE"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:23"
+				},
+				"location":
+				{
+					"district": "12",
+					"locationName": "CMS 10 - Vista Hermosa 4.76 S5",
+					"nearbyPlace": "SAN CLEMENTE",
+					"longitude": "-117.640920",
+					"latitude": "33.450706",
+					"elevation": "0",
+					"direction": "South",
+					"county": "Orange",
+					"route": "I-5",
+					"routeSuffix": "S",
+					"postmilePrefix": "C",
+					"postmile": "4.76",
+					"alignment": "L",
+					"milepost": "4.6"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "11:21:39"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "S-5 AT CO LINE",
+						"phase1Line2": "SINGLE LANE ONLY",
+						"phase1Line3": "MON 10PM-5AM"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		}
+	]
+}

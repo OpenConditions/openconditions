@@ -210,6 +210,7 @@ export function scheduleFeed(feed: CatalogFeed, ctx: FeedJobContext): Cron | und
   const { sql, statusStore } = ctx;
   if (feed.accessMode === "on_demand") return undefined;
   const env = ctx.env ?? process.env;
+  if (feed.format === "pun" && feed.disabled) return undefined;
   const missing = missingCredentials(feed, env);
   if (missing.length > 0) {
     console.warn(
@@ -288,6 +289,7 @@ export function startScheduler(
 ): () => void {
   const { inFlight } = opts;
   const jobs: Cron[] = [];
+  const punShutdown = new AbortController();
   const openlrClient = createOpenlrClient();
   const raw = createRawArchive(sql, rawArchiveOptionsFromEnv());
   // One gate for all feeds: a large payload is parsed and written while no
@@ -319,6 +321,7 @@ export function startScheduler(
         parseGate,
         parseProcess,
         grants,
+        ...(feed.format === "pun" ? { signal: punShutdown.signal } : {}),
       },
       ...(inFlight ? { inFlight } : {}),
       ...(bindingDrain ? { bindingDrain } : {}),
@@ -326,6 +329,7 @@ export function startScheduler(
     if (job) jobs.push(job);
   }
   const stop = () => {
+    punShutdown.abort(Error("PUN scheduler shutdown"));
     for (const job of jobs) {
       job.stop();
     }
