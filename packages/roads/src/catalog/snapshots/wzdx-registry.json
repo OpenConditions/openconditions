@@ -20,6 +20,26 @@
     "selectionState": "discovered"
   },
   {
+    "qualifier": "3bbdeede647cb1d3",
+    "name": "WZDx — Utah DOT (utah)",
+    "endpoints": {
+      "main": {
+        "url": "https://udottraffic.utah.gov/wzdx/udot/v40/data",
+        "cadenceSec": 300
+      }
+    },
+    "snapshot": {
+      "completeness": "complete",
+      "recordsPath": "features"
+    },
+    "license": "NOASSERTION",
+    "attribution": "Utah DOT",
+    "terms": {
+      "note": "WZDx registry metadata (no dataset grant verified)"
+    },
+    "selectionState": "discovered"
+  },
+  {
     "qualifier": "80f9ce9830b1b3cd",
     "name": "WZDx — Iowa DOT (iowa)",
     "endpoints": {
@@ -100,11 +120,11 @@
     "selectionState": "discovered"
   },
   {
-    "qualifier": "d863f1f7d976968f",
-    "name": "WZDx — Maricopa County DOT (arizona)",
+    "qualifier": "acad1adfe0ce4075",
+    "name": "WZDx — Missouri DOT (missouri)",
     "endpoints": {
       "main": {
-        "url": "https://wzdxapi.aztech.org/construction",
+        "url": "https://traveler.modot.org/timconfig/feed/desktop/mo_wzdx.json",
         "cadenceSec": 300
       }
     },
@@ -113,7 +133,7 @@
       "recordsPath": "features"
     },
     "license": "NOASSERTION",
-    "attribution": "Maricopa County DOT",
+    "attribution": "Missouri DOT",
     "terms": {
       "note": "WZDx registry metadata (no dataset grant verified)"
     },
@@ -140,11 +160,11 @@
     "selectionState": "discovered"
   },
   {
-    "qualifier": "acad1adfe0ce4075",
-    "name": "WZDx — Missouri DOT (missouri)",
+    "qualifier": "d863f1f7d976968f",
+    "name": "WZDx — Maricopa County DOT (arizona)",
     "endpoints": {
       "main": {
-        "url": "https://traveler.modot.org/timconfig/feed/desktop/mo_wzdx.json",
+        "url": "https://wzdxapi.aztech.org/construction",
         "cadenceSec": 300
       }
     },
@@ -153,7 +173,27 @@
       "recordsPath": "features"
     },
     "license": "NOASSERTION",
-    "attribution": "Missouri DOT",
+    "attribution": "Maricopa County DOT",
+    "terms": {
+      "note": "WZDx registry metadata (no dataset grant verified)"
+    },
+    "selectionState": "discovered"
+  },
+  {
+    "qualifier": "f29380f77502b8d2",
+    "name": "WZDx — New Mexico DOT (new mexico)",
+    "endpoints": {
+      "main": {
+        "url": "https://ai.blyncsy.io/wzdx/nmdot/feed",
+        "cadenceSec": 300
+      }
+    },
+    "snapshot": {
+      "completeness": "complete",
+      "recordsPath": "features"
+    },
+    "license": "NOASSERTION",
+    "attribution": "New Mexico DOT",
     "terms": {
       "note": "WZDx registry metadata (no dataset grant verified)"
     },
@@ -323,26 +363,6 @@
     "selectionState": "discovered"
   },
   {
-    "qualifier": "7945221f406463df",
-    "name": "WZDx — Delaware DOT (delaware)",
-    "endpoints": {
-      "main": {
-        "url": "https://wzdx.e-dot.com/del_dot_feed_wzdx_v4.1.geojson",
-        "cadenceSec": 300
-      }
-    },
-    "snapshot": {
-      "completeness": "complete",
-      "recordsPath": "features"
-    },
-    "license": "NOASSERTION",
-    "attribution": "Delaware DOT",
-    "terms": {
-      "note": "WZDx registry metadata (no dataset grant verified)"
-    },
-    "selectionState": "discovered"
-  },
-  {
     "qualifier": "914cf87008410abe",
     "name": "WZDx — Quebec City (n/a)",
     "endpoints": {
@@ -361,6 +381,26 @@
       "note": "WZDx registry metadata (no dataset grant verified)"
     },
     "speedUnit": "km/h",
+    "selectionState": "discovered"
+  },
+  {
+    "qualifier": "7945221f406463df",
+    "name": "WZDx — Delaware DOT (delaware)",
+    "endpoints": {
+      "main": {
+        "url": "https://wzdx.e-dot.com/del_dot_feed_wzdx_v4.1.geojson",
+        "cadenceSec": 300
+      }
+    },
+    "snapshot": {
+      "completeness": "complete",
+      "recordsPath": "features"
+    },
+    "license": "NOASSERTION",
+    "attribution": "Delaware DOT",
+    "terms": {
+      "note": "WZDx registry metadata (no dataset grant verified)"
+    },
     "selectionState": "discovered"
   },
   {
@@ -558,26 +598,6 @@
     },
     "license": "NOASSERTION",
     "attribution": "North Dakota DOT",
-    "terms": {
-      "note": "WZDx registry metadata (no dataset grant verified)"
-    },
-    "selectionState": "discovered"
-  },
-  {
-    "qualifier": "c23026733b3ba176",
-    "name": "WZDx — Florida DOT (florida)",
-    "endpoints": {
-      "main": {
-        "url": "https://api.depot.fdot.gov/wzdx-latest",
-        "cadenceSec": 300
-      }
-    },
-    "snapshot": {
-      "completeness": "complete",
-      "recordsPath": "features"
-    },
-    "license": "NOASSERTION",
-    "attribution": "Florida DOT",
     "terms": {
       "note": "WZDx registry metadata (no dataset grant verified)"
     },
