@@ -59,7 +59,8 @@
             "minLength": 1,
             "enum": [
               "digitraffic-weather",
-              "dwd-cdc-10min"
+              "dwd-cdc-10min",
+              "smhi-metobs"
             ]
           },
           "tier": {

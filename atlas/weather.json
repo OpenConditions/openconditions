@@ -184,6 +184,68 @@
           "homepage": "https://www.digitraffic.fi/en/"
         }
       ]
+    },
+    "weather/se": {
+      "$schema": "../schema/weather.schema.json",
+      "feeds": [
+        {
+          "operator": "smhi",
+          "product": "weather",
+          "name": "SMHI CORE meteorological observations",
+          "format": "smhi-metobs",
+          "tier": "authoritative",
+          "endpoints": {
+            "sites": {
+              "urls": [
+                "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/1.json?measuringStations=core",
+                "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/39.json?measuringStations=core",
+                "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/6.json?measuringStations=core",
+                "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/12.json?measuringStations=core",
+                "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/3.json?measuringStations=core",
+                "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/4.json?measuringStations=core",
+                "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/21.json?measuringStations=core",
+                "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/7.json?measuringStations=core"
+              ],
+              "cadenceSec": 86400
+            },
+            "status": {
+              "urls": [
+                "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/1/station-set/all/period/latest-hour/data.json?measuringStations=core",
+                "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/39/station-set/all/period/latest-hour/data.json?measuringStations=core",
+                "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/6/station-set/all/period/latest-hour/data.json?measuringStations=core",
+                "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/12/station-set/all/period/latest-hour/data.json?measuringStations=core",
+                "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/3/station-set/all/period/latest-hour/data.json?measuringStations=core",
+                "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/4/station-set/all/period/latest-hour/data.json?measuringStations=core",
+                "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/21/station-set/all/period/latest-hour/data.json?measuringStations=core",
+                "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/7/station-set/all/period/latest-hour/data.json?measuringStations=core"
+              ],
+              "cadenceSec": 600
+            }
+          },
+          "snapshot": {
+            "completeness": "complete"
+          },
+          "freshnessWindowSec": 3600,
+          "extrasAllow": [
+            "owner",
+            "measuringStations"
+          ],
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "Source: SMHI; normalized by OpenConditions; CC BY 4.0",
+          "terms": {
+            "url": "https://www.smhi.se/data/om-smhis-data/villkor-for-anvandning",
+            "reviewedAt": "2026-11-08"
+          },
+          "privacyUrl": "https://www.smhi.se/om-smhi/hantering-av-personuppgifter",
+          "homepage": "https://www.smhi.se/",
+          "coverage": {
+            "countries": [
+              "SE"
+            ]
+          }
+        }
+      ]
     }
   },
   "feeds": [
@@ -429,6 +491,92 @@
       },
       "cadenceSec": 300,
       "country": "FI"
+    },
+    {
+      "operator": "smhi",
+      "product": "weather",
+      "name": "SMHI CORE meteorological observations",
+      "format": "smhi-metobs",
+      "tier": "authoritative",
+      "endpoints": {
+        "sites": {
+          "urls": [
+            "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/1.json?measuringStations=core",
+            "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/39.json?measuringStations=core",
+            "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/6.json?measuringStations=core",
+            "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/12.json?measuringStations=core",
+            "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/3.json?measuringStations=core",
+            "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/4.json?measuringStations=core",
+            "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/21.json?measuringStations=core",
+            "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/7.json?measuringStations=core"
+          ],
+          "cadenceSec": 86400
+        },
+        "status": {
+          "urls": [
+            "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/1/station-set/all/period/latest-hour/data.json?measuringStations=core",
+            "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/39/station-set/all/period/latest-hour/data.json?measuringStations=core",
+            "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/6/station-set/all/period/latest-hour/data.json?measuringStations=core",
+            "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/12/station-set/all/period/latest-hour/data.json?measuringStations=core",
+            "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/3/station-set/all/period/latest-hour/data.json?measuringStations=core",
+            "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/4/station-set/all/period/latest-hour/data.json?measuringStations=core",
+            "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/21/station-set/all/period/latest-hour/data.json?measuringStations=core",
+            "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/7/station-set/all/period/latest-hour/data.json?measuringStations=core"
+          ],
+          "cadenceSec": 600
+        }
+      },
+      "snapshot": {
+        "completeness": "complete"
+      },
+      "freshnessWindowSec": 3600,
+      "extrasAllow": [
+        "owner",
+        "measuringStations"
+      ],
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Source: SMHI; normalized by OpenConditions; CC BY 4.0",
+      "terms": {
+        "url": "https://www.smhi.se/data/om-smhis-data/villkor-for-anvandning",
+        "reviewedAt": "2026-11-08"
+      },
+      "privacyUrl": "https://www.smhi.se/om-smhi/hantering-av-personuppgifter",
+      "homepage": "https://www.smhi.se/",
+      "coverage": {
+        "countries": [
+          "SE"
+        ]
+      },
+      "id": "se-smhi-weather",
+      "domain": "weather",
+      "region": "se",
+      "file": "feeds/weather/se.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": true,
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "changeNotice": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://www.smhi.se/data/om-smhis-data/villkor-for-anvandning",
+        "reviewedAt": "2026-11-08"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
+      },
+      "restricted": false,
+      "cadenceSec": 600,
+      "country": "SE"
     }
   ]
 }

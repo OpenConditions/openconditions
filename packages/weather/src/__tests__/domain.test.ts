@@ -47,6 +47,7 @@ test("every format is a source format the weather model contributes, producing t
     }
     if (id === "digitraffic-weather")
       expect(format.produces?.properties).toContain("device.status");
+    else expect(format.produces?.properties).not.toContain("device.status");
   }
 });
 
@@ -73,7 +74,11 @@ test("the feed shape is the base shape alone", () => {
 });
 
 test("the Digitraffic feed polls the v2 API with the user and compression headers", () => {
-  expect([...weatherCatalogue().keys()]).toEqual(["de-dwd-cdc-weather", "fi-digitraffic-weather"]);
+  expect([...weatherCatalogue().keys()]).toEqual([
+    "de-dwd-cdc-weather",
+    "fi-digitraffic-weather",
+    "se-smhi-weather",
+  ]);
   const feed = catalogFeed("fi-digitraffic-weather");
   expect(feed).toMatchObject({
     domain: "weather",
@@ -107,6 +112,10 @@ test("a format without a payload parses to nothing", () => {
       expect(() => format.parse(catalogFeed("de-dwd-cdc-weather"), {}, ctx)).toThrow(
         /missing required/,
       );
+      continue;
+    }
+    if (format.id === "smhi-metobs") {
+      expect(() => format.parse(catalogFeed("se-smhi-weather"), {}, ctx)).toThrow(/eight/);
       continue;
     }
     const out = format.parse(catalogFeed("fi-digitraffic-weather"), {}, ctx);

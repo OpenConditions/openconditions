@@ -8,6 +8,8 @@ import { parseDigitrafficWeather, parseDigitrafficWeatherStatus } from "./format
 import { DIGITRAFFIC_SENSORS } from "./formats/digitraffic-sensors.js";
 import { DWD_PROPERTIES, DWD_ROLES, parseDwd } from "./formats/dwd.js";
 
+import { parseSmhi, parseSmhiStatus, SMHI_PARAMETERS } from "./formats/smhi.js";
+
 /** What a weather feed publishes: weather stations and what they measure now. */
 export const WEATHER_PRODUCTS = ["weather"] as const;
 
@@ -25,6 +27,18 @@ const FORMATS: FeedFormat<WeatherCatalogFeed>[] = [
       ]),
     ),
     parse: parseDwd,
+  },
+  {
+    id: "smhi-metobs",
+    kind: "features",
+    products: WEATHER_PRODUCTS,
+    produces: {
+      kinds: ["weather_station", "sensor_channel"],
+      properties: SMHI_PARAMETERS.map((p) => p.property),
+    },
+    endpoints: { sites: { required: true }, status: { required: true, status: true } },
+    parse: parseSmhi,
+    parseStatus: parseSmhiStatus,
   },
   {
     id: "digitraffic-weather",
