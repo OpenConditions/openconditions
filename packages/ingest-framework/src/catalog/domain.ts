@@ -95,7 +95,13 @@ export interface StreamingParse<F extends CatalogFeed = CatalogFeed> {
 /** How a domain reads one feed format. */
 export interface FeedFormat<F extends CatalogFeed = CatalogFeed> {
   id: string;
+  /** Source qualification gate, enforced before any worker or live checker acquisition. */
+  acquisitionBlocked?: string;
+  /** Hold acquisition roles provisionally until publication succeeds. */
+  transactionalRoles?: boolean;
   kind: "situations" | "measurements" | "features";
+  /** Blocks worker acquisition until full-scope operator qualification is recorded. */
+  acquisitionBlockedReason?: string;
   /** The products a feed of this format may carry. */
   products: readonly string[];
   /** The feature and offer kinds and the properties the format emits, which on-demand routing reads. */
@@ -106,8 +112,12 @@ export interface FeedFormat<F extends CatalogFeed = CatalogFeed> {
    * empty answer, not a failure that keeps the last publication.
    */
   mayBeEmpty?: true;
+  /** Reject the whole candidate if any canonical record fails; retain role state until publication. */
+  atomicCandidate?: true;
   /** Revalidate source-clock freshness even when HTTP confirms held bytes unchanged. */
   reparseUnchanged?: true;
+  /** Fail the whole measurement publication on any canonical rejection. */
+  atomicMeasurements?: true;
   /**
    * A measurements format whose every poll restates each transient reading
    * still in effect (the latest position of every vehicle out): a transient

@@ -1,0 +1,42 @@
+{
+  "archive": {
+    "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/precipitation/now/10minutenwerte_nieder_00020_now.zip",
+    "status": 200,
+    "headers": {
+      "Server": "nginx",
+      "Date": "Mon, 09 Nov 2026 13:53:28 GMT",
+      "Content-Type": "application/zip",
+      "Content-Length": "537",
+      "Last-Modified": "Mon, 09 Nov 2026 13:40:00 GMT",
+      "Connection": "close",
+      "ETag": "\"6af1cd30-219\"",
+      "X-Frame-Options": "SAMEORIGIN",
+      "Strict-Transport-Security": "max-age=31536000",
+      "Accept-Ranges": "bytes"
+    },
+    "retrievedAt": "2026-11-09T13:53:28.251471+00:00",
+    "bytes": 537,
+    "sha256": "d0b762bca5db4a6a47a96ca5e9c29b9a5b9702d42e6a2505becf7a767cae35ab"
+  },
+  "metadata": {
+    "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/precipitation/now/zehn_now_rr_Beschreibung_Stationen.txt",
+    "status": 200,
+    "headers": {
+      "Server": "nginx",
+      "Date": "Mon, 09 Nov 2026 13:51:22 GMT",
+      "Content-Type": "text/plain",
+      "Content-Length": "1377975",
+      "Last-Modified": "Mon, 09 Nov 2026 13:40:00 GMT",
+      "Connection": "close",
+      "ETag": "\"6af1cd30-1506b7\"",
+      "X-Frame-Options": "SAMEORIGIN",
+      "Strict-Transport-Security": "max-age=31536000",
+      "Accept-Ranges": "bytes"
+    },
+    "retrievedAt": "2026-11-09T13:51:22.375979+00:00",
+    "bytes": 1377975,
+    "sha256": "cec2b154798a3208abb3ab9cfceda81424dc302fdf1461a4100c00429175d98e"
+  },
+  "metadataSelection": "Header and exact station 00020 row; full table retained in activation evidence",
+  "selectedMetadataSha256": "f524855e660e89c7251fb200b335fa2a49ad4f9fd8b33bae6f10f64568b6a626"
+}

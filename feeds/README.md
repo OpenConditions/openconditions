@@ -132,6 +132,7 @@ The other optional fields every feed may carry:
   or a shared group of settings such as `${@overpass.url}`, whose base is the
   instance's own service (perhaps self-hosted, perhaps plain http) and no
   credit link (`feeds:lint` reports those). `GET /sources` serves it.
+- `acquisitionLimits`: optional cumulative worker limits for one poll: positive integer `requests`, `bytes` (response-body bytes) and `deadlineSec`. Every role shares the budget. Exhaustion or cancellation refuses publication and preserves last-good data. Per-response egress limits still apply.
 - `requestLimits`: the publisher's stated limits, `perMinute`, `perDay`,
   `maxRadiusKm` and `keyScope` (`instance` or `consumer`: whom one key serves).
   `perMinute` and `perDay` count upstream requests: an on-demand cell of a

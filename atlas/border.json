@@ -32,6 +32,45 @@
         }
       ]
     },
+    "border/pl": {
+      "$schema": "../schema/border.schema.json",
+      "feeds": [
+        {
+          "operator": "granica",
+          "product": "waits",
+          "name": "Granica outbound waits: Medyka, Korczowa and Hrebenne",
+          "format": "granica-html",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://granica.gov.pl/index.php/pl/czasy-oczekiwania/ukraina",
+              "cadenceSec": 1800
+            }
+          },
+          "snapshot": {
+            "completeness": "complete"
+          },
+          "freshnessWindowSec": 7200,
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "Ministerstwo Finansów / Krajowa Administracja Skarbowa; granica.gov.pl; converted to OpenConditions.",
+          "terms": {
+            "url": "https://api.dane.gov.pl/1.4/datasets/1694",
+            "reviewedAt": "2026-11-07",
+            "note": "Dataset 1694 licenses outbound car/truck waits under CC BY 4.0 and identifies website/service numerical data as identical. Resource 19712 describes the interface; it is not a separate observation grant or a blanket website licence. Only PL→UA passenger cars and DMC >7.5t freight at units 401030, 401060 and 303020 are included. Estimates are waiting to begin clearance, not total crossing duration. Warsaw wall time is an adapter interpretation; ambiguous dates/times fail closed. Eight daily updates intentionally leave gaps under the unchanged two-hour source-age deadline. One shared GET every 30 minutes is a conservative choice, not a stated provider quota. Coordinates are separately curated Wikidata CC0 with revision evidence.",
+            "notice": "Ministerstwo Finansów / Krajowa Administracja Skarbowa; granica.gov.pl; converted to OpenConditions. Adapted numerical estimates; no endorsement or warranty. CC BY 4.0: https://creativecommons.org/licenses/by/4.0/ ; disclaimer: https://creativecommons.org/licenses/by/4.0/legalcode.en#s5",
+            "redistribution": true,
+            "derivedRedistribution": true,
+            "commercialUse": true,
+            "attributionRequired": true,
+            "changeNotice": true,
+            "retention": true
+          },
+          "privacyUrl": "https://granica.gov.pl/index.php/pl/polityka-plik%C3%B3w-cookies",
+          "homepage": "https://granica.gov.pl/index.php/pl/czasy-oczekiwania/ukraina"
+        }
+      ]
+    },
     "border/us": {
       "$schema": "../schema/border.schema.json",
       "feeds": [
@@ -131,6 +170,74 @@
       },
       "cadenceSec": 600,
       "country": "CA"
+    },
+    {
+      "operator": "granica",
+      "product": "waits",
+      "name": "Granica outbound waits: Medyka, Korczowa and Hrebenne",
+      "format": "granica-html",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://granica.gov.pl/index.php/pl/czasy-oczekiwania/ukraina",
+          "cadenceSec": 1800
+        }
+      },
+      "snapshot": {
+        "completeness": "complete"
+      },
+      "freshnessWindowSec": 7200,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Ministerstwo Finansów / Krajowa Administracja Skarbowa; granica.gov.pl; converted to OpenConditions.",
+      "terms": {
+        "url": "https://api.dane.gov.pl/1.4/datasets/1694",
+        "reviewedAt": "2026-11-07",
+        "note": "Dataset 1694 licenses outbound car/truck waits under CC BY 4.0 and identifies website/service numerical data as identical. Resource 19712 describes the interface; it is not a separate observation grant or a blanket website licence. Only PL→UA passenger cars and DMC >7.5t freight at units 401030, 401060 and 303020 are included. Estimates are waiting to begin clearance, not total crossing duration. Warsaw wall time is an adapter interpretation; ambiguous dates/times fail closed. Eight daily updates intentionally leave gaps under the unchanged two-hour source-age deadline. One shared GET every 30 minutes is a conservative choice, not a stated provider quota. Coordinates are separately curated Wikidata CC0 with revision evidence.",
+        "notice": "Ministerstwo Finansów / Krajowa Administracja Skarbowa; granica.gov.pl; converted to OpenConditions. Adapted numerical estimates; no endorsement or warranty. CC BY 4.0: https://creativecommons.org/licenses/by/4.0/ ; disclaimer: https://creativecommons.org/licenses/by/4.0/legalcode.en#s5",
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "changeNotice": true,
+        "retention": true
+      },
+      "privacyUrl": "https://granica.gov.pl/index.php/pl/polityka-plik%C3%B3w-cookies",
+      "homepage": "https://granica.gov.pl/index.php/pl/czasy-oczekiwania/ukraina",
+      "id": "pl-granica-waits",
+      "domain": "border",
+      "region": "pl",
+      "file": "feeds/border/pl.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": true,
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "changeNotice": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://api.dane.gov.pl/1.4/datasets/1694",
+        "reviewedAt": "2026-11-07"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "PL"
+        ]
+      },
+      "cadenceSec": 1800,
+      "country": "PL"
     },
     {
       "operator": "cbp",

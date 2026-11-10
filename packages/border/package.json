@@ -29,7 +29,8 @@
   "dependencies": {
     "@openconditions/ingest-framework": "workspace:*",
     "@openconditions/model": "workspace:*",
-    "@openconditions/model-border": "workspace:*"
+    "@openconditions/model-border": "workspace:*",
+    "parse5": "^8.1.0"
   },
   "devDependencies": {
     "@openconditions/conformance": "workspace:*",

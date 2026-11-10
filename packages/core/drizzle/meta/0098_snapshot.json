@@ -1,5 +1,5 @@
 {
-  "id": "87bf7300-0305-425b-b8d6-4917c9eb522c",
+  "id": "4bc1aa2a-cd9e-486d-ae64-0eb2df8a97d2",
   "prevId": "d6f4824e-cc6a-4e37-9f08-3d9c3b4bfbe9",
   "version": "7",
   "dialect": "postgresql",
@@ -670,83 +670,6 @@
           "value": "\"subject_class\" IN ('feature', 'situation', 'observation', 'offer')"
         }
       },
-      "isRLSEnabled": false
-    },
-    "conditions.jma_budget": {
-      "name": "jma_budget",
-      "schema": "conditions",
-      "columns": {
-        "egress": {
-          "name": "egress",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "day": {
-          "name": "day",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "used": {
-          "name": "used",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "reserved": {
-          "name": "reserved",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "jma_budget_egress_day_pk": {
-          "name": "jma_budget_egress_day_pk",
-          "columns": [
-            "egress",
-            "day"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "jma_budget_nonnegative": {
-          "name": "jma_budget_nonnegative",
-          "value": "\"conditions\".\"jma_budget\".\"used\" >= 0 AND \"conditions\".\"jma_budget\".\"reserved\" >= 0"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "conditions.jma_download": {
-      "name": "jma_download",
-      "schema": "conditions",
-      "columns": {
-        "url": {
-          "name": "url",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "value": {
-          "name": "value",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "conditions.contributor_receipt": {
@@ -4578,6 +4501,70 @@
           "columns": [
             "source_id",
             "incident_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "conditions.observation_revision": {
+      "name": "observation_revision",
+      "schema": "conditions",
+      "columns": {
+        "source_id": {
+          "name": "source_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "feature_id": {
+          "name": "feature_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "property": {
+          "name": "property",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "measured_at": {
+          "name": "measured_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rank": {
+          "name": "rank",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "signature": {
+          "name": "signature",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "suppressed": {
+          "name": "suppressed",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "observation_revision_source_id_feature_id_property_pk": {
+          "name": "observation_revision_source_id_feature_id_property_pk",
+          "columns": [
+            "source_id",
+            "feature_id",
+            "property"
           ]
         }
       },

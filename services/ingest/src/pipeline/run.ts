@@ -1,3 +1,4 @@
+import { deserialize, serialize } from "node:v8";
 import type { RawTier } from "@openconditions/core/server";
 import type {
   CatalogFeed,
@@ -45,6 +46,7 @@ import { feedErrorMessage } from "../feed-error.js";
 import type { RawArchive } from "../raw/archive.js";
 import { archivingTee, digestOnlyTee, type StreamTeeFactory } from "../raw/stream-tee.js";
 import { rawTierFor } from "../raw/tiers.js";
+import { acquisitionBudget } from "./acquisition-budget.js";
 import { loadBaselineMap } from "./baseline-store.js";
 import { bindRecords } from "./bind-records.js";
 import { bodyStreamFrom } from "./body-stream.js";
@@ -70,6 +72,7 @@ import {
 import { loadReference } from "./reference.js";
 import { resolveOpenLr } from "./resolve.js";
 import { tallyRestrictions } from "./restriction-tally.js";
+import { smhiHttpPolicy } from "./smhi-http.js";
 import { type SmnWindow, smnMessages } from "./smn-messages.js";
 import { inspectSnapshotCompleteness, type SnapshotInspection } from "./snapshot-inspection.js";
 import {
@@ -221,6 +224,8 @@ export interface RunResult {
 export interface RunDeps {
   /** Native child entry override, matching ParseProcess entry injection for built-runtime tests. */
   jmaNativeEntry?: URL;
+  fetchState?: import("@openconditions/ingest-framework").FetchState;
+  acquisitionCheck?: () => void;
   sql: Sql;
   fetch: typeof fetch;
   now: () => string;
@@ -321,7 +326,11 @@ export function feedFetch(
   const timeoutSec = role === undefined ? undefined : src.endpoints[role]?.timeoutSec;
   return makeAuthorizedFetch(
     src,
-    guardedFeedFetch(deps, timeoutSec),
+    guardedFeedFetch(
+      deps,
+      timeoutSec,
+      role === undefined ? undefined : src.endpoints[role]?.maxResponseBytes,
+    ),
     deps.env ?? process.env,
     Date.now,
     deps.grants,
@@ -338,8 +347,10 @@ export function feedFetch(
 export function guardedFeedFetch(
   deps: { fetch: typeof fetch; lookup?: LookupFn },
   timeoutSec?: number,
+  maxResponseBytes?: number,
 ): typeof fetch {
   const opts = guardOptionsFromEnv();
+  if (maxResponseBytes !== undefined) opts.maxBytes = Math.min(opts.maxBytes, maxResponseBytes);
   if (timeoutSec !== undefined) opts.timeoutMs = Math.max(opts.timeoutMs, timeoutSec * 1000);
   return guardedFetch(deps.fetch, opts, {}, deps.lookup);
 }
@@ -368,7 +379,12 @@ export function pollTickSec(cadenceSec: number): number {
 function rolesDue(src: CatalogFeed, roles: RoleState | undefined, now: number): string[] {
   if (!roles) return dataRoles(src);
   const due = dueRoles(src, roles.lastFetchedAt, now + pollTickSec(src.cadenceSec) * 500);
-  return due.length > 0 && src.rawRetention === "none" ? dataRoles(src) : due;
+  const ready = due.filter(
+    (role) =>
+      src.format !== "smhi-metobs" ||
+      smhiHttpPolicy(roles).ready(src.endpoints[role]?.urls ?? [], Date.now()),
+  );
+  return ready.length > 0 && src.rawRetention === "none" ? dataRoles(src) : ready;
 }
 
 /**
@@ -450,6 +466,30 @@ export async function runSource(src: CatalogFeed, deps: RunDeps): Promise<RunRes
       parseProcess: deps.parseProcess,
     });
   }
+  if (src.format === "smhi-metobs" && src.disabled) {
+    return {
+      count: 0,
+      durationMs: 0,
+      outcome: "missing_configuration",
+      error: `SMHI qualification gate: ${src.disabled.reason}`,
+    };
+  }
+  const priorRoles =
+    (formatOf(src).atomicCandidate ||
+      formatOf(src).atomicMeasurements ||
+      src.format === "smhi-metobs") &&
+    deps.roles
+      ? (deserialize(serialize(deps.roles)) as RoleState)
+      : undefined;
+  const restoreRoles = () => {
+    if (priorRoles && deps.roles) {
+      const failing = deps.roles.failing;
+      for (const key of Object.keys(deps.roles))
+        delete (deps.roles as unknown as Record<string, unknown>)[key];
+      Object.assign(deps.roles, priorRoles);
+      if (formatOf(src).atomicMeasurements) deps.roles.failing = failing;
+    }
+  };
   const attemptAt = deps.now();
   if (src.rawRetention === "none" && deps.roles !== undefined) {
     deps.roles.payloads = {};
@@ -464,11 +504,59 @@ export async function runSource(src: CatalogFeed, deps: RunDeps): Promise<RunRes
     at: attemptAt,
     closed: false,
   };
+  const budget = src.acquisitionLimits
+    ? acquisitionBudget(src.acquisitionLimits, deps.fetch, deps.signal)
+    : undefined;
   try {
-    return src.format === "jma-xml"
-      ? await runJma(src, deps, attempt)
-      : await runAttempt(src, deps, attempt, due);
+    if (src.format === "jma-xml") return await runJma(src, deps, attempt);
+    const accepted = deps.roles;
+    const candidate =
+      accepted && formatOf(src).transactionalRoles
+        ? {
+            ...accepted,
+            lastFetchedAt: { ...accepted.lastFetchedAt },
+            payloads: { ...accepted.payloads },
+            urls: { ...accepted.urls },
+            items: { ...accepted.items },
+            failing: { ...accepted.failing },
+            answers: Object.fromEntries(
+              Object.entries(accepted.answers).map(([role, answers]) => [role, { ...answers }]),
+            ),
+          }
+        : undefined;
+    const result = await runAttempt(
+      src,
+      {
+        ...deps,
+        ...(candidate ? { roles: candidate } : {}),
+        ...(budget
+          ? { fetch: budget.fetch, signal: budget.signal, acquisitionCheck: budget.check }
+          : {}),
+      },
+      attempt,
+      due,
+    );
+    if (
+      candidate &&
+      accepted &&
+      result.error === undefined &&
+      (result.outcome === undefined ||
+        result.outcome === "validated_unchanged" ||
+        result.outcome === "changed" ||
+        result.outcome === "complete_empty")
+    ) {
+      Object.assign(accepted, candidate);
+      if (candidate.statusIndex === undefined) delete accepted.statusIndex;
+    }
+    if (
+      result.error ||
+      result.outcome === "partial" ||
+      (formatOf(src).atomicMeasurements && (result.rejected ?? 0) > 0)
+    )
+      restoreRoles();
+    return result;
   } catch (err) {
+    restoreRoles();
     if (!attempt.closed) {
       await upsertSourceStatus(deps.sql, src.id, {
         freshnessWindowSec: src.freshnessWindowSec,
@@ -484,6 +572,8 @@ export async function runSource(src: CatalogFeed, deps: RunDeps): Promise<RunRes
       );
     }
     throw err;
+  } finally {
+    budget?.close();
   }
 }
 
@@ -501,6 +591,7 @@ async function runAttempt(
   due: readonly string[],
 ): Promise<RunResult> {
   const start = Date.now();
+  const httpDeadline = start + 120000;
   const steps = new PollSteps(start);
   const attemptAt = attempt.at;
   const attemptId = attempt.id;
@@ -536,6 +627,12 @@ async function runAttempt(
   const env = deps.env ?? process.env;
   const fetchFor = (role: string) => feedFetch(src, { ...deps, env }, role);
   const format = formatOf(src);
+  if (format.acquisitionBlockedReason) {
+    const error = format.acquisitionBlockedReason;
+    await recordStatus({ freshnessWindowSec: src.freshnessWindowSec, outcome: "error", error });
+    return { count: 0, durationMs: Date.now() - start, error };
+  }
+  if (format.acquisitionBlocked) throw new Error(format.acquisitionBlocked);
   const teeFor = (c: ReturnType<typeof capture>): StreamTeeFactory =>
     c ? archivingTee(c.archive, c.meta) : digestOnlyTee;
 
@@ -611,12 +708,15 @@ async function runAttempt(
     ...(acceptFetch ? { acceptFetch } : {}),
     ...(warning ? { warning } : {}),
     statesComplete: !leftOut,
+    atomicCandidate: format.atomicCandidate === true,
     ...(smnWindow ? { smnWindow } : {}),
   });
-  const finish = (parse: ParseOutput): Promise<RunResult> => {
+  const finish = (parse: ParseOutput, dwdStationPayloads?: FeedPayloads): Promise<RunResult> => {
+    deps.acquisitionCheck?.();
     const poll = pollContext();
     const skipped = drainSkipped(src.id);
-    if (format.kind === "features") return finishFeaturePoll(poll, parse, heldPayload, skipped);
+    if (format.kind === "features")
+      return finishFeaturePoll(poll, parse, heldPayload, skipped, dwdStationPayloads);
     return format.kind === "measurements"
       ? finishFlowPoll(
           poll,
@@ -804,8 +904,22 @@ async function runAttempt(
           result = await fetchEndpoint(
             src,
             role,
-            guardedFeedFetch(deps, src.endpoints[role]?.timeoutSec),
+            src.format === "smhi-metobs"
+              ? smhiHttpPolicy(deps.roles).wrap(
+                  guardedFeedFetch(
+                    deps,
+                    src.endpoints[role]?.timeoutSec,
+                    src.endpoints[role]?.maxResponseBytes,
+                  ),
+                  httpDeadline,
+                )
+              : guardedFeedFetch(
+                  deps,
+                  src.endpoints[role]?.timeoutSec,
+                  src.endpoints[role]?.maxResponseBytes,
+                ),
             {
+              state: deps.fetchState,
               resolvers: domainOf(src).resolvers,
               ...(deps.signal ? { signal: deps.signal } : {}),
               env,
@@ -819,6 +933,7 @@ async function runAttempt(
             },
           );
         } catch (err) {
+          deps.acquisitionCheck?.();
           const reason = feedErrorMessage(src, err, env);
           gap(role);
           // A tolerant `urls` role whose every URL failed stands in URL by URL,
@@ -1014,6 +1129,7 @@ async function runAttempt(
           delete freshUrls[role];
         }
       }
+      deps.acquisitionCheck?.();
       // A role counts as fetched once its answer is held: a poll that fails
       // before then leaves it due, or the next polls would parse nothing for it
       // until its cadence came round again.
@@ -1054,6 +1170,8 @@ async function runAttempt(
       acceptFetch = () => {
         for (const accept of accepts) accept();
       };
+      if (warnings.length > 0 && src.format === "smhi-metobs")
+        throw new Error(`SMHI incomplete acquisition: ${warnings.join("; ")}`);
       if (warnings.length > 0) warning = warnings.join("; ");
     } catch (err) {
       return failFetch(err);
@@ -1185,12 +1303,17 @@ async function runAttempt(
       }
     };
     const parseAndFinish = async (): Promise<RunResult> => {
+      deps.acquisitionCheck?.();
       steps.lap("gate");
       const latest = await parseLatest();
       if ("failed" in latest) return latest.failed;
       steps.lap("parse");
       const { parsed } = latest;
-      const result = await finish(parsed);
+      const dwdStationPayloads =
+        src.format === "dwd-cdc-10min"
+          ? await payloadsOf(roles.filter((role) => role.endsWith("_stations")))
+          : undefined;
+      const result = await finish(parsed, dwdStationPayloads);
       if (keepPayloads && live.length > 0 && result.error === undefined && parsed.statusIndex) {
         deps.roles!.statusIndex = parsed.statusIndex;
       }
@@ -1243,6 +1366,7 @@ interface PollContext {
   warning?: string;
   /** Every data role's states are in the parse: none was left out. */
   statesComplete: boolean;
+  atomicCandidate: boolean;
 }
 
 /** Records a failure that keeps the last good publication, and the run's result for it. */
@@ -1449,9 +1573,12 @@ async function finishEventPoll(
 async function finishFlowPoll(
   poll: PollContext,
   parse: FlowOutput,
-  format: Pick<FeedFormat, "mayBeEmpty" | "restatesTransient">,
+  format: Pick<FeedFormat, "mayBeEmpty" | "restatesTransient" | "atomicMeasurements">,
   skipped: SkipCounts,
 ): Promise<RunResult> {
+  if (format.atomicMeasurements && skippedRecords(skipped) > 0) {
+    return fail(poll, "error", "atomic measurements: malformed source records");
+  }
   const mayBeEmpty = format.mayBeEmpty === true;
   const { src, deps } = poll;
   let output = parse;
@@ -1501,6 +1628,7 @@ async function finishFlowPoll(
       output: stamped,
       situationsComplete: baselinesLoaded,
       restatesTransient: format.restatesTransient === true && poll.statesComplete,
+      atomic: format.atomicMeasurements === true,
       rejected: skippedRecords(skipped),
       poll: poll.identity,
       durationMs: Date.now() - poll.start,
@@ -1555,6 +1683,7 @@ async function finishFeaturePoll(
   parse: ParseOutput,
   heldPayload: boolean,
   skipped: SkipCounts,
+  dwdStationPayloads?: FeedPayloads,
 ): Promise<RunResult> {
   const { src, deps } = poll;
   const nonWithdrawing =
@@ -1585,7 +1714,9 @@ async function finishFeaturePoll(
       return fail(poll, "failed", "source-clock snapshot requires successful current roles");
   }
   const shrunk =
-    nonWithdrawing || (parse.featuresComplete === true && parse.features.length === 0)
+    parse.featuresComplete === false ||
+    nonWithdrawing ||
+    (parse.featuresComplete === true && parse.features.length === 0)
       ? undefined
       : await shrinkTripped(deps.sql, src.id, parse.features.length, deps.now());
   if (shrunk) return failShrunk(poll, "features", "features", parse.features.length, shrunk);
@@ -1594,6 +1725,7 @@ async function finishFeaturePoll(
   const stamp = (drafts: readonly RecordDraft[]) => drafts.map((d) => stampOne(d));
   const output = {
     ...(parse.publication ? { publication: parse.publication } : {}),
+    featuresComplete: parse.featuresComplete,
     features: stamp(parse.features),
     observations: stamp(parse.observations),
     offers: stamp(parse.offers),
@@ -1603,6 +1735,7 @@ async function finishFeaturePoll(
   try {
     published = await publishFeatures(deps.sql, src, {
       output,
+      ...(dwdStationPayloads ? { dwdStationPayloads } : {}),
       rejected: (parse.rejected ?? 0) + skippedRecords(skipped),
       poll: poll.identity,
       durationMs: Date.now() - poll.start,
@@ -1610,6 +1743,9 @@ async function finishFeaturePoll(
       model: writeModel(deps.model),
       statesComplete: poll.statesComplete && parse.featuresComplete !== false,
       featuresComplete: nonWithdrawing ? false : parse.featuresComplete,
+      atomicCoherence: src.format === "smhi-metobs",
+      atomicCandidate: poll.atomicCandidate,
+      observationRevisions: parse.observationRevisions,
       ...(poll.warning ? { warning: poll.warning } : {}),
     });
     poll.attempt.closed = true;
@@ -1664,6 +1800,9 @@ async function finishStatusPoll(
   try {
     published = await publishReadings(deps.sql, src, {
       observations,
+      atomicCandidate: poll.atomicCandidate,
+      observationRevisions: output.observationRevisions,
+      atomicCoherence: src.format === "smhi-metobs",
       rejected: output.rejected + skippedRecords(skipped),
       poll: poll.identity,
       durationMs: Date.now() - poll.start,

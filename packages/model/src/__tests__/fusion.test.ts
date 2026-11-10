@@ -78,6 +78,37 @@ describe("fusion", () => {
     expect(winner([lapsed])).toBeUndefined();
   });
 
+  it("honours explicit bulk source expiry despite healthy repeated polls", () => {
+    const a = feed("free_flow", "2026-10-01T10:00:00Z");
+    a.observation.freshness = { expiresAt: NOW };
+    expect(winner([a])).toBeUndefined();
+  });
+
+  it("preserves on-demand candidate policy while its stored deadline controls public visibility", () => {
+    const a = feed("free_flow", "2026-10-01T10:00:00Z");
+    a.observation.provenance.accessMode = "on_demand";
+    a.observation.freshness = { expiresAt: NOW };
+    expect(winner([a])).toBe("free_flow");
+  });
+
+  it("propagates bulk source deadlines to the fused row", () => {
+    const a = feed("free_flow", "2026-10-01T11:00:00Z");
+    const deadline = "2026-10-01T13:00:00Z";
+    a.observation.freshness = { expiresAt: deadline };
+    const fusion = fuse(crowdRegistry, "charging.evse_status", [a], NOW)!;
+    const result = fusedObservation(crowdRegistry, fusion, {
+      subject: { kind: "feature", featureId: "oc:feature:oc.example.org:c1" },
+      location: { geometry: null, extent: "none", geometryOrigin: "none", fuzziness: "exact" },
+      instanceId: "oc.example.org",
+      now: NOW,
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok)
+      expect(result.value["freshness"]).toMatchObject({
+        expiresAt: deadline.replace("Z", ".000Z"),
+      });
+  });
+
   it("never lets a crowd report override a fresh authoritative status", () => {
     expect(
       winner([

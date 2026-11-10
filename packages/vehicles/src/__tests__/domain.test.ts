@@ -11,7 +11,7 @@ import { vehiclesFeedShape } from "../feed-schema.js";
 import { vehiclesRegistry } from "./helpers/seal.js";
 import { FEEDS_DIR, vehiclesCatalogue } from "./helpers/vehicles-feed.js";
 
-const NOW = new Date("2026-10-15T00:00:00Z");
+const NOW = new Date("2026-11-08T00:00:00Z");
 
 test("vehiclesDomain registers the Digitraffic maintenance tracking, which may answer with no vehicle", () => {
   expect(vehiclesDomain.id).toBe("vehicles");
@@ -19,7 +19,7 @@ test("vehiclesDomain registers the Digitraffic maintenance tracking, which may a
   expect(VEHICLES_PRODUCTS).toEqual(["maintenance"]);
   expect(vehiclesDomain.feedShape).toBe(vehiclesFeedShape);
   expect(vehiclesDomain.resolvers).toEqual([]);
-  expect(Object.keys(vehiclesDomain.formats)).toEqual(["digitraffic"]);
+  expect(Object.keys(vehiclesDomain.formats)).toEqual(["iowa-avl", "digitraffic"]);
   expect(vehiclesDomain.formats["digitraffic"]).toMatchObject({
     id: "digitraffic",
     kind: "measurements",
@@ -49,8 +49,11 @@ test("the feed shape is the base shape alone, and strict", () => {
 
 test("the catalogue's vehicles feeds lint clean", () => {
   const catalog = readCatalogDir(FEEDS_DIR, [vehiclesDomain], { otherDomains: "ignore" });
-  expect(catalog.files.map((f) => f.region)).toEqual(["fi"]);
-  expect([...vehiclesCatalogue().keys()]).toEqual(["fi-digitraffic-maintenance"]);
+  expect(catalog.files.map((f) => f.region)).toEqual(["fi", "us"]);
+  expect([...vehiclesCatalogue().keys()]).toEqual([
+    "fi-digitraffic-maintenance",
+    "us-ia-iowadot-maintenance",
+  ]);
   expect(lintCatalog(catalog.files, { groups: {} }, [vehiclesDomain], NOW)).toEqual([]);
 });
 

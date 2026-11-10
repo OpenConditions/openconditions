@@ -3,6 +3,7 @@ import {
   defineKind,
   defineProperty,
   defineResultSchema,
+  extendVocabulary,
   LineStringGeometry,
   type RegistryModule,
 } from "@openconditions/model";
@@ -29,6 +30,7 @@ export const VEHICLE_ACTIVITIES = [
 export const vehiclesModule: RegistryModule = {
   name: "vehicles",
   entries: [
+    extendVocabulary({ vocabulary: "source_format", values: ["iowa-avl"] }),
     defineDomain({
       code: DOMAIN,
       description:

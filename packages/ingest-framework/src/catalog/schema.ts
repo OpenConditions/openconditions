@@ -132,12 +132,18 @@ const eachSchema = z
     pattern: z.string().min(1).optional(),
     links: z.array(z.string().min(1)).nonempty().optional(),
     keepSec: z.number().int().positive().optional(),
+    /** Revalidates unchanged terminal links only when the listing supplies version metadata. */
+    revalidateSec: z.number().int().positive().optional(),
+    maxItems: z.number().int().positive().max(10000).optional(),
   })
   .strict()
   .superRefine((each, ctx) => {
     const listed = each.records !== undefined || each.field !== undefined;
     if (listed === (each.links !== undefined)) {
       ctx.addIssue({ code: "custom", message: "each needs exactly one of records+field or links" });
+    }
+    if (listed && (each.revalidateSec !== undefined || each.maxItems !== undefined)) {
+      ctx.addIssue({ code: "custom", message: "revalidateSec and maxItems apply only to links" });
     }
     if (listed && (each.records === undefined || each.field === undefined)) {
       ctx.addIssue({ code: "custom", message: "each needs both records and field" });
@@ -207,6 +213,8 @@ export const endpointSchema = z
       .union([
         z
           .object({
+            /** ArcGIS exceededTransferLimit continuation with monotonic OBJECTID validation. */
+            arcgis: z.literal(true).optional(),
             skipParam: z.string(),
             pageSize: z.number().int().positive(),
             mode: z.enum(["offset", "page"]).optional(),
@@ -306,6 +314,12 @@ export const endpointSchema = z
      * publisher slower than the operator's `OPENCONDITIONS_FETCH_TIMEOUT_MS`
      * (60 s by default) allows. It lengthens that limit and never shortens it.
      */
+    maxResponseBytes: z
+      .number()
+      .int()
+      .positive()
+      .max(512 * 1024 * 1024)
+      .optional(),
     timeoutSec: z.number().int().positive().max(900).optional(),
     /**
      * A role of changes that asks for those since its previous answer: each
@@ -521,6 +535,14 @@ export const feedBaseShape = {
     .optional(),
   freshnessWindowSec: z.number().int().positive(),
   accessMode: z.enum(ACCESS_MODES).optional(),
+  acquisitionLimits: z
+    .object({
+      requests: z.number().int().positive(),
+      bytes: z.number().int().positive(),
+      deadlineSec: z.number().int().positive(),
+    })
+    .strict()
+    .optional(),
   requestLimits: z
     .object({
       perMinute: z.number().int().positive().optional(),

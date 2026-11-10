@@ -17,3 +17,15 @@
   served (byte-order mark, `;;` separators, CRLF), all 30 offices, fetched
   2026-10-14T23:38:07Z. Open Government Licence – Canada (the "Current Border
   Wait Times" dataset of the Open Government Portal).
+
+## Granica
+
+`granica-2026-11-08.html.txt` contains the exact anonymous Polish country-page response bytes captured on 2026-11-08; the adjacent receipt records the URL, retrieval instant, size and SHA-256. The `.txt` suffix keeps formatting tools from rewriting provider HTML or its scripts. Scripts are never executed. Only the numerical outbound car/truck product is extracted under dataset 1694's CC BY 4.0 grant and explicit website/service equivalence. This is not a licence grant for surrounding website content, images or notices. Synthetic edge cases are labelled in the tests and derive from this capture.
+
+The capture reports freight waits of 16:00, 14:00 and 25:00 at Medyka, Korczowa and Hrebenne, and passenger waits of 2:00, 1:00 and 0:00. DMC means permissible gross mass. The adapter retains the >7500 kg restriction in typed lane eligibility, and estimates waiting to begin clearance. It makes no assertion about facility openness or total crossing duration.
+
+`granica-geometry-evidence.json` identifies the independent Wikidata structured-coordinate statements, revisions and retrieval method. Medyka's JSON was directly captured; the two other entity JSON refreshes returned 403. Their revision-specific indexed entity pages supplied the structured CC0 statements. These joins are not fresh direct API qualification, and contain no silently imported OSM geometry. Decimal coordinates for those two statements are arithmetic conversions of their sexagesimal values. The railway Hrebenne entity is excluded.
+
+`granica-2026-11-09.html.txt` retains only the country table, with CRLF and lone CR converted to LF, from the 2026-11-09T18:26:35.741420Z response. Its receipt binds the full response hash, raw table hash and length, normalized table hash and length, and newline transformation and transcribes the six included waits independently: Medyka 120/600, Korczowa 0/180, Hrebenne 0/780 minutes (car/freight). The source date is November 9; crossing minutes 19:00, 19:01 and 19:22 mean 18:00Z, 18:01Z and 18:22Z under the Warsaw interpretation. Response Date and Last-Modified describe transport and do not renew those publications.
+
+On November 9 the two previously blocked Wikidata entity JSON requests returned HTTP 200 at the same recorded revisions. The geometry receipt now records direct retrieval instants and response hashes for both. Earlier 403 evidence remains in the external implementation report and the receipt's prior-refresh fields. Their structured P625 values are retained directly; there is no OSM geometry import.
