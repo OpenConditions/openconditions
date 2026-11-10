@@ -5,11 +5,21 @@ import {
 } from "@openconditions/ingest-framework";
 import { type VehiclesCatalogFeed, vehiclesFeedShape } from "./feed-schema.js";
 import { parseDigitrafficMaintenance } from "./formats/digitraffic.js";
+import { parseIowaAvl } from "./formats/iowa-avl.js";
 
 /** What a vehicles feed publishes: where road maintenance fleets are and what they do. */
 export const VEHICLES_PRODUCTS = ["maintenance"] as const;
 
 const FORMATS: FeedFormat<VehiclesCatalogFeed>[] = [
+  {
+    id: "iowa-avl",
+    atomicMeasurements: true,
+    kind: "measurements",
+    products: ["maintenance"],
+    mayBeEmpty: true,
+    endpoints: { main: { required: true } },
+    parse: parseIowaAvl,
+  },
   {
     id: "digitraffic",
     kind: "measurements",

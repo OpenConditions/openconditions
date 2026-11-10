@@ -58,7 +58,8 @@
             "type": "string",
             "minLength": 1,
             "enum": [
-              "digitraffic"
+              "digitraffic",
+              "iowa-avl"
             ]
           },
           "tier": {
@@ -190,6 +191,10 @@
                     {
                       "type": "object",
                       "properties": {
+                        "arcgis": {
+                          "type": "boolean",
+                          "const": true
+                        },
                         "skipParam": {
                           "type": "string"
                         },
