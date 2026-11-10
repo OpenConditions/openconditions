@@ -158,6 +158,14 @@ async function checkFeed(
 
   if (feed.disabled)
     return { ...result("skipped", `disabled: ${feed.disabled.reason}`), skipReason: "disabled" };
+  if (feed.format === "pun")
+    return {
+      ...result(
+        "skipped",
+        "PUN full-generation acquisition requires the separate qualification route",
+      ),
+      skipReason: "configuration",
+    };
   if (keylessOnly && (feed.auth || feedCredentialNames(feed).some((name) => !name.setting))) {
     return {
       ...result("skipped", "keyless mode: configured credentials/auth are not tested"),
@@ -213,7 +221,15 @@ async function checkFeed(
       return result("warning", `${role} (${endpoint.decoder}) could not be loaded`);
     } else warnings.push(`${role} (${endpoint.decoder}) could not be loaded`);
   }
-  const ctx = { fetchedAt: new Date().toISOString(), cadenceSec: feed.cadenceSec, reference };
+  const ctx = {
+    fetchedAt: new Date().toISOString(),
+    cadenceSec: feed.cadenceSec,
+    reference,
+    payloadEvidence: {} as Record<
+      string,
+      readonly import("@openconditions/ingest-framework").PayloadDigest[]
+    >,
+  };
 
   // A format too large to buffer is read as the service reads it, streamed.
   // A failure before the body opens is the network's; one while reading it,
@@ -272,6 +288,7 @@ async function checkFeed(
       }
       payloads[role] = fetched.buffers;
       payloadUrls[role] = fetched.urls;
+      if (feed.format === "geofa") ctx.payloadEvidence[role] = fetched.payloads;
     } catch (err) {
       return result("warning", redact(errorText(err)));
     }

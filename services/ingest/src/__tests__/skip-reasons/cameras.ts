@@ -148,4 +148,7 @@ export const SAMPLES: SkipSamples = {
   },
 };
 
-export const EXEMPT: SkipExemptions = {};
+export const EXEMPT: SkipExemptions = {
+  "cameras/quebec-cameras":
+    "Invalid inventory members throw and reject the whole snapshot before publication; per-record skipping could withdraw last-good cameras. Covered by quebec-cameras unit and PostGIS regressions.",
+};

@@ -1,0 +1,155 @@
+[
+  {
+    "file": "ar-rss.xml",
+    "url": "https://ssl.smn.gob.ar/CAP/AR.php",
+    "retrievedAt": "2026-11-07T15:47:45.274479+00:00",
+    "sha256": "1027cf95651ea7ad6bfc4ffa5d4a7e6b97ffbf9ef37a82945ce6ec3a2ccb0038",
+    "headers": {
+      "Date": "Sat, 07 Nov 2026 15:47:45 GMT",
+      "Content-Type": "application/rss+xml; charset=UTF-8",
+      "Transfer-Encoding": "chunked",
+      "Connection": "close",
+      "Server": "cloudflare",
+      "Cache-Control": "max-age=180, public",
+      "content-security-policy": "frame-ancestors 'self' https://smn.gob.ar https://*.smn.gob.ar https://smn.gov.ar https://*.smn.gov.ar;",
+      "pragma": "public",
+      "expires": "Sat, 07 Nov 2026 15:48:45 GMT",
+      "vary": "Accept-Encoding",
+      "Speculation-Rules": "\"/cdn-cgi/speculation\"",
+      "cf-cache-status": "DYNAMIC",
+      "Control-Allow-Origin": "*",
+      "CF-RAY": "a56d7a6a9cb0c821-DUS",
+      "alt-svc": "h3=\":443\"; ma=86400"
+    }
+  },
+  {
+    "file": "acp-rss.xml",
+    "url": "https://ssl.smn.gob.ar/feeds/CAP/avisocortoplazo/rss_acpCAP.xml",
+    "retrievedAt": "2026-11-07T15:47:45.585163+00:00",
+    "sha256": "9ab7f5b08bf1039279376d62f0bbffbe1eb70335864867351cfe194830ca6d47",
+    "headers": {
+      "Date": "Sat, 07 Nov 2026 15:47:45 GMT",
+      "Content-Type": "text/xml",
+      "Transfer-Encoding": "chunked",
+      "Connection": "close",
+      "Server": "cloudflare",
+      "Cache-Control": "max-age=180, public",
+      "content-security-policy": "frame-ancestors 'self' https://smn.gob.ar https://*.smn.gob.ar https://smn.gov.ar https://*.smn.gov.ar;",
+      "last-modified": "Sat, 07 Nov 2026 15:45:01 GMT",
+      "Speculation-Rules": "\"/cdn-cgi/speculation\"",
+      "Control-Allow-Origin": "*",
+      "expires": "Sat, 07 Nov 2026 15:50:45 GMT",
+      "vary": "Accept-Encoding",
+      "etag": "W/\"105e95e-4ce-65fb19c931940\"",
+      "cf-cache-status": "DYNAMIC",
+      "CF-RAY": "a56d7a703a86f80d-DUS",
+      "alt-svc": "h3=\":443\"; ma=86400"
+    }
+  },
+  {
+    "file": "policy.pdf",
+    "url": "https://www.argentina.gob.ar/normativa/361173_disp25_pdf/archivo",
+    "error": "HTTP Error 403: Forbidden"
+  },
+  {
+    "file": "policy.html",
+    "url": "https://www.argentina.gob.ar/normativa/nacional/disposici%C3%B3n-25-2022-361173/texto",
+    "error": "HTTP Error 403: Forbidden"
+  },
+  {
+    "file": "cap-1.xml",
+    "url": "https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090330_Viento_Llanura_alertas_alertas_4.xml",
+    "retrievedAt": "2026-11-07T15:47:46.146278+00:00",
+    "sha256": "55ecf2de1b3abd7ae044de0e5b406dcea32b57f07d0a12be94465376b779dcba",
+    "headers": {
+      "Date": "Sat, 07 Nov 2026 15:47:46 GMT",
+      "Content-Type": "text/xml",
+      "Transfer-Encoding": "chunked",
+      "Connection": "close",
+      "Server": "cloudflare",
+      "Cache-Control": "max-age=180, public",
+      "content-security-policy": "frame-ancestors 'self' https://smn.gob.ar https://*.smn.gob.ar https://smn.gov.ar https://*.smn.gov.ar;",
+      "last-modified": "Sat, 07 Nov 2026 15:00:02 GMT",
+      "Speculation-Rules": "\"/cdn-cgi/speculation\"",
+      "Control-Allow-Origin": "*",
+      "expires": "Sat, 07 Nov 2026 15:50:46 GMT",
+      "vary": "Accept-Encoding",
+      "etag": "W/\"1716be-8da-65fb0fbb3a080\"",
+      "cf-cache-status": "DYNAMIC",
+      "CF-RAY": "a56d7a73ddd26a88-DUS",
+      "alt-svc": "h3=\":443\"; ma=86400"
+    }
+  },
+  {
+    "file": "cap-2.xml",
+    "url": "https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261107090329_Tormenta_Patagonia_alertas_alertas_8.xml",
+    "retrievedAt": "2026-11-07T15:47:46.440576+00:00",
+    "sha256": "1551adf7b1c3631b378dac1c89bee9daf616c5704b251fd81698f4f6f29185f7",
+    "headers": {
+      "Date": "Sat, 07 Nov 2026 15:47:46 GMT",
+      "Content-Type": "text/xml",
+      "Transfer-Encoding": "chunked",
+      "Connection": "close",
+      "Server": "cloudflare",
+      "Cache-Control": "max-age=180, public",
+      "content-security-policy": "frame-ancestors 'self' https://smn.gob.ar https://*.smn.gob.ar https://smn.gov.ar https://*.smn.gov.ar;",
+      "last-modified": "Sat, 07 Nov 2026 15:00:02 GMT",
+      "Speculation-Rules": "\"/cdn-cgi/speculation\"",
+      "Control-Allow-Origin": "*",
+      "expires": "Sat, 07 Nov 2026 15:50:46 GMT",
+      "vary": "Accept-Encoding",
+      "etag": "W/\"1716b8-ffc-65fb0fbb3a080\"",
+      "cf-cache-status": "DYNAMIC",
+      "CF-RAY": "a56d7a75bba1c7a7-DUS",
+      "alt-svc": "h3=\":443\"; ma=86400"
+    }
+  },
+  {
+    "file": "wind-original.xml",
+    "url": "https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261106205319_Viento_Llanura_alertas_alertas_23.xml",
+    "retrievedAt": "2026-11-07T16:01:06.325677+00:00",
+    "sha256": "f4c494978299f8098ab30dd46ec96c65d9c0609447ec39aa398c913fcc75e45a",
+    "headers": {
+      "Date": "Sat, 07 Nov 2026 16:01:06 GMT",
+      "Content-Type": "text/xml",
+      "Transfer-Encoding": "chunked",
+      "Connection": "close",
+      "Server": "cloudflare",
+      "Cache-Control": "max-age=180, public",
+      "content-security-policy": "frame-ancestors 'self' https://smn.gob.ar https://*.smn.gob.ar https://smn.gov.ar https://*.smn.gov.ar;",
+      "last-modified": "Sat, 07 Nov 2026 10:00:00 GMT",
+      "Speculation-Rules": "\"/cdn-cgi/speculation\"",
+      "Control-Allow-Origin": "*",
+      "expires": "Sat, 07 Nov 2026 16:04:06 GMT",
+      "vary": "Accept-Encoding",
+      "etag": "W/\"171692-b28-65faccab2e800\"",
+      "cf-cache-status": "DYNAMIC",
+      "CF-RAY": "a56d8dfccb8dc80e-DUS",
+      "alt-svc": "h3=\":443\"; ma=86400"
+    }
+  },
+  {
+    "file": "zonda-original.xml",
+    "url": "https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261106205317_Zonda_Cordillera_alertas_alertas_1.xml",
+    "retrievedAt": "2026-11-07T16:01:06.720759+00:00",
+    "sha256": "b06e8cb2c1c95a3e0a8a3fbb6b5f84b42a55c7f8136dd0ae43fd9db00df720ed",
+    "headers": {
+      "Date": "Sat, 07 Nov 2026 16:01:06 GMT",
+      "Content-Type": "text/xml",
+      "Transfer-Encoding": "chunked",
+      "Connection": "close",
+      "Server": "cloudflare",
+      "Cache-Control": "max-age=180, public",
+      "content-security-policy": "frame-ancestors 'self' https://smn.gob.ar https://*.smn.gob.ar https://smn.gov.ar https://*.smn.gov.ar;",
+      "last-modified": "Sat, 07 Nov 2026 10:00:00 GMT",
+      "Speculation-Rules": "\"/cdn-cgi/speculation\"",
+      "Control-Allow-Origin": "*",
+      "expires": "Sat, 07 Nov 2026 16:04:06 GMT",
+      "vary": "Accept-Encoding",
+      "etag": "W/\"17166f-98d-65faccab2e800\"",
+      "cf-cache-status": "DYNAMIC",
+      "CF-RAY": "a56d8dfedd07c7a7-DUS",
+      "alt-svc": "h3=\":443\"; ma=86400"
+    }
+  }
+]

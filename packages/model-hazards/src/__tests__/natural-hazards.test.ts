@@ -242,6 +242,7 @@ describe("natural hazards", () => {
     const formats = registry.vocabulary("source_format")!;
     for (const id of HAZARDS_SOURCE_FORMATS) expect(formats.contributedBy[id]).toBe("hazards");
     expect([...HAZARDS_SOURCE_FORMATS]).toEqual([
+      "nsw-rfs",
       "cap",
       "nws",
       "meteoalarm",

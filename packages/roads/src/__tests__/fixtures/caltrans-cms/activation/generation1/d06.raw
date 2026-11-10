@@ -1,0 +1,6259 @@
+{
+	"data":
+	[
+		{
+			"cms":
+			{
+				"index": "SV-001",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "1 - NB I-5 JNO GRPVNE TRK INSP (PM 12.2)",
+					"nearbyPlace":    "Lebec",
+					"longitude":      "-118.939197",
+					"latitude":       "34.96794",
+					"elevation":      "1289",
+					"direction":      "North",
+					"county":         "Kern",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "12.22",
+					"alignment":      "",
+					"milepost":       "217.32"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:30"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-002",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "2 - SB I-5 JSO RTE 99 (PM 15.8)",
+					"nearbyPlace":    "Arvin",
+					"longitude":      "-118.951298",
+					"latitude":       "35.004478",
+					"elevation":      "954",
+					"direction":      "South",
+					"county":         "Kern",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "14.82",
+					"alignment":      "",
+					"milepost":       "219.86"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "16:50:33"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-003",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "3 - NB I-5 S\/O RTE 223 (PM 29.9)",
+					"nearbyPlace":    "Bakersfield",
+					"longitude":      "-119.119907",
+					"latitude":       "35.170266",
+					"elevation":      "291",
+					"direction":      "North",
+					"county":         "Kern",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "29.87",
+					"alignment":      "",
+					"milepost":       "234.97"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:30"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-004",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "4 - SB I-5 N\/O RTE 43 (PM 43.9)",
+					"nearbyPlace":    "Buttonwillow",
+					"longitude":      "-119.287498",
+					"latitude":       "35.32017",
+					"elevation":      "328",
+					"direction":      "South",
+					"county":         "Kern",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "43.9",
+					"alignment":      "",
+					"milepost":       "249.01"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:29"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-005",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "5 - WB RTE 119 JEO I-5 (PM 21.0)",
+					"nearbyPlace":    "Bakersfield",
+					"longitude":      "-119.185075",
+					"latitude":       "35.267174",
+					"elevation":      "324",
+					"direction":      "West",
+					"county":         "Kern",
+					"route":          "SR-119",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "22.01",
+					"alignment":      "",
+					"milepost":       "20.52"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:30"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-006",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "6 - EB RTE 119 3 MI W\/O I-5 (PM 0.0)",
+					"nearbyPlace":    "Bakersfield",
+					"longitude":      "-119.289894",
+					"latitude":       "35.267447",
+					"elevation":      "308",
+					"direction":      "East",
+					"county":         "Kern",
+					"route":          "SR-119",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "16.06",
+					"alignment":      "",
+					"milepost":       "14.56"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:21"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-007",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "7 - SB RTE 43 N\/O I-5 (PM 3.7)",
+					"nearbyPlace":    "Bakersfield",
+					"longitude":      "-119.252527",
+					"latitude":       "35.318673",
+					"elevation":      "328",
+					"direction":      "South",
+					"county":         "Kern",
+					"route":          "SR-43",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "3.65",
+					"alignment":      "",
+					"milepost":       "3.53"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:30"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-008",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "8 - NB I-5 S\/O RTE 58 (PM 48.2)",
+					"nearbyPlace":    "Bakersfield",
+					"longitude":      "-119.350354",
+					"latitude":       "35.365471",
+					"elevation":      "305",
+					"direction":      "North",
+					"county":         "Kern",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "48.63",
+					"alignment":      "",
+					"milepost":       "253.75"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:29"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-009",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "9 - SB I5 AT BUTTONWILLOW RA (PM 53.9)",
+					"nearbyPlace":    "Buttonwillow",
+					"longitude":      "-119.419823",
+					"latitude":       "35.415025",
+					"elevation":      "308",
+					"direction":      "South",
+					"county":         "Kern",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "53.83",
+					"alignment":      "",
+					"milepost":       "258.94"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "16:50:35"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-010",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "10 - NB I-5 JSO LERDO HWY (PM 61.5)",
+					"nearbyPlace":    "Buttonwillow",
+					"longitude":      "-119.516712",
+					"latitude":       "35.486157",
+					"elevation":      "278",
+					"direction":      "North",
+					"county":         "Kern",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "61.18",
+					"alignment":      "",
+					"milepost":       "266.3"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:30"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-011",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "11 - I-5 AT MERCED AVE OC (PM 65.17)",
+					"nearbyPlace":    "Buttonwillow",
+					"longitude":      "-119.566",
+					"latitude":       "35.528246",
+					"elevation":      "291",
+					"direction":      "North",
+					"county":         "Kern",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "65.2",
+					"alignment":      "",
+					"milepost":       "270.32"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:30"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-012",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "12 - NB I-5 S\/O RTE 46 (PM 70.5)",
+					"nearbyPlace":    "Buttonwillow",
+					"longitude":      "-119.626771",
+					"latitude":       "35.586761",
+					"elevation":      "246",
+					"direction":      "North",
+					"county":         "Kern",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "70.5",
+					"alignment":      "",
+					"milepost":       "275.6"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:22:07"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-013",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "13 - SB I-5 AT LOST HILLS RD (PM 77.1)",
+					"nearbyPlace":    "Lost Hills",
+					"longitude":      "-119.690651",
+					"latitude":       "35.66606",
+					"elevation":      "255",
+					"direction":      "South",
+					"county":         "Kern",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "77.05",
+					"alignment":      "",
+					"milepost":       "282.2"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:31"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-014",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "14 - WB RTE 46 AT MAIN DRAIN (PM 34.6)",
+					"nearbyPlace":    "Wasco",
+					"longitude":      "-119.617632",
+					"latitude":       "35.616102",
+					"elevation":      "242",
+					"direction":      "West",
+					"county":         "Kern",
+					"route":          "SR-46",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "34.6",
+					"alignment":      "",
+					"milepost":       "87.46"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:22:00"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-015",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "15 - NB I-5 S\/O RTE 41 (PM 13.5)",
+					"nearbyPlace":    "Kettleman City",
+					"longitude":      "-119.92495",
+					"latitude":       "35.947469",
+					"elevation":      "269",
+					"direction":      "North",
+					"county":         "Kings",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "13.51",
+					"alignment":      "",
+					"milepost":       "305.65"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:21:50"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-016",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "16 - SB I-5 AT MILHAM AVE (PM 19.07)",
+					"nearbyPlace":    "Kettleman City",
+					"longitude":      "-119.989528",
+					"latitude":       "36.008835",
+					"elevation":      "472",
+					"direction":      "South",
+					"county":         "Kings",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "19.08",
+					"alignment":      "",
+					"milepost":       "311.22"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:30"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-017",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "17 - NB RTE 41 S\/O I-5 (PM 11.39)",
+					"nearbyPlace":    "Kettleman City",
+					"longitude":      "-120.020408",
+					"latitude":       "35.931441",
+					"elevation":      "652",
+					"direction":      "North",
+					"county":         "Kings",
+					"route":          "SR-41",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "11.36",
+					"alignment":      "",
+					"milepost":       "65.08"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:21:51"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-018",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "18 - SB RTE 41 N\/O I-5 (PM 17.49)",
+					"nearbyPlace":    "Kettleman City",
+					"longitude":      "-119.959581",
+					"latitude":       "36.00205",
+					"elevation":      "285",
+					"direction":      "South",
+					"county":         "Kings",
+					"route":          "SR-41",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "17.69",
+					"alignment":      "",
+					"milepost":       "71.43"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:21:41"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-019",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "19 - NB I-5 S\/O RTE 269 (PM 26.15)",
+					"nearbyPlace":    "Kettleman City",
+					"longitude":      "-120.075055",
+					"latitude":       "36.060802",
+					"elevation":      "570",
+					"direction":      "North",
+					"county":         "Kings",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "25.08",
+					"alignment":      "",
+					"milepost":       "317.23"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-08-21",
+						"messageTime": "11:40:08"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-020",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "20 - SB I-5 N\/O RTE 269 (PM 2.98)",
+					"nearbyPlace":    "Coalinga",
+					"longitude":      "-120.132359",
+					"latitude":       "36.108315",
+					"elevation":      "508",
+					"direction":      "South",
+					"county":         "Fresno",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "2.99",
+					"alignment":      "",
+					"milepost":       "321.85"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:21:45"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-021",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "21 - NB I-5 S\/O RTE 198 (PM 11.44)",
+					"nearbyPlace":    "Huron",
+					"longitude":      "-120.215552",
+					"latitude":       "36.209687",
+					"elevation":      "446",
+					"direction":      "North",
+					"county":         "Fresno",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "11.41",
+					"alignment":      "",
+					"milepost":       "330.26"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:30"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-022",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "22 - SB I-5 N\/O RTE 33 (PM 19.35)",
+					"nearbyPlace":    "Coalinga",
+					"longitude":      "-120.28389",
+					"latitude":       "36.310858",
+					"elevation":      "577",
+					"direction":      "South",
+					"county":         "Fresno",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "19.37",
+					"alignment":      "",
+					"milepost":       "338.24"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-09-01",
+						"messageTime": "00:02:05"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-023",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "23 - WB 198 AT EL DORADO (PM 28.93)",
+					"nearbyPlace":    "Coalinga",
+					"longitude":      "-120.205274",
+					"latitude":       "36.254965",
+					"elevation":      "396",
+					"direction":      "West",
+					"county":         "Fresno",
+					"route":          "SR-198",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "28.98",
+					"alignment":      "",
+					"milepost":       "55.05"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:21:33"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-024",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "24 - SB RTE 145 N\/O I-5 (PM 1.69)",
+					"nearbyPlace":    "Coalinga",
+					"longitude":      "-120.248556",
+					"latitude":       "36.311862",
+					"elevation":      "377",
+					"direction":      "South",
+					"county":         "Fresno",
+					"route":          "SR-145",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "1.67",
+					"alignment":      "",
+					"milepost":       "1.67"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:21:29"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-025",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "25 - NB I-5 S\/O RTE 33 (PM 28.06)",
+					"nearbyPlace":    "Cantua Creek",
+					"longitude":      "-120.373905",
+					"latitude":       "36.413521",
+					"elevation":      "498",
+					"direction":      "North",
+					"county":         "Fresno",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "28.05",
+					"alignment":      "",
+					"milepost":       "346.91"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-04",
+						"messageTime": "12:40:51"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-026",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "26 - SB I-5 N\/O RTE 33 (PM 30.61)",
+					"nearbyPlace":    "Cantua Creek",
+					"longitude":      "-120.401773",
+					"latitude":       "36.443785",
+					"elevation":      "482",
+					"direction":      "South",
+					"county":         "Fresno",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "30.66",
+					"alignment":      "",
+					"milepost":       "349.53"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:30"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-027",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "27 - NB I-5 S\/O PANOCHE RD (PM 47.24)",
+					"nearbyPlace":    "Firebaugh",
+					"longitude":      "-120.604261",
+					"latitude":       "36.619045",
+					"elevation":      "580",
+					"direction":      "North",
+					"county":         "Fresno",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "47.23",
+					"alignment":      "",
+					"milepost":       "366.14"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-30",
+						"messageTime": "20:00:18"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-028",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "28 - SB I-5 N\/O PANOCHE RD (PM 52.09)",
+					"nearbyPlace":    "Firebaugh",
+					"longitude":      "-120.652555",
+					"latitude":       "36.677902",
+					"elevation":      "528",
+					"direction":      "South",
+					"county":         "Fresno",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "52.12",
+					"alignment":      "",
+					"milepost":       "370.99"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:30"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-029",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "29 - NB I-5 S\/O SHIELDS AVE (PM 58.73)",
+					"nearbyPlace":    "Firebaugh",
+					"longitude":      "-120.711614",
+					"latitude":       "36.760274",
+					"elevation":      "570",
+					"direction":      "North",
+					"county":         "Fresno",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "58.67",
+					"alignment":      "",
+					"milepost":       "377.54"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "16:50:33"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-030",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "30 - SB I-5 N\/O SHIELDS AVE (PM 62.61)",
+					"nearbyPlace":    "Firebaugh",
+					"longitude":      "-120.746468",
+					"latitude":       "36.810073",
+					"elevation":      "393",
+					"direction":      "South",
+					"county":         "Fresno",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "62.62",
+					"alignment":      "",
+					"milepost":       "381.48"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-04",
+						"messageTime": "12:40:58"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-031",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "31 - NB RTE 99 S\/O Traver",
+					"nearbyPlace":    "Kingsburg",
+					"longitude":      "-119.481811",
+					"latitude":       "36.443182",
+					"elevation":      "291",
+					"direction":      "North",
+					"county":         "Tulare",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "47.89",
+					"alignment":      "",
+					"milepost":       "106.31"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:30"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-032",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "32 - SB - RTE 99  N\/O RD 12 -- 18th Ave",
+					"nearbyPlace":    "Kingsburg",
+					"longitude":      "-119.552374",
+					"latitude":       "36.509988",
+					"elevation":      "305",
+					"direction":      "South",
+					"county":         "Fresno",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "0.21",
+					"alignment":      "",
+					"milepost":       "112.56"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:30"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-033",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "33 - SB - RTE 99",
+					"nearbyPlace":    "Kingsburg",
+					"longitude":      "-119.538853",
+					"latitude":       "36.50032",
+					"elevation":      "305",
+					"direction":      "South",
+					"county":         "Tulare",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "53.15",
+					"alignment":      "",
+					"milepost":       "111.56"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:21:28"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-034",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "34 - SB - RTE 99 S\/O Draper St",
+					"nearbyPlace":    "Kingsburg",
+					"longitude":      "-119.503178",
+					"latitude":       "36.474751",
+					"elevation":      "298",
+					"direction":      "South",
+					"county":         "Tulare",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "50.39",
+					"alignment":      "",
+					"milepost":       "108.81"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:30"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-035",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "35 - NB RTE 99 S\/O RTE 119 (PM 15.9)",
+					"nearbyPlace":    "Bakersfield",
+					"longitude":      "-119.016822",
+					"latitude":       "35.244832",
+					"elevation":      "341",
+					"direction":      "North",
+					"county":         "Kern",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "15.94",
+					"alignment":      "",
+					"milepost":       "16.76"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-28",
+						"messageTime": "15:45:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-036",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "36 - SB RTE 99 S\/O Pacheco Rd",
+					"nearbyPlace":    "Bakersfield",
+					"longitude":      "-119.034009",
+					"latitude":       "35.308312",
+					"elevation":      "377",
+					"direction":      "South",
+					"county":         "Kern",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "20.43",
+					"alignment":      "",
+					"milepost":       "21.25"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "16:50:32"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-037",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "37 - RTE 119 W\/O RTE 99 (PM 0.0)",
+					"nearbyPlace":    "Bakersfield",
+					"longitude":      "-119.047114",
+					"latitude":       "35.266879",
+					"elevation":      "351",
+					"direction":      "East",
+					"county":         "Kern",
+					"route":          "SR-119",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "29.94",
+					"alignment":      "",
+					"milepost":       "28.38"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-08-21",
+						"messageTime": "11:40:07"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-038",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "38 - NB RTE 99 S\/O RTE 58 (PM 20.4)",
+					"nearbyPlace":    "Bakersfield",
+					"longitude":      "-119.033388",
+					"latitude":       "35.308",
+					"elevation":      "380",
+					"direction":      "North",
+					"county":         "Kern",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "20.39",
+					"alignment":      "",
+					"milepost":       "21.22"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-08-18",
+						"messageTime": "14:46:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-039",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "39 - WB 58 JWO COTTONWOOD (PM 55.1)",
+					"nearbyPlace":    "Bakersfield",
+					"longitude":      "-118.989184",
+					"latitude":       "35.352637",
+					"elevation":      "393",
+					"direction":      "West",
+					"county":         "Kern",
+					"route":          "SR-58",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "55.19",
+					"alignment":      "",
+					"milepost":       "112.02"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "16:50:35"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-040",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "40 - EB RTE 58 AT LANDCO RD (PM 51.0)",
+					"nearbyPlace":    "Bakersfield",
+					"longitude":      "-119.058194",
+					"latitude":       "35.383142",
+					"elevation":      "406",
+					"direction":      "East",
+					"county":         "Kern",
+					"route":          "SR-58",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "51.03",
+					"alignment":      "",
+					"milepost":       "108.19"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2025-11-03",
+						"messageTime": "08:57:19"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-041",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "41 - NB RTE 99 S\/O RTE 65 (PM 29.2)",
+					"nearbyPlace":    "Bakersfield",
+					"longitude":      "-119.0677",
+					"latitude":       "35.427506",
+					"elevation":      "449",
+					"direction":      "North",
+					"county":         "Kern",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "29.19",
+					"alignment":      "",
+					"milepost":       "29.99"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:30"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-042",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "42 - SB RTE N\/O 99 RTE 65 (PM 29.5)",
+					"nearbyPlace":    "Bakersfield",
+					"longitude":      "-119.073243",
+					"latitude":       "35.431503",
+					"elevation":      "472",
+					"direction":      "South",
+					"county":         "Kern",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "29.61",
+					"alignment":      "",
+					"milepost":       "30.42"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:20"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-043",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "43 - NB RTE 99 S\/O RTE 46 (PM 42.6)",
+					"nearbyPlace":    "Mc Farland",
+					"longitude":      "-119.202982",
+					"latitude":       "35.580084",
+					"elevation":      "456",
+					"direction":      "North",
+					"county":         "Kern",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "42.68",
+					"alignment":      "",
+					"milepost":       "43.52"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:30"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-044",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "44 - SB RTE 99 N\/O RTE 46 (PM 45.8)",
+					"nearbyPlace":    "Mc Farland",
+					"longitude":      "-119.21477",
+					"latitude":       "35.624014",
+					"elevation":      "410",
+					"direction":      "South",
+					"county":         "Kern",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "45.85",
+					"alignment":      "",
+					"milepost":       "46.4"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:30"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-045",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "45 - NB RTE 99 AT AVE 48 (PM 5.59)",
+					"nearbyPlace":    "Earlimart",
+					"longitude":      "-119.270189",
+					"latitude":       "35.868241",
+					"elevation":      "298",
+					"direction":      "North",
+					"county":         "Tulare",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "5.51",
+					"alignment":      "",
+					"milepost":       "63.96"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:29"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-046",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "46 - SB RTE 99 AT AVE 72 (PM 9.11)",
+					"nearbyPlace":    "Earlimart",
+					"longitude":      "-119.282383",
+					"latitude":       "35.920212",
+					"elevation":      "269",
+					"direction":      "South",
+					"county":         "Tulare",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "9.16",
+					"alignment":      "",
+					"milepost":       "67.62"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:30"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-047",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "47 - WB RTE 198 E\/O RTE 43",
+					"nearbyPlace":    "Hanford",
+					"longitude":      "-119.586611",
+					"latitude":       "36.327988",
+					"elevation":      "259",
+					"direction":      "West",
+					"county":         "Kings",
+					"route":          "SR-198",
+					"routeSuffix":    "",
+					"postmilePrefix": "T",
+					"postmile":       "21.81",
+					"alignment":      "",
+					"milepost":       "90.62"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-24",
+						"messageTime": "12:24:06"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-048",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "48 - SB 99 AT AVE 384",
+					"nearbyPlace":    "Kingsburg",
+					"longitude":      "-119.524413",
+					"latitude":       "36.493324",
+					"elevation":      "308",
+					"direction":      "South",
+					"county":         "Tulare",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "52.2",
+					"alignment":      "",
+					"milepost":       "110.61"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-05-26",
+						"messageTime": "10:05:08"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-049",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "49 - NB RTE 99 S\/O CALDWELL",
+					"nearbyPlace":    "Visalia",
+					"longitude":      "-119.383608",
+					"latitude":       "36.296752",
+					"elevation":      "298",
+					"direction":      "North",
+					"county":         "Tulare",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "36.3",
+					"alignment":      "",
+					"milepost":       "94.74"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-07-11",
+						"messageTime": "00:53:25"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-050",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "50 - SB RTE 99 AT AVE 320 (PM 42.27)",
+					"nearbyPlace":    "Visalia",
+					"longitude":      "-119.434704",
+					"latitude":       "36.370901",
+					"elevation":      "291",
+					"direction":      "South",
+					"county":         "Tulare",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "42.26",
+					"alignment":      "",
+					"milepost":       "100.68"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:32"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-051",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "51 - EB RTE198 W\/O RTE 99",
+					"nearbyPlace":    "Visalia",
+					"longitude":      "-119.445601",
+					"latitude":       "36.327307",
+					"elevation":      "285",
+					"direction":      "West",
+					"county":         "Tulare",
+					"route":          "SR-198",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "1.66",
+					"alignment":      "",
+					"milepost":       "98.5"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "08:21:09"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-052",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "52 - WB RTE 198 JEO PLAZA RD (PM 5.3)",
+					"nearbyPlace":    "Visalia",
+					"longitude":      "-119.377393",
+					"latitude":       "36.327301",
+					"elevation":      "305",
+					"direction":      "West",
+					"county":         "Tulare",
+					"route":          "SR-198",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "5.22",
+					"alignment":      "",
+					"milepost":       "102.32"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:31"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-053",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "53 - NB RTE 99 AT AVE 384 (PM 52.24)",
+					"nearbyPlace":    "Kingsburg",
+					"longitude":      "-119.524795",
+					"latitude":       "36.494035",
+					"elevation":      "308",
+					"direction":      "North",
+					"county":         "Tulare",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "52.25",
+					"alignment":      "",
+					"milepost":       "110.66"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:25:07"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-054",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "54 - SB RTE 99 AT SOUTH AVE (PM 10.5)",
+					"nearbyPlace":    "Fowler",
+					"longitude":      "-119.677338",
+					"latitude":       "36.619784",
+					"elevation":      "318",
+					"direction":      "South",
+					"county":         "Fresno",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "10.5",
+					"alignment":      "",
+					"milepost":       "122.84"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "16:55:06"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-055",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "55 - NB RTE 99 AT ADAMS AVE (PM 11.8)",
+					"nearbyPlace":    "Fowler",
+					"longitude":      "-119.692523",
+					"latitude":       "36.634309",
+					"elevation":      "305",
+					"direction":      "North",
+					"county":         "Fresno",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "11.79",
+					"alignment":      "",
+					"milepost":       "124.16"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:30"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-056",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "56 - NB SR 99 AT CEDAR AVE(PM 16.92)",
+					"nearbyPlace":    "Fresno",
+					"longitude":      "-119.754516",
+					"latitude":       "36.689107",
+					"elevation":      "334",
+					"direction":      "North",
+					"county":         "Fresno",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "16.92",
+					"alignment":      "",
+					"milepost":       "129.26"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "16:54:52"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-057",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "57 - SB SR 99 at CEDAR AVE (PM 16.92)",
+					"nearbyPlace":    "Fresno",
+					"longitude":      "-119.755078",
+					"latitude":       "36.688982",
+					"elevation":      "311",
+					"direction":      "South",
+					"county":         "Fresno",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "16.94",
+					"alignment":      "",
+					"milepost":       "129.29"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:31"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-058",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "58 - SB 99 AT SHIELDS AVE (PM 25.00)",
+					"nearbyPlace":    "Fresno",
+					"longitude":      "-119.845517",
+					"latitude":       "36.778466",
+					"elevation":      "311",
+					"direction":      "South",
+					"county":         "Fresno",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "25.01",
+					"alignment":      "",
+					"milepost":       "137.35"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:29"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-059",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "59 - NB 99 AT BARSTOW AVE (PM 28.81)",
+					"nearbyPlace":    "Fresno",
+					"longitude":      "-119.895698",
+					"latitude":       "36.815223",
+					"elevation":      "318",
+					"direction":      "North",
+					"county":         "Fresno",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "28.8",
+					"alignment":      "",
+					"milepost":       "141.44"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:29"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-060",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "60 - SB RTE 99 AT SJ RIVER (PM 0.5)",
+					"nearbyPlace":    "Madera",
+					"longitude":      "-119.93905",
+					"latitude":       "36.846186",
+					"elevation":      "305",
+					"direction":      "South",
+					"county":         "Madera",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "0.47",
+					"alignment":      "",
+					"milepost":       "144.26"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:29"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-061",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "61 - NB RTE 99 S\/O AVE 8 (PM 2.19)",
+					"nearbyPlace":    "Madera",
+					"longitude":      "-119.960385",
+					"latitude":       "36.865657",
+					"elevation":      "285",
+					"direction":      "North",
+					"county":         "Madera",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "2.21",
+					"alignment":      "",
+					"milepost":       "146.17"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:30"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-062",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "62 - SB RTE 99 N\/O AVE 8 (PM 2.2)",
+					"nearbyPlace":    "Madera",
+					"longitude":      "-119.961324",
+					"latitude":       "36.866004",
+					"elevation":      "295",
+					"direction":      "South",
+					"county":         "Madera",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "2.26",
+					"alignment":      "",
+					"milepost":       "147.06"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:30"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-063",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "63 - SB RTE 99 AT AVE 17 (PM 15.61)",
+					"nearbyPlace":    "Madera",
+					"longitude":      "-120.119395",
+					"latitude":       "37.01121",
+					"elevation":      "255",
+					"direction":      "South",
+					"county":         "Madera",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "15.6",
+					"alignment":      "",
+					"milepost":       "159.56"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:30"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-064",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "64 - NB RTE 99 S\/O RTE 152 (PM 21.15)",
+					"nearbyPlace":    "Chowchilla",
+					"longitude":      "-120.192176",
+					"latitude":       "37.070664",
+					"elevation":      "265",
+					"direction":      "North",
+					"county":         "Madera",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "21.36",
+					"alignment":      "",
+					"milepost":       "165.36"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "16:50:31"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-065",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "65 - SB RTE 99 AT LE GRAND (PM 28.17)",
+					"nearbyPlace":    "Chowchilla",
+					"longitude":      "-120.27453",
+					"latitude":       "37.141565",
+					"elevation":      "239",
+					"direction":      "South",
+					"county":         "Madera",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "28.2",
+					"alignment":      "",
+					"milepost":       "172.17"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:30"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-066",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "66 - EB RTE 152 JWO RTE 233 (PM 10.0)",
+					"nearbyPlace":    "Chowchilla",
+					"longitude":      "-120.312463",
+					"latitude":       "37.083373",
+					"elevation":      "219",
+					"direction":      "East",
+					"county":         "Madera",
+					"route":          "SR-152",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "9.96",
+					"alignment":      "",
+					"milepost":       "98.77"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:30"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-067",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "67- NB RTE 145 at Ave 11 1\/2",
+					"nearbyPlace":    "Madera",
+					"longitude":      "-120.055934",
+					"latitude":       "36.91228",
+					"elevation":      "259",
+					"direction":      "South",
+					"county":         "Madera",
+					"route":          "SR-145",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "6.3",
+					"alignment":      "",
+					"milepost":       "47.45"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:30"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-068",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "68-  SR46 WB AT JEO SR33 (PM 20.70)",
+					"nearbyPlace":    "Lost Hills",
+					"longitude":      "-119.863393",
+					"latitude":       "35.615282",
+					"elevation":      "633",
+					"direction":      "West",
+					"county":         "Kern",
+					"route":          "SR-46",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "20.78",
+					"alignment":      "",
+					"milepost":       "73.69"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:22:02"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-069",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "69 - EB RTE 46 N\/O KECKS RD ",
+					"nearbyPlace":    "Lost Hills",
+					"longitude":      "-120.082827",
+					"latitude":       "35.671117",
+					"elevation":      "853",
+					"direction":      "East",
+					"county":         "Kern",
+					"route":          "SR-46",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "7.28",
+					"alignment":      "",
+					"milepost":       "60.19"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:31"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-070",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "70 - EB RTE 41 AT CHOLAME (PM 54.4)",
+					"nearbyPlace":    "Shandon",
+					"longitude":      "-120.294378",
+					"latitude":       "35.72746",
+					"elevation":      "1151",
+					"direction":      "East",
+					"county":         "San Luis Obispo",
+					"route":          "SR-46",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "54.3",
+					"alignment":      "",
+					"milepost":       "46.36"
+				},
+				"inService": "false",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Not Reported",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "Not Reported",
+						"phase1Line2": "Not Reported",
+						"phase1Line3": "Not Reported"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "Not Reported",
+						"phase2Line2": "Not Reported",
+						"phase2Line3": "Not Reported"
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-071",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "71 - NB RTE 41 AT ANNADALE (PM 21.5)",
+					"nearbyPlace":    "Fresno",
+					"longitude":      "-119.785629",
+					"latitude":       "36.699321",
+					"elevation":      "278",
+					"direction":      "North",
+					"county":         "Fresno",
+					"route":          "SR-41",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "20.59",
+					"alignment":      "",
+					"milepost":       "122.32"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-15",
+						"messageTime": "23:26:38"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-072",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "72 - NB RTE 41 AT O ST (PM 22.95)",
+					"nearbyPlace":    "Fresno",
+					"longitude":      "-119.778997",
+					"latitude":       "36.731569",
+					"elevation":      "318",
+					"direction":      "North",
+					"county":         "Fresno",
+					"route":          "SR-41",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "22.94",
+					"alignment":      "",
+					"milepost":       "124.71"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:30"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-073",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "73 - SB 41 AT PRINCETON AVE (PM 26.2)",
+					"nearbyPlace":    "Fresno",
+					"longitude":      "-119.785285",
+					"latitude":       "36.775615",
+					"elevation":      "324",
+					"direction":      "South",
+					"county":         "Fresno",
+					"route":          "SR-41",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "26.2",
+					"alignment":      "",
+					"milepost":       "127.94"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:29"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-074",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "74 - NB RTE 41 S\/O SIERRA AVE (PM 29.87)",
+					"nearbyPlace":    "Fresno",
+					"longitude":      "-119.784783",
+					"latitude":       "36.828813",
+					"elevation":      "331",
+					"direction":      "North",
+					"county":         "Fresno",
+					"route":          "SR-41",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "29.87",
+					"alignment":      "",
+					"milepost":       "131.61"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "16:50:30"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-075",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "75 - SB RTE 41 AT AUDUBON (PM 32.16)",
+					"nearbyPlace":    "Fresno",
+					"longitude":      "-119.791942",
+					"latitude":       "36.863961",
+					"elevation":      "360",
+					"direction":      "South",
+					"county":         "Fresno",
+					"route":          "SR-41",
+					"routeSuffix":    "",
+					"postmilePrefix": "T",
+					"postmile":       "32.38",
+					"alignment":      "",
+					"milepost":       "134.13"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:29"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-076",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "76 - SB RTE 41 N\/O AVE 12 (PM 4.23)",
+					"nearbyPlace":    "Madera",
+					"longitude":      "-119.794077",
+					"latitude":       "36.93801",
+					"elevation":      "387",
+					"direction":      "South",
+					"county":         "Madera",
+					"route":          "SR-41",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "4.24",
+					"alignment":      "",
+					"milepost":       "139.24"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:30"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-077",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "77 - NB RTE 41 S\/O RTE 145 (PM 8.54)",
+					"nearbyPlace":    "Friant",
+					"longitude":      "-119.793838",
+					"latitude":       "37.001271",
+					"elevation":      "442",
+					"direction":      "North",
+					"county":         "Madera",
+					"route":          "SR-41",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "8.61",
+					"alignment":      "",
+					"milepost":       "143.61"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-06-29",
+						"messageTime": "09:30:09"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-078",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "78 - NB 41 at Oakhurst (PM 32.0)",
+					"nearbyPlace":    "Oakhurst",
+					"longitude":      "-119.661497",
+					"latitude":       "37.324108",
+					"elevation":      "2417",
+					"direction":      "North",
+					"county":         "Madera",
+					"route":          "SR-41",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "34.83",
+					"alignment":      "",
+					"milepost":       "168.19"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-09-08",
+						"messageTime": "08:06:04"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-079",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "79 - SB 99 NORTH OF AVE 15 1\/2",
+					"nearbyPlace":    "Madera",
+					"longitude":      "-120.081767",
+					"latitude":       "36.978843",
+					"elevation":      "272",
+					"direction":      "South",
+					"county":         "Madera",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "12.54",
+					"alignment":      "",
+					"milepost":       "156.51"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:30"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-080",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "80 - SB RTE 168 AT HARVARD (PM 1.29)",
+					"nearbyPlace":    "Fresno",
+					"longitude":      "-119.749598",
+					"latitude":       "36.7741",
+					"elevation":      "331",
+					"direction":      "South",
+					"county":         "Fresno",
+					"route":          "SR-168",
+					"routeSuffix":    "S",
+					"postmilePrefix": "R",
+					"postmile":       "1.64",
+					"alignment":      "",
+					"milepost":       "1.61"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "16:50:30"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-081",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "81 - WB RTE 168 AT GETTYSBURG (PM 3.6)",
+					"nearbyPlace":    "Fresno",
+					"longitude":      "-119.739054",
+					"latitude":       "36.802772",
+					"elevation":      "351",
+					"direction":      "West",
+					"county":         "Fresno",
+					"route":          "SR-168",
+					"routeSuffix":    "S",
+					"postmilePrefix": "R",
+					"postmile":       "3.79",
+					"alignment":      "",
+					"milepost":       "3.76"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:29"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-082",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "82 - WB 168 AT SIERRA AVE (PM 6.0)",
+					"nearbyPlace":    "Clovis",
+					"longitude":      "-119.707783",
+					"latitude":       "36.831335",
+					"elevation":      "377",
+					"direction":      "West",
+					"county":         "Fresno",
+					"route":          "SR-168",
+					"routeSuffix":    "S",
+					"postmilePrefix": "R",
+					"postmile":       "6.4",
+					"alignment":      "",
+					"milepost":       "6.39"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:29"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-083",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "83 - NB RTE 168 AT ACADEMY (PM 15.47)",
+					"nearbyPlace":    "Clovis",
+					"longitude":      "-119.549284",
+					"latitude":       "36.880144",
+					"elevation":      "528",
+					"direction":      "North",
+					"county":         "Fresno",
+					"route":          "SR-168",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "16.07",
+					"alignment":      "",
+					"milepost":       "7.33"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "16:50:33"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-084",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "84 - E\/O Academy",
+					"nearbyPlace":    "Sanger",
+					"longitude":      "-119.538499",
+					"latitude":       "36.735775",
+					"elevation":      "387",
+					"direction":      "East",
+					"county":         "Fresno",
+					"route":          "SR-180",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "72.59",
+					"alignment":      "",
+					"milepost":       "49.08"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "16:50:46"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-085",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "85 - EB RTE 180 1.5 MI JWO SR 99 (PM 54.60)",
+					"nearbyPlace":    "Fresno",
+					"longitude":      "-119.835844",
+					"latitude":       "36.737825",
+					"elevation":      "285",
+					"direction":      "East",
+					"county":         "Fresno",
+					"route":          "SR-180",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "55.07",
+					"alignment":      "",
+					"milepost":       "31.57"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:29"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-086",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "86 - EB RTE 180 AT FULTON (PM 57.3)",
+					"nearbyPlace":    "Fresno",
+					"longitude":      "-119.799568",
+					"latitude":       "36.748735",
+					"elevation":      "314",
+					"direction":      "East",
+					"county":         "Fresno",
+					"route":          "SR-180",
+					"routeSuffix":    "S",
+					"postmilePrefix": "R",
+					"postmile":       "57.3",
+					"alignment":      "",
+					"milepost":       "1.97"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-19",
+						"messageTime": "09:43:27"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-087",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "87 - WB RTE 180 AT DIANA (PM 58.2)",
+					"nearbyPlace":    "Fresno",
+					"longitude":      "-119.78691",
+					"latitude":       "36.752765",
+					"elevation":      "314",
+					"direction":      "West",
+					"county":         "Fresno",
+					"route":          "SR-180",
+					"routeSuffix":    "S",
+					"postmilePrefix": "R",
+					"postmile":       "58.05",
+					"alignment":      "",
+					"milepost":       "2.74"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-03",
+						"messageTime": "11:44:57"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-088",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "88 - SB RTE 41 N of RTE 198\/ LACY BLVD",
+					"nearbyPlace":    "Lemoore",
+					"longitude":      "-119.80804",
+					"latitude":       "36.327265",
+					"elevation":      "209",
+					"direction":      "South",
+					"county":         "Kings",
+					"route":          "SR-41",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "43.11",
+					"alignment":      "",
+					"milepost":       "94.95"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:21:25"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-089",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "89 - WB RTE 180 Cedar Ave",
+					"nearbyPlace":    "Fresno",
+					"longitude":      "-119.750162",
+					"latitude":       "36.75528",
+					"elevation":      "311",
+					"direction":      "West",
+					"county":         "Fresno",
+					"route":          "SR-180",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "60.1",
+					"alignment":      "",
+					"milepost":       "36.6"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "16:50:30"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-090",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "90 - EB RTE 180 AT COVE RD (PM 83.81)",
+					"nearbyPlace":    "Reedley",
+					"longitude":      "-119.347697",
+					"latitude":       "36.715222",
+					"elevation":      "528",
+					"direction":      "East",
+					"county":         "Fresno",
+					"route":          "SR-180",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "83.88",
+					"alignment":      "",
+					"milepost":       "59.41"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "16:50:31"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-091",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "91 - WB RTE 180 JWO CLOVIS (PM 62.67)",
+					"nearbyPlace":    "Fresno",
+					"longitude":      "-119.707844",
+					"latitude":       "36.753252",
+					"elevation":      "314",
+					"direction":      "West",
+					"county":         "Fresno",
+					"route":          "SR-180",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "0",
+					"alignment":      "",
+					"milepost":       "7.53"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:29"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-092",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "92 - EB RTE58 JWO TOWERLINE RD (PM 64.92)",
+					"nearbyPlace":    "Arvin",
+					"longitude":      "-118.820389",
+					"latitude":       "35.332591",
+					"elevation":      "748",
+					"direction":      "East",
+					"county":         "Kern",
+					"route":          "SR-58",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "64.93",
+					"alignment":      "",
+					"milepost":       "121.75"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-02",
+						"messageTime": "20:20:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-093",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "93 - WB RTE 178 AT HALEY (PM 4.1)",
+					"nearbyPlace":    "Bakersfield",
+					"longitude":      "-118.974978",
+					"latitude":       "35.39273",
+					"elevation":      "567",
+					"direction":      "West",
+					"county":         "Kern",
+					"route":          "SR-178",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "4.18",
+					"alignment":      "",
+					"milepost":       "4.21"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-14",
+						"messageTime": "12:58:15"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-094",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "94 - EB RTE 178 E\/O RTE 184 (PM 9.8)",
+					"nearbyPlace":    "Bakersfield",
+					"longitude":      "-118.877875",
+					"latitude":       "35.399038",
+					"elevation":      "761",
+					"direction":      "East",
+					"county":         "Kern",
+					"route":          "SR-178",
+					"routeSuffix":    "",
+					"postmilePrefix": "T",
+					"postmile":       "9.75",
+					"alignment":      "",
+					"milepost":       "9.75"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "16:50:34"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-095",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "95 - NB RTE 99 S\/O AVE 304",
+					"nearbyPlace":    "Visalia",
+					"longitude":      "-119.417582",
+					"latitude":       "36.339287",
+					"elevation":      "298",
+					"direction":      "North",
+					"county":         "Tulare",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "40",
+					"alignment":      "",
+					"milepost":       "98.42"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:30"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-096",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "96 - WB RTE 178 AT BODFISH (PM 43.7)",
+					"nearbyPlace":    "Lake Isabella",
+					"longitude":      "-118.489398",
+					"latitude":       "35.612",
+					"elevation":      "2440",
+					"direction":      "West",
+					"county":         "Kern",
+					"route":          "SR-178",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "41.65",
+					"alignment":      "",
+					"milepost":       "41.85"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-05",
+						"messageTime": "19:10:56"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-097",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "97 - WB RTE 180 W\/O DE WOLF AVE",
+					"nearbyPlace":    "Fresno",
+					"longitude":      "-119.651066",
+					"latitude":       "36.737247",
+					"elevation":      "347",
+					"direction":      "West",
+					"county":         "Fresno",
+					"route":          "SR-180",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "66.28",
+					"alignment":      "",
+					"milepost":       "41.94"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:30"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-098",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "98 - EB RTE 198 \/ 12th Ave",
+					"nearbyPlace":    "Hanford",
+					"longitude":      "-119.674348",
+					"latitude":       "36.318254",
+					"elevation":      "239",
+					"direction":      "East",
+					"county":         "Kings",
+					"route":          "SR-198",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "16.83",
+					"alignment":      "",
+					"milepost":       "85.64"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-08-21",
+						"messageTime": "11:40:09"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-099",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "99 - NB SR 99 JSO ASHLAN (PM 25.7)",
+					"nearbyPlace":    "Fresno",
+					"longitude":      "-119.853718",
+					"latitude":       "36.786272",
+					"elevation":      "305",
+					"direction":      "North",
+					"county":         "Fresno",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "25.7",
+					"alignment":      "",
+					"milepost":       "138.04"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-07-11",
+						"messageTime": "00:56:02"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-100",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "100-NB RTE 99 JSO RTE 190",
+					"nearbyPlace":    "Tipton",
+					"longitude":      "-119.310152",
+					"latitude":       "36.042136",
+					"elevation":      "262",
+					"direction":      "North",
+					"county":         "Tulare",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "17.79",
+					"alignment":      "",
+					"milepost":       "76.23"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:30"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-101",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "101-SB RTE 99 AT CARTMILL RD",
+					"nearbyPlace":    "Tulare",
+					"longitude":      "-119.351444",
+					"latitude":       "36.247784",
+					"elevation":      "301",
+					"direction":      "West",
+					"county":         "Tulare",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "32.46",
+					"alignment":      "",
+					"milepost":       "90.9"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:31"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-102",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "102-SB RTE 99 JNO MOUNTAIN VIEW (4.15)",
+					"nearbyPlace":    "Selma",
+					"longitude":      "-119.6022",
+					"latitude":       "36.551803",
+					"elevation":      "305",
+					"direction":      "West",
+					"county":         "Fresno",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "4.21",
+					"alignment":      "",
+					"milepost":       "116.56"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:21:51"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-103",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "103 - WB RTE 198 AT 19TH AVE E\/O RTE 41",
+					"nearbyPlace":    "Lemoore",
+					"longitude":      "-119.792581",
+					"latitude":       "36.289196",
+					"elevation":      "219",
+					"direction":      "West",
+					"county":         "Kings",
+					"route":          "SR-198",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "9.87",
+					"alignment":      "",
+					"milepost":       "78.69"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:30"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-104",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "104 - EB RTE 198 and Linwood St.",
+					"nearbyPlace":    "Visalia",
+					"longitude":      "-119.341183",
+					"latitude":       "36.327158",
+					"elevation":      "314",
+					"direction":      "East",
+					"county":         "Tulare",
+					"route":          "SR-198",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "7.24",
+					"alignment":      "",
+					"milepost":       "104.34"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:30"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-105",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "105 - SB RTE 99 N of CALDWELL AVE",
+					"nearbyPlace":    "Visalia",
+					"longitude":      "-119.385182",
+					"latitude":       "36.298574",
+					"elevation":      "318",
+					"direction":      "South",
+					"county":         "Tulare",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "36.45",
+					"alignment":      "",
+					"milepost":       "94.89"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-07-11",
+						"messageTime": "00:55:52"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-106",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "106 - EB 58 JWO FAIRFAX RD",
+					"nearbyPlace":    "Bakersfield",
+					"longitude":      "-118.933864",
+					"latitude":       "35.352073",
+					"elevation":      "400",
+					"direction":      "East",
+					"county":         "Kern",
+					"route":          "SR-58",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "58.33",
+					"alignment":      "",
+					"milepost":       "110.52"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:31"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-107",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "107 - WB SR 190 E of SR 99",
+					"nearbyPlace":    "Tipton",
+					"longitude":      "-119.293746",
+					"latitude":       "36.051211",
+					"elevation":      "278",
+					"direction":      "West",
+					"county":         "Tulare",
+					"route":          "SR-190",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "0.97",
+					"alignment":      "",
+					"milepost":       "0.97"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:30"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-108",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "108 - SB SR 99",
+					"nearbyPlace":    "Madera",
+					"longitude":      "-120.145654",
+					"latitude":       "37.032702",
+					"elevation":      "252",
+					"direction":      "West",
+					"county":         "Madera",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "17.68",
+					"alignment":      "",
+					"milepost":       "161.67"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2025-10-29",
+						"messageTime": "14:44:17"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-110",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "110 - WB SR 180 E of Academy Ave",
+					"nearbyPlace":    "Sanger",
+					"longitude":      "-119.512232",
+					"latitude":       "36.735576",
+					"elevation":      "387",
+					"direction":      "West",
+					"county":         "Fresno",
+					"route":          "SR-180",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "74.04",
+					"alignment":      "",
+					"milepost":       "50.52"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:31"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-111",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "111 - NB Rte 65 N\/O Ave 136 (PM 17.28)",
+					"nearbyPlace":    "Porterville",
+					"longitude":      "-119.039472",
+					"latitude":       "36.038909",
+					"elevation":      "456",
+					"direction":      "North",
+					"county":         "Tulare",
+					"route":          "SR-65",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "17.28",
+					"alignment":      "",
+					"milepost":       "42.27"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:21:02"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-112",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "112 - NB SR 99 N of Mountain View Ave",
+					"nearbyPlace":    "Selma",
+					"longitude":      "-119.607884",
+					"latitude":       "36.557093",
+					"elevation":      "314",
+					"direction":      "North",
+					"county":         "Fresno",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "4.68",
+					"alignment":      "",
+					"milepost":       "117.03"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "16:53:40"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-113",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "113 - SB SR 99 S of Manning Ave",
+					"nearbyPlace":    "Selma",
+					"longitude":      "-119.644623",
+					"latitude":       "36.58995",
+					"elevation":      "311",
+					"direction":      "South",
+					"county":         "Fresno",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "7.75",
+					"alignment":      "",
+					"milepost":       "120.09"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:43"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-114",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "114 - SB SR 99 S of Mountain View Ave",
+					"nearbyPlace":    "Selma",
+					"longitude":      "-119.591131",
+					"latitude":       "36.54246",
+					"elevation":      "305",
+					"direction":      "South",
+					"county":         "Fresno",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "3.32",
+					"alignment":      "",
+					"milepost":       "115.67"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-09-26",
+						"messageTime": "09:21:04"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "BE",
+						"phase1Line2": "WORK ZONE",
+						"phase1Line3": "ALERT"
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-115",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "115 - NB SR 99 at Mountain View Ave",
+					"nearbyPlace":    "Kingsburg",
+					"longitude":      "-119.59124",
+					"latitude":       "36.543057",
+					"elevation":      "314",
+					"direction":      "North",
+					"county":         "Fresno",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "3.35",
+					"alignment":      "",
+					"milepost":       "115.7"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:29"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-116",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "116 - NB SR 99 N of Manning Ave",
+					"nearbyPlace":    "Fowler",
+					"longitude":      "-119.676988",
+					"latitude":       "36.620156",
+					"elevation":      "318",
+					"direction":      "North",
+					"county":         "Fresno",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "10.51",
+					"alignment":      "",
+					"milepost":       "122.85"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-30",
+						"messageTime": "11:30:07"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-118",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "118 - NB SR 99 Gateway Drive",
+					"nearbyPlace":    "Madera",
+					"longitude":      "-120.04723",
+					"latitude":       "36.94846",
+					"elevation":      "291",
+					"direction":      "North",
+					"county":         "Madera",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "9.661",
+					"alignment":      "R",
+					"milepost":       "153.621"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:30"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "SV-119",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "119 - SB SR 99 Truxtun Ave",
+					"nearbyPlace":    "Bakersfield",
+					"longitude":      "-119.044702",
+					"latitude":       "35.376224",
+					"elevation":      "406",
+					"direction":      "South",
+					"county":         "Kern",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "25.184",
+					"alignment":      "L",
+					"milepost":       "26.006"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:20:30"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "VCMS-186",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:23:05"
+				},
+				"location":
+				{
+					"district":       "6",
+					"locationName":   "186 - VIRTUAL SIGN : SR-168",
+					"nearbyPlace":    "Auberry",
+					"longitude":      "-119.472747",
+					"latitude":       "37.04495",
+					"elevation":      "1774",
+					"direction":      "East",
+					"county":         "Fresno",
+					"route":          "SR-168",
+					"routeSuffix":    "",
+					"postmilePrefix": "T",
+					"postmile":       "32.834",
+					"alignment":      "L",
+					"milepost":       "32.829"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2025-02-10",
+						"messageTime": "07:56:13"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		}
+	]
+}

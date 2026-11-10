@@ -533,6 +533,70 @@
         }
       ]
     },
+    "charging/dk": {
+      "$schema": "../schema/charging.schema.json",
+      "feeds": [
+        {
+          "operator": "geofa",
+          "product": "charging",
+          "name": "GeoFA public car charging inventory",
+          "format": "geofa",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://geofa.geodanmark.dk/ows/fkg/fkg?service=WFS&version=2.0.0&request=GetFeature&typeNames=fkg%3Afkg.t_5607_ladefacilitet&sortBy=objekt_id&outputFormat=application%2Fjson&srsName=EPSG%3A4326&propertyName=geometri,objekt_id,versions_id,systid_fra,systid_til,oprettet,statuskode,off_kode,ladefacilitet_type_kode,effekt_type_kode,tilgaengelighed_type_kode,internationalt_id,internationalt_id1,internationalt_id2,internationalt_id3,internationalt_id4,internationalt_id5,antal_ladepunkter,stiktype,anvendelsesgrad_kwh,driftstart_fra,planstatus_kode,gyldig_fra,gyldig_til,ejer_ladefacilitet,operatoer_ladefacilitet,vejnavn,husnr,postnr,postnr_by",
+              "geofa": {
+                "nonWithdrawing": true,
+                "pageSize": 2000
+              },
+              "cadenceSec": 86400
+            }
+          },
+          "freshnessWindowSec": 172800,
+          "requestLimits": {
+            "perMinute": 60,
+            "perDay": 100
+          },
+          "extrasAllow": [
+            "objekt_id",
+            "versions_id",
+            "geofaVersions",
+            "systid_fra",
+            "systid_til",
+            "oprettet",
+            "statuskode",
+            "off_kode",
+            "ladefacilitet_type_kode",
+            "effekt_type_kode",
+            "tilgaengelighed_type_kode",
+            "internationalt_id",
+            "internationalt_id1",
+            "internationalt_id2",
+            "internationalt_id3",
+            "internationalt_id4",
+            "internationalt_id5",
+            "antal_ladepunkter",
+            "stiktype",
+            "anvendelsesgrad_kwh",
+            "driftstart_fra",
+            "planstatus_kode",
+            "gyldig_fra",
+            "gyldig_til"
+          ],
+          "extrasFederate": false,
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "@geodanmark (normalized by OpenConditions)",
+          "terms": {
+            "url": "https://www.geodanmark.dk/home/vejledninger/vilkaar-for-data-anvendelse/",
+            "reviewedAt": "2026-11-07",
+            "note": "CC BY 4.0 covers GeoFA geographical subject data; linked credit required. Website/secretariat privacy policy is not an EVSE-data privacy guarantee. Linked media, contact, case data and external tariffs are excluded."
+          },
+          "privacyUrl": "https://www.geodanmark.dk/privatlivspolitik/",
+          "homepage": "https://www.geodanmark.dk/home/vejledninger/vilkaar-for-data-anvendelse/"
+        }
+      ]
+    },
     "charging/es": {
       "$schema": "../schema/charging.schema.json",
       "feeds": [
@@ -913,6 +977,41 @@
                 }
               ]
             }
+          }
+        }
+      ]
+    },
+    "charging/it": {
+      "$schema": "../schema/charging.schema.json",
+      "feeds": [
+        {
+          "operator": "agid",
+          "qualifier": "pun",
+          "product": "charging",
+          "name": "GSE/MASE PUN charging inventory via Cruscotto Italia (AgID)",
+          "format": "pun",
+          "tier": "aggregator",
+          "endpoints": {
+            "main": {
+              "url": "https://cruscotto-italia.dati.gov.it/data/manifest.json",
+              "cadenceSec": 86400
+            }
+          },
+          "freshnessWindowSec": 172800,
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "GSE/MASE — PUN; Cruscotto Italia (AgID), CC BY 4.0 ex art. 52 c.2 D.Lgs 82/2005 (CAD). Normalized and deduplicated by OpenConditions; representative connector only.",
+          "terms": {
+            "url": "https://cruscotto-italia.dati.gov.it/api.html#condizioni",
+            "reviewedAt": "2026-11-07",
+            "note": "Public factual EVSE/location/CPO/representative connector inventory only. AgID's PUN-specific CC BY 4.0 distribution identifies GSE as holder; accepted with CAD Article 52 and AgID guidelines. Excludes media, personal contacts, availability, tariffs and payment claims. Mirror municipal coverage is not a complete national census. CRS is undeclared; named latitude/longitude fields and full-generation Istat boundary checks qualify geographic interpretation without a formal EPSG assertion. Full capture and worker/PostGIS/public API qualification completed 2026-11-09: 5618 shards, 80265 unique EVSEs, no availability observations. Persistent client coordination enforces one connection and at most one request per second, including retries, with retained host cooldown. Operators sharing an egress IP must coordinate aggregate traffic; a client cannot discover unrelated NAT users."
+          },
+          "privacyUrl": "https://www.agid.gov.it/it/privacy-policy",
+          "homepage": "https://cruscotto-italia.dati.gov.it/api.html",
+          "coverage": {
+            "countries": [
+              "IT"
+            ]
           }
         }
       ]
@@ -2346,6 +2445,99 @@
       "country": "DE"
     },
     {
+      "operator": "geofa",
+      "product": "charging",
+      "name": "GeoFA public car charging inventory",
+      "format": "geofa",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://geofa.geodanmark.dk/ows/fkg/fkg?service=WFS&version=2.0.0&request=GetFeature&typeNames=fkg%3Afkg.t_5607_ladefacilitet&sortBy=objekt_id&outputFormat=application%2Fjson&srsName=EPSG%3A4326&propertyName=geometri,objekt_id,versions_id,systid_fra,systid_til,oprettet,statuskode,off_kode,ladefacilitet_type_kode,effekt_type_kode,tilgaengelighed_type_kode,internationalt_id,internationalt_id1,internationalt_id2,internationalt_id3,internationalt_id4,internationalt_id5,antal_ladepunkter,stiktype,anvendelsesgrad_kwh,driftstart_fra,planstatus_kode,gyldig_fra,gyldig_til,ejer_ladefacilitet,operatoer_ladefacilitet,vejnavn,husnr,postnr,postnr_by",
+          "geofa": {
+            "nonWithdrawing": true,
+            "pageSize": 2000
+          },
+          "cadenceSec": 86400
+        }
+      },
+      "freshnessWindowSec": 172800,
+      "requestLimits": {
+        "perMinute": 60,
+        "perDay": 100
+      },
+      "extrasAllow": [
+        "objekt_id",
+        "versions_id",
+        "geofaVersions",
+        "systid_fra",
+        "systid_til",
+        "oprettet",
+        "statuskode",
+        "off_kode",
+        "ladefacilitet_type_kode",
+        "effekt_type_kode",
+        "tilgaengelighed_type_kode",
+        "internationalt_id",
+        "internationalt_id1",
+        "internationalt_id2",
+        "internationalt_id3",
+        "internationalt_id4",
+        "internationalt_id5",
+        "antal_ladepunkter",
+        "stiktype",
+        "anvendelsesgrad_kwh",
+        "driftstart_fra",
+        "planstatus_kode",
+        "gyldig_fra",
+        "gyldig_til"
+      ],
+      "extrasFederate": false,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "@geodanmark (normalized by OpenConditions)",
+      "terms": {
+        "url": "https://www.geodanmark.dk/home/vejledninger/vilkaar-for-data-anvendelse/",
+        "reviewedAt": "2026-11-07",
+        "note": "CC BY 4.0 covers GeoFA geographical subject data; linked credit required. Website/secretariat privacy policy is not an EVSE-data privacy guarantee. Linked media, contact, case data and external tariffs are excluded."
+      },
+      "privacyUrl": "https://www.geodanmark.dk/privatlivspolitik/",
+      "homepage": "https://www.geodanmark.dk/home/vejledninger/vilkaar-for-data-anvendelse/",
+      "id": "dk-geofa-charging",
+      "domain": "charging",
+      "region": "dk",
+      "file": "feeds/charging/dk.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": true,
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "changeNotice": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://www.geodanmark.dk/home/vejledninger/vilkaar-for-data-anvendelse/",
+        "reviewedAt": "2026-11-07"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DK"
+        ]
+      },
+      "cadenceSec": 86400,
+      "country": "DK"
+    },
+    {
       "operator": "dgt",
       "product": "charging",
       "name": "DGT national access point charge points (MITERD)",
@@ -2895,6 +3087,65 @@
       },
       "cadenceSec": 86400,
       "country": "HK"
+    },
+    {
+      "operator": "agid",
+      "qualifier": "pun",
+      "product": "charging",
+      "name": "GSE/MASE PUN charging inventory via Cruscotto Italia (AgID)",
+      "format": "pun",
+      "tier": "aggregator",
+      "endpoints": {
+        "main": {
+          "url": "https://cruscotto-italia.dati.gov.it/data/manifest.json",
+          "cadenceSec": 86400
+        }
+      },
+      "freshnessWindowSec": 172800,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "GSE/MASE — PUN; Cruscotto Italia (AgID), CC BY 4.0 ex art. 52 c.2 D.Lgs 82/2005 (CAD). Normalized and deduplicated by OpenConditions; representative connector only.",
+      "terms": {
+        "url": "https://cruscotto-italia.dati.gov.it/api.html#condizioni",
+        "reviewedAt": "2026-11-07",
+        "note": "Public factual EVSE/location/CPO/representative connector inventory only. AgID's PUN-specific CC BY 4.0 distribution identifies GSE as holder; accepted with CAD Article 52 and AgID guidelines. Excludes media, personal contacts, availability, tariffs and payment claims. Mirror municipal coverage is not a complete national census. CRS is undeclared; named latitude/longitude fields and full-generation Istat boundary checks qualify geographic interpretation without a formal EPSG assertion. Full capture and worker/PostGIS/public API qualification completed 2026-11-09: 5618 shards, 80265 unique EVSEs, no availability observations. Persistent client coordination enforces one connection and at most one request per second, including retries, with retained host cooldown. Operators sharing an egress IP must coordinate aggregate traffic; a client cannot discover unrelated NAT users."
+      },
+      "privacyUrl": "https://www.agid.gov.it/it/privacy-policy",
+      "homepage": "https://cruscotto-italia.dati.gov.it/api.html",
+      "coverage": {
+        "countries": [
+          "IT"
+        ]
+      },
+      "id": "it-agid-pun-charging",
+      "domain": "charging",
+      "region": "it",
+      "file": "feeds/charging/it.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": true,
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "changeNotice": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://cruscotto-italia.dati.gov.it/api.html#condizioni",
+        "reviewedAt": "2026-11-07"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
+      },
+      "restricted": false,
+      "cadenceSec": 86400,
+      "country": "IT"
     },
     {
       "operator": "keco",

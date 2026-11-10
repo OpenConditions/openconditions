@@ -150,6 +150,8 @@ export async function withPolledValidity<T extends Rec>(
       return t === undefined ? [] : [t];
     });
     if (instants.length === 0) return record;
-    return { ...record, validUntil: new Date(Math.max(...instants)).toISOString() };
+    const expiry = (record["freshness"] as Rec | undefined)?.["expiresAt"];
+    const cap = typeof expiry === "string" ? Date.parse(expiry) : Number.POSITIVE_INFINITY;
+    return { ...record, validUntil: new Date(Math.min(Math.max(...instants), cap)).toISOString() };
   });
 }

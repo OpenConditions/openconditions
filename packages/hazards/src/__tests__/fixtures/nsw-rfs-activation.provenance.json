@@ -1,0 +1,27 @@
+{
+  "url": "https://www.rfs.nsw.gov.au/feeds/majorIncidentsCAP.xml",
+  "started": "2026-11-09T09:10:48.866542+00:00",
+  "status": 200,
+  "headers": {
+    "Date": "Mon, 09 Nov 2026 09:10:49 GMT",
+    "Content-Type": "text/xml",
+    "Content-Length": "104596",
+    "Connection": "close",
+    "CF-Ray": "a57bafbf7fccfc82-DUS",
+    "CF-Cache-Status": "REVALIDATED",
+    "Accept-Ranges": "bytes",
+    "Cache-Control": "max-age=30, must-revalidate",
+    "ETag": "\"8d3cc9d9cbd046b8e1b5c31bc6a02276\"",
+    "Last-Modified": "Mon, 09 Nov 2026 09:08:46 GMT",
+    "Server": "cloudflare",
+    "Strict-Transport-Security": "max-age=3600",
+    "X-Content-Type-Options": "nosniff",
+    "x-amz-id-2": "2LLp6uvB/hKhao3IE5H/RaCLtA+gl/HXzvjIWrdDeYL0iq9oGkBCnjtWlLYWBlF+rje6wnQyb4nNmDM7/73mAmGUyIbIIoLX",
+    "x-amz-request-id": "X1ZT2PA4N98ERCM9",
+    "x-amz-version-id": "_Txxqr3ZPoGHnf8Hw3Fz5vw8k4Km9_d6",
+    "alt-svc": "h3=\":443\"; ma=86400"
+  },
+  "bytes": 104596,
+  "sha256": "b53bdd6047acd7edc53b0f36550373611c193f851134978151c6eafcf7af46cf",
+  "finished": "2026-11-09T09:10:49.902524+00:00"
+}

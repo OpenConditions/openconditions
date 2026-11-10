@@ -55,9 +55,11 @@ export const CHARGING_SOURCE_FORMATS = [
   "cynap",
   "chargy",
   "evroam",
+  "geofa",
   "keco",
   "tdx",
   "ocm",
+  "pun",
 ] as const;
 
 /**

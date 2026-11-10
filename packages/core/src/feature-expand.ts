@@ -160,6 +160,20 @@ export async function latestOfFeatures(
   const clauses = [
     ...currentReadingClauses("l", "$1", q.scope),
     `l.feature_id = ANY(${p([...ownerOf.keys()])}::text[])`,
+    // Partial inventories may retain a removed component's stored series.
+    // Where a stored feature supplies membership, only its current components
+    // can be subjects. ID-only callers may also expand readings without a feature row.
+    ...(q.canonical
+      ? []
+      : [
+          `(l.component_key IS NULL
+          OR NOT EXISTS (SELECT 1 FROM conditions.feature f WHERE f.id = l.feature_id)
+          OR EXISTS (
+          SELECT 1 FROM conditions.feature f,
+            jsonb_array_elements(COALESCE(f.record->'components', '[]'::jsonb)) AS component
+          WHERE f.id = l.feature_id AND component->>'key' = l.component_key
+        ))`,
+        ]),
     // The scope's clauses leave the one fused row the scope reads, so a
     // full and a public fusion, which share a record id, never meet here.
     q.canonical

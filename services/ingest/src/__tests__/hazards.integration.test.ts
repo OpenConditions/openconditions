@@ -1,4 +1,6 @@
-import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { mkdtempSync, readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { crc32 } from "node:zlib";
 import {
@@ -19,9 +21,13 @@ import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { registerApiRoutes } from "../api/routes.js";
 import { registerScope } from "../api/scope.js";
+import { formatOf } from "../domains.js";
 import { createOAuthGrants } from "../oauth-grants.js";
+import { publishSituations, stampAttribution } from "../pipeline/publish.js";
 import { createRoleState, type RunResult, runSource } from "../pipeline/run.js";
+import { createRawArchive, type RawArchive } from "../raw/archive.js";
 import { REPO_CATALOG, repoFeed } from "./helpers/catalog.js";
+import { malformedInfo, revisionCycle } from "./helpers/nsw-rfs.js";
 import { registry } from "./helpers/situations.js";
 
 /**
@@ -52,6 +58,7 @@ let db: TestDatabase;
 let sql: postgres.Sql;
 let app: FastifyInstance;
 
+const apiSources = [...REPO_CATALOG.sources];
 const HAZARDS = REPO_CATALOG.feeds.filter((feed) => feed.domain === "hazards");
 
 beforeAll(async () => {
@@ -67,7 +74,11 @@ beforeAll(async () => {
   );
   app = Fastify();
   registerScope(app, TOKEN);
-  registerApiRoutes(app, sql, { registry, now: () => new Date(clock), catalog: REPO_CATALOG });
+  registerApiRoutes(app, sql, {
+    registry,
+    now: () => new Date(clock),
+    catalog: { sources: apiSources },
+  });
   await app.ready();
 }, 180_000);
 
@@ -84,6 +95,7 @@ function harness(
   id: string,
   serve: (url: string, init?: RequestInit) => Response | Promise<Response>,
   grants?: OAuthGrants,
+  raw?: RawArchive,
 ) {
   const feed = repoFeed(id) as CatalogFeed;
   const roles = createRoleState();
@@ -102,6 +114,7 @@ function harness(
       lookup: fakeLookup,
       model: { registry, instanceId: "test.local" },
       roles,
+      ...(raw ? { raw } : {}),
       ...(grants ? { grants } : {}),
     });
   };
@@ -706,8 +719,10 @@ describe("hazards fires, quakes and smoke through the pipeline", () => {
 });
 
 describe("hazards feeds in the catalogue", () => {
-  it("holds the fourteen enabled feeds", () => {
+  it("holds the sixteen enabled feeds", () => {
     expect(HAZARDS.map((f) => f.id).sort()).toEqual([
+      "ar-smn-alerts",
+      "au-nsw-rfs-alerts",
       "ca-eccc-alerts",
       "de-dwd-alerts",
       "eu-effis-fires",
@@ -730,4 +745,399 @@ describe("hazards feeds in the catalogue", () => {
     expect(credit("gdacs-events")).toBe("GDACS, European Union (CC BY 4.0), modified");
     expect(credit("eu-effis-fires")).toMatch(/modified/);
   });
+});
+
+describe("NSW RFS current incidents qualification", () => {
+  it.each([
+    ["nsw-rfs-current", "nsw-rfs-expected", "2026-11-07T17:13:00Z"],
+    ["nsw-rfs-activation", "nsw-rfs-activation-expected", "2026-11-09T09:10:49Z"],
+  ])(
+    "qualifies %s through acquisition, parser child, PostGIS and API",
+    async (capture, expectation, T) => {
+      const expected = JSON.parse(fixtureText(`${expectation}.json`)) as {
+        identifier: string;
+        incident: string;
+        sent: string;
+        effective: string;
+        expires: string;
+        instruction: string;
+        coordinates: number[];
+      }[];
+      expect(expected.length).toBeGreaterThan(0);
+      const credit =
+        "© State of New South Wales (NSW Rural Fire Service). For current information go to www.rfs.nsw.gov.au. Current Incidents, https://www.rfs.nsw.gov.au/fire-information/fires-near-me; CC BY 3.0 AU, https://creativecommons.org/licenses/by/3.0/au/. Modified by OpenConditions: CAP conversion, fire filtering and incident anchors; polygons omitted. No endorsement implied.";
+      const attribution = {
+        provider: credit,
+        license: "CC-BY-3.0-AU",
+        licenseUrl: "https://creativecommons.org/licenses/by/3.0/au/",
+      };
+      let body = fixtureText(`${capture}.xml`);
+      let unchanged = false;
+      const requests: RequestInit[] = [];
+      const rawDir = mkdtempSync(join(tmpdir(), "nsw-rfs-qualification-"));
+      console.info("NSW_RFS_RAW_STAGE", rawDir);
+      const rfs = harness(
+        "au-nsw-rfs-alerts",
+        (_url, init) => {
+          requests.push({ headers: Object.fromEntries(new Headers(init?.headers).entries()) });
+          return unchanged
+            ? new Response(null, { status: 304 })
+            : new Response(body, { headers: { etag: '"rfs-fixture"' } });
+        },
+        undefined,
+        createRawArchive(sql, { dir: rawDir }),
+      );
+      Object.assign(rfs.feed, { rfsCurrentSnapshotQualified: false });
+      // Unqualified configuration must retain last-good data even for valid input.
+      const refused = await rfs.poll(T);
+      expect(refused.outcome).toBe("failed");
+      expect(refused.error).toMatch(/not qualified/);
+      expect(await rfs.live()).toEqual([]);
+      Object.assign(rfs.feed, { rfsCurrentSnapshotQualified: true });
+      // Replay captured provider bytes; this is local qualification, not new HTTP.
+      delete rfs.roles.lastFetchedAt["alerts"];
+      const first = await rfs.poll(later(T, 1));
+      expect(first.error).toBeUndefined();
+      const live = await rfs.live();
+      const rawRows =
+        await sql`SELECT hash, bytes_raw, storage_key FROM conditions.raw_payload WHERE source_id = 'au-nsw-rfs-alerts' AND hash = ${createHash("sha256").update(body).digest("hex")}`;
+      expect(rawRows).toHaveLength(1);
+      expect(Number(rawRows[0]!.bytes_raw)).toBe(Buffer.byteLength(body));
+      expect(readFileSync(join(rawDir, rawRows[0]!.storage_key)).length).toBeGreaterThan(0);
+
+      expect(live).toHaveLength(expected.length);
+      const result = await get(
+        "/situations?domain=hazards&kind=alert&bbox=140,-38,154,-28&limit=100",
+      );
+      const records = (result["records"] as Rec[]).filter((r) =>
+        String(r["id"]).includes("au-nsw-rfs-alerts"),
+      );
+      const expectedIds = expected
+        .map((e) => `oc:situation:au-nsw-rfs-alerts:${e.incident}`)
+        .sort();
+      expect(records.map((r) => r["id"]).sort()).toEqual(expectedIds);
+      const assertRecord = (record: Rec, e: (typeof expected)[number]) => {
+        expect(record).toMatchObject({
+          id: `oc:situation:au-nsw-rfs-alerts:${e.incident}`,
+          groupId: `nsw-rfs:webmaster@rfs.nsw.gov.au:${e.incident}`,
+          instruction: [{ lang: "en-AU", text: e.instruction }],
+          effects: [],
+          location: {
+            extent: "point",
+            fuzziness: "extent_unknown",
+            geometry: { type: "Point", coordinates: e.coordinates },
+          },
+          provenance: {
+            sourceId: "au-nsw-rfs-alerts",
+            recordId: e.identifier,
+            sourceUpdatedAt: e.sent,
+            attribution,
+          },
+          details: {
+            cap: {
+              identifier: e.identifier,
+              sent: e.sent,
+              effective: e.effective,
+              expires: e.expires,
+            },
+          },
+        });
+      };
+      for (const e of expected)
+        assertRecord(
+          records.find((r) => r["id"] === `oc:situation:au-nsw-rfs-alerts:${e.incident}`)!,
+          e,
+        );
+      const geo = await get("/situations.geojson?domain=hazards&bbox=140,-38,154,-28&limit=100");
+      const features = (geo["features"] as Rec[]).filter((f) =>
+        String((f["properties"] as Rec)["id"]).includes("au-nsw-rfs-alerts"),
+      );
+      expect(features.map((f) => (f["properties"] as Rec)["id"]).sort()).toEqual(expectedIds);
+      for (const e of expected) {
+        const feature = features.find(
+          (f) => (f["properties"] as Rec)["id"] === `oc:situation:au-nsw-rfs-alerts:${e.incident}`,
+        )!;
+        expect(feature["geometry"]).toEqual({ type: "Point", coordinates: e.coordinates });
+        // GeoJSON moves geometry to the feature, retaining point precision on location.
+        const properties = feature["properties"] as Rec;
+        assertRecord(
+          {
+            ...properties,
+            location: { ...(properties["location"] as Rec), geometry: feature["geometry"] },
+          },
+          e,
+        );
+      }
+      const sources = await get("/sources");
+      const source = (sources["sources"] as Rec[]).find((r) => r["id"] === "au-nsw-rfs-alerts");
+      expect(source).toMatchObject({
+        id: "au-nsw-rfs-alerts",
+        license: attribution.license,
+        attribution: credit,
+        homepage: "https://www.rfs.nsw.gov.au/fire-information/fires-near-me",
+        terms: { url: "https://www.rfs.nsw.gov.au/fire-information/fires-near-me" },
+        licensing: { declarations: [{ text: attribution.license, url: attribution.licenseUrl }] },
+      });
+      const original = body;
+      for (const adverse of [
+        revisionCycle(original, 2),
+        revisionCycle(original, 4),
+        original.replace("<headline>", "<headline>No redistribution. "),
+        ...malformedInfo.map((extra) => original.replace("<info>", `<info>${extra}`)),
+      ]) {
+        body = adverse;
+        delete rfs.roles.lastFetchedAt["alerts"];
+        expect((await rfs.poll(later(T, 10))).error).toBeDefined();
+        expect(await rfs.live()).toEqual(live);
+        const retained = await get("/situations?domain=hazards&bbox=140,-38,154,-28&limit=100");
+        expect(
+          (retained["records"] as Rec[]).filter((r) =>
+            String(r["id"]).includes("au-nsw-rfs-alerts"),
+          ),
+        ).toEqual(records);
+        const retainedGeo = await get(
+          "/situations.geojson?domain=hazards&bbox=140,-38,154,-28&limit=100",
+        );
+        expect(JSON.stringify(retainedGeo)).not.toMatch(
+          /No redistribution|Evacuate immediately|cycle-/,
+        );
+      }
+      body = original;
+      // Valid bytes with a subset are still forbidden when the independent gate is false.
+      Object.assign(rfs.feed, { rfsCurrentSnapshotQualified: false });
+      body = body.replace(/<contentObject>[\s\S]*?<\/contentObject>/, "");
+      expect((await rfs.poll(later(T, 1801))).outcome).toBe("failed");
+      expect(await rfs.live()).toEqual(live);
+      Object.assign(rfs.feed, { rfsCurrentSnapshotQualified: true });
+      body = "<html>upstream error</html>";
+      delete rfs.roles.lastFetchedAt["alerts"];
+      expect((await rfs.poll(later(T, 1802))).error).toBeDefined();
+      expect(await rfs.live()).toEqual(live);
+      body = fixtureText(`${capture}.xml`);
+      delete rfs.roles.lastFetchedAt["alerts"];
+      expect((await rfs.poll(later(T, 1803))).error).toBeUndefined();
+      // Constructed reissuance updates the same incident row; partial/empty cannot withdraw.
+      const oldMessage = expected[0]!.identifier;
+      body = body.replaceAll(oldMessage, `constructed-reissue:${oldMessage}`);
+      delete rfs.roles.lastFetchedAt["alerts"];
+      const replacement = await rfs.poll(later(T, 1804));
+      expect(replacement.error).toBeUndefined();
+      expect(replacement).toMatchObject({ count: 1, updated: 1, deleted: 0 });
+      expect(await rfs.live()).toEqual(live);
+      body = body.replace(/<contentObject>[\s\S]*?<\/contentObject>/, "");
+      delete rfs.roles.lastFetchedAt["alerts"];
+      expect((await rfs.poll(later(T, 1805))).error).toBeUndefined();
+      expect(await rfs.live()).toEqual(live);
+      body = body.replace(/<contentObject>[\s\S]*?<\/contentObject>/g, "");
+      delete rfs.roles.lastFetchedAt["alerts"];
+      expect((await rfs.poll(later(T, 1806))).error).toBeDefined();
+      expect(await rfs.live()).toEqual(live);
+      body = fixtureText(`${capture}.xml`);
+      delete rfs.roles.lastFetchedAt["alerts"];
+      expect((await rfs.poll(later(T, 1807))).error).toBeUndefined();
+      // A 304 cannot renew source time or prolong message freshness.
+      unchanged = true;
+      const stale = await rfs.poll(later(T, 3607));
+      expect(stale.error).toBeDefined();
+      expect(stale.error).toMatch(/fresh/);
+      expect(JSON.stringify(requests)).toContain("rfs-fixture");
+      await sweepRecords(sql, {
+        now: clock,
+        registry,
+        instanceId: "test.local",
+        maxAgeSec: 3600,
+        historyDays: 90,
+      });
+      const after = await get("/situations?domain=hazards&bbox=140,-38,154,-28&limit=100");
+      expect(
+        (after["records"] as Rec[]).filter((r) => String(r["id"]).includes("au-nsw-rfs-alerts")),
+      ).toEqual([]);
+    },
+  );
+});
+
+it("retains newer instructions against fresh-window source clock rollback through actual worker and API", async () => {
+  const T = "2026-11-09T09:10:49Z";
+  const original = fixtureText("nsw-rfs-activation.xml");
+  const expected = JSON.parse(fixtureText("nsw-rfs-activation-expected.json"))[0];
+  const first = original.match(/<contentObject>[\s\S]*?<\/contentObject>/)![0];
+  const newer = first
+    .replace(/<identifier>[^<]+/, "<identifier>review-newer-message")
+    .replace(/<sent>[^<]+/, "<sent>2026-11-09T20:10:00+11:00")
+    .replace(/<effective>[^<]+/, "<effective>2026-11-09T20:10:00+11:00")
+    .replace(
+      /<instruction>[\s\S]*?<\/instruction>/,
+      "<instruction>REVIEW NEWER SAFETY INSTRUCTION</instruction>",
+    );
+  let body = original
+    .replace(first, newer)
+    .replace(/<dateTimeSent>[^<]+/, "<dateTimeSent>2026-11-09T20:10:15+11:00");
+  const validators: (string | null)[] = [];
+  let etag = '"ordering-newer"';
+  const h = harness("au-nsw-rfs-alerts", (_url, init) => {
+    validators.push(new Headers(init?.headers).get("if-none-match"));
+    return new Response(body, { headers: { etag } });
+  });
+  Object.assign(h.feed, { rfsCurrentSnapshotQualified: true });
+  const a = await h.poll(later(T, 60));
+  expect(a.error).toBeUndefined();
+  const read = async () => {
+    const r = await app.inject({
+      method: "GET",
+      url: "/situations?domain=hazards&bbox=140,-38,154,-28&limit=100",
+    });
+    expect(r.statusCode).toBe(200);
+    return r
+      .json()
+      .records.find((x: Rec) => x.id === `oc:situation:au-nsw-rfs-alerts:${expected.incident}`);
+  };
+  const before = await read();
+  expect(JSON.stringify(before.instruction)).toContain("REVIEW NEWER");
+  body = original;
+  etag = '"ordering-refused"';
+  delete h.roles.lastFetchedAt["alerts"];
+  const b = await h.poll(later(T, 61));
+  expect(b.error).toMatch(/RFS.*ordering/);
+  const after = await read();
+
+  expect(after).toEqual(before);
+  const durable = async () =>
+    sql`SELECT * FROM conditions.nsw_rfs_clock WHERE source_id = ${h.feed.id} ORDER BY incident_id`;
+  const rows = async () =>
+    sql`SELECT record, revision, expires_at, tombstoned_at FROM conditions.situation WHERE source_id = ${h.feed.id} ORDER BY id`;
+  const receipt = await durable();
+  const records = await rows();
+  const advanced = (xml: string, time = "2026-11-09T20:10:30+11:00") =>
+    xml.replace(/<dateTimeSent>[^<]+/, `<dateTimeSent>${time}`);
+  // A newer envelope and geometry metadata cannot promote an older CAP revision.
+  for (const candidate of [
+    advanced(original),
+    advanced(original).replace(/<circle>[^<]+/, "<circle>-31.8,148.1 0"),
+    advanced(
+      original.replace(
+        first,
+        newer.replace("REVIEW NEWER SAFETY INSTRUCTION", "CONFLICTING SAME TIME"),
+      ),
+    ),
+  ]) {
+    body = candidate;
+    delete h.roles.lastFetchedAt["alerts"];
+    expect((await h.poll(later(T, 62))).error).toMatch(/RFS ordering/);
+    expect(await rows()).toEqual(records);
+    expect(await durable()).toEqual(receipt);
+    expect(await read()).toEqual(before);
+    expect(validators.at(-1)).toBe('"ordering-newer"');
+  }
+  // A fresh parser/role state accepts an equal-time message-id reissue.
+  body = advanced(
+    original.replace(first, newer.replace("review-newer-message", "legitimate-reissue")),
+  );
+  const restarted = harness("au-nsw-rfs-alerts", () => new Response(body));
+  expect((await restarted.poll(later(T, 63))).error).toBeUndefined();
+  const renewed = await read();
+  expect(renewed.instruction).toEqual(before.instruction);
+  expect(renewed.freshness.expiresAt).toBe("2026-11-09T10:10:30.000Z");
+  // Repeated retained bytes cannot renew expiry; only a verified new envelope can.
+  expect((await restarted.poll(later(T, 64))).error).toBeUndefined();
+  expect((await read()).freshness).toEqual(renewed.freshness);
+  const stable = await durable();
+  body = body.replace(/<expires>[^<]+/, "<expires>2026-11-11T20:10:30+11:00");
+  delete restarted.roles.lastFetchedAt["alerts"];
+  expect((await restarted.poll(later(T, 65))).error).toMatch(/RFS ordering/);
+  expect(await durable()).toEqual(stable);
+  body = advanced(body, "2026-11-09T20:10:45+11:00");
+  delete restarted.roles.lastFetchedAt["alerts"];
+  expect((await restarted.poll(later(T, 66))).error).toBeUndefined();
+  expect((await read()).freshness.expiresAt).toBe("2026-11-09T10:10:45.000Z");
+  // Two already-parsed generations commit under the same publication lock.
+  const at = later(T, 67);
+  const parsed = (xml: string) =>
+    formatOf(h.feed).parse(
+      h.feed,
+      { alerts: [Buffer.from(xml)] },
+      { fetchedAt: at, cadenceSec: 60, reference: {} },
+    );
+  const olderParsed = parsed(body);
+  const newerParsed = parsed(
+    advanced(
+      body
+        .replaceAll("20:10:00+11:00", "20:11:00+11:00")
+        .replace("REVIEW NEWER SAFETY INSTRUCTION", "CONCURRENT NEWEST"),
+      "2026-11-09T20:11:15+11:00",
+    ),
+  );
+  const [attempt] = await sql<
+    { id: number }[]
+  >`SELECT id FROM conditions.source_poll_attempt WHERE source = ${h.feed.id} ORDER BY id DESC LIMIT 1`;
+  const commit = (output: typeof olderParsed) =>
+    publishSituations(sql, h.feed, {
+      situations: output.situations.map((d) => stampAttribution(d, h.feed, new Date(at))),
+      nswRfsOrdering: output.nswRfsOrdering,
+      situationsComplete: false,
+      rejected: 0,
+      poll: { id: attempt!.id, at },
+      now: at,
+      durationMs: 1,
+      model: { registry, instanceId: "test.local" },
+    });
+  const raced = await Promise.allSettled([commit(olderParsed), commit(newerParsed)]);
+  expect(raced[1]!.status).toBe("fulfilled");
+  expect(JSON.stringify((await read()).instruction)).toContain("CONCURRENT NEWEST");
+  const newestRows = await rows();
+  const newestClock = await durable();
+  const reversed = await Promise.allSettled([
+    commit(newerParsed),
+    commit(olderParsed),
+    commit(newerParsed),
+  ]);
+  expect(reversed.map((r) => r.status)).toEqual(["fulfilled", "rejected", "fulfilled"]);
+  expect(await rows()).toEqual(newestRows);
+  expect(await durable()).toEqual(newestClock);
+  // Model refusal rolls back even the candidate clock written earlier in the transaction.
+  const invalid = parsed(
+    advanced(body.replaceAll("20:10:00+11:00", "20:11:30+11:00"), "2026-11-09T20:11:45+11:00"),
+  );
+  invalid.situations[0]!["kind"] = "invalid-kind";
+  await expect(commit(invalid)).rejects.toThrow(/model rejected/);
+  expect(await durable()).toEqual(newestClock);
+  expect(await rows()).toEqual(newestRows);
+  // Receipt persists after ordinary sweep and physical history/row removal.
+  await sweepRecords(sql, {
+    now: "2026-11-09T11:00:00Z",
+    registry,
+    instanceId: "test.local",
+    maxAgeSec: 3600,
+    historyDays: 90,
+  });
+  await sql`DELETE FROM conditions.situation WHERE source_id = ${h.feed.id}`;
+  body = advanced(original, "2026-11-09T20:11:00+11:00");
+  const afterSweep = harness("au-nsw-rfs-alerts", () => new Response(body));
+  expect((await afterSweep.poll(later(T, 67))).error).toMatch(/RFS ordering/);
+  expect(await afterSweep.live()).toEqual([]);
+  // Fully validated expired dispositions retain their own newer incident clock.
+  const expired = newer
+    .replaceAll("20:10:00+11:00", "20:11:30+11:00")
+    .replace(/<expires>[^<]+/, "<expires>2026-11-09T20:11:40+11:00");
+  body = advanced(original.replace(first, expired), "2026-11-09T20:11:45+11:00");
+  delete afterSweep.roles.lastFetchedAt["alerts"];
+  expect((await afterSweep.poll(later(T, 68))).error).toBeUndefined();
+  const terminalClock = await durable();
+  body = advanced(
+    original.replace(
+      first,
+      expired
+        .replace("<severity>Minor</severity>", "<severity>invalid</severity>")
+        .replace("<severity>Moderate</severity>", "<severity>invalid</severity>"),
+    ),
+    "2026-11-09T20:12:00+11:00",
+  );
+  // Invalid native fields must fail even though this incident has expired.
+  body = body.replace(/<severity>[^<]+/, "<severity>invalid");
+  delete afterSweep.roles.lastFetchedAt["alerts"];
+  expect((await afterSweep.poll(later(T, 69))).error).toBeDefined();
+  expect(await durable()).toEqual(terminalClock);
+  body = advanced(original.replace(first, newer), "2026-11-09T20:12:00+11:00");
+  delete afterSweep.roles.lastFetchedAt["alerts"];
+  expect((await afterSweep.poll(later(T, 70))).error).toMatch(/RFS ordering/);
+  expect(await durable()).toEqual(terminalClock);
 });

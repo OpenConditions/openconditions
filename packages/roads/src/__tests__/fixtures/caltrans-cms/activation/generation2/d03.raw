@@ -1,0 +1,5729 @@
+{
+	"data":
+	[
+		{
+			"cms":
+			{
+				"index": "1229",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district":       "3",
+					"locationName":   "001 - Placerville",
+					"nearbyPlace":    "Placerville",
+					"longitude":      "-120.767877",
+					"latitude":       "38.730662",
+					"elevation":      "2171",
+					"direction":      "East",
+					"county":         "El Dorado",
+					"route":          "US-50",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "19.85",
+					"alignment":      "",
+					"milepost":       "48.37"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "09:15:42"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "APPLE HILL TRAF",
+						"phase1Line2": "USE EXITS",
+						"phase1Line3": "49 / 54 / 57"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1228",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district":       "3",
+					"locationName":   "002 - El Dorado Hills",
+					"nearbyPlace":    "El Dorado Hills",
+					"longitude":      "-121.078824",
+					"latitude":       "38.650045",
+					"elevation":      "639",
+					"direction":      "East",
+					"county":         "El Dorado",
+					"route":          "US-50",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "0.44",
+					"alignment":      "",
+					"milepost":       "29.25"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "09:15:39"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "APPLE HILL TRAF",
+						"phase1Line2": "USE EXITS",
+						"phase1Line3": "49 / 54 / 57"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1240",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district":       "3",
+					"locationName":   "003 - Gilardi Rd",
+					"nearbyPlace":    "Newcastle",
+					"longitude":      "-121.146840",
+					"latitude":       "38.851713",
+					"elevation":      "626",
+					"direction":      "East",
+					"county":         "Placer",
+					"route":          "I-80",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "12.04",
+					"alignment":      "",
+					"milepost":       "113.54"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "18:30:45"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1238",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district":       "3",
+					"locationName":   "004 - Truckee",
+					"nearbyPlace":    "Truckee",
+					"longitude":      "-120.212591",
+					"latitude":       "39.323323",
+					"elevation":      "5892",
+					"direction":      "West",
+					"county":         "Nevada",
+					"route":          "I-80",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "13.92",
+					"alignment":      "",
+					"milepost":       "184.5"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "18:30:40"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1268",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district":       "4",
+					"locationName":   "005 - Dixon",
+					"nearbyPlace":    "Dixon",
+					"longitude":      "-121.833445",
+					"latitude":       "38.465283",
+					"elevation":      "65",
+					"direction":      "East",
+					"county":         "Solano",
+					"route":          "I-80",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "37.45",
+					"alignment":      "",
+					"milepost":       "64.93"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "18:30:40"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1241",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district":       "3",
+					"locationName":   "006 - Bell Rd",
+					"nearbyPlace":    "Auburn",
+					"longitude":      "-121.040795",
+					"latitude":       "38.950570",
+					"elevation":      "1637",
+					"direction":      "East",
+					"county":         "Placer",
+					"route":          "I-80",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "21.58",
+					"alignment":      "",
+					"milepost":       "123.08"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:28:06"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "MINUTES TO:",
+						"phase1Line2": "COLFAX 12",
+						"phase1Line3": "TRUCKEE 57"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1231",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district":       "3",
+					"locationName":   "007 - Twin Bridges",
+					"nearbyPlace":    "Strawberry",
+					"longitude":      "-120.137150",
+					"latitude":       "38.807658",
+					"elevation":      "5935",
+					"direction":      "East",
+					"county":         "El Dorado",
+					"route":          "US-50",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "58.88",
+					"alignment":      "",
+					"milepost":       "87.1"
+				},
+				"inService": "False",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-02",
+						"messageTime": "09:39:02"
+					},
+					"display":     "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1256",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district":       "3",
+					"locationName":   "008 - 48th Street",
+					"nearbyPlace":    "Sacramento",
+					"longitude":      "-121.448271",
+					"latitude":       "38.557878",
+					"elevation":      "26",
+					"direction":      "West",
+					"county":         "Sacramento",
+					"route":          "US-50",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "1.42",
+					"alignment":      "",
+					"milepost":       "7.05"
+				},
+				"inService": "False",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2023-12-28",
+						"messageTime": "01:34:32"
+					},
+					"display":     "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1272",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district":       "3",
+					"locationName":   "009 - Olive Dr",
+					"nearbyPlace":    "Davis",
+					"longitude":      "-121.726085",
+					"latitude":       "38.545878",
+					"elevation":      "32",
+					"direction":      "West",
+					"county":         "Yolo",
+					"route":          "I-80",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "0.9",
+					"alignment":      "",
+					"milepost":       "73.08"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-05",
+						"messageTime": "09:53:49"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1232",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district":       "3",
+					"locationName":   "010 - Meyers",
+					"nearbyPlace":    "South Lake Tahoe",
+					"longitude":      "-120.022953",
+					"latitude":       "38.850870",
+					"elevation":      "6345",
+					"direction":      "West",
+					"county":         "El Dorado",
+					"route":          "US-50",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "70.58",
+					"alignment":      "",
+					"milepost":       "98.75"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "05:55:35"
+					},
+					"display":     "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1248",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "011 - Rainbow",
+					"nearbyPlace": "Soda Springs",
+					"longitude": "-120.490908",
+					"latitude": "39.311639",
+					"elevation": "5935",
+					"direction": "East",
+					"county": "Placer",
+					"route": "I-80",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "66.78",
+					"alignment": "",
+					"milepost": "168.12"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-05",
+						"messageTime": "10:29:51"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1246",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "012 - Blue Canyon",
+					"nearbyPlace": "Emigrant Gap",
+					"longitude": "-120.706042",
+					"latitude": "39.282676",
+					"elevation": "5305",
+					"direction": "East",
+					"county": "Placer",
+					"route": "I-80",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "53.22",
+					"alignment": "L",
+					"milepost": "154.68"
+				},
+				"inService": "False",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-06-03",
+						"messageTime": "10:33:00"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1236",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "013 - Vista Point",
+					"nearbyPlace": "Donner Lake",
+					"longitude": "-120.269240",
+					"latitude": "39.328996",
+					"elevation": "6332",
+					"direction": "West",
+					"county": "Nevada",
+					"route": "I-80",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "10.26",
+					"alignment": "",
+					"milepost": "181.36"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-05",
+						"messageTime": "10:29:56"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1265",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "014 - Madison Ave (WB)",
+					"nearbyPlace": "Sacramento",
+					"longitude": "-121.353295",
+					"latitude": "38.667953",
+					"elevation": "127",
+					"direction": "West",
+					"county": "Sacramento",
+					"route": "I-80",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "13.07",
+					"alignment": "",
+					"milepost": "96.59"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "03:55:50"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1266",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "015 - Elk Grove Blvd",
+					"nearbyPlace": "Elk Grove",
+					"longitude": "-121.391870",
+					"latitude": "38.416426",
+					"elevation": "42",
+					"direction": "North",
+					"county": "Sacramento",
+					"route": "SR-99",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "13.29",
+					"alignment": "",
+					"milepost": "287.76"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:28:06"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "MINUTES TO:",
+						"phase1Line2": "FLORIN 7",
+						"phase1Line3": "US 50 11"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1261",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "016 - El Camino Ave",
+					"nearbyPlace": "Sacramento",
+					"longitude": "-121.426034",
+					"latitude": "38.612153",
+					"elevation": "42",
+					"direction": "South",
+					"county": "Sacramento",
+					"route": "SR-51",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "4.81",
+					"alignment": "",
+					"milepost": "4.82"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "03:55:49"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1264",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "017 - Madison Ave (EB)",
+					"nearbyPlace": "Sacramento",
+					"longitude": "-121.352312",
+					"latitude": "38.667947",
+					"elevation": "124",
+					"direction": "East",
+					"county": "Sacramento",
+					"route": "I-80",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "13.11",
+					"alignment": "",
+					"milepost": "96.6"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "13:35:32"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1230",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "018 - Sly Park",
+					"nearbyPlace": "Pollock Pines",
+					"longitude": "-120.590455",
+					"latitude": "38.756783",
+					"elevation": "3874",
+					"direction": "East",
+					"county": "El Dorado",
+					"route": "US-50",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "30.43",
+					"alignment": "",
+					"milepost": "58.96"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "16:33:51"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1273",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "019 - Chiles",
+					"nearbyPlace": "Davis",
+					"longitude": "-121.664313",
+					"latitude": "38.559149",
+					"elevation": "22",
+					"direction": "East",
+					"county": "Yolo",
+					"route": "I-80",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "4.37",
+					"alignment": "",
+					"milepost": "77.38"
+				},
+				"inService": "False",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-08-28",
+						"messageTime": "12:52:21"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1254",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "020 - W El Camino Ave",
+					"nearbyPlace": "Sacramento",
+					"longitude": "-121.510865",
+					"latitude": "38.611336",
+					"elevation": "9",
+					"direction": "South",
+					"county": "Sacramento",
+					"route": "I-5",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "25.71",
+					"alignment": "",
+					"milepost": "521.01"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "14:07:53"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1257",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "022 - 18th Street",
+					"nearbyPlace": "Sacramento",
+					"longitude": "-121.489502",
+					"latitude": "38.562576",
+					"elevation": "29",
+					"direction": "East",
+					"county": "Sacramento",
+					"route": "US-50",
+					"routeSuffix": "",
+					"postmilePrefix": "L",
+					"postmile": "1.57",
+					"alignment": "",
+					"milepost": "4.73"
+				},
+				"inService": "False",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2024-01-31",
+						"messageTime": "14:03:50"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1258",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "023 - Howe Ave",
+					"nearbyPlace": "Sacramento",
+					"longitude": "-121.398837",
+					"latitude": "38.555958",
+					"elevation": "39",
+					"direction": "East",
+					"county": "Sacramento",
+					"route": "US-50",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "4.26",
+					"alignment": "",
+					"milepost": "9.9"
+				},
+				"inService": "False",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2024-01-31",
+						"messageTime": "21:52:11"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1259",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "024 - Scott Rd",
+					"nearbyPlace": "Folsom",
+					"longitude": "-121.127339",
+					"latitude": "38.642925",
+					"elevation": "354",
+					"direction": "West",
+					"county": "Sacramento",
+					"route": "US-50",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "20.82",
+					"alignment": "",
+					"milepost": "26.48"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:28:07"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "MINUTES TO:",
+						"phase1Line2": "WATT 15",
+						"phase1Line3": "DOWNTOWN 22"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1267",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "025 - M. L. K.",
+					"nearbyPlace": "Sacramento",
+					"longitude": "-121.464819",
+					"latitude": "38.520039",
+					"elevation": "22",
+					"direction": "North",
+					"county": "Sacramento",
+					"route": "SR-99",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "21.57",
+					"alignment": "",
+					"milepost": "296.05"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:28:06"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "MINUTES TO:",
+						"phase1Line2": "US 50 3",
+						"phase1Line3": "AIRPORT 15"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1252",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "026 - 35th Ave",
+					"nearbyPlace": "Sacramento",
+					"longitude": "-121.521494",
+					"latitude": "38.521069",
+					"elevation": "26",
+					"direction": "North",
+					"county": "Sacramento",
+					"route": "I-5",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "19",
+					"alignment": "",
+					"milepost": "514.28"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-05",
+						"messageTime": "09:53:49"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1249",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "027 - Kingvale",
+					"nearbyPlace": "Soda Springs",
+					"longitude": "-120.439408",
+					"latitude": "39.315835",
+					"elevation": "6128",
+					"direction": "West",
+					"county": "Placer",
+					"route": "I-80",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "69.59",
+					"alignment": "",
+					"milepost": "171.01"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-05",
+						"messageTime": "08:40:55"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1242",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "028 - Gold Run (EB)",
+					"nearbyPlace": "Gold Run",
+					"longitude": "-120.863267",
+					"latitude": "39.172441",
+					"elevation": "3267",
+					"direction": "East",
+					"county": "Placer",
+					"route": "I-80",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "41.03",
+					"alignment": "",
+					"milepost": "142.5"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-03",
+						"messageTime": "22:07:43"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1243",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "029 - Gold Run (WB)",
+					"nearbyPlace": "Gold Run",
+					"longitude": "-120.843565",
+					"latitude": "39.187404",
+					"elevation": "3198",
+					"direction": "West",
+					"county": "Placer",
+					"route": "I-80",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "42.53",
+					"alignment": "",
+					"milepost": "143.97"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-02",
+						"messageTime": "18:44:42"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "TRUCKERS",
+						"phase1Line2": "WATCH DOWNHILL",
+						"phase1Line3": "SPEED"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1244",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "030 - Baxter",
+					"nearbyPlace": "Whitmore",
+					"longitude": "-120.770269",
+					"latitude": "39.221265",
+					"elevation": "4051",
+					"direction": "East",
+					"county": "Placer",
+					"route": "I-80",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "47.52",
+					"alignment": "",
+					"milepost": "148.99"
+				},
+				"inService": "False",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-01-07",
+						"messageTime": "21:52:00"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1247",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "031 - E.O. Blue Canyon",
+					"nearbyPlace": "Emigrant Gap",
+					"longitude": "-120.697825",
+					"latitude": "39.287078",
+					"elevation": "5364",
+					"direction": "West",
+					"county": "Placer",
+					"route": "I-80",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "53.75",
+					"alignment": "",
+					"milepost": "155.22"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-30",
+						"messageTime": "08:17:03"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "BIG RIG DRIVERS",
+						"phase1Line2": "STOP AND CHECK",
+						"phase1Line3": "YOUR BRAKES"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1245",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "032 - W.O. Blue Canyon",
+					"nearbyPlace": "Emigrant Gap",
+					"longitude": "-120.711446",
+					"latitude": "39.280869",
+					"elevation": "5259",
+					"direction": "West",
+					"county": "Placer",
+					"route": "I-80",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "52.91",
+					"alignment": "L",
+					"milepost": "154.34"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-05",
+						"messageTime": "05:50:56"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "TRUCKERS",
+						"phase1Line2": "WATCH DOWNHILL",
+						"phase1Line3": "SPEED"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1239",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "033 - Prosser Village Rd",
+					"nearbyPlace": "Truckee",
+					"longitude": "-120.147641",
+					"latitude": "39.354560",
+					"elevation": "5875",
+					"direction": "West",
+					"county": "Nevada",
+					"route": "I-80",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "18.2",
+					"alignment": "",
+					"milepost": "188.78"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "18:32:48"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1237",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "034 - Donner Park",
+					"nearbyPlace": "Truckee",
+					"longitude": "-120.224141",
+					"latitude": "39.323878",
+					"elevation": "5918",
+					"direction": "East",
+					"county": "Nevada",
+					"route": "I-80",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "13.3",
+					"alignment": "L",
+					"milepost": "183.87"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "18:32:48"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1251",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "035 - Cabin Creek Rd",
+					"nearbyPlace": "Truckee",
+					"longitude": "-120.206845",
+					"latitude": "39.277931",
+					"elevation": "5936",
+					"direction": "North",
+					"county": "Placer",
+					"route": "SR-89",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "18.95",
+					"alignment": "",
+					"milepost": "77.81"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-04",
+						"messageTime": "15:04:59"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1250",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "036 - Fairway Dr",
+					"nearbyPlace": "Tahoe City",
+					"longitude": "-120.151228",
+					"latitude": "39.163825",
+					"elevation": "6282",
+					"direction": "South",
+					"county": "Placer",
+					"route": "SR-89",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "8.98",
+					"alignment": "",
+					"milepost": "67.85"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-04",
+						"messageTime": "07:50:01"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1156",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "037 - Eagle Lakes Rd",
+					"nearbyPlace": "20/80 Jct",
+					"longitude": "-120.571701",
+					"latitude": "39.327833",
+					"elevation": "5479",
+					"direction": "West",
+					"county": "Nevada",
+					"route": "I-80",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "61.54",
+					"alignment": "",
+					"milepost": "163.04"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-04",
+						"messageTime": "11:29:27"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1158",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "038 - Cisco Grove",
+					"nearbyPlace": "20/80 Jct",
+					"longitude": "-120.543524",
+					"latitude": "39.309878",
+					"elevation": "5666",
+					"direction": "West",
+					"county": "Placer",
+					"route": "I-80",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "63.54",
+					"alignment": "",
+					"milepost": "164.88"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-04",
+						"messageTime": "04:12:07"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "BRAKE CHECK AREA",
+						"phase1Line2": "8 MILES AHEAD",
+						"phase1Line3": "TRUCKS MUST STOP"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1260",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "039 - Elvas (NB)",
+					"nearbyPlace": "Sacramento",
+					"longitude": "-121.455226",
+					"latitude": "38.584822",
+					"elevation": "26",
+					"direction": "North",
+					"county": "Sacramento",
+					"route": "SR-51",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "2.18",
+					"alignment": "",
+					"milepost": "2.17"
+				},
+				"inService": "False",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2025-03-19",
+						"messageTime": "08:19:38"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1262",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "040 - Bryte Bend",
+					"nearbyPlace": "Sacramento",
+					"longitude": "-121.543845",
+					"latitude": "38.604379",
+					"elevation": "19",
+					"direction": "East",
+					"county": "Sacramento",
+					"route": "I-80",
+					"routeSuffix": "",
+					"postmilePrefix": "M",
+					"postmile": "0.47",
+					"alignment": "",
+					"milepost": "84.39"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "18:32:52"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1263",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "041 - Truxel Rd",
+					"nearbyPlace": "Sacramento",
+					"longitude": "-121.488537",
+					"latitude": "38.639555",
+					"elevation": "13",
+					"direction": "West",
+					"county": "Sacramento",
+					"route": "I-80",
+					"routeSuffix": "",
+					"postmilePrefix": "M",
+					"postmile": "4.39",
+					"alignment": "",
+					"milepost": "88.27"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "09:03:28"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1227",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "042 - Jct 149/70",
+					"nearbyPlace": "Oroville",
+					"longitude": "-121.615489",
+					"latitude": "39.574067",
+					"elevation": "269",
+					"direction": "East",
+					"county": "Butte",
+					"route": "SR-70",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "19.87",
+					"alignment": "",
+					"milepost": "52.31"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "12:12:03"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1233",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "043 - 50/89 Jct",
+					"nearbyPlace": "South Lake Tahoe",
+					"longitude": "-120.002467",
+					"latitude": "38.914715",
+					"elevation": "6286",
+					"direction": "West",
+					"county": "El Dorado",
+					"route": "US-50",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "75.59",
+					"alignment": "",
+					"milepost": "103.75"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-03",
+						"messageTime": "16:49:24"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1234",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "044 - Midway Rd",
+					"nearbyPlace": "South Lake Tahoe",
+					"longitude": "-119.948899",
+					"latitude": "38.952625",
+					"elevation": "6289",
+					"direction": "West",
+					"county": "El Dorado",
+					"route": "US-50",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "79.9",
+					"alignment": "",
+					"milepost": "108.06"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-05",
+						"messageTime": "15:19:17"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1159",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "045 - Granlibakken",
+					"nearbyPlace": "Tahoe City",
+					"longitude": "-120.144670",
+					"latitude": "39.161935",
+					"elevation": "6246",
+					"direction": "North",
+					"county": "Placer",
+					"route": "SR-89",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "8.14",
+					"alignment": "",
+					"milepost": "67.38"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-04",
+						"messageTime": "07:49:55"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1157",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "046 - Rocky Ridge Rd",
+					"nearbyPlace": "Tahoe City",
+					"longitude": "-120.130339",
+					"latitude": "39.179624",
+					"elevation": "6312",
+					"direction": "West",
+					"county": "Placer",
+					"route": "SR-28",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "1.24",
+					"alignment": "",
+					"milepost": "1.17"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-04",
+						"messageTime": "07:49:52"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1160",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "047 - National Ave",
+					"nearbyPlace": "Kings Beach",
+					"longitude": "-120.042812",
+					"latitude": "39.254854",
+					"elevation": "6604",
+					"direction": "West",
+					"county": "Placer",
+					"route": "SR-267",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "8.41",
+					"alignment": "",
+					"milepost": "10.21"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-02",
+						"messageTime": "14:23:47"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1168",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "048 - Castle Peak Rd",
+					"nearbyPlace": "Donner Summit",
+					"longitude": "-120.355597",
+					"latitude": "39.334701",
+					"elevation": "7165",
+					"direction": "East",
+					"county": "Nevada",
+					"route": "I-80",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "4.65",
+					"alignment": "",
+					"milepost": "175.78"
+				},
+				"inService": "False",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-29",
+						"messageTime": "14:45:34"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1165",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "049 - Williams (NB)",
+					"nearbyPlace": "Williams",
+					"longitude": "-122.140560",
+					"latitude": "39.151351",
+					"elevation": "62",
+					"direction": "North",
+					"county": "Colusa",
+					"route": "I-5",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "17.55",
+					"alignment": "",
+					"milepost": "576.36"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-14",
+						"messageTime": "11:15:17"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "3415",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "050 - Williams (SB)",
+					"nearbyPlace": "Colusa",
+					"longitude": "-122.159185",
+					"latitude": "39.177905",
+					"elevation": "75",
+					"direction": "South",
+					"county": "Colusa",
+					"route": "I-5",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "19.65",
+					"alignment": "",
+					"milepost": "578.49"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-14",
+						"messageTime": "11:29:07"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1169",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "051 - Rocklin Rd",
+					"nearbyPlace": "Rocklin",
+					"longitude": "-121.228078",
+					"latitude": "38.784236",
+					"elevation": "262",
+					"direction": "West",
+					"county": "Placer",
+					"route": "I-80",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "5.66",
+					"alignment": "",
+					"milepost": "107.18"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:28:07"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "DOUGLAS 4 MIN",
+						"phase1Line2": "BUS 80 13 MIN",
+						"phase1Line3": "I-5 20 MIN"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1170",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "052 - Twin Cities Rd",
+					"nearbyPlace": "Elk Grove",
+					"longitude": "-121.455760",
+					"latitude": "38.276180",
+					"elevation": "9",
+					"direction": "North",
+					"county": "Sacramento",
+					"route": "I-5",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "1.55",
+					"alignment": "",
+					"milepost": "496.8"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "21:54:12"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1171",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "053 - Laguna Blvd (NB)",
+					"nearbyPlace": "Elk Grove",
+					"longitude": "-121.489065",
+					"latitude": "38.435605",
+					"elevation": "9",
+					"direction": "North",
+					"county": "Sacramento",
+					"route": "I-5",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "12.7",
+					"alignment": "",
+					"milepost": "507.99"
+				},
+				"inService": "False",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-22",
+						"messageTime": "14:06:16"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1172",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "054 - Laguna Blvd (SB)",
+					"nearbyPlace": "Elk Grove",
+					"longitude": "-121.490253",
+					"latitude": "38.438544",
+					"elevation": "6",
+					"direction": "South",
+					"county": "Sacramento",
+					"route": "I-5",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "12.9",
+					"alignment": "",
+					"milepost": "508.19"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "18:32:47"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1173",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "055 - Sutterville Rd",
+					"nearbyPlace": "Sacramento",
+					"longitude": "-121.516454",
+					"latitude": "38.535714",
+					"elevation": "19",
+					"direction": "South",
+					"county": "Sacramento",
+					"route": "I-5",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "20.07",
+					"alignment": "",
+					"milepost": "515.34"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "18:32:48"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1174",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "056 - Garden Hwy",
+					"nearbyPlace": "Sacramento",
+					"longitude": "-121.509768",
+					"latitude": "38.610536",
+					"elevation": "9",
+					"direction": "North",
+					"county": "Sacramento",
+					"route": "I-5",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "25.64",
+					"alignment": "",
+					"milepost": "520.93"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-05",
+						"messageTime": "09:53:49"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1176",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "057 - Del Paso Rd",
+					"nearbyPlace": "Sacramento",
+					"longitude": "-121.529425",
+					"latitude": "38.649704",
+					"elevation": "19",
+					"direction": "North",
+					"county": "Sacramento",
+					"route": "I-5",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "28.55",
+					"alignment": "",
+					"milepost": "523.84"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:28:07"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "AIRPORT 4 MIN",
+						"phase1Line2": "WOODLAND 11 MIN",
+						"phase1Line3": "MRYSVILLE 33 MIN"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1175",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "058 - Arena Blvd",
+					"nearbyPlace": "Sacramento",
+					"longitude": "-121.527445",
+					"latitude": "38.644701",
+					"elevation": "13",
+					"direction": "South",
+					"county": "Sacramento",
+					"route": "I-5",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "28.54",
+					"alignment": "",
+					"milepost": "523.83"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "05:53:23"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1177",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "059 - Elvas (SB)",
+					"nearbyPlace": "Sacramento",
+					"longitude": "-121.457749",
+					"latitude": "38.584882",
+					"elevation": "36",
+					"direction": "South",
+					"county": "Sacramento",
+					"route": "SR-51",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "2.05",
+					"alignment": "",
+					"milepost": "2.05"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "00:55:41"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1178",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "060 - Bell St",
+					"nearbyPlace": "Sacramento",
+					"longitude": "-121.410160",
+					"latitude": "38.626910",
+					"elevation": "59",
+					"direction": "North",
+					"county": "Sacramento",
+					"route": "SR-51",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "6.25",
+					"alignment": "",
+					"milepost": "6.31"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-04",
+						"messageTime": "03:05:51"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1179",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "061 - Walnut Ave",
+					"nearbyPlace": "Galt",
+					"longitude": "-121.306954",
+					"latitude": "38.282845",
+					"elevation": "42",
+					"direction": "North",
+					"county": "Sacramento",
+					"route": "SR-99",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "2.9",
+					"alignment": "",
+					"milepost": "277.35"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:28:07"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "ELK GROVE 10 MIN",
+						"phase1Line2": " .US 50 21 MIN",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1181",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "063 - W Elkhorn Blvd",
+					"nearbyPlace": "Rio Linda",
+					"longitude": "-121.540388",
+					"latitude": "38.691977",
+					"elevation": "19",
+					"direction": "South",
+					"county": "Sacramento",
+					"route": "SR-99",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "33.81",
+					"alignment": "",
+					"milepost": "300.5"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:28:05"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "MINUTES TO:",
+						"phase1Line2": "WOODLAND 10",
+						"phase1Line3": "DAVIS 22"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1202",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "066 - Lead Hill Dr",
+					"nearbyPlace": "Roseville",
+					"longitude": "-121.265847",
+					"latitude": "38.751648",
+					"elevation": "196",
+					"direction": "East",
+					"county": "Placer",
+					"route": "I-80",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "2.55",
+					"alignment": "",
+					"milepost": "104.05"
+				},
+				"inService": "False",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2025-07-15",
+						"messageTime": "06:19:28"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "2269",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "067 - Riosa Rd",
+					"nearbyPlace": "Lincoln",
+					"longitude": "-121.390435",
+					"latitude": "38.990568",
+					"elevation": "88",
+					"direction": "South",
+					"county": "Placer",
+					"route": "SR-65",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "22.28",
+					"alignment": "",
+					"milepost": "82.95"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:28:05"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "LINCOLN 10 MIN",
+						"phase1Line2": "I-80 18 MIN",
+						"phase1Line3": "AUBURN 30 MIN"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "2261",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "068 - Twelve Bridges",
+					"nearbyPlace": "Lincoln",
+					"longitude": "-121.299397",
+					"latitude": "38.857901",
+					"elevation": "131",
+					"direction": "North",
+					"county": "Placer",
+					"route": "SR-65",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "12.38",
+					"alignment": "",
+					"milepost": "72.08"
+				},
+				"inService": "False",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-01-07",
+						"messageTime": "23:52:06"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1214",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "069 - Truckee Airport",
+					"nearbyPlace": "Truckee",
+					"longitude": "-120.146272",
+					"latitude": "39.313558",
+					"elevation": "5921",
+					"direction": "South",
+					"county": "Placer",
+					"route": "SR-267",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "0.39",
+					"alignment": "",
+					"milepost": "2.19"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-02",
+						"messageTime": "14:23:51"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "3297",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "070 - Riego Rd",
+					"nearbyPlace": "Nicolaus",
+					"longitude": "-121.540074",
+					"latitude": "38.748508",
+					"elevation": "19",
+					"direction": "North",
+					"county": "Sutter",
+					"route": "SR-99",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "0.82",
+					"alignment": "",
+					"milepost": "304.47"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-29",
+						"messageTime": "11:36:44"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "2594",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "071 - Neal Rd",
+					"nearbyPlace": "Chico",
+					"longitude": "-121.739421",
+					"latitude": "39.662155",
+					"elevation": "226",
+					"direction": "South",
+					"county": "Butte",
+					"route": "SR-99",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "25.7",
+					"alignment": "",
+					"milepost": "370.52"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:28:08"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "MINUTES TO:",
+						"phase1Line2": "OROVILLE 12",
+						"phase1Line3": "70 MRYSVL 37"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "4026",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "072 - Sherman Island",
+					"nearbyPlace": "Rio Vista",
+					"longitude": "-121.733216",
+					"latitude": "38.076809",
+					"elevation": "-13",
+					"direction": "North",
+					"county": "Sacramento",
+					"route": "SR-160",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "4.01",
+					"alignment": "",
+					"milepost": "6.67"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:28:07"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "MINUTES TO:",
+						"phase1Line2": "HWY 12 7",
+						"phase1Line3": "ISLETON 13"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "4061",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "073 - Ponderosa",
+					"nearbyPlace": "Shingle Springs",
+					"longitude": "-120.935697",
+					"latitude": "38.663485",
+					"elevation": "1500",
+					"direction": "West",
+					"county": "El Dorado",
+					"route": "US-50",
+					"routeSuffix": "",
+					"postmilePrefix": "M",
+					"postmile": "8.68",
+					"alignment": "",
+					"milepost": "37.22"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "18:32:48"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "4122",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "074 - Skyway - JSO",
+					"nearbyPlace": "Skyway",
+					"longitude": "-121.792791",
+					"latitude": "39.707678",
+					"elevation": "217",
+					"direction": "North",
+					"county": "Butte",
+					"route": "SR-99",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "29.95",
+					"alignment": "",
+					"milepost": "374.77"
+				},
+				"inService": "False",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-06-04",
+						"messageTime": "07:22:07"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "4144",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "075 - Eaton Rd - JNO",
+					"nearbyPlace": "Chico",
+					"longitude": "-121.881767",
+					"latitude": "39.781187",
+					"elevation": "174",
+					"direction": "South",
+					"county": "Butte",
+					"route": "SR-99",
+					"routeSuffix": "",
+					"postmilePrefix": "M",
+					"postmile": "36.94",
+					"alignment": "",
+					"milepost": "381.76"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-05",
+						"messageTime": "15:04:48"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "4079",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "076 - Snows Rd - JWO",
+					"nearbyPlace": "Camino",
+					"longitude": "-120.680082",
+					"latitude": "38.735085",
+					"elevation": "3100",
+					"direction": "West",
+					"county": "El Dorado",
+					"route": "US-50",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "25.2",
+					"alignment": "",
+					"milepost": "53.74"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-31",
+						"messageTime": "18:33:21"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "4087",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "077 - Ice House Rd",
+					"nearbyPlace": "Pollock Pines",
+					"longitude": "-120.446384",
+					"latitude": "38.768626",
+					"elevation": "3400",
+					"direction": "East",
+					"county": "El Dorado",
+					"route": "US-50",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "39.8",
+					"alignment": "",
+					"milepost": "68.18"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-02",
+						"messageTime": "15:25:18"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "4065",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "078 - Greenstone O/C",
+					"nearbyPlace": "Shingle Springs",
+					"longitude": "-120.884422",
+					"latitude": "38.695832",
+					"elevation": "1415",
+					"direction": "East",
+					"county": "El Dorado",
+					"route": "US-50",
+					"routeSuffix": "",
+					"postmilePrefix": "M",
+					"postmile": "12.38",
+					"alignment": "",
+					"milepost": "40.92"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "09:15:41"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "APPLE HILL TRAF",
+						"phase1Line2": "USE EXITS",
+						"phase1Line3": "49 / 54 / 57"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "5161",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "117 - Gloria_Dr_SAC_5_SB",
+					"nearbyPlace": "Greenhaven",
+					"longitude": "-121.522310",
+					"latitude": "38.509533",
+					"elevation": "14",
+					"direction": "South",
+					"county": "Sacramento",
+					"route": "I-5",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "18.21",
+					"alignment": "",
+					"milepost": "513.29"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-02",
+						"messageTime": "07:57:25"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "5166",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "121 - Cox Ln - JWO",
+					"nearbyPlace": "Oroville - Robinsons Corner",
+					"longitude": "-121.612560",
+					"latitude": "39.375972",
+					"elevation": "300",
+					"direction": "West",
+					"county": "Butte",
+					"route": "SR-70",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "4.88",
+					"alignment": "",
+					"milepost": "37.41"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "18:32:48"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "4090",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "126 - Wrights Lake -EO",
+					"nearbyPlace": "Wrights Lake",
+					"longitude": "-120.205593",
+					"latitude": "38.787156",
+					"elevation": "5400",
+					"direction": "East",
+					"county": "El Dorado",
+					"route": "US-50",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "54.19",
+					"alignment": "",
+					"milepost": "82.46"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "05:55:37"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "5106",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "129 - South_River_Rd_YOL50_EB",
+					"nearbyPlace": "West Sacramento",
+					"longitude": "-121.520245",
+					"latitude": "38.575181",
+					"elevation": "20",
+					"direction": "East",
+					"county": "Yolo",
+					"route": "US-50",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "2.8",
+					"alignment": "",
+					"milepost": "2.8"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "18:33:44"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "5109",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "130 - I-5_Jct_WO_SAC50_WB",
+					"nearbyPlace": "Sacramento",
+					"longitude": "-121.510911",
+					"latitude": "38.568721",
+					"elevation": "500",
+					"direction": "West",
+					"county": "Sacramento",
+					"route": "US-50",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "0.34",
+					"alignment": "",
+					"milepost": "3.49"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "15:43:09"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "5114",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "131 - Mayhew_Rd_SAC50_EB",
+					"nearbyPlace": "Sacramento",
+					"longitude": "-121.352778",
+					"latitude": "38.561273",
+					"elevation": "60",
+					"direction": "East",
+					"county": "Sacramento",
+					"route": "US-50",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "6.78",
+					"alignment": "",
+					"milepost": "12.42"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "18:33:47"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "5113",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "132 - Mayhew_Rd_SAC50_WB",
+					"nearbyPlace": "Watt ave",
+					"longitude": "-121.348974",
+					"latitude": "38.562123",
+					"elevation": "500",
+					"direction": "West",
+					"county": "Sacramento",
+					"route": "US-50",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "7.04",
+					"alignment": "",
+					"milepost": "12.63"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-02",
+						"messageTime": "08:09:06"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "5116",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "133 - Bradshaw_Rd_JEO_SAC50_EB",
+					"nearbyPlace": "Rancho Cordova",
+					"longitude": "-121.327679",
+					"latitude": "38.569901",
+					"elevation": "78",
+					"direction": "East",
+					"county": "Sacramento",
+					"route": "US-50",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "8.29",
+					"alignment": "",
+					"milepost": "8.29"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "00:55:50"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "5123",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "134 - Bradshaw_Rd_SAC50_WB",
+					"nearbyPlace": "Rancho Cordova",
+					"longitude": "-121.316255",
+					"latitude": "38.575382",
+					"elevation": "78",
+					"direction": "West",
+					"county": "Sacramento",
+					"route": "US-50",
+					"routeSuffix": "",
+					"postmilePrefix": "M",
+					"postmile": "9",
+					"alignment": "",
+					"milepost": "14.64"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-29",
+						"messageTime": "07:19:16"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "5126",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "135 - Zinfandel_Dr_EO_SAC50_EB",
+					"nearbyPlace": "Rancho Cordova",
+					"longitude": "-121.282254",
+					"latitude": "38.593828",
+					"elevation": "113",
+					"direction": "East",
+					"county": "Sacramento",
+					"route": "US-50",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "11.26",
+					"alignment": "",
+					"milepost": "16.89"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "18:33:14"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "5125",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "136 - White_Rock_POC_JEO_SAC50_WB",
+					"nearbyPlace": "Rancho Cordova",
+					"longitude": "-121.295234",
+					"latitude": "38.586553",
+					"elevation": "96",
+					"direction": "West",
+					"county": "Sacramento",
+					"route": "US-50",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "10.33",
+					"alignment": "",
+					"milepost": "15.96"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "18:33:51"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "5124",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "137 - White_Rock_POC_JWO_SAC50_EB",
+					"nearbyPlace": "Rancho Cordova",
+					"longitude": "-121.304040",
+					"latitude": "38.580325",
+					"elevation": "90",
+					"direction": "East",
+					"county": "Sacramento",
+					"route": "US-50",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "9.72",
+					"alignment": "",
+					"milepost": "15.35"
+				},
+				"inService": "False",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2025-11-15",
+						"messageTime": "21:47:31"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "5127",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "138 - Zinfandel_Dr_EO_SAC50_WB",
+					"nearbyPlace": "Rancho Cordova",
+					"longitude": "-121.277872",
+					"latitude": "38.599550",
+					"elevation": "124",
+					"direction": "West",
+					"county": "Sacramento",
+					"route": "US-50",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "11.73",
+					"alignment": "",
+					"milepost": "17.36"
+				},
+				"inService": "False",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-01-02",
+						"messageTime": "04:02:52"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "5128",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "139 - Hazel_Ave_WO_SAC50_WB",
+					"nearbyPlace": "Rancho Cordova",
+					"longitude": "-121.225965",
+					"latitude": "38.626403",
+					"elevation": "127",
+					"direction": "West",
+					"county": "Sacramento",
+					"route": "US-50",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "15.18",
+					"alignment": "",
+					"milepost": "20.85"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "18:34:05"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1255",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "141 - 10th_St_JWO_SAC50_WB",
+					"nearbyPlace": "Sacramento",
+					"longitude": "-121.500181",
+					"latitude": "38.565852",
+					"elevation": "26",
+					"direction": "West",
+					"county": "Sacramento",
+					"route": "US-50",
+					"routeSuffix": "",
+					"postmilePrefix": "L",
+					"postmile": "0.95",
+					"alignment": "",
+					"milepost": "4.1"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-05",
+						"messageTime": "09:53:49"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1235",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "145 - 48th_St_WO_SAC50_EB",
+					"nearbyPlace": "Sacramento",
+					"longitude": "-121.453925",
+					"latitude": "38.558958",
+					"elevation": "40",
+					"direction": "East",
+					"county": "Sacramento",
+					"route": "US-50",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "1.12",
+					"alignment": "",
+					"milepost": "6.74"
+				},
+				"inService": "False",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2025-07-21",
+						"messageTime": "13:13:35"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "5362",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "149 - Howe_Ave_JEO_SAC50_WB",
+					"nearbyPlace": "Sacramento",
+					"longitude": "-121.406849",
+					"latitude": "38.554533",
+					"elevation": "40",
+					"direction": "West",
+					"county": "Sacramento",
+					"route": "US-50",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "3.82",
+					"alignment": "",
+					"milepost": "9.45"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-05",
+						"messageTime": "09:53:49"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1234",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "150 - Howe_Ave_JEO_SAC50_EB",
+					"nearbyPlace": "Sacramento",
+					"longitude": "-12.139908",
+					"latitude": "38.555766",
+					"elevation": "40",
+					"direction": "East",
+					"county": "Sacramento",
+					"route": "US-50",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "4.25",
+					"alignment": "",
+					"milepost": "9.8"
+				},
+				"inService": "False",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2025-12-08",
+						"messageTime": "04:00:39"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "5129",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "153 - Sunrise Blvd_EO_SAC50_EB",
+					"nearbyPlace": "Rancho Cordova",
+					"longitude": "-121.252845",
+					"latitude": "38.615537",
+					"elevation": "131",
+					"direction": "East",
+					"county": "Sacramento",
+					"route": "US-50",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "13.55",
+					"alignment": "",
+					"milepost": "19.22"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "18:34:38"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "5130",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "154 - Aerojet_Rd_SAC50_EB",
+					"nearbyPlace": "Folsom",
+					"longitude": "-121.212749",
+					"latitude": "38.632852",
+					"elevation": "138",
+					"direction": "East",
+					"county": "Sacramento",
+					"route": "US-50",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "16.01",
+					"alignment": "",
+					"milepost": "21.68"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "09:15:40"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "APPLE HILL TRAF",
+						"phase1Line2": "USE EXITS",
+						"phase1Line3": "49 / 54 / 57"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "5102",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "155 - Folsom_Blvd_JWO_SAC50_WB",
+					"nearbyPlace": "Folsom",
+					"longitude": "-121.201844",
+					"latitude": "38.639163",
+					"elevation": "173",
+					"direction": "West",
+					"county": "Sacramento",
+					"route": "US-50",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "16.75",
+					"alignment": "",
+					"milepost": "22.42"
+				},
+				"inService": "False",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-09",
+						"messageTime": "05:18:57"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "5101",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "156 - Prairie_City_Rd_WO_SAC50_WB",
+					"nearbyPlace": "Folsom",
+					"longitude": "-121.178967",
+					"latitude": "38.642356",
+					"elevation": "239",
+					"direction": "West",
+					"county": "Sacramento",
+					"route": "US-50",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "18.01",
+					"alignment": "",
+					"milepost": "23.68"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "18:34:38"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "5355",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "158 - Metro_Air_Pkwy_JEO_SAC5_NB",
+					"nearbyPlace": "Airport",
+					"longitude": "-121.565056",
+					"latitude": "38.671475",
+					"elevation": "500",
+					"direction": "North",
+					"county": "Sacramento",
+					"route": "I-5",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "31.12",
+					"alignment": "",
+					"milepost": "31.12"
+				},
+				"inService": "False",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-04",
+						"messageTime": "15:51:46"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "N/A",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "160 - Chiles_Rd_YOL80_EB",
+					"nearbyPlace": "Davis",
+					"longitude": "-121.639262",
+					"latitude": "38.563109",
+					"elevation": "36",
+					"direction": "East",
+					"county": "Yolo",
+					"route": "I-80",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "5.75",
+					"alignment": "",
+					"milepost": "77.38"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:28:06"
+					},
+					"display": "1 Page (Normal)",
+					"displayTime": "3",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "MINUTES TO:",
+						"phase1Line2": "WEST SAC 5",
+						"phase1Line3": "DWTN SAC 8"
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "5405",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "161 - Enterprise_Blvd_YOL80_EB",
+					"nearbyPlace": "W. Sacramento",
+					"longitude": "-121.579294",
+					"latitude": "38.573775",
+					"elevation": "36",
+					"direction": "East",
+					"county": "Yolo",
+					"route": "I-80",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "9.08",
+					"alignment": "",
+					"milepost": "81.29"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-01",
+						"messageTime": "08:53:06"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "5410",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "162 - Harbor_Blvd_JWO_YOL50_WB",
+					"nearbyPlace": "W. Sacramento",
+					"longitude": "-121.555319",
+					"latitude": "38.575287",
+					"elevation": "36",
+					"direction": "West",
+					"county": "Yolo",
+					"route": "US-50",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "0.84",
+					"alignment": "",
+					"milepost": "0.84"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-05",
+						"messageTime": "09:53:49"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "5413",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "163 - Harbor_Blvd_JEO_YOL50_EB",
+					"nearbyPlace": "W. Sacramento",
+					"longitude": "-121.537912",
+					"latitude": "38.574769",
+					"elevation": "36",
+					"direction": "East",
+					"county": "Yolo",
+					"route": "US-50",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "1.52",
+					"alignment": "",
+					"milepost": "1.52"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "09:03:49"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1180",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "166 - Sheldon_Rd_SAC99_SB",
+					"nearbyPlace": "Sacramento",
+					"longitude": "-121.406248",
+					"latitude": "38.446533",
+					"elevation": "42",
+					"direction": "South",
+					"county": "Sacramento",
+					"route": "SR-99",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "15.53",
+					"alignment": "",
+					"milepost": "15.53"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "18:35:05"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1306",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "EMS - VM001 / Whitmore HAR AM1610 - Drum Forebay / EB (Daktronics VMS)",
+					"nearbyPlace": "Forebay",
+					"longitude": "-120.752485",
+					"latitude": "39.237115",
+					"elevation": "4275",
+					"direction": "East",
+					"county": "Placer",
+					"route": "I-80",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "48.99",
+					"alignment": "",
+					"milepost": "150.5"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-09-25",
+						"messageTime": "08:27:59"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "4109",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "EMS - VM002 / Fog - Dillard Road (Daktronics VMS)",
+					"nearbyPlace": "Dillard Road",
+					"longitude": "-121.335148",
+					"latitude": "38.342948",
+					"elevation": "38",
+					"direction": "North",
+					"county": "Sacramento",
+					"route": "SR-99",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "7.31",
+					"alignment": "",
+					"milepost": "511.63"
+				},
+				"inService": "False",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2025-04-29",
+						"messageTime": "13:50:52"
+					},
+					"display": "Blank",
+					"displayTime": "5",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1284",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "EMS - VM003 / Truckee HAR AM1610 - Donner_Pass_Rd_JWO / EB (Daktronics VMS)",
+					"nearbyPlace": "Truckee",
+					"longitude": "-120.229948",
+					"latitude": "39.324617",
+					"elevation": "5817",
+					"direction": "East",
+					"county": "Nevada",
+					"route": "I-80",
+					"routeSuffix": "",
+					"postmilePrefix": "M",
+					"postmile": "12.43",
+					"alignment": "",
+					"milepost": "183.57"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-09-25",
+						"messageTime": "08:32:15"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1281",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "EMS - VM004 / Kingvale HAR AM1610 - Soda Springs / WB (Skyline VMS)",
+					"nearbyPlace": "Truckee",
+					"longitude": "-120.398805",
+					"latitude": "39.324156",
+					"elevation": "5587",
+					"direction": "West",
+					"county": "Nevada",
+					"route": "I-80",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "2.16",
+					"alignment": "",
+					"milepost": "2"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-13",
+						"messageTime": "12:14:05"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1282",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "EMS - VM005 / Donner Sum HAR AM1610 - Soda Springs / EB (Skyline VMS)",
+					"nearbyPlace": "Truckee",
+					"longitude": "-120.387952",
+					"latitude": "39.327199",
+					"elevation": "5587",
+					"direction": "East",
+					"county": "Nevada",
+					"route": "I-80",
+					"routeSuffix": "",
+					"postmilePrefix": "",
+					"postmile": "2.74",
+					"alignment": "",
+					"milepost": "173.88"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-01",
+						"messageTime": "13:15:26"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "1340",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:28:30"
+				},
+				"location":
+				{
+					"district": "3",
+					"locationName": "EMS - VM007 / High Winds , Fog- Reed Ave (Skyline VMS)",
+					"nearbyPlace": "Ikea - W. Sac",
+					"longitude": "-121.552682",
+					"latitude": "38.590778",
+					"elevation": "81",
+					"direction": "East",
+					"county": "Yolo",
+					"route": "I-80",
+					"routeSuffix": "",
+					"postmilePrefix": "R",
+					"postmile": "11.13",
+					"alignment": "",
+					"milepost": "83.34"
+				},
+				"inService": "True",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-08-06",
+						"messageTime": "14:35:42"
+					},
+					"display": "Blank",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font": "Not Reported",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font": "Not Reported",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		}
+	]
+}

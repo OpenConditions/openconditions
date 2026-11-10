@@ -1,5 +1,123 @@
 {
   "files": {
+    "hazards/ar": {
+      "$schema": "../schema/hazards.schema.json",
+      "feeds": [
+        {
+          "operator": "smn",
+          "product": "alerts",
+          "name": "SMN Argentina weather warnings",
+          "format": "cap",
+          "tier": "authoritative",
+          "endpoints": {
+            "alerts": {
+              "url": "https://ssl.smn.gob.ar/CAP/AR.php",
+              "smnRss": "ar",
+              "cadenceSec": 180
+            }
+          },
+          "freshnessWindowSec": 900,
+          "requestLimits": {
+            "perMinute": 120
+          },
+          "license": "LicenseRef-CC-BY-2.5-AR",
+          "licenseUrl": "https://creativecommons.org/licenses/by/2.5/ar/",
+          "attribution": "Fuente: Servicio Meteorológico Nacional (SMN), República Argentina; normalizado por OpenConditions",
+          "terms": {
+            "url": "https://www.argentina.gob.ar/normativa/361173_disp25_pdf/archivo",
+            "reviewedAt": "2026-11-07",
+            "note": "Disposición 25/2022, sections 2 and 4A: SMN-authored CAP uses CC BY 2.5 Argentina. RSS separately declares CC BY 4.0. Third-party resources are outside this grant and are not fetched. The rolling RSS index is not complete absence authority."
+          },
+          "privacyUrl": "https://www.argentina.gob.ar/terminos-y-condiciones",
+          "homepage": "https://www.smn.gob.ar/",
+          "coverage": {
+            "countries": [
+              "AR"
+            ]
+          }
+        },
+        {
+          "operator": "smn",
+          "qualifier": "acp",
+          "product": "alerts",
+          "name": "SMN Argentina short-term warnings (unqualified)",
+          "format": "cap",
+          "tier": "authoritative",
+          "endpoints": {
+            "alerts": {
+              "url": "https://ssl.smn.gob.ar/feeds/CAP/avisocortoplazo/rss_acpCAP.xml",
+              "smnRss": "acp",
+              "cadenceSec": 180
+            }
+          },
+          "freshnessWindowSec": 900,
+          "requestLimits": {
+            "perMinute": 120
+          },
+          "license": "LicenseRef-CC-BY-2.5-AR",
+          "licenseUrl": "https://creativecommons.org/licenses/by/2.5/ar/",
+          "attribution": "Fuente: Servicio Meteorológico Nacional (SMN), República Argentina; normalizado por OpenConditions",
+          "terms": {
+            "url": "https://www.argentina.gob.ar/normativa/361173_disp25_pdf/archivo",
+            "reviewedAt": "2026-11-07",
+            "note": "Disposición 25/2022, sections 2 and 4A: SMN-authored CAP uses CC BY 2.5 Argentina. RSS separately declares CC BY 4.0. Third-party resources are outside this grant and are not fetched. The rolling RSS index is not complete absence authority."
+          },
+          "privacyUrl": "https://www.argentina.gob.ar/terminos-y-condiciones",
+          "homepage": "https://www.smn.gob.ar/",
+          "coverage": {
+            "countries": [
+              "AR"
+            ]
+          },
+          "disabled": {
+            "reason": "A real active ACP CAP capture and lifecycle qualification are required before enabling this separate product. Only the no-warning RSS sentinel has been captured.",
+            "since": "2026-11-07"
+          }
+        }
+      ]
+    },
+    "hazards/au": {
+      "$schema": "../schema/hazards.schema.json",
+      "feeds": [
+        {
+          "subdivision": "nsw",
+          "operator": "rfs",
+          "product": "alerts",
+          "name": "NSW RFS Current Incidents",
+          "format": "nsw-rfs",
+          "tier": "authoritative",
+          "endpoints": {
+            "alerts": {
+              "url": "https://www.rfs.nsw.gov.au/feeds/majorIncidentsCAP.xml",
+              "cadenceSec": 1800
+            }
+          },
+          "freshnessWindowSec": 3600,
+          "license": "CC-BY-3.0-AU",
+          "licenseUrl": "https://creativecommons.org/licenses/by/3.0/au/",
+          "attribution": "© State of New South Wales (NSW Rural Fire Service). For current information go to www.rfs.nsw.gov.au. Current Incidents, https://www.rfs.nsw.gov.au/fire-information/fires-near-me; CC BY 3.0 AU, https://creativecommons.org/licenses/by/3.0/au/. Modified by OpenConditions: CAP conversion, fire filtering and incident anchors; polygons omitted. No endorsement implied.",
+          "terms": {
+            "url": "https://www.rfs.nsw.gov.au/fire-information/fires-near-me",
+            "reviewedAt": "2026-11-09",
+            "note": "Accepted exact-product interpretation: Current Incidents expressly licenses reuse under CC BY 3.0 AU; Data.NSW corroborates the exact CAP product. This product licence prevails over contradictory generic unaltered-copying/commercial-distribution wording; the feed-page distribution reservation remains relevant to access, without revoking compliant licensed reuse. Preserve notices and modification credit. Branding, BOM products and expressly restricted third-party content are excluded. ControlAuthority identifies operational responsibility, not copyright ownership."
+          },
+          "privacyUrl": "https://www.rfs.nsw.gov.au/about-us/privacy",
+          "homepage": "https://www.rfs.nsw.gov.au/fire-information/fires-near-me",
+          "coverage": {
+            "countries": [
+              "AU"
+            ],
+            "bbox": [
+              140.9,
+              -37.6,
+              153.7,
+              -28.1
+            ]
+          },
+          "rfsCurrentSnapshotQualified": true
+        }
+      ]
+    },
     "hazards/ca": {
       "$schema": "../schema/hazards.schema.json",
       "feeds": [
@@ -833,6 +951,201 @@
     }
   },
   "feeds": [
+    {
+      "operator": "smn",
+      "product": "alerts",
+      "name": "SMN Argentina weather warnings",
+      "format": "cap",
+      "tier": "authoritative",
+      "endpoints": {
+        "alerts": {
+          "url": "https://ssl.smn.gob.ar/CAP/AR.php",
+          "smnRss": "ar",
+          "cadenceSec": 180
+        }
+      },
+      "freshnessWindowSec": 900,
+      "requestLimits": {
+        "perMinute": 120
+      },
+      "license": "LicenseRef-CC-BY-2.5-AR",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.5/ar/",
+      "attribution": "Fuente: Servicio Meteorológico Nacional (SMN), República Argentina; normalizado por OpenConditions",
+      "terms": {
+        "url": "https://www.argentina.gob.ar/normativa/361173_disp25_pdf/archivo",
+        "reviewedAt": "2026-11-07",
+        "note": "Disposición 25/2022, sections 2 and 4A: SMN-authored CAP uses CC BY 2.5 Argentina. RSS separately declares CC BY 4.0. Third-party resources are outside this grant and are not fetched. The rolling RSS index is not complete absence authority."
+      },
+      "privacyUrl": "https://www.argentina.gob.ar/terminos-y-condiciones",
+      "homepage": "https://www.smn.gob.ar/",
+      "coverage": {
+        "countries": [
+          "AR"
+        ]
+      },
+      "id": "ar-smn-alerts",
+      "domain": "hazards",
+      "region": "ar",
+      "file": "feeds/hazards/ar.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": true,
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "changeNotice": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://www.argentina.gob.ar/normativa/361173_disp25_pdf/archivo",
+        "reviewedAt": "2026-11-07"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
+      },
+      "restricted": false,
+      "cadenceSec": 180,
+      "country": "AR"
+    },
+    {
+      "operator": "smn",
+      "qualifier": "acp",
+      "product": "alerts",
+      "name": "SMN Argentina short-term warnings (unqualified)",
+      "format": "cap",
+      "tier": "authoritative",
+      "endpoints": {
+        "alerts": {
+          "url": "https://ssl.smn.gob.ar/feeds/CAP/avisocortoplazo/rss_acpCAP.xml",
+          "smnRss": "acp",
+          "cadenceSec": 180
+        }
+      },
+      "freshnessWindowSec": 900,
+      "requestLimits": {
+        "perMinute": 120
+      },
+      "license": "LicenseRef-CC-BY-2.5-AR",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.5/ar/",
+      "attribution": "Fuente: Servicio Meteorológico Nacional (SMN), República Argentina; normalizado por OpenConditions",
+      "terms": {
+        "url": "https://www.argentina.gob.ar/normativa/361173_disp25_pdf/archivo",
+        "reviewedAt": "2026-11-07",
+        "note": "Disposición 25/2022, sections 2 and 4A: SMN-authored CAP uses CC BY 2.5 Argentina. RSS separately declares CC BY 4.0. Third-party resources are outside this grant and are not fetched. The rolling RSS index is not complete absence authority."
+      },
+      "privacyUrl": "https://www.argentina.gob.ar/terminos-y-condiciones",
+      "homepage": "https://www.smn.gob.ar/",
+      "coverage": {
+        "countries": [
+          "AR"
+        ]
+      },
+      "disabled": {
+        "reason": "A real active ACP CAP capture and lifecycle qualification are required before enabling this separate product. Only the no-warning RSS sentinel has been captured.",
+        "since": "2026-11-07"
+      },
+      "id": "ar-smn-acp-alerts",
+      "domain": "hazards",
+      "region": "ar",
+      "file": "feeds/hazards/ar.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": true,
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "changeNotice": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://www.argentina.gob.ar/normativa/361173_disp25_pdf/archivo",
+        "reviewedAt": "2026-11-07"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
+      },
+      "restricted": false,
+      "cadenceSec": 180,
+      "country": "AR"
+    },
+    {
+      "subdivision": "nsw",
+      "operator": "rfs",
+      "product": "alerts",
+      "name": "NSW RFS Current Incidents",
+      "format": "nsw-rfs",
+      "tier": "authoritative",
+      "endpoints": {
+        "alerts": {
+          "url": "https://www.rfs.nsw.gov.au/feeds/majorIncidentsCAP.xml",
+          "cadenceSec": 1800
+        }
+      },
+      "freshnessWindowSec": 3600,
+      "license": "CC-BY-3.0-AU",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/au/",
+      "attribution": "© State of New South Wales (NSW Rural Fire Service). For current information go to www.rfs.nsw.gov.au. Current Incidents, https://www.rfs.nsw.gov.au/fire-information/fires-near-me; CC BY 3.0 AU, https://creativecommons.org/licenses/by/3.0/au/. Modified by OpenConditions: CAP conversion, fire filtering and incident anchors; polygons omitted. No endorsement implied.",
+      "terms": {
+        "url": "https://www.rfs.nsw.gov.au/fire-information/fires-near-me",
+        "reviewedAt": "2026-11-09",
+        "note": "Accepted exact-product interpretation: Current Incidents expressly licenses reuse under CC BY 3.0 AU; Data.NSW corroborates the exact CAP product. This product licence prevails over contradictory generic unaltered-copying/commercial-distribution wording; the feed-page distribution reservation remains relevant to access, without revoking compliant licensed reuse. Preserve notices and modification credit. Branding, BOM products and expressly restricted third-party content are excluded. ControlAuthority identifies operational responsibility, not copyright ownership."
+      },
+      "privacyUrl": "https://www.rfs.nsw.gov.au/about-us/privacy",
+      "homepage": "https://www.rfs.nsw.gov.au/fire-information/fires-near-me",
+      "coverage": {
+        "countries": [
+          "AU"
+        ],
+        "bbox": [
+          140.9,
+          -37.6,
+          153.7,
+          -28.1
+        ]
+      },
+      "rfsCurrentSnapshotQualified": true,
+      "id": "au-nsw-rfs-alerts",
+      "domain": "hazards",
+      "region": "au",
+      "file": "feeds/hazards/au.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": true,
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "changeNotice": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://www.rfs.nsw.gov.au/fire-information/fires-near-me",
+        "reviewedAt": "2026-11-09"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
+      },
+      "restricted": false,
+      "cadenceSec": 1800,
+      "country": "AU"
+    },
     {
       "operator": "eccc",
       "product": "alerts",

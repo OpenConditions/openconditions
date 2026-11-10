@@ -19,6 +19,7 @@ import {
   CAP_URGENCIES,
 } from "./crosswalk/cap.js";
 import {
+  CAP_AU_CLASSES,
   CAP_CP_CLASSES,
   DWD_II_CLASSES,
   METEOALARM_CLASSES,
@@ -40,6 +41,7 @@ const cap = (vocabulary: string, table: Readonly<Record<string, string | null>>)
  * events and GDACS's RSS.
  */
 export const HAZARDS_SOURCE_FORMATS = [
+  "nsw-rfs",
   "cap",
   "nws",
   "meteoalarm",
@@ -102,6 +104,7 @@ export const hazardsModule: RegistryModule = {
       [alertKind, naturalHazardKind],
       [
         DWD_II_CLASSES,
+        CAP_AU_CLASSES,
         CAP_CP_CLASSES,
         VTEC_CLASSES,
         METEOALARM_CLASSES,

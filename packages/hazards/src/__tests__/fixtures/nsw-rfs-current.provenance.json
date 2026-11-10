@@ -1,0 +1,12 @@
+{
+  "url": "https://www.rfs.nsw.gov.au/feeds/majorIncidentsCAP.xml",
+  "retrievedAt": "2026-11-07T17:14:42Z",
+  "retrievalTimeNote": "HTTP Date retained as response time; exact client request start was not logged.",
+  "httpHeaders": "HTTP/2 200 \ndate: Sat, 07 Nov 2026 17:14:42 GMT\ncontent-type: text/xml\ncontent-length: 140065\ncf-ray: a56df9cb3b55c7f9-DUS\ncf-cache-status: REVALIDATED\naccept-ranges: bytes\ncache-control: max-age=30, must-revalidate\netag: \"53ddb36d7337f7bb041f9b1527f3cd7d\"\nlast-modified: Sat, 07 Nov 2026 17:12:42 GMT\nserver: cloudflare\nstrict-transport-security: max-age=3600\nx-content-type-options: nosniff\nx-amz-id-2: k5uBjfeW7lG6lRclMaR2sj1Mj4PCk7uCkMz+oiHeG4339vGUSz7k4ddbO10XanMllk/emTYGkvXPfXLDoeB31eUtmjAz7dT2\nx-amz-request-id: EA5KDQ3W90Z5DEYX\nx-amz-version-id: HPjuLltXJTzRZNE0L8eT2ix8Bs9HTAdw\nset-cookie: __cf_bm=LYRsMAziKM8fkSTnTxEY3cNfIoUXtD039RMfd0uLhHQ-1794071681.8014615-1.0.1.1-8aNcj9GvOu4EpXMvQm3FR3wJmbm.vEg32fh8ma6CyIU2sO5lC4qYIkNYhDhmCiN59ORtUrxkjR2gMZ17e27mZ8bh1WHKfkzqLx9fqL519uwZgDmHO2SKgORjxZjgii4W; HttpOnly; SameSite=None; Partitioned; Secure; Path=/; Domain=www.rfs.nsw.gov.au; Expires=Sat, 07 Nov 2026 17:44:42 GMT\nalt-svc: h3=\":443\"; ma=86400\n\n",
+  "sha256": "22b7d014a8188cd99d48270982a78ade2282aad77e58128cfd11a9ef57c8d15f",
+  "bytes": 140065,
+  "sourcePublication": "2026-11-08T04:12:40+11:00",
+  "license": "CC-BY-3.0-AU",
+  "product": "NSW RFS Current Incidents",
+  "constructedCases": "All mutations in nsw-rfs.test.ts are constructed, including Update/Cancel rejection, prefixes, unmapped anchors, duplicates and empties. No real lifecycle/empty acceptance demonstrated."
+}

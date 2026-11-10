@@ -42,6 +42,7 @@ export const sourceStatus = conditionsSchema.table("source_status", {
   lastSuccessAt: timestamp("last_success_at", { withTimezone: true }),
   lastNetworkSuccessAt: timestamp("last_network_success_at", { withTimezone: true }),
   freshnessDeadline: timestamp("freshness_deadline", { withTimezone: true }),
+  sourcePublishedAt: timestamp("source_published_at", { withTimezone: true }),
   lastPublicationAt: timestamp("last_publication_at", { withTimezone: true }),
   publicationRevision: bigint("publication_revision", { mode: "number" }).notNull().default(0),
   lastOutcome: text("last_outcome"),
@@ -820,3 +821,41 @@ export const geonetCoverage = conditionsSchema.table("geonet_coverage", {
   coveredFrom: timestamp("covered_from", { withTimezone: true }).notNull(),
   coveredUntil: timestamp("covered_until", { withTimezone: true }).notNull(),
 });
+
+/** Durable CAP message window for SMN's rolling indexes, committed with publication. */
+export const smnCapMessage = conditionsSchema.table(
+  "smn_cap_message",
+  {
+    sourceId: text("source_id").notNull(),
+    identifier: text("identifier").notNull(),
+    variant: text("variant").generatedAlwaysAs(sql`encode(sha256(body), 'hex')`).notNull(),
+    retrieval: jsonb("retrieval").notNull().default(sql`'{"legacy":true}'::jsonb`),
+    body: bytea("body").notNull(),
+    retainUntil: timestamp("retain_until", { withTimezone: true }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.sourceId, t.variant] })],
+);
+
+/** The bounded latest SMN projection decision, committed with originals and public records. */
+export const smnCapDecision = conditionsSchema.table("smn_cap_decision", {
+  sourceId: text("source_id").primaryKey(),
+  decidedAt: timestamp("decided_at", { withTimezone: true }).notNull(),
+  decision: jsonb("decision").notNull(),
+});
+
+/** RFS publisher clocks survive record expiry and bounded revision retention.
+ * No automatic pruning: forgetting an incident would permit its stale revival.
+ * Empty incident id holds the distribution high-water, not absence authority.
+ */
+export const nswRfsClock = conditionsSchema.table(
+  "nsw_rfs_clock",
+  {
+    sourceId: text("source_id").notNull(),
+    incidentId: text("incident_id").notNull(),
+    sent: text("sent").notNull(),
+    published: text("published").notNull(),
+    content: text("content").notNull(),
+    expiry: text("expiry").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.sourceId, t.incidentId] })],
+);
