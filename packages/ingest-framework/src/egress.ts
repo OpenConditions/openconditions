@@ -399,6 +399,8 @@ export function guardedFetch(
           void res.body?.cancel().catch(() => {});
           void agent.destroy().catch(() => {});
           agent = undefined;
+          if (currentInit.redirect === "error")
+            throw new Error(`redirect refused fetching ${redact(currentUrl)}`);
           if (!location) {
             throw new Error(`redirect ${res.status} without Location from ${redact(currentUrl)}`);
           }

@@ -68,6 +68,7 @@ import {
 import { loadReference } from "./reference.js";
 import { resolveOpenLr } from "./resolve.js";
 import { tallyRestrictions } from "./restriction-tally.js";
+import { type SmnWindow, smnMessages } from "./smn-messages.js";
 import { inspectSnapshotCompleteness, type SnapshotInspection } from "./snapshot-inspection.js";
 import {
   getLastRowCount,
@@ -570,6 +571,8 @@ async function runAttempt(
   };
   let acceptFetch: (() => void) | undefined;
   let snapshotInspection: SnapshotInspection | undefined;
+  let smnWindow: SmnWindow | undefined;
+  let smnRetrieval: Parameters<typeof smnMessages>[5];
   // Whether any data payload had bytes: a streamed body is taken to have.
   let heldPayload = true;
   let captureEvidence = false;
@@ -592,6 +595,7 @@ async function runAttempt(
     ...(acceptFetch ? { acceptFetch } : {}),
     ...(warning ? { warning } : {}),
     statesComplete: !leftOut,
+    ...(smnWindow ? { smnWindow } : {}),
   });
   const finish = (parse: ParseOutput): Promise<RunResult> => {
     const poll = pollContext();
@@ -880,6 +884,7 @@ async function runAttempt(
           continue;
         }
         if (result.status === "fetched" || result.status === "partial") {
+          if (src.endpoints[role]?.smnRss) smnRetrieval = result.smnRetrieval;
           payloadHashes = [...(payloadHashes ?? []), ...result.payloads.map((p) => p.sha256)];
           if (feedCapture) {
             // The responses as received: an archive, not its entries; an
@@ -1084,22 +1089,42 @@ async function runAttempt(
     }
 
     const roles = dataRoles(src);
+    let smnPayloads: FeedPayloads | undefined;
+    if (src.endpoints["alerts"]?.smnRss) {
+      try {
+        const payloads = await payloadsOf(roles);
+        smnWindow = await smnMessages(
+          deps.sql,
+          src,
+          payloads["alerts"] ?? [],
+          attemptAt,
+          attempt.id,
+          smnRetrieval,
+        );
+        smnPayloads = { ...payloads, alerts: smnWindow.parseBodies };
+      } catch (err) {
+        return failFetch(err);
+      }
+    }
+    const parseBytes = smnPayloads ? payloadBytes(smnPayloads) : bytesOf(roles);
     // A large payload parses in the child process, unless its parse reads
     // reference data, which would have to be copied there every poll.
     const parseProcess =
       deps.parseProcess !== undefined &&
-      bytesOf(roles) >= deps.parseProcess.minBytes &&
+      parseBytes >= deps.parseProcess.minBytes &&
       Object.keys(reference).length === 0
         ? deps.parseProcess
         : undefined;
     const parseApart = async (
       child: ParseProcess,
     ): Promise<{ parsed: ParseOutput } | { failed: RunResult }> => {
-      heldPayload = bytesOf(roles) > 0;
+      heldPayload = parseBytes > 0;
       const payloads = Object.fromEntries(
         roles.map((role) => [
           role,
-          held(role) ?? (fresh[role] ?? []).map((data) => ({ data, gzipped: false })),
+          smnPayloads
+            ? (smnPayloads[role] ?? []).map((data) => ({ data, gzipped: false }))
+            : (held(role) ?? (fresh[role] ?? []).map((data) => ({ data, gzipped: false }))),
         ]),
       );
       try {
@@ -1123,7 +1148,7 @@ async function runAttempt(
       if (parseProcess !== undefined) return parseApart(parseProcess);
       let payloads: FeedPayloads;
       try {
-        payloads = await payloadsOf(roles);
+        payloads = smnPayloads ?? (await payloadsOf(roles));
         snapshotInspection = inspectSnapshotCompleteness(src, payloads["main"] ?? []);
         heldPayload = Object.values(payloads).some((buffers) => buffers.some((b) => b.length > 0));
       } catch (err) {
@@ -1156,7 +1181,7 @@ async function runAttempt(
     // The drafts of a large payload stay on the heap until their write
     // commits, so the gate holds through the write, not just the parse.
     return deps.parseGate
-      ? deps.parseGate.run(bytesOf(roles), parseAndFinish, src.id)
+      ? deps.parseGate.run(parseBytes, parseAndFinish, src.id)
       : parseAndFinish();
   }
 
@@ -1187,6 +1212,7 @@ function liveRoles(src: CatalogFeed): string[] {
 
 /** What the poll's last stages share once its payloads are parsed. */
 interface PollContext {
+  smnWindow?: SmnWindow;
   src: CatalogFeed;
   deps: RunDeps;
   attempt: PollAttempt;
@@ -1331,6 +1357,7 @@ async function finishEventPoll(
   try {
     summary = await publishSituations(deps.sql, src, {
       situations,
+      ...(poll.smnWindow ? { smnWindow: poll.smnWindow, smnDecision: parse.smn } : {}),
       situationsComplete: parse.situationsComplete ?? true,
       ...(unlocatableSituations
         ? {
@@ -1369,7 +1396,7 @@ async function finishEventPoll(
   return {
     count: c.created + c.updated + c.restored,
     durationMs,
-    outcome: situations.length === 0 ? "complete_empty" : "changed",
+    outcome: parse.smn ? "partial" : situations.length === 0 ? "complete_empty" : "changed",
     activeEvents: situations.length - summary.rejected.length,
     inserted: c.created + c.restored,
     updated: c.updated,

@@ -263,6 +263,8 @@ export const endpointSchema = z
       .optional(),
     /** Fetched once per item of another role's payload; the `url` names it as `{item}`. */
     each: eachSchema.optional(),
+    /** Reviewed SMN RSS-to-CAP acquisition; not a generic cross-directory walk. */
+    smnRss: z.enum(["ar", "acp"]).optional(),
     /**
      * The response is a zip archive: the role's payloads are its entries whose
      * name matches `entries` (all without it), in name order, at most
@@ -318,6 +320,26 @@ export const endpointSchema = z
   })
   .strict()
   .superRefine((e, ctx) => {
+    if (e.smnRss) {
+      const expected =
+        e.smnRss === "ar"
+          ? "https://ssl.smn.gob.ar/CAP/AR.php"
+          : "https://ssl.smn.gob.ar/feeds/CAP/avisocortoplazo/rss_acpCAP.xml";
+      if (
+        e.url !== expected ||
+        e.urls ||
+        e.each ||
+        e.follow ||
+        e.pagination ||
+        e.unzip ||
+        e.expand ||
+        e.fanout
+      )
+        ctx.addIssue({
+          code: "custom",
+          message: "smnRss requires its official index URL and no other acquisition mode",
+        });
+    }
     if (e.each) {
       if (e.url === undefined || !e.url.includes("{item}")) {
         ctx.addIssue({

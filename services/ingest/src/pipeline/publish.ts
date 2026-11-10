@@ -16,11 +16,13 @@ import type { FlowOutput } from "@openconditions/roads";
 import {
   LatestCache,
   type LatestCacheWrite,
+  tombstoneRecords,
   type WriteContext,
   type WriteSummary,
   writeSnapshotIn,
 } from "@openconditions/storage";
 import type postgres from "postgres";
+import { checkSmnWindow, type SmnWindow, storeSmnMessages } from "./smn-messages.js";
 import { upsertSourceStatus } from "./source-status.js";
 
 type Sql = postgres.Sql;
@@ -246,6 +248,8 @@ export async function publishSituations(
   src: Pick<CatalogFeed, "id" | "freshnessWindowSec">,
   input: {
     situations: readonly RecordDraft[];
+    smnWindow?: SmnWindow;
+    smnDecision?: ParseOutput["smn"];
     situationsComplete?: boolean;
     unlocatable?: readonly string[];
     /** Local ids of the records behind `unlocatable`; a stored effect's id begins with its record's. */
@@ -280,23 +284,44 @@ export async function publishSituations(
           `(${unlocatable.length} unlocatable in source ${src.id})`,
       );
     }
-    const summary = await writeSnapshotIn(
-      tx,
-      src.id,
-      { situations },
-      {
-        ...writeContext(input),
-        complete: { feature: true, situation: input.situationsComplete ?? true, offer: true },
-      },
-    );
+    if (input.smnWindow) await checkSmnWindow(tx, src.id, input.smnWindow, input.now);
+    const context = {
+      ...writeContext(input),
+      complete: input.smnWindow
+        ? false
+        : { feature: true, situation: input.situationsComplete ?? true, offer: true },
+    };
+    if (input.smnWindow && !input.smnDecision) throw new Error("SMN: missing partial decision");
+    const summary = await writeSnapshotIn(tx, src.id, { situations }, context);
+    if (input.smnDecision) {
+      const held = await tx<
+        { id: string }[]
+      >`SELECT id FROM conditions.situation WHERE source_id=${src.id} AND tombstoned_at IS NULL AND NOT id = ANY(${ids}::text[]) AND (id = ANY(${input.smnDecision.suppress}::text[]) OR EXISTS (SELECT 1 FROM unnest(${input.smnDecision.suppress}::text[]) AS s(id) WHERE left(conditions.situation.id,length(s.id)+1)=s.id || '#'))`;
+      await tombstoneRecords(
+        tx,
+        "situation",
+        held.map((r) => r.id),
+        "withdrawn",
+        context,
+        summary,
+      );
+      summary.counts.situation.withdrawn += held.length;
+    }
+    if (input.smnWindow) {
+      if (summary.rejected.length > 0)
+        throw new Error("SMN: canonical rejection refuses the entire bulletin");
+      await storeSmnMessages(tx, src.id, input.smnWindow.messages, input.now);
+      await tx`INSERT INTO conditions.smn_cap_decision (source_id,decided_at,decision) VALUES (${src.id},${input.now}::timestamptz,${tx.json(JSON.parse(JSON.stringify(input.smnDecision)))}) ON CONFLICT (source_id) DO UPDATE SET decided_at=excluded.decided_at,decision=excluded.decision`;
+    }
     const [{ live }] = await tx<{ live: number }[]>`
       SELECT count(*)::int AS live FROM conditions.situation
        WHERE source_id = ${src.id} AND tombstoned_at IS NULL`;
     const counts = summary.counts.situation;
     await upsertSourceStatus(tx, src.id, {
       freshnessWindowSec: src.freshnessWindowSec,
-      outcome:
-        situations.length === 0 && input.situationsComplete !== false
+      outcome: input.smnDecision
+        ? "partial"
+        : situations.length === 0 && input.situationsComplete !== false
           ? "complete_empty"
           : "changed",
       attemptAt: input.poll.at,
@@ -304,6 +329,11 @@ export async function publishSituations(
       durationMs: input.durationMs,
       attemptId: input.poll.id,
       ...(input.poll.payloadHashes ? { payloadHashes: input.poll.payloadHashes } : {}),
+      ...(input.smnDecision
+        ? {
+            error: `SMN partial: expired=${input.smnDecision.expired}, withheld=${input.smnDecision.withheld}, unresolved=${input.smnDecision.diagnostics.length}`,
+          }
+        : {}),
       publication: {
         activeEvents: live,
         rowCount: live,
