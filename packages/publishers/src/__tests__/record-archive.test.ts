@@ -1,6 +1,7 @@
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { contentHash } from "@openconditions/model";
 import { parquetMetadata, parquetReadObjects } from "hyparquet";
 import { describe, expect, it } from "vitest";
 import {
@@ -233,4 +234,24 @@ describe("the archive of model records", () => {
       currency: "EUR",
     });
   });
+});
+
+it.each([false, true])(
+  "archive output hashes its final PUN projection (extras shared: %s)",
+  (share) => {
+    const original = record({ extras: { pun: { status: "AVAILABLE" } } });
+    original.provenance.sourceFormat = "pun";
+    original.contentHash = contentHash(original);
+    const [shown] = publishedRecords("situation", [original], NOW, { federateExtras: () => share });
+    expect(shown).toBeDefined();
+    expect(shown!.contentHash).toBe(contentHash(shown!));
+    expect(original.extras).toEqual({ pun: { status: "AVAILABLE" } });
+    expect(shown).not.toHaveProperty("extras");
+  },
+);
+it("archive rehashes after withholding other source extras", () => {
+  const original = record({ extras: { diagnostic: "private" } });
+  original.contentHash = contentHash(original);
+  const [shown] = publishedRecords("situation", [original], NOW);
+  expect(shown!.contentHash).toBe(contentHash(shown!));
 });

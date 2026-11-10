@@ -22,6 +22,10 @@ const VTEC_PHENOMENON = /^\/[OTEX]\.[A-Z]{3}\.[A-Z]{4}\.([A-Z]{2})\.[WAYSFON]\./
  */
 function capCodes(eventCodes: readonly CapPair[], parameters: readonly CapPair[]): string[] {
   const codes: string[] = [];
+  for (const e of eventCodes) {
+    if (e.valueName === "https://govshare.gov.au/xmlui/handle/10772/6495")
+      codes.push(`CAP-AU:${e.value.trim()}`);
+  }
   for (const e of eventCodes) if (e.valueName === "II") codes.push(`II:${e.value.trim()}`);
   for (const e of eventCodes) {
     if (!e.valueName.startsWith("profile:CAP-CP:Event:")) continue;

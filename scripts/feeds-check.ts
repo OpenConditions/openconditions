@@ -30,6 +30,7 @@ import {
   type BodyStreamFactory,
   bodyStreamFrom,
 } from "../services/ingest/src/pipeline/body-stream.js";
+import { acquireGeonet } from "../services/ingest/src/pipeline/geonet.js";
 import { streamFeed } from "../services/ingest/src/pipeline/measured-data.js";
 import { loadReference } from "../services/ingest/src/pipeline/reference.js";
 import { digestOnlyTee } from "../services/ingest/src/raw/stream-tee.js";
@@ -157,6 +158,14 @@ async function checkFeed(
 
   if (feed.disabled)
     return { ...result("skipped", `disabled: ${feed.disabled.reason}`), skipReason: "disabled" };
+  if (feed.format === "pun")
+    return {
+      ...result(
+        "skipped",
+        "PUN full-generation acquisition requires the separate qualification route",
+      ),
+      skipReason: "configuration",
+    };
   if (keylessOnly && (feed.auth || feedCredentialNames(feed).some((name) => !name.setting))) {
     return {
       ...result("skipped", "keyless mode: configured credentials/auth are not tested"),
@@ -193,6 +202,22 @@ async function checkFeed(
   const redact = (s: string) => redactSecrets(redactUrl(s), secrets);
   const fetchFn = makeAuthorizedFetch(feed, baseFetch, env);
   const warnings: string[] = [];
+  if (feed.format === "geonet") {
+    try {
+      const started = performance.now();
+      const acquired = await acquireGeonet(feed, fetchFn, new Date().toISOString(), []);
+      return result("ok", undefined, acquired.drafts.length, {
+        rejected: 0,
+        terminal: acquired.terminal.length,
+        bytes: Object.values(acquired.payloads)
+          .flat()
+          .reduce((sum, b) => sum + b.length, 0),
+        parseMs: Math.round(performance.now() - started),
+      });
+    } catch (err) {
+      return result("error", redact(errorText(err)));
+    }
+  }
 
   const reference: Record<string, unknown> = {};
   for (const [role, endpoint] of Object.entries(feed.endpoints)) {
@@ -203,7 +228,15 @@ async function checkFeed(
       return result("warning", `${role} (${endpoint.decoder}) could not be loaded`);
     } else warnings.push(`${role} (${endpoint.decoder}) could not be loaded`);
   }
-  const ctx = { fetchedAt: new Date().toISOString(), cadenceSec: feed.cadenceSec, reference };
+  const ctx = {
+    fetchedAt: new Date().toISOString(),
+    cadenceSec: feed.cadenceSec,
+    reference,
+    payloadEvidence: {} as Record<
+      string,
+      readonly import("@openconditions/ingest-framework").PayloadDigest[]
+    >,
+  };
 
   // A format too large to buffer is read as the service reads it, streamed.
   // A failure before the body opens is the network's; one while reading it,
@@ -262,6 +295,7 @@ async function checkFeed(
       }
       payloads[role] = fetched.buffers;
       payloadUrls[role] = fetched.urls;
+      if (feed.format === "geofa") ctx.payloadEvidence[role] = fetched.payloads;
     } catch (err) {
       return result("warning", redact(errorText(err)));
     }

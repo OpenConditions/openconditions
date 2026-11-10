@@ -125,4 +125,8 @@ export const SAMPLES: SkipSamples = {
 export const EXEMPT: SkipExemptions = {
   "hazards/jma-xml":
     "The dedicated durable worker fails the whole poll on unusable native reports or uncleared offices; it never silently skips a malformed record. Its stateless parser deliberately refuses execution. Worker rollback and public API behavior are exercised in hazards.integration.test.ts.",
+  "hazards/geonet":
+    "GeoNet fails the whole bounded reconciliation on malformed or unknown required values; deleted/reclassified events are explicit terminal dispositions, not skipped records. Optional unavailable measurements remain absent. Parser and PostGIS lifecycle tests cover these paths.",
+  "hazards/nsw-rfs":
+    "Strict all-or-nothing distribution: unreadable or unknown semantics throw and retain last-good publication. Known out-of-scope classes and expired messages are counted as terminal snapshot dispositions, not rejected-record skips.",
 };

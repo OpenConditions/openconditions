@@ -50,6 +50,8 @@ export type ImageRedistribution = (typeof IMAGE_REDISTRIBUTIONS)[number];
 export interface ViewInput {
   /** The publisher's view, preset or image id; `0` for a camera with one view. */
   key: string;
+  detailUrl?: string;
+  credit?: string;
   name?: LocalizedText[];
   /** Where the camera looks, in degrees from north; only for a true camera bearing. */
   bearingDeg?: number;
@@ -179,7 +181,8 @@ function viewComponent(view: ViewInput, camera: ViewCamera): Record<string, unkn
       ...optional("bearingDeg", bearing),
       ...optional("direction", view.direction),
       ...optional("road", view.road),
-      ...optional("detailUrl", camera.detailUrl),
+      ...optional("detailUrl", urlOf(view.detailUrl) ?? camera.detailUrl),
+      ...optional("credit", clean(view.credit)),
       imageRedistribution: camera.imageRedistribution,
     },
   };
@@ -357,6 +360,8 @@ export interface ImageReadingInput {
   cameraId: string;
   viewKey: string;
   status: CameraStatus;
+  detailUrl?: string;
+  credit?: string;
   /** The publisher's own words on the camera's state. */
   statusText?: readonly { lang: string; text: string }[];
   imageUrl?: string;
@@ -415,7 +420,20 @@ export function imageReading(
     property: "camera.image",
     temporality: "live",
     location: input.point === undefined ? { ...UNLOCATED } : pointLocation(input.point),
-    provenance: provenance(feed, input.cameraId, clean(input.upstream)),
+    provenance: {
+      ...provenance(feed, input.cameraId, clean(input.upstream)),
+      attribution: {
+        ...(provenance(feed, input.cameraId)["attribution"] as Record<string, unknown>),
+        ...(clean(input.credit) === undefined && urlOf(input.detailUrl) === undefined
+          ? {}
+          : {
+              publisher: {
+                name: clean(input.credit) ?? feed.attribution,
+                ...optional("url", urlOf(input.detailUrl)),
+              },
+            }),
+      },
+    },
     freshness: freshness(feed, ctx.fetchedAt),
     subject: {
       kind: "feature",

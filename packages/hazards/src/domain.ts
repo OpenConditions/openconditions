@@ -9,8 +9,10 @@ import { parseEffis } from "./formats/effis.js";
 import { parseEonet } from "./formats/eonet.js";
 import { parseFirms } from "./formats/firms.js";
 import { parseGdacs } from "./formats/gdacs.js";
+import { parseGeonet } from "./formats/geonet.js";
 import { parseHms } from "./formats/hms.js";
 import { parseMeteoAlarm } from "./formats/meteoalarm.js";
+import { parseNswRfs } from "./formats/nsw-rfs.js";
 import { parseNws } from "./formats/nws.js";
 import { parseSlstrFrp } from "./formats/slstr-frp.js";
 import { parseUsgs } from "./formats/usgs.js";
@@ -31,6 +33,26 @@ const FORMATS: FeedFormat<HazardsCatalogFeed>[] = [
     parse: () => {
       throw new Error("JMA requires durable worker reconciliation; stateless parsing is refused");
     },
+  },
+  {
+    id: "geonet",
+    kind: "situations",
+    products: ["quakes"],
+    endpoints: {
+      recent: { required: true },
+      detail: { required: true },
+      history: { required: true },
+      solutions: { required: true },
+    },
+    parse: parseGeonet,
+  },
+  {
+    id: "nsw-rfs",
+    kind: "situations",
+    products: ["alerts"],
+    endpoints: { alerts: { required: true } },
+    reparseUnchanged: true,
+    parse: parseNswRfs,
   },
   {
     id: "cap",
@@ -137,4 +159,12 @@ export const hazardsDomain: IngestDomain<HazardsCatalogFeed> =
     feedShape: hazardsFeedShape,
     formats: Object.fromEntries(FORMATS.map((format) => [format.id, format])),
     resolvers: [],
+    lintFeed: (feed) => {
+      const mode = feed.endpoints["alerts"]?.smnRss;
+      if (mode === "acp" && !feed.disabled)
+        return ["SMN ACP requires a real active CAP capture before activation"];
+      if (mode && (feed.format !== "cap" || feed.snapshot))
+        return ["SMN RSS requires rolling CAP acquisition without complete-snapshot authority"];
+      return [];
+    },
   });

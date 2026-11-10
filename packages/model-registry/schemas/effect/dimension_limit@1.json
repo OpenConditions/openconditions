@@ -1551,6 +1551,7 @@
             "jma:event",
             "jma:message",
             "jma:warning",
+            "geonet:event",
             "gdacs:event",
             "glide",
             "gvp:volcano"

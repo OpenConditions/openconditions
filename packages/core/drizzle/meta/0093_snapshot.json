@@ -1,5 +1,5 @@
 {
-  "id": "8ca963f9-3821-43c8-bb47-8cf3ac730e18",
+  "id": "97143600-94cf-4be9-b4e2-01fe08ae752c",
   "prevId": "975f1678-b6d3-4483-b24f-e3233700e8b0",
   "version": "7",
   "dialect": "postgresql",
@@ -670,83 +670,6 @@
           "value": "\"subject_class\" IN ('feature', 'situation', 'observation', 'offer')"
         }
       },
-      "isRLSEnabled": false
-    },
-    "conditions.jma_budget": {
-      "name": "jma_budget",
-      "schema": "conditions",
-      "columns": {
-        "egress": {
-          "name": "egress",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "day": {
-          "name": "day",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "used": {
-          "name": "used",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "reserved": {
-          "name": "reserved",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "jma_budget_egress_day_pk": {
-          "name": "jma_budget_egress_day_pk",
-          "columns": [
-            "egress",
-            "day"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "jma_budget_nonnegative": {
-          "name": "jma_budget_nonnegative",
-          "value": "\"conditions\".\"jma_budget\".\"used\" >= 0 AND \"conditions\".\"jma_budget\".\"reserved\" >= 0"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "conditions.jma_download": {
-      "name": "jma_download",
-      "schema": "conditions",
-      "columns": {
-        "url": {
-          "name": "url",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "value": {
-          "name": "value",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "conditions.contributor_receipt": {
@@ -5852,6 +5775,12 @@
         },
         "freshness_deadline": {
           "name": "freshness_deadline",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_published_at": {
+          "name": "source_published_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false

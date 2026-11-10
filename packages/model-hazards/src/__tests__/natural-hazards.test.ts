@@ -243,6 +243,7 @@ describe("natural hazards", () => {
     for (const id of HAZARDS_SOURCE_FORMATS) expect(formats.contributedBy[id]).toBe("hazards");
     expect([...HAZARDS_SOURCE_FORMATS]).toEqual([
       "jma-xml",
+      "nsw-rfs",
       "cap",
       "nws",
       "meteoalarm",
@@ -252,6 +253,7 @@ describe("natural hazards", () => {
       "effis",
       "hms",
       "usgs",
+      "geonet",
       "eonet",
       "gdacs",
     ]);

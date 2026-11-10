@@ -12,6 +12,7 @@ export * from "./formats/effis.js";
 export * from "./formats/eonet.js";
 export * from "./formats/firms.js";
 export * from "./formats/gdacs.js";
+export * from "./formats/geonet.js";
 export * from "./formats/hms.js";
 export * from "./formats/meteoalarm.js";
 export * from "./formats/nws.js";

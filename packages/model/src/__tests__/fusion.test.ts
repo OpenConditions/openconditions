@@ -270,3 +270,39 @@ describe("fusion", () => {
     });
   });
 });
+
+it("does not fuse a publisher snapshot past its explicit expiry", () => {
+  const c = feed("free_flow", "2026-10-01T08:00:00Z");
+  c.observation.freshness = { expiresAt: "2026-10-01T10:00:00Z" };
+  expect(winner([c])).toBeUndefined();
+});
+
+it("preserves existing on-demand expiry handling at the storage lifecycle seam", () => {
+  const c = feed("free_flow", "2026-10-01T08:00:00Z");
+  c.observation.provenance.accessMode = "on_demand";
+  c.observation.freshness = { expiresAt: "2026-10-01T10:00:00Z" };
+  expect(winner([c])).toBe("free_flow");
+});
+
+it.each([false, true])(
+  "caps stored fusion by every explicit contributor expiry (mixed=%s)",
+  (mixed) => {
+    const bulk = feed("free_flow", "2026-10-01T11:30:00Z");
+    bulk.observation.freshness = { expiresAt: "2026-10-01T12:05:00Z" };
+    const other = feed("free_flow", "2026-10-01T11:00:00Z");
+    if (mixed) {
+      other.observation.provenance.accessMode = "on_demand";
+      other.observation.freshness = { expiresAt: "2026-10-01T12:10:00Z" };
+    }
+    const fusion = fuse(crowdRegistry, "charging.evse_status", [bulk, other], NOW)!;
+    const result = fusedObservation(crowdRegistry, fusion, {
+      subject: { kind: "feature", featureId: "oc:feature:oc.example.org:c1", componentKey: "2" },
+      location: { geometry: null, extent: "none", geometryOrigin: "none", fuzziness: "exact" },
+      instanceId: "oc.example.org",
+      now: NOW,
+    });
+    expect(result.ok && result.value["freshness"]).toMatchObject({
+      expiresAt: "2026-10-01T12:05:00.000Z",
+    });
+  },
+);

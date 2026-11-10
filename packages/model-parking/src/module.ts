@@ -62,8 +62,10 @@ export const PARKING_SOURCE_FORMATS = [
   "sbb",
   "opendatahub",
   "hdb",
+  "taipei",
   "utmc",
   "tfnsw",
+  "vegvesen-parkreg",
 ] as const;
 
 /**

@@ -36,8 +36,10 @@ test("every format is a source format the hazards model contributes", () => {
   }
 });
 
-test("the feed shape is the base shape alone", () => {
-  expect(Object.keys(hazardsFeedShape).sort()).toEqual(Object.keys(feedBaseShape).sort());
+test("the feed shape adds the explicit RFS snapshot qualification control", () => {
+  expect(Object.keys(hazardsFeedShape).sort()).toEqual(
+    [...Object.keys(feedBaseShape), "rfsCurrentSnapshotQualified"].sort(),
+  );
   const feed = {
     operator: "dwd",
     product: "alerts",
@@ -78,6 +80,15 @@ test("a format without a payload parses to nothing, and a situations format says
   for (const format of Object.values(hazardsDomain.formats)) {
     if (format.id === "jma-xml") {
       expect(() => format.parse(dwdFeed(), {}, ctx)).toThrow("durable worker reconciliation");
+      continue;
+    }
+    if (format.id === "geonet") {
+      expect(() => format.parse(dwdFeed(), {}, ctx)).toThrow("reconciled acquisition");
+      continue;
+    }
+    if (format.id === "nsw-rfs") {
+      expect(() => format.parse(dwdFeed(), {}, ctx)).toThrow(/distribution/);
+
       continue;
     }
     const out = format.parse(dwdFeed(), {}, ctx);

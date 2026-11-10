@@ -1,0 +1,7 @@
+# SMN captures
+
+These are bounded live captures from 2026-11-07. `provenance.json` records exact URLs, retrieval instants, response headers and SHA-256 hashes. The ordinary RSS index is captured whole; two representative current CAP documents were fetched. The two warning URLs named in the accepted research were also captured to verify the original wind timestamps and the indexed, expired Zonda polygon with duplicate vertices. The ACP index contains the explicit no-warning sentinel. No active ACP CAP has been qualified. CAP cancellation and altered lifecycle cases in tests are synthetic mutations, not observed cancellations.
+
+The RSS notice states CC BY 4.0. SMN-authored CAP is attributed under CC BY 2.5 Argentina using Disposición 25/2022, sections 2 and 4A: <https://www.argentina.gob.ar/normativa/361173_disp25_pdf/archivo>. Source: Servicio Meteorológico Nacional (SMN), República Argentina. XML is preserved as received; OpenConditions normalizes the projected records. Future third-party resources are outside this grant and are not fetched.
+
+The current policy HTML and PDF returned 403 during this capture attempt; the accepted issue research previously read the official annex. Those failed reads are recorded in the provenance receipt and are not represented as current successful policy captures. Copyright year 2025 is a rights notice, not a freshness timestamp. Index presence is not evidence of an active warning or a complete national census.

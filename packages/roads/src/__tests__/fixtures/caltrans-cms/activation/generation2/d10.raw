@@ -1,0 +1,5676 @@
+{
+	"data":
+	[
+		{
+			"cms":
+			{
+				"index": "V1",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "1 - SB I-5 S\/O FRENCH CAMP RD",
+					"nearbyPlace":    "French Camp",
+					"longitude":      "-121.281221",
+					"latitude":       "37.889094",
+					"elevation":      "9",
+					"direction":      "South",
+					"county":         "San Joaquin",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "21.96",
+					"alignment":      "",
+					"milepost":       "467.43"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "19:20:07"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V2",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "2 - SB I 5 ROTH RD",
+					"nearbyPlace":    "French Camp",
+					"longitude":      "-121.279925",
+					"latitude":       "37.86444",
+					"elevation":      "9",
+					"direction":      "South",
+					"county":         "San Joaquin",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "20.22",
+					"alignment":      "",
+					"milepost":       "465.7"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "07:40:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V3",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "3 - SB I 5 N\/O LATHROP RD",
+					"nearbyPlace":    "Lathrop",
+					"longitude":      "-121.285075",
+					"latitude":       "37.844368",
+					"elevation":      "19",
+					"direction":      "South",
+					"county":         "San Joaquin",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "18.81",
+					"alignment":      "",
+					"milepost":       "464.29"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-01-27",
+						"messageTime": "12:05:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V4",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "4 - SB I 5 N\/O LOUISE AVE",
+					"nearbyPlace":    "Lathrop",
+					"longitude":      "-121.29299",
+					"latitude":       "37.819608",
+					"elevation":      "9",
+					"direction":      "South",
+					"county":         "San Joaquin",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "17.04",
+					"alignment":      "",
+					"milepost":       "462.52"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:05:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V5",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "5 - SB I 5 N\/O RTE 120",
+					"nearbyPlace":    "Lathrop",
+					"longitude":      "-121.300261",
+					"latitude":       "37.799465",
+					"elevation":      "13",
+					"direction":      "South",
+					"county":         "San Joaquin",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "15.59",
+					"alignment":      "",
+					"milepost":       "461.06"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V6",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "6 - WB 120 E\/O MAIN ST",
+					"nearbyPlace":    "Manteca",
+					"longitude":      "-121.202038",
+					"latitude":       "37.783608",
+					"elevation":      "32",
+					"direction":      "West",
+					"county":         "San Joaquin",
+					"route":          "SR-120",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "6.06",
+					"alignment":      "",
+					"milepost":       "5.56"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:00:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V7",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "7 - WB 120 E\/O UNION AVE",
+					"nearbyPlace":    "Manteca",
+					"longitude":      "-121.225306",
+					"latitude":       "37.783576",
+					"elevation":      "29",
+					"direction":      "West",
+					"county":         "San Joaquin",
+					"route":          "SR-120",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "4.79",
+					"alignment":      "",
+					"milepost":       "4.3"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:20:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V8",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "8 - WB 120 W\/O AIRPORT WAY",
+					"nearbyPlace":    "Manteca",
+					"longitude":      "-121.262413",
+					"latitude":       "37.783457",
+					"elevation":      "26",
+					"direction":      "West",
+					"county":         "San Joaquin",
+					"route":          "SR-120",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "2.86",
+					"alignment":      "",
+					"milepost":       "2.25"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:10:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V9",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "9 - WB 120 E\/O I 5",
+					"nearbyPlace":    "Lathrop",
+					"longitude":      "-121.300381",
+					"latitude":       "37.789272",
+					"elevation":      "19",
+					"direction":      "West",
+					"county":         "San Joaquin",
+					"route":          "SR-120",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "0.59",
+					"alignment":      "",
+					"milepost":       "0.09"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V10",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "10 - SB I-5 S\/O MARCH LANE",
+					"nearbyPlace":    "Stockton",
+					"longitude":      "-121.341259",
+					"latitude":       "37.97832",
+					"elevation":      "0",
+					"direction":      "South",
+					"county":         "San Joaquin",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "29.56",
+					"alignment":      "",
+					"milepost":       "475"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-05",
+						"messageTime": "12:54:03"
+					},
+					"display":     "2 Pages (Extended)",
+					"displayTime": "2.5",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "W-4 TO CLOSE AT",
+						"phase1Line2": "TRACY BLVD",
+						"phase1Line3": "11\/15 7AM-7PM"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Single_Stroke",
+						"phase2Line1": "",
+						"phase2Line2": "TUNE TO 1670 AM",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V11",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "11 - NB I-5 N\/O FRENCH CAMP",
+					"nearbyPlace":    "Stockton",
+					"longitude":      "-121.28547",
+					"latitude":       "37.902583",
+					"elevation":      "16",
+					"direction":      "North",
+					"county":         "San Joaquin",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "22.91",
+					"alignment":      "",
+					"milepost":       "468.39"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:02"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V12",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "12 - SB 99 S\/O HAMMER - N\/O Wilson Way",
+					"nearbyPlace":    "Stockton",
+					"longitude":      "-121.258266",
+					"latitude":       "38.010144",
+					"elevation":      "26",
+					"direction":      "South",
+					"county":         "San Joaquin",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "22.16",
+					"alignment":      "",
+					"milepost":       "257.98"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "19:15:02"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V13",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "13 - NB 99 S\/O ARCH RD.",
+					"nearbyPlace":    "Stockton",
+					"longitude":      "-121.219587",
+					"latitude":       "37.877485",
+					"elevation":      "19",
+					"direction":      "North",
+					"county":         "San Joaquin",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "12.71",
+					"alignment":      "",
+					"milepost":       "248.5"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:06"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V14",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "14 - NB 99 S\/O FRENCH CAMP RD",
+					"nearbyPlace":    "Manteca",
+					"longitude":      "-121.217633",
+					"latitude":       "37.840245",
+					"elevation":      "42",
+					"direction":      "North",
+					"county":         "San Joaquin",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "10.16",
+					"alignment":      "",
+					"milepost":       "245.94"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "15:40:07"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V15",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "15 - NB I-5 S\/O RTE 205",
+					"nearbyPlace":    "Tracy",
+					"longitude":      "-121.335214",
+					"latitude":       "37.764306",
+					"elevation":      "13",
+					"direction":      "North",
+					"county":         "San Joaquin",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "12.35",
+					"alignment":      "",
+					"milepost":       "457.84"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "06:00:05"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V16",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "16 - EB 120 EO AIRPORT",
+					"nearbyPlace":    "Manteca",
+					"longitude":      "-121.242966",
+					"latitude":       "37.783012",
+					"elevation":      "26",
+					"direction":      "East",
+					"county":         "San Joaquin",
+					"route":          "SR-120",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "3.87",
+					"alignment":      "",
+					"milepost":       "3.33"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "16:25:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V17",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "17 - EB 120 EO UNION",
+					"nearbyPlace":    "Manteca",
+					"longitude":      "-121.217359",
+					"latitude":       "37.783114",
+					"elevation":      "39",
+					"direction":      "East",
+					"county":         "San Joaquin",
+					"route":          "SR-120",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "5.23",
+					"alignment":      "",
+					"milepost":       "4.73"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "16:35:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V18",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "18 - NB 99 N\/O FREMONT",
+					"nearbyPlace":    "Stockton",
+					"longitude":      "-121.24712",
+					"latitude":       "37.97361",
+					"elevation":      "19",
+					"direction":      "North",
+					"county":         "San Joaquin",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "19.55",
+					"alignment":      "",
+					"milepost":       "255.36"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:50:07"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V19",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "19 - NB 99 MILGEO OC",
+					"nearbyPlace":    "Ripon",
+					"longitude":      "-121.133162",
+					"latitude":       "37.746685",
+					"elevation":      "65",
+					"direction":      "North",
+					"county":         "San Joaquin",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "1.7",
+					"alignment":      "",
+					"milepost":       "237.51"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:03"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V20",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "20 - EB 120 AT CALLA RD (Manteca)",
+					"nearbyPlace":    "Manteca",
+					"longitude":      "-121.165626",
+					"latitude":       "37.797498",
+					"elevation":      "52",
+					"direction":      "East",
+					"county":         "San Joaquin",
+					"route":          "SR-120",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "7.6",
+					"alignment":      "",
+					"milepost":       "8.08"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-05",
+						"messageTime": "12:20:48"
+					},
+					"display":     "2 Pages (Extended)",
+					"displayTime": "2.5",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "SONORA PASS",
+						"phase1Line2": "OPEN",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Single_Stroke",
+						"phase2Line1": "TIOGA PASS",
+						"phase2Line2": "OPEN",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V21",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "21 - NB 99 S\/O Mer-Sta Cnty Line",
+					"nearbyPlace":    "Turlock",
+					"longitude":      "-120.821226",
+					"latitude":       "37.463215",
+					"elevation":      "114",
+					"direction":      "North",
+					"county":         "Merced",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "37.25",
+					"alignment":      "",
+					"milepost":       "210.7"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V22",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "22 - SB 99 N\/O 140 MERCED",
+					"nearbyPlace":    "Merced",
+					"longitude":      "-120.489116",
+					"latitude":       "37.298779",
+					"elevation":      "177",
+					"direction":      "South",
+					"county":         "Merced",
+					"route":          "SR-59",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "14.77",
+					"alignment":      "",
+					"milepost":       "188.43"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:02"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V23",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "23 - SB 99 S\/O HAMMAT AVE.",
+					"nearbyPlace":    "Livingston",
+					"longitude":      "-120.705458",
+					"latitude":       "37.381005",
+					"elevation":      "147",
+					"direction":      "South",
+					"county":         "Merced",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "28.51",
+					"alignment":      "",
+					"milepost":       "201.91"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "18:25:02"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V24",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "24 - SB 99 S\/O ARMSTRONG RD",
+					"nearbyPlace":    "Lodi",
+					"longitude":      "-121.260201",
+					"latitude":       "38.084087",
+					"elevation":      "49",
+					"direction":      "South",
+					"county":         "San Joaquin",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "27.31",
+					"alignment":      "",
+					"milepost":       "263.08"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:04"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V25",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "25 - NB 99 MORADA S\/O 8 MILE RD",
+					"nearbyPlace":    "Stockton",
+					"longitude":      "-121.258364",
+					"latitude":       "38.044993",
+					"elevation":      "29",
+					"direction":      "North",
+					"county":         "San Joaquin",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "24.57",
+					"alignment":      "",
+					"milepost":       "260.37"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:02"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V26",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "26 - SB 99 N\/O FARMINGTON RD",
+					"nearbyPlace":    "Stockton",
+					"longitude":      "-121.236909",
+					"latitude":       "37.948281",
+					"elevation":      "13",
+					"direction":      "South",
+					"county":         "San Joaquin",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "17.72",
+					"alignment":      "",
+					"milepost":       "253.52"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V27",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "27 - Merced N\/B 99 S\/O Mission Ave",
+					"nearbyPlace":    "Merced",
+					"longitude":      "-120.424558",
+					"latitude":       "37.262409",
+					"elevation":      "196",
+					"direction":      "North",
+					"county":         "Merced",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "10.59",
+					"alignment":      "",
+					"milepost":       "183.96"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:02"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V28",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "28 - NB 99 N\/O Westside Blvd",
+					"nearbyPlace":    "Atwater",
+					"longitude":      "-120.658042",
+					"latitude":       "37.36418",
+					"elevation":      "154",
+					"direction":      "North",
+					"county":         "Merced",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "25.64",
+					"alignment":      "",
+					"milepost":       "199.04"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V29",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "29 - SB 99 S\/O Childs Ave",
+					"nearbyPlace":    "Merced",
+					"longitude":      "-120.450913",
+					"latitude":       "37.282992",
+					"elevation":      "183",
+					"direction":      "South",
+					"county":         "Merced",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "12.6",
+					"alignment":      "",
+					"milepost":       "185.91"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:02"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V30",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "30 - SB 99 S\/O WATERLOO",
+					"nearbyPlace":    "Stockton",
+					"longitude":      "-121.250015",
+					"latitude":       "37.979753",
+					"elevation":      "32",
+					"direction":      "South",
+					"county":         "San Joaquin",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "20",
+					"alignment":      "",
+					"milepost":       "255.82"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:15:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V31",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "31 - NB I-5 S\/O RTE 152",
+					"nearbyPlace":    "Los Banos",
+					"longitude":      "-120.94633",
+					"latitude":       "37.032645",
+					"elevation":      "298",
+					"direction":      "North",
+					"county":         "Merced",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "15.47",
+					"alignment":      "",
+					"milepost":       "400.49"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-01-13",
+						"messageTime": "06:55:02"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V32",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "32 - SB I-5 N\/O RTE 152",
+					"nearbyPlace":    "Gustine",
+					"longitude":      "-120.997722",
+					"latitude":       "37.085056",
+					"elevation":      "160",
+					"direction":      "South",
+					"county":         "Merced",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "20.07",
+					"alignment":      "",
+					"milepost":       "405.06"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-02-02",
+						"messageTime": "08:20:02"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V33",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "33 - EB RTE 152 W\/O I-5",
+					"nearbyPlace":    "Gustine",
+					"longitude":      "-120.998782",
+					"latitude":       "37.056637",
+					"elevation":      "295",
+					"direction":      "East",
+					"county":         "Merced",
+					"route":          "SR-33",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "13.24",
+					"alignment":      "",
+					"milepost":       "60.15"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-02-02",
+						"messageTime": "08:20:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V34",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "34 - WB RTE 152 E\/O I-5",
+					"nearbyPlace":    "Los Banos",
+					"longitude":      "-120.94686",
+					"latitude":       "37.056883",
+					"elevation":      "180",
+					"direction":      "West",
+					"county":         "Merced",
+					"route":          "SR-152",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "15.11",
+					"alignment":      "",
+					"milepost":       "63.02"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-01-13",
+						"messageTime": "06:55:02"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V35",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "35 - SB I-5 N\/O 33 (Santa Nella)",
+					"nearbyPlace":    "Gustine",
+					"longitude":      "-121.023155",
+					"latitude":       "37.115404",
+					"elevation":      "164",
+					"direction":      "South",
+					"county":         "Merced",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "22.59",
+					"alignment":      "",
+					"milepost":       "407.61"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V36",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "36 - SB I-5 WESTLEY REST AREA",
+					"nearbyPlace":    "Westley",
+					"longitude":      "-121.327315",
+					"latitude":       "37.585693",
+					"elevation":      "305",
+					"direction":      "South",
+					"county":         "Stanislaus",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "27.54",
+					"alignment":      "",
+					"milepost":       "445.06"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V37",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "37 - NB I-5 WESTLEY REST AREA",
+					"nearbyPlace":    "Westley",
+					"longitude":      "-121.321755",
+					"latitude":       "37.582109",
+					"elevation":      "301",
+					"direction":      "North",
+					"county":         "Stanislaus",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "27.15",
+					"alignment":      "",
+					"milepost":       "444.67"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V38",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "38 - EB 152 SAN LUIS RESERVOIR",
+					"nearbyPlace":    "Gustine",
+					"longitude":      "-121.059912",
+					"latitude":       "37.062078",
+					"elevation":      "272",
+					"direction":      "East",
+					"county":         "Merced",
+					"route":          "SR-152",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "10.76",
+					"alignment":      "",
+					"milepost":       "56.69"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V39",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "39 - NB 99 N\/O WILSON WAY",
+					"nearbyPlace":    "Stockton",
+					"longitude":      "-121.257747",
+					"latitude":       "38.009594",
+					"elevation":      "29",
+					"direction":      "North",
+					"county":         "San Joaquin",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "22.12",
+					"alignment":      "",
+					"milepost":       "257.94"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:02"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V41",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "41 - SB 99 N of Westside Blvd",
+					"nearbyPlace":    "Atwater",
+					"longitude":      "-120.656829",
+					"latitude":       "37.363255",
+					"elevation":      "157",
+					"direction":      "South",
+					"county":         "Merced",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "25.55",
+					"alignment":      "",
+					"milepost":       "198.95"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "19:35:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V42",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "42 - EB 108 SOULSBYVILLE",
+					"nearbyPlace":    "Soulsbyville",
+					"longitude":      "-120.274819",
+					"latitude":       "37.992415",
+					"elevation":      "2926",
+					"direction":      "East",
+					"county":         "Tuolumne",
+					"route":          "SR-108",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "7.01",
+					"alignment":      "",
+					"milepost":       "26.07"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-05",
+						"messageTime": "12:21:06"
+					},
+					"display":     "2 Pages (Extended)",
+					"displayTime": "2.5",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "SONORA PASS",
+						"phase1Line2": "OPEN",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Single_Stroke",
+						"phase2Line1": "TIOGA PASS",
+						"phase2Line2": "OPEN",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V43",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "43 - EB 120 W\/O YOSEMITE",
+					"nearbyPlace":    "Jamestown",
+					"longitude":      "-120.492974",
+					"latitude":       "37.88912",
+					"elevation":      "1148",
+					"direction":      "East",
+					"county":         "Tuolumne",
+					"route":          "SR-108",
+					"routeSuffix":    "",
+					"postmilePrefix": "L",
+					"postmile":       "0.13",
+					"alignment":      "",
+					"milepost":       "51.17"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-05",
+						"messageTime": "12:21:20"
+					},
+					"display":     "2 Pages (Extended)",
+					"displayTime": "2.5",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "SONORA PASS",
+						"phase1Line2": "OPEN",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "Single_Stroke",
+						"phase2Line1": "TIOGA PASS",
+						"phase2Line2": "OPEN",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V44",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "44 - NB I5 S of Charter Way",
+					"nearbyPlace":    "Stockton",
+					"longitude":      "-121.297059",
+					"latitude":       "37.93549",
+					"elevation":      "32",
+					"direction":      "North",
+					"county":         "San Joaquin",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "25.26",
+					"alignment":      "",
+					"milepost":       "470.75"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V45",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "45 - EB 49 (MOCCASIN)",
+					"nearbyPlace":    "Coulterville",
+					"longitude":      "-120.315081",
+					"latitude":       "37.815299",
+					"elevation":      "984",
+					"direction":      "East",
+					"county":         "Tuolumne",
+					"route":          "SR-120",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "23.71",
+					"alignment":      "",
+					"milepost":       "63.11"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-05",
+						"messageTime": "10:40:01"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "TIOGA PASS",
+						"phase1Line2": "OPEN",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V46",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "46 - NB I-5 S\/O 120",
+					"nearbyPlace":    "Lathrop",
+					"longitude":      "-121.314064",
+					"latitude":       "37.780135",
+					"elevation":      "26",
+					"direction":      "North",
+					"county":         "San Joaquin",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "13.96",
+					"alignment":      "",
+					"milepost":       "459.24"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-04",
+						"messageTime": "15:06:05"
+					},
+					"display":     "2 Pages (Extended)",
+					"displayTime": "2.5",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "W-4 TO CLOSE AT",
+						"phase1Line2": "TRACY BLVD",
+						"phase1Line3": "11\/15 7AM-7PM"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Single_Stroke",
+						"phase2Line1": "",
+						"phase2Line2": "TUNE TO 1670 AM",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V47",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "47 - SB 99 GRIFFITH ROAD OC",
+					"nearbyPlace":    "Turlock",
+					"longitude":      "-120.814175",
+					"latitude":       "37.459942",
+					"elevation":      "108",
+					"direction":      "South",
+					"county":         "Merced",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "36.77",
+					"alignment":      "",
+					"milepost":       "210.22"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:02"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V48",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "48 - NB I5 S of Monte Diablo Ave",
+					"nearbyPlace":    "Stockton",
+					"longitude":      "-121.32564",
+					"latitude":       "37.9565",
+					"elevation":      "9",
+					"direction":      "North",
+					"county":         "San Joaquin",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "27.71",
+					"alignment":      "",
+					"milepost":       "472.99"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:02"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V49",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "49 - NB I5 N of March Lane",
+					"nearbyPlace":    "Stockton",
+					"longitude":      "-121.343665",
+					"latitude":       "37.985934",
+					"elevation":      "-3",
+					"direction":      "North",
+					"county":         "San Joaquin",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "30.1",
+					"alignment":      "",
+					"milepost":       "475.38"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:02"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V50",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "50 - EB 4 W\/O MURPHYS",
+					"nearbyPlace":    "Murphys",
+					"longitude":      "-120.451378",
+					"latitude":       "38.143015",
+					"elevation":      "2234",
+					"direction":      "East",
+					"county":         "Calaveras",
+					"route":          "SR-4",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "29.98",
+					"alignment":      "",
+					"milepost":       "123.06"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-03",
+						"messageTime": "22:20:02"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "EBBETTS PASS",
+						"phase1Line2": "CLOSED",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V51",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "51 - SB 99 S\/O MITCHELL",
+					"nearbyPlace":    "Ceres",
+					"longitude":      "-120.930215",
+					"latitude":       "37.567936",
+					"elevation":      "95",
+					"direction":      "South",
+					"county":         "Stanislaus",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "9.45",
+					"alignment":      "",
+					"milepost":       "220.51"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "16:45:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V52",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "52 - NB 99 S\/O KEYES",
+					"nearbyPlace":    "Keyes",
+					"longitude":      "-120.915828",
+					"latitude":       "37.556021",
+					"elevation":      "85",
+					"direction":      "North",
+					"county":         "Stanislaus",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "8.32",
+					"alignment":      "",
+					"milepost":       "219.37"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "18:05:02"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V53",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "53 - SB 99 N\/O TAYLOR",
+					"nearbyPlace":    "Turlock",
+					"longitude":      "-120.898816",
+					"latitude":       "37.542426",
+					"elevation":      "98",
+					"direction":      "South",
+					"county":         "Stanislaus",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "7.26",
+					"alignment":      "",
+					"milepost":       "218.02"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:02"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V54",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "54 - NB 99 S\/O HATCH ROAD (N\/O WHITMORE)",
+					"nearbyPlace":    "Ceres",
+					"longitude":      "-120.971333",
+					"latitude":       "37.604517",
+					"elevation":      "82",
+					"direction":      "North",
+					"county":         "Stanislaus",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "12.83",
+					"alignment":      "",
+					"milepost":       "223.89"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V55",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "55 - SB 99 N\/O SR 219 KIERNAN AVE",
+					"nearbyPlace":    "Salida",
+					"longitude":      "-121.092068",
+					"latitude":       "37.715131",
+					"elevation":      "59",
+					"direction":      "South",
+					"county":         "Stanislaus",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "23.31",
+					"alignment":      "",
+					"milepost":       "234.37"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "16:50:07"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V56",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "56 - NB SR99 S of 219 Kiernan Ave",
+					"nearbyPlace":    "Modesto",
+					"longitude":      "-121.074474",
+					"latitude":       "37.703639",
+					"elevation":      "75",
+					"direction":      "North",
+					"county":         "Stanislaus",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "22.04",
+					"alignment":      "",
+					"milepost":       "233.14"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "18:40:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V57",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "57 - SB 99 S\/O AUSTIN ROAD",
+					"nearbyPlace":    "Ripon",
+					"longitude":      "-121.168017",
+					"latitude":       "37.766817",
+					"elevation":      "52",
+					"direction":      "South",
+					"county":         "San Joaquin",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "4.56",
+					"alignment":      "",
+					"milepost":       "240.38"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "20:40:02"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V58",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "58 - EB SR219 W of Morrow Rd",
+					"nearbyPlace":    "Modesto",
+					"longitude":      "-121.038049",
+					"latitude":       "37.711336",
+					"elevation":      "91",
+					"direction":      "North",
+					"county":         "Stanislaus",
+					"route":          "SR-219",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "2.51",
+					"alignment":      "",
+					"milepost":       "2.43"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V59",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "59 - WB SR219 E of Pentecost Dr",
+					"nearbyPlace":    "Modesto",
+					"longitude":      "-121.001175",
+					"latitude":       "37.711341",
+					"elevation":      "104",
+					"direction":      "South",
+					"county":         "Stanislaus",
+					"route":          "SR-219",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "4.52",
+					"alignment":      "",
+					"milepost":       "4.44"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V60",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "60 - EB 580 FLYNN ROAD",
+					"nearbyPlace":    "Livermore",
+					"longitude":      "-121.670728",
+					"latitude":       "37.718524",
+					"elevation":      "961",
+					"direction":      "East",
+					"county":         "Alameda",
+					"route":          "I-580",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "6.56",
+					"alignment":      "",
+					"milepost":       "22.71"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "15:30:06"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V61",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "61 - EB SR205 E of Mtn House Pkwy",
+					"nearbyPlace":    "Tracy",
+					"longitude":      "-121.513384",
+					"latitude":       "37.741111",
+					"elevation":      "108",
+					"direction":      "East",
+					"county":         "San Joaquin",
+					"route":          "I-205",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "2.37",
+					"alignment":      "",
+					"milepost":       "3.3"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:02"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V62",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "62 - EB SR205 W of Tracy Blvd",
+					"nearbyPlace":    "Tracy",
+					"longitude":      "-121.446717",
+					"latitude":       "37.760561",
+					"elevation":      "13",
+					"direction":      "East",
+					"county":         "San Joaquin",
+					"route":          "I-205",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "6.33",
+					"alignment":      "",
+					"milepost":       "7.26"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V63",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "63 - WB 205 MACARTHUR DRIVE",
+					"nearbyPlace":    "Tracy",
+					"longitude":      "-121.416546",
+					"latitude":       "37.764218",
+					"elevation":      "26",
+					"direction":      "West",
+					"county":         "San Joaquin",
+					"route":          "I-205",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "8.03",
+					"alignment":      "",
+					"milepost":       "8.96"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:02"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V64",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "64 - EB 205 EAST BANTA OH",
+					"nearbyPlace":    "Tracy",
+					"longitude":      "-121.360219",
+					"latitude":       "37.764726",
+					"elevation":      "13",
+					"direction":      "East",
+					"county":         "San Joaquin",
+					"route":          "I-205",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "11.18",
+					"alignment":      "",
+					"milepost":       "12.11"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "18:55:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V65",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "65 - NB 5 S\/O Eight Mile Road",
+					"nearbyPlace":    "Stockton",
+					"longitude":      "-121.36363",
+					"latitude":       "38.03168",
+					"elevation":      "16",
+					"direction":      "North",
+					"county":         "San Joaquin",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "33.43",
+					"alignment":      "",
+					"milepost":       "478.92"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V66",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "66 - SB I-5 S\/O Peltier Rd",
+					"nearbyPlace":    "Lodi",
+					"longitude":      "-121.40004",
+					"latitude":       "38.16796",
+					"elevation":      "13",
+					"direction":      "South",
+					"county":         "San Joaquin",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "43.16",
+					"alignment":      "",
+					"milepost":       "488.66"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-04",
+						"messageTime": "15:07:07"
+					},
+					"display":     "2 Pages (Extended)",
+					"displayTime": "2.5",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "W-4 TO CLOSE AT",
+						"phase1Line2": "TRACY BLVD",
+						"phase1Line3": "11\/15 7AM-7PM"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Single_Stroke",
+						"phase2Line1": "",
+						"phase2Line2": "TUNE TO 1670 AM",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V67",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "67 - EB 12 Rio Vista",
+					"nearbyPlace":    "Rio Vista",
+					"longitude":      "-121.69175",
+					"latitude":       "38.16067",
+					"elevation":      "16",
+					"direction":      "East",
+					"county":         "Solano",
+					"route":          "SR-12",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "26.02",
+					"alignment":      "",
+					"milepost":       "63.21"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:03"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V68",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "68 - WB SR 12 E\/O I-5",
+					"nearbyPlace":    "Lodi",
+					"longitude":      "-121.37599",
+					"latitude":       "38.11624",
+					"elevation":      "13",
+					"direction":      "West",
+					"county":         "San Joaquin",
+					"route":          "SR-12",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "11.37",
+					"alignment":      "",
+					"milepost":       "81.15"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V69",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "69 - NB SR99 N of Atwtr-Mer Expwy",
+					"nearbyPlace":    "Atwater",
+					"longitude":      "-120.574668",
+					"latitude":       "37.33371",
+					"elevation":      "170",
+					"direction":      "North",
+					"county":         "Merced",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "20.44",
+					"alignment":      "",
+					"milepost":       "193.82"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V70",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "70 - NB 99 Chowchilla Weigh Station ",
+					"nearbyPlace":    "Le Grand",
+					"longitude":      "-120.298519",
+					"latitude":       "37.159632",
+					"elevation":      "239",
+					"direction":      "North",
+					"county":         "Merced",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "0.64",
+					"alignment":      "",
+					"milepost":       "173.99"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V71",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "71 - NB SR99 S of Le Grand Rd",
+					"nearbyPlace":    "Merced",
+					"longitude":      "-120.35653",
+					"latitude":       "37.207958",
+					"elevation":      "203",
+					"direction":      "North",
+					"county":         "Merced",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "5.26",
+					"alignment":      "",
+					"milepost":       "178.61"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V72",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "72 - SB SR99 N of Le Grand Rd",
+					"nearbyPlace":    "Merced",
+					"longitude":      "-120.384649",
+					"latitude":       "37.230556",
+					"elevation":      "193",
+					"direction":      "South",
+					"county":         "Merced",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "7.46",
+					"alignment":      "",
+					"milepost":       "180.81"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-08",
+						"messageTime": "12:25:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V73",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "73 - SB SR99 N of Buhach Rd",
+					"nearbyPlace":    "Atwater",
+					"longitude":      "-120.577113",
+					"latitude":       "37.333926",
+					"elevation":      "160",
+					"direction":      "South",
+					"county":         "Merced",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "20.58",
+					"alignment":      "",
+					"milepost":       "193.96"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:02"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V75",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "75 - EB SR4 W of Wilson Way",
+					"nearbyPlace":    "Stockton",
+					"longitude":      "-121.275429",
+					"latitude":       "37.95258",
+					"elevation":      "26",
+					"direction":      "East",
+					"county":         "San Joaquin",
+					"route":          "SR-4",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "17.47",
+					"alignment":      "",
+					"milepost":       "64.25"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-07",
+						"messageTime": "22:25:02"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V76",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "76 - WB SR4 W of SR99",
+					"nearbyPlace":    "Stockton",
+					"longitude":      "-121.253494",
+					"latitude":       "37.959924",
+					"elevation":      "22",
+					"direction":      "West",
+					"county":         "San Joaquin",
+					"route":          "SR-4",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "18.78",
+					"alignment":      "",
+					"milepost":       "65.56"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-04",
+						"messageTime": "15:06:06"
+					},
+					"display":     "2 Pages (Extended)",
+					"displayTime": "2.5",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "W-4 TO CLOSE AT",
+						"phase1Line2": "TRACY BLVD",
+						"phase1Line3": "11\/15 7AM-7PM"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Single_Stroke",
+						"phase2Line1": "",
+						"phase2Line2": "TUNE TO 1670 AM",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V77",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "77 - SB SR99 N of French Camp Rd",
+					"nearbyPlace":    "Manteca",
+					"longitude":      "-121.219186",
+					"latitude":       "37.865903",
+					"elevation":      "13",
+					"direction":      "South",
+					"county":         "San Joaquin",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "11.91",
+					"alignment":      "",
+					"milepost":       "247.76"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V78",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "78 - NB SR99 N of Kansas",
+					"nearbyPlace":    "Modesto",
+					"longitude":      "-121.022186",
+					"latitude":       "37.651084",
+					"elevation":      "85",
+					"direction":      "North",
+					"county":         "Stanislaus",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "17.3",
+					"alignment":      "",
+					"milepost":       "228.4"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V79",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "79 - SB SR99 at Louise Ave OC",
+					"nearbyPlace":    "Manteca",
+					"longitude":      "-121.205387",
+					"latitude":       "37.812353",
+					"elevation":      "26",
+					"direction":      "South",
+					"county":         "San Joaquin",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "7.98",
+					"alignment":      "",
+					"milepost":       "243.83"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:02"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V80",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "80 - EB 88 E\/O PINE GROVE",
+					"nearbyPlace":    "Pine Grove",
+					"longitude":      "-120.65032",
+					"latitude":       "38.407698",
+					"elevation":      "2575",
+					"direction":      "East",
+					"county":         "Amador",
+					"route":          "SR-88",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "23.85",
+					"alignment":      "",
+					"milepost":       "49.23"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:02"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V81",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "81 - EB 88 AT DEW DROP",
+					"nearbyPlace":    "Pioneer",
+					"longitude":      "-120.484117",
+					"latitude":       "38.513483",
+					"elevation":      "4232",
+					"direction":      "East",
+					"county":         "Amador",
+					"route":          "SR-88",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "38.23",
+					"alignment":      "",
+					"milepost":       "63.46"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-05-28",
+						"messageTime": "19:45:02"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V82",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "82 - WB SR580 W of Bird Rd",
+					"nearbyPlace":    "Tracy",
+					"longitude":      "-121.371947",
+					"latitude":       "37.620643",
+					"elevation":      "351",
+					"direction":      "West",
+					"county":         "San Joaquin",
+					"route":          "I-580",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "2.25",
+					"alignment":      "",
+					"milepost":       "2.86"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V83",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "83 - WB SR580 W of Jct Rte 132",
+					"nearbyPlace":    "Tracy",
+					"longitude":      "-121.408206",
+					"latitude":       "37.642829",
+					"elevation":      "265",
+					"direction":      "West",
+					"county":         "San Joaquin",
+					"route":          "SR-132",
+					"routeSuffix":    "",
+					"postmilePrefix": "L",
+					"postmile":       "0.02",
+					"alignment":      "",
+					"milepost":       "0.02"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V84",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "84 - EB SR580 E of Valpico Rd",
+					"nearbyPlace":    "Tracy",
+					"longitude":      "-121.470744",
+					"latitude":       "37.680128",
+					"elevation":      "318",
+					"direction":      "East",
+					"county":         "San Joaquin",
+					"route":          "I-580",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "9.07",
+					"alignment":      "",
+					"milepost":       "9.67"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V85",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "85 - EB SR580 E of SR205",
+					"nearbyPlace":    "Tracy",
+					"longitude":      "-121.542397",
+					"latitude":       "37.725528",
+					"elevation":      "259",
+					"direction":      "East",
+					"county":         "San Joaquin",
+					"route":          "I-580",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "14.13",
+					"alignment":      "",
+					"milepost":       "14.73"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V86",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "86 - EB SR120 @ Yosemite Ave",
+					"nearbyPlace":    "Lathrop",
+					"longitude":      "-121.279903",
+					"latitude":       "37.787346",
+					"elevation":      "65",
+					"direction":      "East",
+					"county":         "San Joaquin",
+					"route":          "SR-120",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "1.76",
+					"alignment":      "",
+					"milepost":       "1.27"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V87",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "87 - EB SR132 W of I5",
+					"nearbyPlace":    "Tracy",
+					"longitude":      "-121.362158",
+					"latitude":       "37.637602",
+					"elevation":      "203",
+					"direction":      "East",
+					"county":         "San Joaquin",
+					"route":          "SR-132",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "2.19",
+					"alignment":      "",
+					"milepost":       "2.93"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V88",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "88 - WB 88 AT STATE LINE",
+					"nearbyPlace":    "Markleeville",
+					"longitude":      "-119.779154",
+					"latitude":       "38.842142",
+					"elevation":      "4888",
+					"direction":      "West",
+					"county":         "Alpine",
+					"route":          "SR-88",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "24.95",
+					"alignment":      "",
+					"milepost":       "121.61"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-09-15",
+						"messageTime": "09:50:02"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V89",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "89 - SB 89 AT MEYERS",
+					"nearbyPlace":    "South Lake Tahoe",
+					"longitude":      "-120.021059",
+					"latitude":       "38.849274",
+					"elevation":      "6377",
+					"direction":      "South",
+					"county":         "El Dorado",
+					"route":          "SR-89",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "8.4",
+					"alignment":      "",
+					"milepost":       "39.8"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-06-17",
+						"messageTime": "10:26:42"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V90",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "90 - EB SR 156 E of Fairview Rd",
+					"nearbyPlace":    "Hollister",
+					"longitude":      "-121.387476",
+					"latitude":       "36.935197",
+					"elevation":      "203",
+					"direction":      "East",
+					"county":         "San Benito",
+					"route":          "SR-156",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "16.69",
+					"alignment":      "",
+					"milepost":       "21.81"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-10",
+						"messageTime": "10:04:38"
+					},
+					"display":     "2 Pages (Extended)",
+					"displayTime": "3.0",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "GUSTY",
+						"phase1Line2": "WIND",
+						"phase1Line3": "WARNING"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Single_Stroke",
+						"phase2Line1": "OVER",
+						"phase2Line2": "PACHECO",
+						"phase2Line3": "PASS"
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V91",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "91 - EB SR152 E of San Felipe Rd",
+					"nearbyPlace":    "Gilroy",
+					"longitude":      "-121.416244",
+					"latitude":       "36.969971",
+					"elevation":      "206",
+					"direction":      "East",
+					"county":         "Santa Clara",
+					"route":          "SR-152",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "19.85",
+					"alignment":      "",
+					"milepost":       "30.56"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-09",
+						"messageTime": "23:25:16"
+					},
+					"display":     "2 Pages (Extended)",
+					"displayTime": "3.0",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "GUSTY",
+						"phase1Line2": "WIND",
+						"phase1Line3": "WARNING"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Single_Stroke",
+						"phase2Line1": "OVER",
+						"phase2Line2": "PACHECO",
+						"phase2Line3": "PASS"
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V92",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "92 - EB SR 152 W of Casa De Fruta",
+					"nearbyPlace":    "Hollister",
+					"longitude":      "-121.380935",
+					"latitude":       "36.977243",
+					"elevation":      "252",
+					"direction":      "East",
+					"county":         "Santa Clara",
+					"route":          "SR-152",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "22.62",
+					"alignment":      "",
+					"milepost":       "33.39"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-10-27",
+						"messageTime": "04:25:07"
+					},
+					"display":     "2 Pages (Extended)",
+					"displayTime": "3.0",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "GUSTY",
+						"phase1Line2": "WIND",
+						"phase1Line3": "WARNING"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Single_Stroke",
+						"phase2Line1": "OVER",
+						"phase2Line2": "PACHECO",
+						"phase2Line3": "PASS"
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V93",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "93 - EB SR 152 E of Dinosaur Point Rd",
+					"nearbyPlace":    "Hollister",
+					"longitude":      "-121.215477",
+					"latitude":       "37.067173",
+					"elevation":      "1381",
+					"direction":      "East",
+					"county":         "Santa Clara",
+					"route":          "SR-152",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "35.07",
+					"alignment":      "",
+					"milepost":       "45.84"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-04",
+						"messageTime": "15:36:12"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "MOVE OVER OR",
+						"phase1Line2": "SLOW DOWN FOR",
+						"phase1Line3": "CRASH RESPONDERS"
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V94",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "94 - EB 140 W\/O BRADLEY OH",
+					"nearbyPlace":    "Merced",
+					"longitude":      "-120.447767",
+					"latitude":       "37.295069",
+					"elevation":      "193",
+					"direction":      "East",
+					"county":         "Merced",
+					"route":          "SR-140",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "36.91",
+					"alignment":      "",
+					"milepost":       "36.7"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-05",
+						"messageTime": "10:40:01"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "TIOGA PASS",
+						"phase1Line2": "OPEN",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V95",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "95 - EB SR132 E of SR33",
+					"nearbyPlace":    "Tracy",
+					"longitude":      "-121.313823",
+					"latitude":       "37.637956",
+					"elevation":      "134",
+					"direction":      "East",
+					"county":         "San Joaquin",
+					"route":          "SR-132",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "4.84",
+					"alignment":      "",
+					"milepost":       "5.58"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:45:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V96",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "96 - EB 120 AT BUCK MEADOWS",
+					"nearbyPlace":    "Groveland",
+					"longitude":      "-120.056781",
+					"latitude":       "37.817645",
+					"elevation":      "3123",
+					"direction":      "East",
+					"county":         "Mariposa",
+					"route":          "SR-120",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "43.68",
+					"alignment":      "",
+					"milepost":       "82.62"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-05",
+						"messageTime": "10:40:02"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "TIOGA PASS",
+						"phase1Line2": "OPEN",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V97",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "97 - EB 140 AT PLANADA",
+					"nearbyPlace":    "Merced",
+					"longitude":      "-120.35381",
+					"latitude":       "37.295689",
+					"elevation":      "223",
+					"direction":      "East",
+					"county":         "Merced",
+					"route":          "SR-140",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "42.1",
+					"alignment":      "",
+					"milepost":       "41.88"
+				},
+				"inService": "false",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "Not Reported",
+						"messageTime": "Not Reported"
+					},
+					"display":     "Not Reported",
+					"displayTime": "Not Reported",
+					"phase1":
+					{
+						"phase1Font":  "Not Reported",
+						"phase1Line1": "Not Reported",
+						"phase1Line2": "Not Reported",
+						"phase1Line3": "Not Reported"
+					},
+					"phase2":
+					{
+						"phase2Font":  "Not Reported",
+						"phase2Line1": "Not Reported",
+						"phase2Line2": "Not Reported",
+						"phase2Line3": "Not Reported"
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V98",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "98 - EB 140 AT MARIPOSA",
+					"nearbyPlace":    "Mariposa",
+					"longitude":      "-119.973042",
+					"latitude":       "37.494078",
+					"elevation":      "2086",
+					"direction":      "East",
+					"county":         "Mariposa",
+					"route":          "SR-140",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "22.16",
+					"alignment":      "",
+					"milepost":       "72.21"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-05",
+						"messageTime": "10:40:01"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "TIOGA PASS",
+						"phase1Line2": "OPEN",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V99",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "99 - EB 140 AT MIDPINES",
+					"nearbyPlace":    "Midpines",
+					"longitude":      "-119.950383",
+					"latitude":       "37.57758",
+					"elevation":      "2224",
+					"direction":      "East",
+					"county":         "Mariposa",
+					"route":          "SR-140",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "30.89",
+					"alignment":      "",
+					"milepost":       "80.95"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-05",
+						"messageTime": "10:40:02"
+					},
+					"display":     "1 Page (Normal)",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "Single_Stroke",
+						"phase1Line1": "TIOGA PASS",
+						"phase1Line2": "OPEN",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V102",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "102 - WB SR132 W of I5",
+					"nearbyPlace":    "Tracy",
+					"longitude":      "-121.313559",
+					"latitude":       "37.638097",
+					"elevation":      "134",
+					"direction":      "West",
+					"county":         "San Joaquin",
+					"route":          "SR-132",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "4.86",
+					"alignment":      "",
+					"milepost":       "5.6"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:45:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V103",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "103 - NB SR99 S of Pelandale Ave",
+					"nearbyPlace":    "Modesto",
+					"longitude":      "-121.061698",
+					"latitude":       "37.690474",
+					"elevation":      "91",
+					"direction":      "North",
+					"county":         "Stanislaus",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "R",
+					"postmile":       "20.91",
+					"alignment":      "",
+					"milepost":       "232.01"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:45:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V104",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "104 - NB SR99 N of Jack Tone Rd",
+					"nearbyPlace":    "Ripon",
+					"longitude":      "-121.154856",
+					"latitude":       "37.759548",
+					"elevation":      "65",
+					"direction":      "North",
+					"county":         "San Joaquin",
+					"route":          "SR-99",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "3.19",
+					"alignment":      "",
+					"milepost":       "239.04"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:45:02"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V105",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "105 - SB I5 Hammer Lane",
+					"nearbyPlace":    "Stockton",
+					"longitude":      "-121.36381",
+					"latitude":       "38.0308",
+					"elevation":      "9",
+					"direction":      "South",
+					"county":         "San Joaquin",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "33.381",
+					"alignment":      "L",
+					"milepost":       "478.658"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "19:10:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V106",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "106 - SB I5 - Sacramento County Line",
+					"nearbyPlace":    "Walnut Grove",
+					"longitude":      "-121.45605",
+					"latitude":       "38.27523",
+					"elevation":      "6",
+					"direction":      "South",
+					"county":         "Sacramento",
+					"route":          "I-5",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "1.493",
+					"alignment":      "L",
+					"milepost":       "496.571"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:45:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V111",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "111 - Virtual CMS : EB SR88 @ Dew Drop",
+					"nearbyPlace":    "Pioneer",
+					"longitude":      "-120.48413",
+					"latitude":       "38.51347",
+					"elevation":      "4232",
+					"direction":      "East",
+					"county":         "Amador",
+					"route":          "SR-88",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "38.23",
+					"alignment":      "",
+					"milepost":       "63.46"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2019-07-11",
+						"messageTime": "10:45:07"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V120",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "120 - WB SR132 Dakota Avenue",
+					"nearbyPlace":    "Modesto",
+					"longitude":      "-121.055172",
+					"latitude":       "37.645447",
+					"elevation":      "68",
+					"direction":      "West",
+					"county":         "Stanislaus",
+					"route":          "SR-132",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "0",
+					"alignment":      "",
+					"milepost":       "0"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:45:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V121",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "121 -EB  SR132 0 Dakota Avenue",
+					"nearbyPlace":    "Modesto",
+					"longitude":      "-121.055358",
+					"latitude":       "37.645188",
+					"elevation":      "68",
+					"direction":      "East",
+					"county":         "Stanislaus",
+					"route":          "SR-132",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "0",
+					"alignment":      "",
+					"milepost":       "0"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:45:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "V900",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "900 - SR140 @ El Portal",
+					"nearbyPlace":    "Le Grand",
+					"longitude":      "-120.22144",
+					"latitude":       "37.34171",
+					"elevation":      "360",
+					"direction":      "West",
+					"county":         "Merced",
+					"route":          "SR-140",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "50.24",
+					"alignment":      "",
+					"milepost":       "50.02"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "1970-01-01",
+						"messageTime": "00:00:00"
+					},
+					"display":     "Not Reported",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		},
+		{
+			"cms":
+			{
+				"index": "v74",
+				"recordTimestamp":
+				{
+					"recordDate": "2026-11-08",
+					"recordTime": "18:29:04"
+				},
+				"location":
+				{
+					"district":       "10",
+					"locationName":   "74 - WB SR132 E of SR580",
+					"nearbyPlace":    "Tracy",
+					"longitude":      "-121.368317",
+					"latitude":       "37.638005",
+					"elevation":      "209",
+					"direction":      "West",
+					"county":         "San Joaquin",
+					"route":          "SR-132",
+					"routeSuffix":    "",
+					"postmilePrefix": "",
+					"postmile":       "1.85",
+					"alignment":      "",
+					"milepost":       "2.59"
+				},
+				"inService": "true",
+				"message":
+				{
+					"messageTimestamp":
+					{
+						"messageDate": "2026-11-06",
+						"messageTime": "17:40:01"
+					},
+					"display":     "Blank",
+					"displayTime": "0.0",
+					"phase1":
+					{
+						"phase1Font":  "",
+						"phase1Line1": "",
+						"phase1Line2": "",
+						"phase1Line3": ""
+					},
+					"phase2":
+					{
+						"phase2Font":  "",
+						"phase2Line1": "",
+						"phase2Line2": "",
+						"phase2Line3": ""
+					}
+				}
+			}
+		}
+	]
+}

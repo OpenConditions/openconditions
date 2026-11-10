@@ -19,6 +19,7 @@ import {
   CAP_URGENCIES,
 } from "./crosswalk/cap.js";
 import {
+  CAP_AU_CLASSES,
   CAP_CP_CLASSES,
   DWD_II_CLASSES,
   METEOALARM_CLASSES,
@@ -41,6 +42,7 @@ const cap = (vocabulary: string, table: Readonly<Record<string, string | null>>)
  */
 export const HAZARDS_SOURCE_FORMATS = [
   "jma-xml",
+  "nsw-rfs",
   "cap",
   "nws",
   "meteoalarm",
@@ -50,6 +52,7 @@ export const HAZARDS_SOURCE_FORMATS = [
   "effis",
   "hms",
   "usgs",
+  "geonet",
   "eonet",
   "gdacs",
 ] as const;
@@ -79,6 +82,7 @@ export const hazardsModule: RegistryModule = {
         "jma:event",
         "jma:message",
         "jma:warning",
+        "geonet:event",
         "gdacs:event",
         "glide",
         // The Smithsonian Global Volcanism Program's volcano number (`357070`).
@@ -104,6 +108,7 @@ export const hazardsModule: RegistryModule = {
       [alertKind, naturalHazardKind],
       [
         DWD_II_CLASSES,
+        CAP_AU_CLASSES,
         CAP_CP_CLASSES,
         VTEC_CLASSES,
         METEOALARM_CLASSES,
