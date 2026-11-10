@@ -4,9 +4,12 @@ import type {
   ParseOutput,
   RecordSkipReason,
 } from "@openconditions/ingest-framework";
+import { capReferences } from "@openconditions/model-hazards";
+import { XMLValidator } from "fast-xml-parser";
 import type { Geometry } from "geojson";
 import { capOutput } from "../cap/accounting.js";
-import type { DerivedShape } from "../cap/situations.js";
+import { capDrafts, type DerivedShape } from "../cap/situations.js";
+import { smnOutput } from "../cap/smn.js";
 import type { CapAlert, CapArea } from "../cap/types.js";
 import { CapReadError, readCapXml } from "../cap/xml.js";
 import type { HazardsCatalogFeed } from "../feed-schema.js";
@@ -131,8 +134,41 @@ export function parseCap(
   let firstError: unknown;
   for (const body of bodies) {
     try {
-      alerts.push(readCapXml(body));
+      if (
+        feed.endpoints?.["alerts"]?.smnRss &&
+        XMLValidator.validate(body.toString("utf8")) !== true
+      )
+        throw new Error("SMN: malformed CAP XML");
+      const alert = readCapXml(body, Boolean(feed.endpoints?.["alerts"]?.smnRss));
+      if (feed.endpoints?.["alerts"]?.smnRss) {
+        const rawReferences = (alert.references ?? "").trim();
+        if (
+          rawReferences &&
+          capReferences(rawReferences).length !== rawReferences.split(/\s+/).length
+        )
+          throw new Error("SMN: malformed CAP references");
+        // Expiry is not validation: malformed hazards must never gain lifecycle
+        // authority merely because ordinary CAP accounting treats them as terminal.
+        for (const info of alert.info ?? []) {
+          const validation = capDrafts({ ...alert, info: [info] }, feed, {
+            fetchedAt: ctx.fetchedAt,
+          });
+          if ((validation.skipped.malformed ?? 0) > 0)
+            throw new Error("SMN: unusable CAP hazard refuses the bulletin");
+        }
+        const one = capOutput([alert], feed, {
+          fetchedAt: ctx.fetchedAt,
+          reportSkips: false,
+          rejectMalformed: true,
+        });
+        if ((one.records?.accepted ?? 0) === 0 && one.records?.terminal !== 1)
+          throw new Error("SMN: unusable CAP message refuses the bulletin");
+        if (alert.restriction || (alert.info ?? []).some((i) => (i.resource ?? []).length > 0))
+          throw new Error("SMN: unreviewed product rights or resources");
+      }
+      alerts.push(alert);
     } catch (error) {
+      if (feed.endpoints?.["alerts"]?.smnRss) throw error;
       firstError ??= error;
       const reason = error instanceof CapReadError ? error.reason : "malformed";
       undecoded[reason] = (undecoded[reason] ?? 0) + 1;
@@ -140,6 +176,7 @@ export function parseCap(
   }
   if (bodies.length > 0 && alerts.length === 0) throw firstError;
   const geometryOf = warnCellGeometry(payloads["areas"]);
+  if (feed.endpoints?.["alerts"]?.smnRss) return smnOutput(alerts, bodies, feed, ctx.fetchedAt);
   return capOutput(alerts, feed, {
     fetchedAt: ctx.fetchedAt,
     undecoded,

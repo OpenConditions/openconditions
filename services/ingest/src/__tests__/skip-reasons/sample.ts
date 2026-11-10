@@ -8,7 +8,7 @@ export interface SkipSample {
   /** The one skip the parse reports. */
   reason: SkipReason;
   /** Payload bodies by endpoint role. */
-  payloads: Readonly<Record<string, string | readonly string[]>>;
+  payloads: Readonly<Record<string, string | readonly (string | Buffer)[]>>;
   /** Feed fields the format reads beyond the minimal definition (a layout block, a mapping). */
   feed?: Readonly<Record<string, unknown>>;
   /** Decoded reference data by role (a site table, a station registry). */

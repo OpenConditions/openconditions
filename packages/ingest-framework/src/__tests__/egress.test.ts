@@ -175,6 +175,22 @@ const pinLookup = (addrs: LookupAddr[]) =>
   (async () => addrs) as unknown as Parameters<typeof guardedFetch>[3];
 
 describe("guardedFetch", () => {
+  it("honors redirect:error before following an otherwise public hop", async () => {
+    const calls: string[] = [];
+    const base = (async (url: string | URL | Request) => {
+      calls.push(String(url));
+      return calls.length === 1
+        ? new Response(null, {
+            status: 302,
+            headers: { location: "http://198.51.100.7/resource.png" },
+          })
+        : new Response("third party");
+    }) as typeof fetch;
+    await expect(guardedFetch(base, OPTS)(PUBLIC, { redirect: "error" })).rejects.toThrow(
+      "redirect refused",
+    );
+    expect(calls).toEqual([PUBLIC]);
+  });
   it("rejects a redirect that points at the metadata IP", async () => {
     const base = (async () =>
       new Response(null, {

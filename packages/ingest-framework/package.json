@@ -29,6 +29,7 @@
   "dependencies": {
     "@openconditions/core": "workspace:*",
     "@openconditions/model": "workspace:*",
+    "fast-xml-parser": "^5.11.2",
     "impit": "^0.14.7",
     "jsonc-parser": "^3.3.1",
     "proj4": "^2.22.0",

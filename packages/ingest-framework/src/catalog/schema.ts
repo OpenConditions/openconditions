@@ -3,7 +3,7 @@ import { type ZodRawShape, z } from "zod";
 import { FEED_QUALIFIER, FEED_TOKEN } from "./ids.js";
 import { MAX_UTC_MINUTES_BACK } from "./templates.js";
 
-const RAW_RETENTION_CLASSES = ["situation", "observation", "reference"] as const;
+const RAW_RETENTION_CLASSES = ["situation", "observation", "reference", "none"] as const;
 
 const FIELD_NAME = /^[a-z][a-z0-9_]*$/;
 const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/;
@@ -132,12 +132,18 @@ const eachSchema = z
     pattern: z.string().min(1).optional(),
     links: z.array(z.string().min(1)).nonempty().optional(),
     keepSec: z.number().int().positive().optional(),
+    /** Revalidates unchanged terminal links only when the listing supplies version metadata. */
+    revalidateSec: z.number().int().positive().optional(),
+    maxItems: z.number().int().positive().max(10000).optional(),
   })
   .strict()
   .superRefine((each, ctx) => {
     const listed = each.records !== undefined || each.field !== undefined;
     if (listed === (each.links !== undefined)) {
       ctx.addIssue({ code: "custom", message: "each needs exactly one of records+field or links" });
+    }
+    if (listed && (each.revalidateSec !== undefined || each.maxItems !== undefined)) {
+      ctx.addIssue({ code: "custom", message: "revalidateSec and maxItems apply only to links" });
     }
     if (listed && (each.records === undefined || each.field === undefined)) {
       ctx.addIssue({ code: "custom", message: "each needs both records and field" });
@@ -188,6 +194,21 @@ export const endpointSchema = z
     method: z.enum(["GET", "POST"]).optional(),
     body: z.string().optional(),
     headers: z.record(z.string(), z.string()).optional(),
+    geofa: z
+      .object({
+        /** Publish observed inventory without withdrawing absent facilities. */
+        nonWithdrawing: z.literal(true).optional(),
+        pageSize: z.union([z.literal(500), z.literal(2000)]).optional(),
+        qualification: z
+          .object({
+            count: z.number().int().nonnegative().max(49000),
+            sha256: z.string().regex(/^[a-f0-9]{64}$/),
+          })
+          .strict()
+          .optional(),
+      })
+      .strict()
+      .optional(),
     pagination: z
       .union([
         z
@@ -248,6 +269,8 @@ export const endpointSchema = z
       .optional(),
     /** Fetched once per item of another role's payload; the `url` names it as `{item}`. */
     each: eachSchema.optional(),
+    /** Reviewed SMN RSS-to-CAP acquisition; not a generic cross-directory walk. */
+    smnRss: z.enum(["ar", "acp"]).optional(),
     /**
      * The response is a zip archive: the role's payloads are its entries whose
      * name matches `entries` (all without it), in name order, at most
@@ -277,6 +300,13 @@ export const endpointSchema = z
      * from an old copy. Unset, a held answer stands in at any age.
      */
     maxPayloadAgeSec: z.number().int().positive().optional(),
+    /** Tighter response-byte and full-body deadline caps; never enlarge operator egress limits. */
+    budget: z
+      .strictObject({
+        maxBytes: z.number().int().positive().max(536870912),
+        deadlineSec: z.number().positive().max(900),
+      })
+      .optional(),
     /**
      * Seconds a request to this endpoint may take, body included, for a
      * publisher slower than the operator's `OPENCONDITIONS_FETCH_TIMEOUT_MS`
@@ -302,6 +332,26 @@ export const endpointSchema = z
   })
   .strict()
   .superRefine((e, ctx) => {
+    if (e.smnRss) {
+      const expected =
+        e.smnRss === "ar"
+          ? "https://ssl.smn.gob.ar/CAP/AR.php"
+          : "https://ssl.smn.gob.ar/feeds/CAP/avisocortoplazo/rss_acpCAP.xml";
+      if (
+        e.url !== expected ||
+        e.urls ||
+        e.each ||
+        e.follow ||
+        e.pagination ||
+        e.unzip ||
+        e.expand ||
+        e.fanout
+      )
+        ctx.addIssue({
+          code: "custom",
+          message: "smnRss requires its official index URL and no other acquisition mode",
+        });
+    }
     if (e.each) {
       if (e.url === undefined || !e.url.includes("{item}")) {
         ctx.addIssue({
@@ -429,7 +479,11 @@ export const feedBaseShape = {
     .optional(),
   snapshot: z
     .object({
-      completeness: z.literal("complete"),
+      completeness: z.enum(["complete", "partial"]),
+      /** Pending qualification forbids publication, even if a local layer enables the feed. */
+      qualification: z.enum(["pending", "qualified"]).optional(),
+      minimumRecords: z.number().int().positive().optional(),
+      csv: z.literal(true).optional(),
       recordsPath: z.string().min(1).optional(),
       rootElement: z.string().min(1).optional(),
       publicationElement: z.string().min(1).optional(),
@@ -439,6 +493,18 @@ export const feedBaseShape = {
     })
     .strict()
     .superRefine((snapshot, ctx) => {
+      if (snapshot.completeness === "partial" && !snapshot.csv) {
+        ctx.addIssue({ code: "custom", message: "partial snapshot requires CSV validation" });
+      }
+      if (
+        snapshot.csv &&
+        (snapshot.recordsPath || snapshot.recordElement || snapshot.totalCountPath)
+      ) {
+        ctx.addIssue({ code: "custom", message: "CSV snapshot cannot use JSON/XML paths" });
+      }
+      if (snapshot.minimumRecords !== undefined && !snapshot.csv) {
+        ctx.addIssue({ code: "custom", message: "minimumRecords requires CSV snapshot" });
+      }
       if (snapshot.recordsPath && snapshot.recordElement) {
         ctx.addIssue({
           code: "custom",
@@ -467,6 +533,14 @@ export const feedBaseShape = {
     .optional(),
   freshnessWindowSec: z.number().int().positive(),
   accessMode: z.enum(ACCESS_MODES).optional(),
+  acquisitionLimits: z
+    .object({
+      requests: z.number().int().positive(),
+      bytes: z.number().int().positive(),
+      deadlineSec: z.number().int().positive(),
+    })
+    .strict()
+    .optional(),
   requestLimits: z
     .object({
       perMinute: z.number().int().positive().optional(),

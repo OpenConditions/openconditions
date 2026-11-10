@@ -1138,3 +1138,88 @@ describe("payload digests", () => {
     expect(res.payloads[1]!.url).toBe("https://b.test/y");
   });
 });
+
+describe("Caltrans transport freshness", () => {
+  const at = Date.parse("2026-11-07T08:00:00Z");
+  const feed = makeFeed(
+    "caltrans-age",
+    { url: "https://example.test/cms" },
+    { format: "caltrans-cms", freshnessWindowSec: 900 },
+  );
+  it.each(["900", "86400", "-1", "1.5", "wat", "999999999999999999999999"])(
+    "rejects stale or malformed Age %s before accepting validators",
+    async (age) => {
+      const state = createFetchState();
+      await expect(
+        fetchEndpoint(
+          feed,
+          "main",
+          (async () => new Response("old", { headers: { age, etag: '"old"' } })) as typeof fetch,
+          { state, at },
+        ),
+      ).rejects.toThrow(/freshness/);
+      expect(state.conditional.size).toBe(0);
+    },
+  );
+  it.each([{ date: "Fri, 06 Nov 2026 08:00:00 GMT" }, { date: "bad" }])(
+    "rejects explicit stale or malformed Date %j",
+    async (headers) => {
+      await expect(
+        fetchEndpoint(
+          feed,
+          "main",
+          (async () => new Response("old", { headers })) as typeof fetch,
+          { state: createFetchState(), at },
+        ),
+      ).rejects.toThrow(/freshness/);
+    },
+  );
+  it("requests revalidation and caps accepted age without using Last-Modified", async () => {
+    let request: RequestInit | undefined;
+    const result = await fetchEndpoint(
+      feed,
+      "main",
+      (async (_url, init) => {
+        request = init;
+        return new Response("current", {
+          headers: {
+            age: "120",
+            date: "Sat, 07 Nov 2026 07:57:00 GMT",
+            "last-modified": "Wed, 01 Jan 2020 00:00:00 GMT",
+          },
+        });
+      }) as typeof fetch,
+      { state: createFetchState(), at },
+    );
+    expect(new Headers(request?.headers).get("cache-control")).toBe("no-cache");
+    expect(result).toMatchObject({ publicationExpiresAt: "2026-11-07T08:12:00.000Z" });
+  });
+});
+
+it.each([
+  [{ age: "0" }, "2026-11-07T08:15:00.000Z"],
+  [{ age: "899" }, "2026-11-07T08:00:01.000Z"],
+  [{ date: "Sat, 07 Nov 2026 09:00:00 GMT" }, "2026-11-07T08:15:00.000Z"],
+  [{ "last-modified": "Wed, 01 Jan 2020 00:00:00 GMT" }, "2026-11-07T08:15:00.000Z"],
+])("bounds Caltrans response %j", async (headers, expiry) => {
+  const result = await fetchEndpoint(
+    makeFeed("age-bound", { url: "https://example.test/cms" }, { format: "caltrans-cms" }),
+    "main",
+    (async () => new Response("ok", { headers })) as typeof fetch,
+    { state: createFetchState(), at: Date.parse("2026-11-07T08:00:00Z") },
+  );
+  expect(result.status).toBe("fetched");
+  if (result.status === "fetched")
+    expect(Math.abs(Date.parse(result.publicationExpiresAt!) - Date.parse(expiry))).toBeLessThan(
+      100,
+    );
+});
+it("keeps the transport policy scoped to CMS", async () => {
+  const result = await fetchEndpoint(
+    makeFeed("other-feed", { url: "https://example.test/other" }),
+    "main",
+    (async () => new Response("ok", { headers: { age: "86400", date: "bad" } })) as typeof fetch,
+    { state: createFetchState() },
+  );
+  expect(result.status).toBe("fetched");
+});

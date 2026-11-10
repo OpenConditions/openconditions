@@ -43,7 +43,11 @@ export interface DerivedShape {
 
 export interface CapSituationOptions {
   /** The warning the message belongs to, as `currentMessages` reads it. */
-  groupId: string;
+  groupId?: string;
+  /** Internal document key; never changes the CAP identity. */
+  localId?: string;
+  /** Provider-scoped resolved internal reference keys only. */
+  referenceIds?: readonly string[];
   /** When the poll read the message. */
   fetchedAt: string;
   /**
@@ -597,7 +601,8 @@ export function capDrafts(
       infos.reduce((sum, i) => sum + unreadLanguage(i), 0);
     if (unknown > 0) skipped.unknown_value = (skipped.unknown_value ?? 0) + unknown;
     // The first hazard keeps the message's id, so a reference to the message names a record.
-    const localId = n === 0 ? alert.identifier : `${alert.identifier}#${n + 1}`;
+    const baseId = opts.localId ?? alert.identifier;
+    const localId = n === 0 ? baseId : `${baseId}#${n + 1}`;
     const c = capClassification(pairs(info.eventCode), pairs(info.parameter)) ?? {
       kind: "alert",
       type: "other",
@@ -626,11 +631,11 @@ export function capDrafts(
         onset !== undefined && Date.parse(onset) > Date.parse(sent) ? "forecast" : "live",
       externalIds: [{ scheme: "cap", id: alert.identifier, authority: alert.sender }],
       location,
-      ...(references.length > 0
+      ...((opts.referenceIds ?? references.map((r) => r.identifier)).length > 0
         ? {
-            relations: references.map((r) => ({
+            relations: (opts.referenceIds ?? references.map((r) => r.identifier)).map((id) => ({
               relation,
-              ref: { class: "situation", id: situationId(feed, r.identifier) },
+              ref: { class: "situation", id: situationId(feed, id) },
             })),
           }
         : {}),
@@ -647,7 +652,7 @@ export function capDrafts(
       ...optional("instruction", instruction),
       validity,
       effects: [],
-      groupId,
+      ...(groupId ? { groupId } : {}),
       details: {
         kind: "alert",
         v: 1,

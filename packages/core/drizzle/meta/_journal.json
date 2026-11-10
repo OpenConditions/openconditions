@@ -656,8 +656,43 @@
     {
       "idx": 93,
       "version": "7",
-      "when": 1794106750787,
-      "tag": "0093_observation_revision",
+      "when": 1794038400000,
+      "tag": "0093_source_publication_clock",
+      "breakpoints": true
+    },
+    {
+      "idx": 94,
+      "version": "7",
+      "when": 1794066703442,
+      "tag": "0094_smn_cap_message",
+      "breakpoints": true
+    },
+    {
+      "idx": 95,
+      "version": "7",
+      "when": 1794210853683,
+      "tag": "0095_glorious_adam_destine",
+      "breakpoints": true
+    },
+    {
+      "idx": 96,
+      "version": "7",
+      "when": 1794273434226,
+      "tag": "0096_small_tigra",
+      "breakpoints": true
+    },
+    {
+      "idx": 97,
+      "version": "7",
+      "when": 1794273434227,
+      "tag": "0097_geonet_coverage",
+      "breakpoints": true
+    },
+    {
+      "idx": 98,
+      "version": "7",
+      "when": 1794341624308,
+      "tag": "0098_observation_revision",
       "breakpoints": true
     }
   ]

@@ -1,0 +1,2337 @@
+{
+  "data":
+  [
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "0",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "",  
+        "locationName":   "",  
+        "nearbyPlace":    "",  
+        "longitude":      "",  
+        "latitude":       "",  
+        "elevation":      "",  
+        "direction":      "",  
+        "county":         "",  
+        "route":          "",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "",  
+        "postmile":       "",  
+        "alignment":      "",  
+        "milepost":       ""   
+        },                                                                 
+      "inService": "",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-02-24",      
+          "messageTime": "12:30:29"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "1",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "1 - Smith Road N/B - Redding",  
+        "nearbyPlace":    "Redding",  
+        "longitude":      "-122.344959",  
+        "latitude":       "40.519830",  
+        "elevation":      "465",  
+        "direction":      "North",  
+        "county":         "Shasta",  
+        "route":          "I-5",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "R",  
+        "postmile":       "10.85",  
+        "alignment":      "",  
+        "milepost":       "673.48"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-11-06",      
+          "messageTime": "14:56:03"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "2",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "2 - Pine Grove N/B - Shasta Lake City",  
+        "nearbyPlace":    "Redding",  
+        "longitude":      "-122.355436",  
+        "latitude":       "40.663210",  
+        "elevation":      "711",  
+        "direction":      "North",  
+        "county":         "Shasta",  
+        "route":          "I-5",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "R",  
+        "postmile":       "20.99",  
+        "alignment":      "",  
+        "milepost":       "683.62"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-11-06",      
+          "messageTime": "14:56:32"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "3",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "3 - Ream Road N/B - Mount Shasta",  
+        "nearbyPlace":    "Mount Shasta",  
+        "longitude":      "-122.313232",  
+        "latitude":       "41.298611",  
+        "elevation":      "3435",  
+        "direction":      "North",  
+        "county":         "Siskiyou",  
+        "route":          "I-5",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "R",  
+        "postmile":       "9.65",  
+        "alignment":      "",  
+        "milepost":       "737.34"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-11-06",      
+          "messageTime": "15:30:53"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "4",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "4 - Abrams Lake Road S/B - Mount Shasta",  
+        "nearbyPlace":    "Mount Shasta",  
+        "longitude":      "-122.345311",  
+        "latitude":       "41.344278",  
+        "elevation":      "3802",  
+        "direction":      "South",  
+        "county":         "Siskiyou",  
+        "route":          "I-5",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "R",  
+        "postmile":       "13.2",  
+        "alignment":      "L",  
+        "milepost":       "740.85"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-11-06",      
+          "messageTime": "15:30:59"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "5",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "5 - Walters Lane N/B - Yreka",  
+        "nearbyPlace":    "Yreka",  
+        "longitude":      "-122.635202",  
+        "latitude":       "41.685582",  
+        "elevation":      "2805",  
+        "direction":      "North",  
+        "county":         "Siskiyou",  
+        "route":          "I-5",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "R",  
+        "postmile":       "44.31",  
+        "alignment":      "",  
+        "milepost":       "771.54"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-11-06",      
+          "messageTime": "17:24:31"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "6",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "6 - Walters Lane S/B - Yreka",  
+        "nearbyPlace":    "Yreka",  
+        "longitude":      "-122.635803",  
+        "latitude":       "41.685557",  
+        "elevation":      "2801",  
+        "direction":      "South",  
+        "county":         "Siskiyou",  
+        "route":          "I-5",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "R",  
+        "postmile":       "44.31",  
+        "alignment":      "",  
+        "milepost":       "771.55"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-11-02",      
+          "messageTime": "07:06:23"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "7",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "7 - Bowman Road S/B - Cottonwood",  
+        "nearbyPlace":    "Cottonwood",  
+        "longitude":      "-122.284855",  
+        "latitude":       "40.367817",  
+        "elevation":      "419",  
+        "direction":      "South",  
+        "county":         "Tehama",  
+        "route":          "I-5",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "",  
+        "postmile":       "41.53",  
+        "alignment":      "",  
+        "milepost":       "662.05"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2024-11-15",      
+          "messageTime": "20:10:52"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "8",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "8 - Truck Scales N/B - Cottonwood",  
+        "nearbyPlace":    "Cottonwood",  
+        "longitude":      "-122.282042",  
+        "latitude":       "40.342159",  
+        "elevation":      "551",  
+        "direction":      "North",  
+        "county":         "Tehama",  
+        "route":          "I-5",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "",  
+        "postmile":       "39.82",  
+        "alignment":      "",  
+        "milepost":       "660.34"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-11-06",      
+          "messageTime": "17:23:54"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "9",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "9 - Oasis Road N/B - Redding",  
+        "nearbyPlace":    "Redding",  
+        "longitude":      "-122.364846",  
+        "latitude":       "40.641434",  
+        "elevation":      "666",  
+        "direction":      "North",  
+        "county":         "Shasta",  
+        "route":          "I-5",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "R",  
+        "postmile":       "19.4",  
+        "alignment":      "",  
+        "milepost":       "682.03"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-11-06",      
+          "messageTime": "17:23:54"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "10",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "10 - Oasis Road S/B - Redding",  
+        "nearbyPlace":    "Redding",  
+        "longitude":      "-122.364949",  
+        "latitude":       "40.641795",  
+        "elevation":      "666",  
+        "direction":      "South",  
+        "county":         "Shasta",  
+        "route":          "I-5",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "R",  
+        "postmile":       "19.41",  
+        "alignment":      "",  
+        "milepost":       "682.05"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-11-06",      
+          "messageTime": "15:35:45"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "16",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "16 - SR 70 W/B - Hallelujah Sandhouse",  
+        "nearbyPlace":    "Chilcoot",  
+        "longitude":      "-120.049765",  
+        "latitude":       "39.778064",  
+        "elevation":      "4970",  
+        "direction":      "West",  
+        "county":         "Lassen",  
+        "route":          "SR-70",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "",  
+        "postmile":       "3.52",  
+        "alignment":      "",  
+        "milepost":       "179.51"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-11-06",      
+          "messageTime": "15:35:52"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "17",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "17 - Riverside Avenue N/B - Red Bluff",  
+        "nearbyPlace":    "Red Bluff",  
+        "longitude":      "-122.220291",  
+        "latitude":       "40.135852",  
+        "elevation":      "301",  
+        "direction":      "North",  
+        "county":         "Tehama",  
+        "route":          "I-5",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "R",  
+        "postmile":       "23.39",  
+        "alignment":      "",  
+        "milepost":       "645.39"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-11-06",      
+          "messageTime": "17:23:55"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "18",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "18 - Wilcox Road S/B - Red Bluff",  
+        "nearbyPlace":    "Red Bluff",  
+        "longitude":      "-122.251583",  
+        "latitude":       "40.219340",  
+        "elevation":      "426",  
+        "direction":      "South",  
+        "county":         "Tehama",  
+        "route":          "I-5",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "",  
+        "postmile":       "31.05",  
+        "alignment":      "",  
+        "milepost":       "651.57"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-11-06",      
+          "messageTime": "14:51:11"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "19",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "19 - Henley Road OC - N/B",  
+        "nearbyPlace":    "Hornbrook",  
+        "longitude":      "-122.568356",  
+        "latitude":       "41.907052",  
+        "elevation":      "2286",  
+        "direction":      "North",  
+        "county":         "Siskiyou",  
+        "route":          "I-5",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "R",  
+        "postmile":       "62.05",  
+        "alignment":      "",  
+        "milepost":       "789.27"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-08-06",      
+          "messageTime": "06:20:19"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "20",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "20 - Hawley Off-Ramp - E/B",  
+        "nearbyPlace":    "Redding",  
+        "longitude":      "-122.349649",  
+        "latitude":       "40.614702",  
+        "elevation":      "659",  
+        "direction":      "East",  
+        "county":         "Shasta",  
+        "route":          "SR-299",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "",  
+        "postmile":       "25.07",  
+        "alignment":      "",  
+        "milepost":       "139.22"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-11-06",      
+          "messageTime": "14:50:46"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "21",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "21 - Abrams Lake - N/B  Wind Warning",  
+        "nearbyPlace":    "Mount Shasta",  
+        "longitude":      "-122.343225",  
+        "latitude":       "41.344860",  
+        "elevation":      "3812",  
+        "direction":      "North",  
+        "county":         "Siskiyou",  
+        "route":          "I-5",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "R",  
+        "postmile":       "13.18",  
+        "alignment":      "R",  
+        "milepost":       "740.84"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-11-06",      
+          "messageTime": "14:56:34"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "22",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "22 - South Yreka - S/B Wind Warning",  
+        "nearbyPlace":    "Yreka",  
+        "longitude":      "-122.640488",  
+        "latitude":       "41.696587",  
+        "elevation":      "2742",  
+        "direction":      "South",  
+        "county":         "Siskiyou",  
+        "route":          "I-5",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "R",  
+        "postmile":       "45.11",  
+        "alignment":      "",  
+        "milepost":       "772.35"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-11-06",      
+          "messageTime": "14:56:38"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "23",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "23 - Eureka Way E/B",  
+        "nearbyPlace":    "Redding",  
+        "longitude":      "-122.433185",  
+        "latitude":       "40.582017",  
+        "elevation":      "734",  
+        "direction":      "East",  
+        "county":         "Shasta",  
+        "route":          "SR-299",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "",  
+        "postmile":       "21.9",  
+        "alignment":      "",  
+        "milepost":       "136.03"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-11-06",      
+          "messageTime": "17:23:57"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "24",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "24 - Lakehead Rest - S/B",  
+        "nearbyPlace":    "Lakehead",  
+        "longitude":      "-122.411313",  
+        "latitude":       "40.925890",  
+        "elevation":      "1305",  
+        "direction":      "South",  
+        "county":         "Shasta",  
+        "route":          "I-5",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "R",  
+        "postmile":       "44.12",  
+        "alignment":      "",  
+        "milepost":       "705.4"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-11-06",      
+          "messageTime": "14:51:08"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "25",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "25 - Eureka Way W/B",  
+        "nearbyPlace":    "Redding",  
+        "longitude":      "-122.419698",  
+        "latitude":       "40.585319",  
+        "elevation":      "692",  
+        "direction":      "West",  
+        "county":         "Shasta",  
+        "route":          "SR-299",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "",  
+        "postmile":       "22.59",  
+        "alignment":      "",  
+        "milepost":       "136.76"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-11-06",      
+          "messageTime": "14:51:10"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "26",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "26 - Gilman Rd - N/B",  
+        "nearbyPlace":    "Lakehead",  
+        "longitude":      "-122.328002",  
+        "latitude":       "40.841999",  
+        "elevation":      "1423",  
+        "direction":      "North",  
+        "county":         "Shasta",  
+        "route":          "I-5",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "R",  
+        "postmile":       "36.1",  
+        "alignment":      "",  
+        "milepost":       "697.14"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-11-06",      
+          "messageTime": "17:23:31"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "27",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "27 - Lamoine - N/B",  
+        "nearbyPlace":    "Lakehead",  
+        "longitude":      "-122.429882",  
+        "latitude":       "40.983285",  
+        "elevation":      "1407",  
+        "direction":      "North",  
+        "county":         "Shasta",  
+        "route":          "I-5",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "R",  
+        "postmile":       "49.48",  
+        "alignment":      "",  
+        "milepost":       "710.6"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-11-06",      
+          "messageTime": "14:57:12"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "28",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "28 - Nine-Mile Hill - N/B",  
+        "nearbyPlace":    "Cottonwood",  
+        "longitude":      "-122.279182",  
+        "latitude":       "40.298897",  
+        "elevation":      "685",  
+        "direction":      "North",  
+        "county":         "Tehama",  
+        "route":          "I-5",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "",  
+        "postmile":       "36.78",  
+        "alignment":      "",  
+        "milepost":       "657.3"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-11-06",      
+          "messageTime": "14:57:23"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "29",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "29 - Airport Road-E/B",  
+        "nearbyPlace":    "Redding",  
+        "longitude":      "-122.314310",  
+        "latitude":       "40.567589",  
+        "elevation":      "583",  
+        "direction":      "East",  
+        "county":         "Shasta",  
+        "route":          "SR-44",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "R",  
+        "postmile":       "2.77",  
+        "alignment":      "",  
+        "milepost":       "4.6"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-11-06",      
+          "messageTime": "14:56:42"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "30",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "30 - 89/299-SB",  
+        "nearbyPlace":    "Burney",  
+        "longitude":      "-121.610251",  
+        "latitude":       "40.946546",  
+        "elevation":      "3152",  
+        "direction":      "South",  
+        "county":         "Shasta",  
+        "route":          "SR-89",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "",  
+        "postmile":       "22.34",  
+        "alignment":      "",  
+        "milepost":       "187.68"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-10-02",      
+          "messageTime": "08:34:08"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "31",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "31 - Sour Grass Road - N/B Corning",  
+        "nearbyPlace":    "Corning",  
+        "longitude":      "-122.199900",  
+        "latitude":       "39.848918",  
+        "elevation":      "282",  
+        "direction":      "North",  
+        "county":         "Tehama",  
+        "route":          "I-5",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "R",  
+        "postmile":       "3.51",  
+        "alignment":      "",  
+        "milepost":       "625.51"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-11-02",      
+          "messageTime": "07:59:52"       
+          },                                                               
+        "display":    "1 Page (Normal)",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "Single Stroke",      
+          "phase1Line1": "MOVE OVER OR",      
+          "phase1Line2": "SLOW FOR WORKERS",      
+          "phase1Line3": "ITS THE LAW"       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "32",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "32 - Gallagher Road - N/B Corning",  
+        "nearbyPlace":    "Corning",  
+        "longitude":      "-122.200098",  
+        "latitude":       "39.942513",  
+        "elevation":      "301",  
+        "direction":      "North",  
+        "county":         "Tehama",  
+        "route":          "I-5",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "R",  
+        "postmile":       "9.97",  
+        "alignment":      "",  
+        "milepost":       "631.98"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-11-06",      
+          "messageTime": "15:30:57"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "33",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "33 - Riverside Ave - N/B Anderson",  
+        "nearbyPlace":    "Anderson",  
+        "longitude":      "-122.307487",  
+        "latitude":       "40.468495",  
+        "elevation":      "426",  
+        "direction":      "North",  
+        "county":         "Shasta",  
+        "route":          "I-5",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "R",  
+        "postmile":       "6.74",  
+        "alignment":      "",  
+        "milepost":       "669.37"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-11-06",      
+          "messageTime": "15:35:19"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "34",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "34 - Smith Road - S/B Redding",  
+        "nearbyPlace":    "Redding",  
+        "longitude":      "-122.345428",  
+        "latitude":       "40.520157",  
+        "elevation":      "459",  
+        "direction":      "South",  
+        "county":         "Shasta",  
+        "route":          "I-5",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "R",  
+        "postmile":       "10.86",  
+        "alignment":      "",  
+        "milepost":       "673.49"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-11-06",      
+          "messageTime": "15:35:16"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "35",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "35 - SR 70 - E/B Hallelujah Sandhouse",  
+        "nearbyPlace":    "Chilcoot",  
+        "longitude":      "-120.049424",  
+        "latitude":       "39.778127",  
+        "elevation":      "4970",  
+        "direction":      "East",  
+        "county":         "Lassen",  
+        "route":          "SR-70",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "",  
+        "postmile":       "3.52",  
+        "alignment":      "",  
+        "milepost":       "179.51"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-11-06",      
+          "messageTime": "14:57:26"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "36",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "36 - US 395 Bug Station N/B Wind Warning",  
+        "nearbyPlace":    "Chilcoot",  
+        "longitude":      "-120.038369",  
+        "latitude":       "39.732842",  
+        "elevation":      "4920",  
+        "direction":      "North",  
+        "county":         "Lassen",  
+        "route":          "US-395",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "R",  
+        "postmile":       "1.64",  
+        "alignment":      "",  
+        "milepost":       "358.75"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-11-06",      
+          "messageTime": "15:35:50"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "37",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "37 - US395/SR36 S/B Wind Warning",  
+        "nearbyPlace":    "Susanville",  
+        "longitude":      "-120.589577",  
+        "latitude":       "40.379584",  
+        "elevation":      "4180",  
+        "direction":      "South",  
+        "county":         "Lassen",  
+        "route":          "US-395",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "R",  
+        "postmile":       "60.95",  
+        "alignment":      "",  
+        "milepost":       "418.05"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-11-06",      
+          "messageTime": "15:30:58"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "38",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "38 - EELab",  
+        "nearbyPlace":    "Redding",  
+        "longitude":      "-114.455886",  
+        "latitude":       "42.573504",  
+        "elevation":      "500",  
+        "direction":      "South",  
+        "county":         "Shasta",  
+        "route":          "SR-299",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "",  
+        "postmile":       "23.87",  
+        "alignment":      "",  
+        "milepost":       "137.97"   
+        },                                                                 
+      "inService": "false",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2020-08-31",      
+          "messageTime": "17:32:13"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "39",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "39 - Johnson Park E/B",  
+        "nearbyPlace":    "Burney",  
+        "longitude":      "-121.620705",  
+        "latitude":       "40.924348",  
+        "elevation":      "3225",  
+        "direction":      "North",  
+        "county":         "Shasta",  
+        "route":          "SR-299",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "",  
+        "postmile":       "78.88",  
+        "alignment":      "",  
+        "milepost":       "192.87"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-04-02",      
+          "messageTime": "05:48:40"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "40",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "40 - Mountain Gate",  
+        "nearbyPlace":    "Mountain Gate",  
+        "longitude":      "-122.345260",  
+        "latitude":       "40.690332",  
+        "elevation":      "820",  
+        "direction":      "North",  
+        "county":         "Shasta",  
+        "route":          "I-5",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "R",  
+        "postmile":       "22.9",  
+        "alignment":      "",  
+        "milepost":       "685.32"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-11-02",      
+          "messageTime": "07:05:40"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "41",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "41 - Wonderland",  
+        "nearbyPlace":    "Mountain Gate",  
+        "longitude":      "-122.331785",  
+        "latitude":       "40.714158",  
+        "elevation":      "885",  
+        "direction":      "North",  
+        "county":         "Shasta",  
+        "route":          "I-5",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "R",  
+        "postmile":       "24.7",  
+        "alignment":      "",  
+        "milepost":       "687.12"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-11-02",      
+          "messageTime": "07:05:41"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "42",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "42 - North Mountain Gate",  
+        "nearbyPlace":    "Mountain Gate",  
+        "longitude":      "-122.321841",  
+        "latitude":       "40.727853",  
+        "elevation":      "961",  
+        "direction":      "North",  
+        "county":         "Shasta",  
+        "route":          "I-5",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "R",  
+        "postmile":       "25.79",  
+        "alignment":      "",  
+        "milepost":       "688.21"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-11-02",      
+          "messageTime": "07:05:43"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "43",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "43 - Henley Rd SB",  
+        "nearbyPlace":    "Hornbrook",  
+        "longitude":      "-122.571994",  
+        "latitude":       "41.915171",  
+        "elevation":      "2319",  
+        "direction":      "South",  
+        "county":         "Siskiyou",  
+        "route":          "I-5",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "R",  
+        "postmile":       "62.49",  
+        "alignment":      "",  
+        "milepost":       "789.24"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-11-06",      
+          "messageTime": "17:23:32"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "44",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "44 - Weed Airport SB",  
+        "nearbyPlace":    "Weed",  
+        "longitude":      "-122.457396",  
+        "latitude":       "41.479210",  
+        "elevation":      "2933",  
+        "direction":      "South",  
+        "county":         "Siskiyou",  
+        "route":          "I-5",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "R",  
+        "postmile":       "25.80",  
+        "alignment":      "",  
+        "milepost":       "752.68"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-10-30",      
+          "messageTime": "15:58:08"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "45",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "45 - Adin WB",  
+        "nearbyPlace":    "Adin",  
+        "longitude":      "-120.946091",  
+        "latitude":       "41.186616",  
+        "elevation":      "4225",  
+        "direction":      "East",  
+        "county":         "Modoc",  
+        "route":          "SR-299",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "L",  
+        "postmile":       "0.26",  
+        "alignment":      "",  
+        "milepost":       "239.34"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-09-01",      
+          "messageTime": "07:33:58"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "46",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "",  
+        "locationName":   "1 SR273 0 Westwood Ave",  
+        "nearbyPlace":    "",  
+        "longitude":      "-122.381824",  
+        "latitude":       "40.520174",  
+        "elevation":      "",  
+        "direction":      "",  
+        "county":         "",  
+        "route":          "",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "",  
+        "postmile":       "",  
+        "alignment":      "",  
+        "milepost":       ""   
+        },                                                                 
+      "inService": "",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-09-15",      
+          "messageTime": "12:03:29"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "81",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "Spring Garden ICWS EB",  
+        "nearbyPlace":    "Spring Garden",  
+        "longitude":      "-120.831575",  
+        "latitude":       "39.919080",  
+        "elevation":      "3665",  
+        "direction":      "East",  
+        "county":         "Plumas",  
+        "route":          "SR-70",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "",  
+        "postmile":       "50.07",  
+        "alignment":      "",  
+        "milepost":       "130.70"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-09-21",      
+          "messageTime": "10:54:27"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    },
+    {                                                                      
+    "cms":                                                               
+      {                                                                    
+      "index": "82",                                         
+      "recordTimestamp":                                                 
+        {                                                                  
+        "recordDate": "2026-11-06",          
+        "recordTime": "23:35:02"           
+        },                                                                 
+      "location":                                                        
+        {                                                                  
+        "district":       "2",  
+        "locationName":   "Spring Garden ICWS WB",  
+        "nearbyPlace":    "Spring Garden",  
+        "longitude":      "-120.805316",  
+        "latitude":       "39.911798",  
+        "elevation":      "3892",  
+        "direction":      "West",  
+        "county":         "Plumas",  
+        "route":          "SR-70",  
+        "routeSuffix":    "",  
+        "postmilePrefix": "",  
+        "postmile":       "51.64",  
+        "alignment":      "",  
+        "milepost":       "132.27"   
+        },                                                                 
+      "inService": "true",              
+      "message":                                                         
+        {                                                                  
+        "messageTimestamp":                                              
+          {                                                                
+          "messageDate": "2026-07-29",      
+          "messageTime": "08:00:02"       
+          },                                                               
+        "display":    "Blank",             
+        "displayTime":  "0.0",       
+        "phase1":                                                        
+          {                                                                
+          "phase1Font":  "",      
+          "phase1Line1": "",      
+          "phase1Line2": "",      
+          "phase1Line3": ""       
+          },                                                               
+        "phase2":                                                        
+          {                                                                
+          "phase2Font":  "",      
+          "phase2Line1": "",      
+          "phase2Line2": "",      
+          "phase2Line3": ""       
+          }                                                                
+        }                                                                  
+      }                                                                    
+    }
+  ]
+}

@@ -36,8 +36,13 @@ export const PRECIPITATION_TYPES = [
   "freezing_rain",
 ] as const;
 
-/** The wire formats weather parses: Digitraffic road weather and ECCC SWOB. */
-export const WEATHER_SOURCE_FORMATS = ["digitraffic-weather", "eccc-swob"] as const;
+/** The wire formats weather parses: Digitraffic, ECCC SWOB, DWD CDC and SMHI Metobs. */
+export const WEATHER_SOURCE_FORMATS = [
+  "digitraffic-weather",
+  "eccc-swob",
+  "dwd-cdc-10min",
+  "smhi-metobs",
+] as const;
 
 /** A weather or road-surface value measured at a site, or on one of its sensors. */
 const SITE: SubjectSpec = {

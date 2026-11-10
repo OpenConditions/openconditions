@@ -1,0 +1,726 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="https://ssl.smn.gob.ar/CAP/estilo_ar.xsl"?>
+
+<rss xmlns:geo="http://www.w3.org/2003/01/geo/wgs84_pos#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+
+<channel>
+
+<title>Ultimos Avisos publicados por el Servicio Meteorologico Nacional (SMN) de Argentina</title>
+
+<link>https://ssl.smn.gob.ar/CAP/AR.php</link>
+
+<description>Ultimos Avisos publicados por el Servicio Meteorologico Nacional (SMN) de Argentina</description>
+
+<dc:publisher>Servicio Meteorologico Nacional (SMN) de Argentina</dc:publisher>
+
+<language>es</language>
+
+<copyright>Copyright 2025 SMN | Derechos de autor, Servicio Meteorologico Nacional (SMN). Licencia CC BY 4.0.</copyright>
+
+<atom:link href="https://ssl.smn.gob.ar/CAP/AR.php" rel="self" type="application/rss+xml"/>
+
+<pubDate>Mon, 09 Nov 2026 07:11:01 GMT</pubDate>
+
+<lastBuildDate>Mon, 09 Nov 2026 07:11:01 GMT</lastBuildDate>
+
+
+<item>
+
+
+<title>Nevadas</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201329_Nevada_Cordillera_alertas_alertas_2.xml</link>
+
+
+<description>El área será afectada por nevadas, chaparrones de nieve y algunas tormentas embebidas. Se prevén valores de nieve acumulada entre 5 y 15 centímetros, que pueden ser superados de forma local.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201329_Nevada_Cordillera_alertas_alertas_2.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201329_Viento_Cordillera_alertas_alertas_1.xml</link>
+
+
+<description>El área cordillerana será afectada por vientos del sector oeste con velocidades entre 50 y 70 km/h, con ráfagas que pueden alcanzar los 100 km/h, pudiendo ser superados de forma puntual.  El resto del área será afectada por vientos del sector norte con velocidades entre 30 y 50 km/h, con ráfagas que pueden alcanzar los 70 km/h, pudiendo ser superados de forma puntual.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201329_Viento_Cordillera_alertas_alertas_1.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201329_Viento_Cordillera_alertas_alertas_2.xml</link>
+
+
+<description>El área cordillerana será afectada por vientos del sector oeste con velocidades entre 50 y 70 km/h, con ráfagas que pueden alcanzar los 100 km/h, pudiendo ser superados de forma puntual.  El resto del área será afectada por vientos del sector norte con velocidades entre 30 y 50 km/h, con ráfagas que pueden alcanzar los 70 km/h, pudiendo ser superados de forma puntual.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201329_Viento_Cordillera_alertas_alertas_2.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201329_Viento_Cordillera_alertas_alertas_3.xml</link>
+
+
+<description>El área cordillerana será afectada por vientos del sector oeste con velocidades entre 50 y 70 km/h, con ráfagas que pueden alcanzar los 100 km/h, pudiendo ser superados de forma puntual.  El resto del área será afectada por vientos del sector norte con velocidades entre 30 y 50 km/h, con ráfagas que pueden alcanzar los 70 km/h, pudiendo ser superados de forma puntual.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201329_Viento_Cordillera_alertas_alertas_3.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Nevadas</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201329_Nevada_Cordillera_alertas_alertas_1.xml</link>
+
+
+<description>El área será afectada por nevadas, chaparrones de nieve y algunas tormentas embebidas. Se prevén valores de nieve acumulada entre 5 y 15 centímetros, que pueden ser superados de forma local.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201329_Nevada_Cordillera_alertas_alertas_1.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_26.xml</link>
+
+
+<description>El área será afectada por vientos del sector oeste con velocidades entre 40 y 80 km/h, y ráfagas que pueden superar los 90 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_26.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_23.xml</link>
+
+
+<description>El área será afectada por vientos del sector oeste con velocidades entre 40 y 80 km/h, y ráfagas que pueden superar los 90 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_23.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_24.xml</link>
+
+
+<description>El área será afectada por vientos del sector oeste con velocidades entre 40 y 80 km/h, y ráfagas que pueden superar los 90 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_24.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_25.xml</link>
+
+
+<description>El área será afectada por vientos del sector oeste con velocidades entre 40 y 80 km/h, y ráfagas que pueden superar los 90 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_25.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201329_Viento_Cordillera_alertas_alertas_4.xml</link>
+
+
+<description>El área cordillerana será afectada por vientos del sector oeste con velocidades entre 50 y 70 km/h, con ráfagas que pueden alcanzar los 100 km/h, pudiendo ser superados de forma puntual.  El resto del área será afectada por vientos del sector norte con velocidades entre 30 y 50 km/h, con ráfagas que pueden alcanzar los 70 km/h, pudiendo ser superados de forma puntual.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201329_Viento_Cordillera_alertas_alertas_4.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201329_Viento_Cordillera_alertas_alertas_5.xml</link>
+
+
+<description>El área cordillerana será afectada por vientos del sector oeste con velocidades entre 50 y 70 km/h, con ráfagas que pueden alcanzar los 100 km/h, pudiendo ser superados de forma puntual.  El resto del área será afectada por vientos del sector norte con velocidades entre 30 y 50 km/h, con ráfagas que pueden alcanzar los 70 km/h, pudiendo ser superados de forma puntual.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201329_Viento_Cordillera_alertas_alertas_5.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201329_Viento_Llanura_alertas_alertas_2.xml</link>
+
+
+<description>El área será afectada por vientos del sector norte, con velocidades entre 30 y 45 km/h con ráfagas que pueden alcanzar los 70 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201329_Viento_Llanura_alertas_alertas_2.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Lluvias</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201330_Lluvia_Patagonia_alertas_alertas_1.xml</link>
+
+
+<description>El área será afectada por lluvias de variada intensidad. Se prevén valores de precipitación acumulada entre 10 y 30 mm, pudiendo ser superados de manera local. En zonas de mayor elevación podrían registrarse precipitaciones entre 40 y 50 mm y en forma de lluvia y nieve mezclada.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201330_Lluvia_Patagonia_alertas_alertas_1.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Lluvias</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201330_Lluvia_Patagonia_alertas_alertas_2.xml</link>
+
+
+<description>El área será afectada por lluvias de variada intensidad. Se prevén valores de precipitación acumulada entre 10 y 30 mm, pudiendo ser superados de manera local. En zonas de mayor elevación podrían registrarse precipitaciones entre 40 y 50 mm y en forma de lluvia y nieve mezclada.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201330_Lluvia_Patagonia_alertas_alertas_2.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201329_Viento_Llanura_alertas_alertas_1.xml</link>
+
+
+<description>El área será afectada por vientos del sector norte, con velocidades entre 30 y 45 km/h con ráfagas que pueden alcanzar los 70 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201329_Viento_Llanura_alertas_alertas_1.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201329_Viento_Cordillera_alertas_alertas_9.xml</link>
+
+
+<description>El área cordillerana será afectada por vientos del sector oeste con velocidades entre 50 y 70 km/h, con ráfagas que pueden alcanzar los 100 km/h, pudiendo ser superados de forma puntual.  El resto del área será afectada por vientos del sector norte con velocidades entre 30 y 50 km/h, con ráfagas que pueden alcanzar los 70 km/h, pudiendo ser superados de forma puntual.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201329_Viento_Cordillera_alertas_alertas_9.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201329_Viento_Cordillera_alertas_alertas_6.xml</link>
+
+
+<description>El área cordillerana será afectada por vientos del sector oeste con velocidades entre 50 y 70 km/h, con ráfagas que pueden alcanzar los 100 km/h, pudiendo ser superados de forma puntual.  El resto del área será afectada por vientos del sector norte con velocidades entre 30 y 50 km/h, con ráfagas que pueden alcanzar los 70 km/h, pudiendo ser superados de forma puntual.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201329_Viento_Cordillera_alertas_alertas_6.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201329_Viento_Cordillera_alertas_alertas_7.xml</link>
+
+
+<description>El área cordillerana será afectada por vientos del sector oeste con velocidades entre 50 y 70 km/h, con ráfagas que pueden alcanzar los 100 km/h, pudiendo ser superados de forma puntual.  El resto del área será afectada por vientos del sector norte con velocidades entre 30 y 50 km/h, con ráfagas que pueden alcanzar los 70 km/h, pudiendo ser superados de forma puntual.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201329_Viento_Cordillera_alertas_alertas_7.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201329_Viento_Cordillera_alertas_alertas_8.xml</link>
+
+
+<description>El área cordillerana será afectada por vientos del sector oeste con velocidades entre 50 y 70 km/h, con ráfagas que pueden alcanzar los 100 km/h, pudiendo ser superados de forma puntual.  El resto del área será afectada por vientos del sector norte con velocidades entre 30 y 50 km/h, con ráfagas que pueden alcanzar los 70 km/h, pudiendo ser superados de forma puntual.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201329_Viento_Cordillera_alertas_alertas_8.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_22.xml</link>
+
+
+<description>El área será afectada por vientos del sector oeste con velocidades entre 40 y 80 km/h, y ráfagas que pueden superar los 90 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_22.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_21.xml</link>
+
+
+<description>El área será afectada por vientos del sector oeste con velocidades entre 40 y 80 km/h, y ráfagas que pueden superar los 90 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_21.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_7.xml</link>
+
+
+<description>El área será afectada por vientos del sector oeste con velocidades entre 40 y 80 km/h, y ráfagas que pueden superar los 90 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_7.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_8.xml</link>
+
+
+<description>El área será afectada por vientos del sector oeste con velocidades entre 40 y 80 km/h, y ráfagas que pueden superar los 90 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_8.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_9.xml</link>
+
+
+<description>El área será afectada por vientos del sector oeste con velocidades entre 40 y 80 km/h, y ráfagas que pueden superar los 90 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_9.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_10.xml</link>
+
+
+<description>El área será afectada por vientos del sector oeste con velocidades entre 40 y 80 km/h, y ráfagas que pueden superar los 90 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_10.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_6.xml</link>
+
+
+<description>El área será afectada por vientos del sector oeste con velocidades entre 40 y 80 km/h, y ráfagas que pueden superar los 90 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_6.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_5.xml</link>
+
+
+<description>El área será afectada por vientos del sector oeste con velocidades entre 40 y 80 km/h, y ráfagas que pueden superar los 90 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_5.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_2.xml</link>
+
+
+<description>El área será afectada por vientos del sector oeste con velocidades entre 40 y 80 km/h, y ráfagas que pueden superar los 90 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_2.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_3.xml</link>
+
+
+<description>El área será afectada por vientos del sector oeste con velocidades entre 40 y 80 km/h, y ráfagas que pueden superar los 90 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_3.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_4.xml</link>
+
+
+<description>El área será afectada por vientos del sector oeste con velocidades entre 40 y 80 km/h, y ráfagas que pueden superar los 90 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_4.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_11.xml</link>
+
+
+<description>El área será afectada por vientos del sector oeste con velocidades entre 40 y 80 km/h, y ráfagas que pueden superar los 90 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_11.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_12.xml</link>
+
+
+<description>El área será afectada por vientos del sector oeste con velocidades entre 40 y 80 km/h, y ráfagas que pueden superar los 90 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_12.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_18.xml</link>
+
+
+<description>El área será afectada por vientos del sector oeste con velocidades entre 40 y 80 km/h, y ráfagas que pueden superar los 90 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_18.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_19.xml</link>
+
+
+<description>El área será afectada por vientos del sector oeste con velocidades entre 40 y 80 km/h, y ráfagas que pueden superar los 90 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_19.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_20.xml</link>
+
+
+<description>El área será afectada por vientos del sector oeste con velocidades entre 40 y 80 km/h, y ráfagas que pueden superar los 90 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_20.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_17.xml</link>
+
+
+<description>El área será afectada por vientos del sector oeste con velocidades entre 40 y 80 km/h, y ráfagas que pueden superar los 90 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_17.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_16.xml</link>
+
+
+<description>El área será afectada por vientos del sector oeste con velocidades entre 40 y 80 km/h, y ráfagas que pueden superar los 90 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_16.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_13.xml</link>
+
+
+<description>El área será afectada por vientos del sector oeste con velocidades entre 40 y 80 km/h, y ráfagas que pueden superar los 90 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_13.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_14.xml</link>
+
+
+<description>El área será afectada por vientos del sector oeste con velocidades entre 40 y 80 km/h, y ráfagas que pueden superar los 90 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_14.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_15.xml</link>
+
+
+<description>El área será afectada por vientos del sector oeste con velocidades entre 40 y 80 km/h, y ráfagas que pueden superar los 90 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_15.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+<item>
+
+
+<title>Viento</title>
+
+<link>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_1.xml</link>
+
+
+<description>El área será afectada por vientos del sector oeste con velocidades entre 40 y 80 km/h, y ráfagas que pueden superar los 90 km/h.</description>
+
+<guid>https://ssl.smn.gob.ar/feeds/CAP/xml_generados/CAP_20261108201328_Viento_Patagonia_alertas_alertas_1.xml</guid>
+
+<pubDate>Mon, 09 Nov 2026 07:00:06 GMT</pubDate>
+
+</item>
+
+
+</channel>
+
+</rss>

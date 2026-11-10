@@ -162,6 +162,12 @@ interface ServiceField {
  * its built-in default.
  */
 export const SERVICE_FIELDS: Readonly<Record<string, ServiceField>> = {
+  PUN_COORDINATION_DIR: {
+    title: "PUN persistent client coordination directory",
+    description:
+      "Shared persistent writable directory for all acquiring Cruscotto Italia clients under this operator. Empty uses cruscotto-italia-client beneath OPENCONDITIONS_STATE_DIR, or ~/.cache/openconditions for local CLI use. Preserve budget.json across restarts and container replacement.",
+    default: "",
+  },
   DATABASE_URL: {
     title: "Database URL",
     description:

@@ -1,5 +1,5 @@
 {
-  "id": "64b544f5-70ae-4cfe-8303-8f0ba2233521",
+  "id": "97143600-94cf-4be9-b4e2-01fe08ae752c",
   "prevId": "975f1678-b6d3-4483-b24f-e3233700e8b0",
   "version": "7",
   "dialect": "postgresql",
@@ -4414,70 +4414,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "conditions.observation_revision": {
-      "name": "observation_revision",
-      "schema": "conditions",
-      "columns": {
-        "source_id": {
-          "name": "source_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "feature_id": {
-          "name": "feature_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "property": {
-          "name": "property",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "measured_at": {
-          "name": "measured_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "rank": {
-          "name": "rank",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "signature": {
-          "name": "signature",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "suppressed": {
-          "name": "suppressed",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "observation_revision_source_id_feature_id_property_pk": {
-          "name": "observation_revision_source_id_feature_id_property_pk",
-          "columns": [
-            "source_id",
-            "feature_id",
-            "property"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
     "conditions.on_demand_fetch": {
       "name": "on_demand_fetch",
       "schema": "conditions",
@@ -5839,6 +5775,12 @@
         },
         "freshness_deadline": {
           "name": "freshness_deadline",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_published_at": {
+          "name": "source_published_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false

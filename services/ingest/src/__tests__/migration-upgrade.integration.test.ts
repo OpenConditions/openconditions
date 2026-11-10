@@ -3,7 +3,12 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { runMigrations } from "@openconditions/core/server";
-import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
+import {
+  createTestDatabase,
+  postgisProfile,
+  runsProfile,
+  type TestDatabase,
+} from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, expect, it } from "vitest";
 
@@ -97,5 +102,84 @@ it("serializes bootstrap and migrations on a fresh database", async () => {
     expect(count).toEqual({ n: journal.entries.length, distinct_n: journal.entries.length });
   } finally {
     await fresh.close();
+  }
+}, 120_000);
+
+it("upgrades seeded current main through 0097 without rewriting retained data or custom rules", async () => {
+  const previous = await createTestDatabase({ empty: true });
+  const q = previous.sql;
+  try {
+    const journal = JSON.parse(await readFile(path.join(folder, "meta/_journal.json"), "utf8")) as {
+      entries: { idx: number; tag: string; when: number }[];
+    };
+    expect(journal.entries[98]?.tag).toBe("0098_observation_revision");
+    await q`CREATE EXTENSION postgis`;
+    await q`CREATE SCHEMA conditions`;
+    await q`CREATE SCHEMA drizzle`;
+    await q`CREATE TABLE drizzle.__drizzle_migrations_oc (id serial PRIMARY KEY, hash text NOT NULL, created_at bigint)`;
+    for (const entry of journal.entries.filter((entry) => entry.idx <= 97)) {
+      const bytes = await readFile(path.join(folder, `${entry.tag}.sql`), "utf8");
+      await q.begin(async (tx) => {
+        for (const statement of bytes.split("--> statement-breakpoint")) {
+          if (statement.trim()) await tx.unsafe(statement);
+        }
+        await tx`INSERT INTO drizzle.__drizzle_migrations_oc (hash, created_at)
+          VALUES (${createHash("sha256").update(bytes).digest("hex")}, ${entry.when})`;
+      });
+    }
+    expect(
+      runsProfile((await q`SHOW server_version_num`)[0]!.server_version_num, postgisProfile()),
+    ).toBe(true);
+    await q`INSERT INTO conditions.source_status (source, freshness_window_sec, publication_revision)
+      VALUES ('upgrade:retained', 3600, 17)`;
+    await q`INSERT INTO conditions.observation_latest
+      (subject_key, property, source_id, subject_kind, reading, template, template_hash,
+       access_mode, result_type, effective_from, since_at, expires_at)
+      VALUES ('upgrade:station', 'weather.air_temperature', 'upgrade:retained', 'feature',
+       '{"value":0,"credit":"retained"}', '{"rights":"original"}', 'original',
+       'bulk', 'number', now(), now(), now() + interval '1 hour')`;
+    await q`INSERT INTO conditions.smn_cap_message (source_id, identifier, body, retain_until)
+      VALUES ('upgrade:smn', 'retained', '\\x6162', now() + interval '1 hour')`;
+    await q`INSERT INTO conditions.geonet_coverage (source_id, covered_from, covered_until, revisions)
+      VALUES ('upgrade:geonet', now(), now() + interval '1 hour', '{"retained":1}')`;
+    await q`INSERT INTO conditions.nsw_rfs_clock (source_id, incident_id, sent, published, content, expiry)
+      VALUES ('upgrade:rfs', 'incident', 'sent', 'published', 'retained', 'expiry')`;
+    await q`CREATE TABLE conditions.upgrade_rule_probe (value integer)`;
+    await q`CREATE RULE retain_custom_rule AS ON UPDATE TO conditions.upgrade_rule_probe DO ALSO NOTHING`;
+    const tables = [
+      "source_status",
+      "observation_latest",
+      "smn_cap_message",
+      "geonet_coverage",
+      "nsw_rfs_clock",
+    ];
+    const rows = () =>
+      Promise.all(
+        tables.map((table) => q.unsafe(`SELECT to_jsonb(t) AS row FROM conditions.${table} t`)),
+      );
+    const before = await rows();
+    const rules =
+      await q`SELECT * FROM pg_rules WHERE schemaname = 'conditions' ORDER BY tablename, rulename`;
+    expect(rules.some((r) => r.rulename === "retain_custom_rule")).toBe(true);
+    await runMigrations(previous.url);
+    expect(await rows()).toEqual(before);
+    expect(
+      await q`SELECT * FROM pg_rules WHERE schemaname = 'conditions' ORDER BY tablename, rulename`,
+    ).toEqual(rules);
+    await q`INSERT INTO conditions.observation_revision
+      (source_id, feature_id, property, measured_at, rank, signature, suppressed)
+      VALUES ('upgrade:eccc', 'station', 'weather.air_temperature', now(), '2', 'suppressed', true)`;
+    const revisions = await q`SELECT * FROM conditions.observation_revision`;
+    await runMigrations(previous.url);
+    expect(await q`SELECT * FROM conditions.observation_revision`).toEqual(revisions);
+    expect(await rows()).toEqual(before);
+    expect(
+      await q`SELECT * FROM pg_rules WHERE schemaname = 'conditions' ORDER BY tablename, rulename`,
+    ).toEqual(rules);
+    expect((await q`SELECT count(*)::int AS n FROM drizzle.__drizzle_migrations_oc`)[0]!.n).toBe(
+      journal.entries.length,
+    );
+  } finally {
+    await previous.close();
   }
 }, 120_000);
