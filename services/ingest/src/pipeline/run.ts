@@ -558,7 +558,16 @@ async function runAttempt(
   }
   steps.lap("reference");
 
-  const ctx: ParseContext = { fetchedAt: attemptAt, cadenceSec: src.cadenceSec, reference };
+  const payloadEvidence: Record<
+    string,
+    readonly import("@openconditions/ingest-framework").PayloadDigest[]
+  > = {};
+  const ctx: ParseContext = {
+    fetchedAt: attemptAt,
+    cadenceSec: src.cadenceSec,
+    reference,
+    payloadEvidence,
+  };
   let acceptFetch: (() => void) | undefined;
   let snapshotInspection: SnapshotInspection | undefined;
   // Whether any data payload had bytes: a streamed body is taken to have.
@@ -923,6 +932,7 @@ async function runAttempt(
         if (result.status === "fetched" || result.status === "partial") {
           fresh[role] = result.buffers;
           freshUrls[role] = result.urls;
+          if (src.format === "geofa") payloadEvidence[role] = result.payloads;
         }
         answered++;
         renewed.add(role);
@@ -1494,6 +1504,10 @@ async function finishFeaturePoll(
   skipped: SkipCounts,
 ): Promise<RunResult> {
   const { src, deps } = poll;
+  const nonWithdrawing =
+    src.format === "geofa" && src.endpoints["main"]?.geofa?.nonWithdrawing === true;
+  if (src.format === "geofa" && !parse.qualifiedFeatureSnapshot && !nonWithdrawing)
+    return fail(poll, "failed", "GeoFA: publication qualification required");
   if (parse.featureSnapshotComplete && poll.warning !== undefined) {
     return fail(
       poll,
@@ -1505,6 +1519,7 @@ async function finishFeaturePoll(
     heldPayload &&
     parse.features.length === 0 &&
     !parse.featureSnapshotComplete &&
+    !(src.format === "geofa" && parse.qualifiedFeatureSnapshot) &&
     parse.featuresComplete !== true
   ) {
     const error =
@@ -1517,7 +1532,7 @@ async function finishFeaturePoll(
       return fail(poll, "failed", "source-clock snapshot requires successful current roles");
   }
   const shrunk =
-    parse.featuresComplete === true && parse.features.length === 0
+    nonWithdrawing || (parse.featuresComplete === true && parse.features.length === 0)
       ? undefined
       : await shrinkTripped(deps.sql, src.id, parse.features.length, deps.now());
   if (shrunk) return failShrunk(poll, "features", "features", parse.features.length, shrunk);
@@ -1541,7 +1556,7 @@ async function finishFeaturePoll(
       now: deps.now(),
       model: writeModel(deps.model),
       statesComplete: poll.statesComplete && parse.featuresComplete !== false,
-      featuresComplete: parse.featuresComplete,
+      featuresComplete: nonWithdrawing ? false : parse.featuresComplete,
       ...(poll.warning ? { warning: poll.warning } : {}),
     });
     poll.attempt.closed = true;

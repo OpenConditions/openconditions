@@ -204,7 +204,15 @@ async function checkFeed(
       return result("warning", `${role} (${endpoint.decoder}) could not be loaded`);
     } else warnings.push(`${role} (${endpoint.decoder}) could not be loaded`);
   }
-  const ctx = { fetchedAt: new Date().toISOString(), cadenceSec: feed.cadenceSec, reference };
+  const ctx = {
+    fetchedAt: new Date().toISOString(),
+    cadenceSec: feed.cadenceSec,
+    reference,
+    payloadEvidence: {} as Record<
+      string,
+      readonly import("@openconditions/ingest-framework").PayloadDigest[]
+    >,
+  };
 
   // A format too large to buffer is read as the service reads it, streamed.
   // A failure before the body opens is the network's; one while reading it,
@@ -263,6 +271,7 @@ async function checkFeed(
       }
       payloads[role] = fetched.buffers;
       payloadUrls[role] = fetched.urls;
+      if (feed.format === "geofa") ctx.payloadEvidence[role] = fetched.payloads;
     } catch (err) {
       return result("warning", redact(errorText(err)));
     }

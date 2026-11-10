@@ -18,6 +18,7 @@ import {
 import type { CatalogFeed, FeedEndpoint, FetchFn } from "./catalog/types.js";
 import { boundedGunzip, maxFeedBytes } from "./egress.js";
 import { budgetFetch } from "./endpoint-budget.js";
+import { fetchGeofa } from "./geofa.js";
 import { decodedFromGzip, type HeldPayload, heldBuffer, holdPayload } from "./held.js";
 import { guardedImpersonatingFetch, type ImpersonationOptions } from "./impersonate.js";
 import { getPath } from "./layouts/row.js";
@@ -58,6 +59,8 @@ export interface FetchState {
   sourceConfig: Map<string, string>;
   /** Per feed id, the pacing of a feed that declares `requestLimits.perMinute`. */
   pacers: Map<string, Pacer>;
+  /** One failed reviewed GeoFA generation per source; process-local daily backoff. */
+  geofaRetry?: Map<string, { sha256: string; at: number }>;
 }
 
 export function createFetchState(): FetchState {
@@ -1330,6 +1333,37 @@ async function fetchRole(
       state.pacers.set(feed.id, pacer);
     }
     fetchFn = pacedFetch(pacer, perMinute, authorized);
+  }
+
+  if (feed.format === "geofa") {
+    if (!endpoint.geofa) throw new Error("GeoFA: acquisition qualification policy required");
+    const urls = endpointUrls();
+    if (urls.length !== 1) throw new Error("GeoFA: one qualified URL required");
+    const sha256 =
+      endpoint.geofa.qualification?.sha256 ??
+      (endpoint.geofa.nonWithdrawing ? "non-withdrawing" : undefined);
+    const retry = state.geofaRetry?.get(feed.id);
+    if (sha256 && retry?.sha256 === sha256 && at < retry.at)
+      throw new Error("GeoFA: daily failure backoff active");
+    let pages: Awaited<ReturnType<typeof fetchGeofa>>;
+    try {
+      pages = await fetchGeofa(urls[0]!, endpoint.geofa, fetchFn);
+    } catch (error) {
+      if (sha256) {
+        state.geofaRetry ??= new Map();
+        state.geofaRetry.set(feed.id, { sha256, at: at + 86400000 });
+      }
+      throw error;
+    }
+    state.geofaRetry?.delete(feed.id);
+    return {
+      status: "fetched",
+      accept: () => {},
+      ...pages,
+      bodyFreshness: "acquired",
+      validatedAtNetwork: true,
+      partitions: { succeeded: 1, failed: 0, total: 1 },
+    };
   }
 
   if (feed.catalog) {

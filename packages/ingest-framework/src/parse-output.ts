@@ -82,6 +82,8 @@ export interface ParseOutput {
   statusIndex?: StatusIndex;
   /** The publisher cut its answer at a result cap: records past it are missing. */
   truncated?: boolean;
+  /** Exact reviewed feature publication verified by its parser. Shrink guards still apply. */
+  qualifiedFeatureSnapshot?: boolean;
   /** The format independently qualified the entire feature snapshot, including an empty one. */
   featureSnapshotComplete?: true;
 }

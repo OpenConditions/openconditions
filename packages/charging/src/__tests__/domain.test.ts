@@ -89,6 +89,7 @@ test("chargingDomain registers its formats with their roles and what they produc
     cynap: main,
     chargy: main,
     evroam: main,
+    geofa: main,
     keco: {
       main: { required: true },
       status: { ...live, accumulatesSince: "main", changesWindowSec: 600 },
@@ -117,7 +118,7 @@ test("chargingDomain registers its formats with their roles and what they produc
     expect(format.kind).toBe("features");
     expect(format.products).toEqual(["charging"]);
     expect(format.produces).toEqual(
-      code === "pun"
+      code === "pun" || code === "geofa"
         ? { kinds: ["charging_site", "evse", "connector"], properties: [] }
         : {
             kinds: ["charging_site", "evse", "connector", "energy_tariff"],

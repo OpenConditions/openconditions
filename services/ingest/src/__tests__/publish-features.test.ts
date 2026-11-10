@@ -78,3 +78,42 @@ it.each([
     expect(upsertSourceStatus).toHaveBeenCalledOnce();
   },
 );
+
+it.each([false, true])(
+  "GeoFA partial publication retains independent offer/state gates (%s)",
+  async (partial) => {
+    const tx = vi.fn().mockResolvedValue([{ live: 0 }]);
+    // The retained-owner query must return no prior facility claims.
+    tx.mockImplementation(async (parts: TemplateStringsArray) =>
+      parts.join("").includes("SELECT record") ? [] : [{ live: 0 }],
+    );
+    const sql = { begin: (run: (tx: unknown) => unknown) => run(tx) };
+    await publishFeatures(
+      sql as never,
+      {
+        id: "dk-geofa-charging",
+        freshnessWindowSec: 300,
+        ...(partial ? { snapshot: { completeness: "partial" } as CatalogFeed["snapshot"] } : {}),
+      },
+      {
+        output: {
+          features: [],
+          observations: [],
+          offers: [],
+          publication: { featuresComplete: true, offersComplete: false, statesComplete: false },
+        },
+        featuresComplete: false,
+        statesComplete: true,
+        poll: { id: 1, at: "2026-11-10T00:00:00Z" },
+        now: "2026-11-10T00:00:00Z",
+        model: writeModel({ instanceId: "test.local" }),
+        rejected: 0,
+        durationMs: 1,
+      },
+    );
+    const context = writeSnapshotIn.mock.calls[0]![3];
+    expect(context.complete).toEqual({ feature: false, offer: false });
+    expect(context.statesComplete).toBe(false);
+    expect(upsertSourceStatus).toHaveBeenCalledOnce();
+  },
+);
