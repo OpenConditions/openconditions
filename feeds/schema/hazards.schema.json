@@ -69,6 +69,7 @@
               "gdacs",
               "hms",
               "meteoalarm",
+              "nsw-rfs",
               "nws",
               "slstr-frp",
               "usgs",
@@ -1154,6 +1155,10 @@
               "since"
             ],
             "additionalProperties": false
+          },
+          "rfsCurrentSnapshotQualified": {
+            "description": "Enable qualified RFS incident/text/anchor publication with finite source expiry; never grants absence-based withdrawal",
+            "type": "boolean"
           }
         },
         "required": [

@@ -22,6 +22,7 @@ import {
   writeSnapshotIn,
 } from "@openconditions/storage";
 import type postgres from "postgres";
+import { checkNswRfsOrdering } from "./nsw-rfs-ordering.js";
 import { checkSmnWindow, type SmnWindow, storeSmnMessages } from "./smn-messages.js";
 import { upsertSourceStatus } from "./source-status.js";
 
@@ -251,6 +252,7 @@ export async function publishSituations(
     smnWindow?: SmnWindow;
     smnDecision?: ParseOutput["smn"];
     situationsComplete?: boolean;
+    nswRfsOrdering?: ParseOutput["nswRfsOrdering"];
     unlocatable?: readonly string[];
     /** Local ids of the records behind `unlocatable`; a stored effect's id begins with its record's. */
     unlocatableRecords?: readonly string[];
@@ -265,6 +267,7 @@ export async function publishSituations(
   const ids = situations.map((d) => String(d["id"]));
   return sql.begin(async (tx) => {
     await tx`SELECT pg_advisory_xact_lock(hashtext(${src.id}))`;
+    if (input.nswRfsOrdering) await checkNswRfsOrdering(tx, src.id, input.nswRfsOrdering);
     const unlocatable = input.unlocatable ?? [];
     const records = input.unlocatableRecords ?? [];
     // A stored situation is kept when this poll drops it whole, or when it
@@ -313,6 +316,8 @@ export async function publishSituations(
       await storeSmnMessages(tx, src.id, input.smnWindow.messages, input.now);
       await tx`INSERT INTO conditions.smn_cap_decision (source_id,decided_at,decision) VALUES (${src.id},${input.now}::timestamptz,${tx.json(JSON.parse(JSON.stringify(input.smnDecision)))}) ON CONFLICT (source_id) DO UPDATE SET decided_at=excluded.decided_at,decision=excluded.decision`;
     }
+    if (input.nswRfsOrdering && summary.rejected.length > 0)
+      throw new Error("RFS ordering: model rejected incident; poll rolled back");
     const [{ live }] = await tx<{ live: number }[]>`
       SELECT count(*)::int AS live FROM conditions.situation
        WHERE source_id = ${src.id} AND tombstoned_at IS NULL`;

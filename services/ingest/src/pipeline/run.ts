@@ -654,7 +654,9 @@ async function runAttempt(
     const freshUrls: Record<string, readonly string[]> = {};
     const accepts: (() => void)[] = [];
     const keepPayloads =
-      deps.roles !== undefined && dataRoles(src).length > 1 && src.rawRetention !== "none";
+      deps.roles !== undefined &&
+      src.rawRetention !== "none" &&
+      (dataRoles(src).length > 1 || format.reparseUnchanged === true);
     /** The data roles whose payloads changed this poll. */
     let fetched: string[] = [];
     const acquiredRoles = new Set<string>();
@@ -1020,7 +1022,7 @@ async function runAttempt(
         return { count: 0, durationMs: Date.now() - start, outcome: "failed", error };
       }
       sourceClockNetworkValidated = answered > 0 && warnings.length === 0;
-      if (fetched.length === 0 && !format.sourceClock) {
+      if (fetched.length === 0 && !format.sourceClock && !format.reparseUnchanged) {
         await recordStatus({
           freshnessWindowSec: src.freshnessWindowSec,
           outcome: "validated_unchanged",
@@ -1296,6 +1298,13 @@ async function finishEventPoll(
   skipped: SkipCounts,
 ): Promise<RunResult> {
   const { src, deps } = poll;
+  if (parse.snapshotQualified === false) {
+    return fail(
+      poll,
+      "failed",
+      "provider current-snapshot contract is not qualified; preserving last-good publication",
+    );
+  }
   const { resolved, dropped, failed, unlocatable } = await resolveOpenLr(
     parse.situations,
     deps.openlrClient ?? null,
@@ -1359,6 +1368,7 @@ async function finishEventPoll(
       situations,
       ...(poll.smnWindow ? { smnWindow: poll.smnWindow, smnDecision: parse.smn } : {}),
       situationsComplete: parse.situationsComplete ?? true,
+      nswRfsOrdering: parse.nswRfsOrdering,
       ...(unlocatableSituations
         ? {
             unlocatable: unlocatableSituations,

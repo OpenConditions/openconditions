@@ -11,6 +11,7 @@ import { parseFirms } from "./formats/firms.js";
 import { parseGdacs } from "./formats/gdacs.js";
 import { parseHms } from "./formats/hms.js";
 import { parseMeteoAlarm } from "./formats/meteoalarm.js";
+import { parseNswRfs } from "./formats/nsw-rfs.js";
 import { parseNws } from "./formats/nws.js";
 import { parseSlstrFrp } from "./formats/slstr-frp.js";
 import { parseUsgs } from "./formats/usgs.js";
@@ -23,6 +24,14 @@ import { parseWfigs } from "./formats/wfigs.js";
 export const HAZARDS_PRODUCTS = ["alerts", "fires", "smoke", "quakes", "events"] as const;
 
 const FORMATS: FeedFormat<HazardsCatalogFeed>[] = [
+  {
+    id: "nsw-rfs",
+    kind: "situations",
+    products: ["alerts"],
+    endpoints: { alerts: { required: true } },
+    reparseUnchanged: true,
+    parse: parseNswRfs,
+  },
   {
     id: "cap",
     kind: "situations",

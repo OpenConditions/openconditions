@@ -122,4 +122,7 @@ export const SAMPLES: SkipSamples = {
   },
 };
 
-export const EXEMPT: SkipExemptions = {};
+export const EXEMPT: SkipExemptions = {
+  "hazards/nsw-rfs":
+    "Strict all-or-nothing distribution: unreadable or unknown semantics throw and retain last-good publication. Known out-of-scope classes and expired messages are counted as terminal snapshot dispositions, not rejected-record skips.",
+};
