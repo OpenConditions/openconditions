@@ -130,9 +130,17 @@ const MINUTE_MS = 60_000;
  * window has left it. Starts are spaced, not refused, so a fan-out or a
  * page sequence finishes at the rate the publisher allows.
  */
-function pacedFetch(pacer: Pacer, perMinute: number, fetchFn: FetchFn): FetchFn {
+function pacedFetch(
+  pacer: Pacer,
+  perMinute: number,
+  fetchFn: FetchFn,
+  outerSignal?: AbortSignal,
+): FetchFn {
   return (async (...args: Parameters<FetchFn>) => {
-    const signal = args[1]?.signal;
+    const signal =
+      outerSignal && args[1]?.signal
+        ? AbortSignal.any([outerSignal, args[1].signal])
+        : (outerSignal ?? args[1]?.signal);
     const wait = async () => {
       signal?.throwIfAborted();
       const prune = () => {
@@ -241,7 +249,7 @@ export type FetchResult =
 
 export interface FetchOptions {
   state?: FetchState;
-  /** Cancels a bounded PUN acquisition, including queue and body waits. */
+  /** Cancels acquisition, including queue and body waits. */
   signal?: AbortSignal;
   /** The resolvers a catalogue parent may name: its domain's. */
   resolvers?: readonly CatalogResolver[];
@@ -1102,6 +1110,8 @@ async function fetchWalk(
   init: RequestInit | undefined,
   redact: (s: string) => string,
   tolerant: boolean,
+  revalidateSec?: number,
+  maxItems?: number,
 ): Promise<ItemsFetch> {
   let listings = sources;
   const next = new Map<string, KeptItem>();
@@ -1141,12 +1151,17 @@ async function fetchWalk(
       // A source listing was no request of the walk's.
       if (level === 0) total++;
     }
+    const items = listedLinks(pattern, read);
+    if (maxItems !== undefined && items.length > maxItems)
+      throw new Error(`walk exceeds ${maxItems} items`);
     const found = await fetchKeeping(
-      listedLinks(pattern, read),
+      items,
       (_url, version, prior) =>
         version === undefined
           ? !last
-          : prior.version !== version || (!last && prior.confirmed !== true),
+          : prior.version !== version ||
+            (!last && prior.confirmed !== true) ||
+            (revalidateSec !== undefined && at - prior.at >= revalidateSec * 1000),
       kept,
       at,
       fetchFn,
@@ -1397,7 +1412,7 @@ async function fetchRole(
       pacer = { starts: [], turn: Promise.resolve() };
       state.pacers.set(feed.id, pacer);
     }
-    fetchFn = pacedFetch(pacer, perMinute, authorized);
+    fetchFn = pacedFetch(pacer, perMinute, authorized, opts.signal);
   }
 
   if (endpoint.smnRss) {
@@ -1558,6 +1573,8 @@ async function fetchRole(
           init,
           redact,
           tolerant,
+          each.revalidateSec,
+          each.maxItems,
         ),
       );
     }

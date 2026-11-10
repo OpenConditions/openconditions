@@ -1,0 +1,100 @@
+[
+  {
+    "file": "tu-listing.html.txt",
+    "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/air_temperature/now/",
+    "sha256": "80ad04298a438ab2d34b470099da83e2a7829fddfed30cff974bf1f5e7964f31",
+    "bytes": 65084,
+    "retrievedAt": "2026-11-07T23:04:36.628602+00:00"
+  },
+  {
+    "file": "tu-stations.txt",
+    "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/air_temperature/now/zehn_now_tu_Beschreibung_Stationen.txt",
+    "sha256": "270ee60fb9d84e1031b5852ef63750780d0327e187965fb73812795a09f0eae7",
+    "bytes": 466155,
+    "retrievedAt": "2026-11-07T23:04:36.822064+00:00"
+  },
+  {
+    "file": "tu.zip",
+    "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/air_temperature/now/10minutenwerte_TU_00044_now.zip",
+    "sha256": "edbafa5c5a65a7f1a26e731d3cb37b7177a85868fd4b7ea3124125b980481433",
+    "bytes": 1346,
+    "retrievedAt": "2026-11-07T23:04:36.907917+00:00"
+  },
+  {
+    "file": "rr-listing.html.txt",
+    "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/precipitation/now/",
+    "sha256": "369019a8eb6af2d6bdc8593a059fe7988d0bd7279905722fe5525df640e8adc8",
+    "bytes": 196641,
+    "retrievedAt": "2026-11-07T23:04:37.139773+00:00"
+  },
+  {
+    "file": "rr-stations.txt",
+    "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/precipitation/now/zehn_now_rr_Beschreibung_Stationen.txt",
+    "sha256": "3efa6aec26d5fa4e2772fce6e1abe0c44b6963b6d2579290a88c0f98c0b93f35",
+    "bytes": 1377975,
+    "retrievedAt": "2026-11-07T23:04:37.411537+00:00"
+  },
+  {
+    "file": "rr.zip",
+    "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/precipitation/now/10minutenwerte_nieder_00044_now.zip",
+    "sha256": "6b4bc29d2eb6a0236f5ce2eb030c2826d918b0505343beaf828248e2cc6cdbb6",
+    "bytes": 667,
+    "retrievedAt": "2026-11-07T23:04:37.499858+00:00"
+  },
+  {
+    "file": "ff-listing.html.txt",
+    "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/wind/now/",
+    "sha256": "f900bf79c8426cca63b6e35b51170609fcb9c073d7db14fa75baf1f14deb69b4",
+    "bytes": 39343,
+    "retrievedAt": "2026-11-07T23:04:37.677341+00:00"
+  },
+  {
+    "file": "ff-stations.txt",
+    "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/wind/now/zehn_now_ff_Beschreibung_Stationen.txt",
+    "sha256": "eb2d0fa91cf6f1dbbb4f91a66650d133fe134ae56be14f1f4a98181bd59acca4",
+    "bytes": 277779,
+    "retrievedAt": "2026-11-07T23:04:37.822937+00:00"
+  },
+  {
+    "file": "ff.zip",
+    "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/wind/now/10minutenwerte_wind_00011_now.zip",
+    "sha256": "76c2eb98742eb1d991672dd59afd3b6c2f66b08047f6b6e33a05eea130fd81db",
+    "bytes": 1002,
+    "retrievedAt": "2026-11-07T23:04:37.886679+00:00"
+  },
+  {
+    "file": "fx-listing.html.txt",
+    "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/extreme_wind/now/",
+    "sha256": "fcd6ac9529e33ba678dbc766f8cc03fbeea5c56aa47de0a21cef4a7ef46db5d1",
+    "bytes": 41567,
+    "retrievedAt": "2026-11-07T23:04:37.992853+00:00"
+  },
+  {
+    "file": "fx-stations.txt",
+    "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/extreme_wind/now/zehn_now_fx_Beschreibung_Stationen.txt",
+    "sha256": "4f96f463146cddb88aec03f8e16b54eb4ea8c27b2dc97bb5a99442d2cfe292ce",
+    "bytes": 277779,
+    "retrievedAt": "2026-11-07T23:04:38.244306+00:00"
+  },
+  {
+    "file": "fx.zip",
+    "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/extreme_wind/now/10minutenwerte_extrema_wind_00011_now.zip",
+    "sha256": "34fb786f3d2c97df5fb993a0a46474a432793695e177dfd47588b1078e07fcbb",
+    "bytes": 1375,
+    "retrievedAt": "2026-11-07T23:04:38.333960+00:00"
+  },
+  {
+    "file": "tu-02362.zip",
+    "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/air_temperature/now/10minutenwerte_TU_02362_now.zip",
+    "sha256": "f2d9eaf4d4c38a35c202bebbc9918a55d4ca7459a5613dc0578d1f5f63ea97e7",
+    "bytes": 493,
+    "retrievedAt": "2026-11-07T23:16:04.106235+00:00"
+  },
+  {
+    "file": "rr-02254.zip",
+    "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/precipitation/now/10minutenwerte_nieder_02254_now.zip",
+    "sha256": "c988200ffa3dae87f8a75cb2c3ff709525a43d732880b9f669b2fae60c775834",
+    "bytes": 413,
+    "retrievedAt": "2026-11-07T23:16:04.192974+00:00"
+  }
+]

@@ -96,6 +96,8 @@ export interface StreamingParse<F extends CatalogFeed = CatalogFeed> {
 export interface FeedFormat<F extends CatalogFeed = CatalogFeed> {
   id: string;
   kind: "situations" | "measurements" | "features";
+  /** Blocks worker acquisition until full-scope operator qualification is recorded. */
+  acquisitionBlockedReason?: string;
   /** The products a feed of this format may carry. */
   products: readonly string[];
   /** The feature and offer kinds and the properties the format emits, which on-demand routing reads. */

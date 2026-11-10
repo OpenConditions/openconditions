@@ -341,6 +341,16 @@
                       "type": "integer",
                       "exclusiveMinimum": 0,
                       "maximum": 9007199254740991
+                    },
+                    "revalidateSec": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "maxItems": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 10000
                     }
                   },
                   "required": [
@@ -822,6 +832,32 @@
               "bulk",
               "on_demand"
             ]
+          },
+          "acquisitionLimits": {
+            "type": "object",
+            "properties": {
+              "requests": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "bytes": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "deadlineSec": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "requests",
+              "bytes",
+              "deadlineSec"
+            ],
+            "additionalProperties": false
           },
           "requestLimits": {
             "type": "object",

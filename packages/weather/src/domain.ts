@@ -6,11 +6,26 @@ import {
 import { type WeatherCatalogFeed, weatherFeedShape } from "./feed-schema.js";
 import { parseDigitrafficWeather, parseDigitrafficWeatherStatus } from "./formats/digitraffic.js";
 import { DIGITRAFFIC_SENSORS } from "./formats/digitraffic-sensors.js";
+import { DWD_PROPERTIES, DWD_ROLES, parseDwd } from "./formats/dwd.js";
 
 /** What a weather feed publishes: weather stations and what they measure now. */
 export const WEATHER_PRODUCTS = ["weather"] as const;
 
 const FORMATS: FeedFormat<WeatherCatalogFeed>[] = [
+  {
+    id: "dwd-cdc-10min",
+    kind: "features",
+    products: WEATHER_PRODUCTS,
+    produces: { kinds: ["weather_station", "sensor_channel"], properties: DWD_PROPERTIES },
+    endpoints: Object.fromEntries(
+      DWD_ROLES.flatMap((role) => [
+        [`${role}_stations`, { required: true }],
+        [`${role}_listing`, { required: true }],
+        [role, { required: true }],
+      ]),
+    ),
+    parse: parseDwd,
+  },
   {
     id: "digitraffic-weather",
     kind: "features",

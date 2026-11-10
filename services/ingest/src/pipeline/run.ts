@@ -45,6 +45,7 @@ import { feedErrorMessage } from "../feed-error.js";
 import type { RawArchive } from "../raw/archive.js";
 import { archivingTee, digestOnlyTee, type StreamTeeFactory } from "../raw/stream-tee.js";
 import { rawTierFor } from "../raw/tiers.js";
+import { acquisitionBudget } from "./acquisition-budget.js";
 import { loadBaselineMap } from "./baseline-store.js";
 import { bindRecords } from "./bind-records.js";
 import { bodyStreamFrom } from "./body-stream.js";
@@ -218,6 +219,8 @@ export interface RunResult {
 }
 
 export interface RunDeps {
+  fetchState?: import("@openconditions/ingest-framework").FetchState;
+  acquisitionCheck?: () => void;
   sql: Sql;
   fetch: typeof fetch;
   now: () => string;
@@ -461,8 +464,18 @@ export async function runSource(src: CatalogFeed, deps: RunDeps): Promise<RunRes
     at: attemptAt,
     closed: false,
   };
+  const budget = src.acquisitionLimits
+    ? acquisitionBudget(src.acquisitionLimits, deps.fetch, deps.signal)
+    : undefined;
   try {
-    return await runAttempt(src, deps, attempt, due);
+    return await runAttempt(
+      src,
+      budget
+        ? { ...deps, fetch: budget.fetch, signal: budget.signal, acquisitionCheck: budget.check }
+        : deps,
+      attempt,
+      due,
+    );
   } catch (err) {
     if (!attempt.closed) {
       await upsertSourceStatus(deps.sql, src.id, {
@@ -479,6 +492,8 @@ export async function runSource(src: CatalogFeed, deps: RunDeps): Promise<RunRes
       );
     }
     throw err;
+  } finally {
+    budget?.close();
   }
 }
 
@@ -531,6 +546,11 @@ async function runAttempt(
   const env = deps.env ?? process.env;
   const fetchFor = (role: string) => feedFetch(src, { ...deps, env }, role);
   const format = formatOf(src);
+  if (format.acquisitionBlockedReason) {
+    const error = format.acquisitionBlockedReason;
+    await recordStatus({ freshnessWindowSec: src.freshnessWindowSec, outcome: "error", error });
+    return { count: 0, durationMs: Date.now() - start, error };
+  }
   const teeFor = (c: ReturnType<typeof capture>): StreamTeeFactory =>
     c ? archivingTee(c.archive, c.meta) : digestOnlyTee;
 
@@ -608,10 +628,12 @@ async function runAttempt(
     statesComplete: !leftOut,
     ...(smnWindow ? { smnWindow } : {}),
   });
-  const finish = (parse: ParseOutput): Promise<RunResult> => {
+  const finish = (parse: ParseOutput, dwdStationPayloads?: FeedPayloads): Promise<RunResult> => {
+    deps.acquisitionCheck?.();
     const poll = pollContext();
     const skipped = drainSkipped(src.id);
-    if (format.kind === "features") return finishFeaturePoll(poll, parse, heldPayload, skipped);
+    if (format.kind === "features")
+      return finishFeaturePoll(poll, parse, heldPayload, skipped, dwdStationPayloads);
     return format.kind === "measurements"
       ? finishFlowPoll(
           poll,
@@ -801,6 +823,7 @@ async function runAttempt(
             role,
             guardedFeedFetch(deps, src.endpoints[role]?.timeoutSec),
             {
+              state: deps.fetchState,
               resolvers: domainOf(src).resolvers,
               ...(deps.signal ? { signal: deps.signal } : {}),
               env,
@@ -814,6 +837,7 @@ async function runAttempt(
             },
           );
         } catch (err) {
+          deps.acquisitionCheck?.();
           const reason = feedErrorMessage(src, err, env);
           gap(role);
           // A tolerant `urls` role whose every URL failed stands in URL by URL,
@@ -1009,6 +1033,7 @@ async function runAttempt(
           delete freshUrls[role];
         }
       }
+      deps.acquisitionCheck?.();
       // A role counts as fetched once its answer is held: a poll that fails
       // before then leaves it due, or the next polls would parse nothing for it
       // until its cadence came round again.
@@ -1180,12 +1205,17 @@ async function runAttempt(
       }
     };
     const parseAndFinish = async (): Promise<RunResult> => {
+      deps.acquisitionCheck?.();
       steps.lap("gate");
       const latest = await parseLatest();
       if ("failed" in latest) return latest.failed;
       steps.lap("parse");
       const { parsed } = latest;
-      const result = await finish(parsed);
+      const dwdStationPayloads =
+        src.format === "dwd-cdc-10min"
+          ? await payloadsOf(roles.filter((role) => role.endsWith("_stations")))
+          : undefined;
+      const result = await finish(parsed, dwdStationPayloads);
       if (keepPayloads && live.length > 0 && result.error === undefined && parsed.statusIndex) {
         deps.roles!.statusIndex = parsed.statusIndex;
       }
@@ -1550,6 +1580,7 @@ async function finishFeaturePoll(
   parse: ParseOutput,
   heldPayload: boolean,
   skipped: SkipCounts,
+  dwdStationPayloads?: FeedPayloads,
 ): Promise<RunResult> {
   const { src, deps } = poll;
   const nonWithdrawing =
@@ -1598,6 +1629,7 @@ async function finishFeaturePoll(
   try {
     published = await publishFeatures(deps.sql, src, {
       output,
+      ...(dwdStationPayloads ? { dwdStationPayloads } : {}),
       rejected: (parse.rejected ?? 0) + skippedRecords(skipped),
       poll: poll.identity,
       durationMs: Date.now() - poll.start,
