@@ -2426,6 +2426,7 @@
             "eccc-swob",
             "dwd-cdc-10min",
             "smhi-metobs",
+            "fmi-weather",
             "parkapi-v3",
             "datex2-light",
             "db-bahnpark",

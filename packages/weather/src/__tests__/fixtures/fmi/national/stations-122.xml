@@ -1,0 +1,1069 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wfs:FeatureCollection
+  timeStamp="2026-11-09T16:40:13Z"
+  numberMatched="28"
+  numberReturned="28"
+  xmlns:wfs="http://www.opengis.net/wfs/2.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  xmlns:gml="http://www.opengis.net/gml/3.2"
+  xmlns:gco="http://www.isotc211.org/2005/gco"
+  xmlns:ins_base="http://inspire.ec.europa.eu/schemas/base/3.3"
+  xmlns:ins_base2="http://inspire.ec.europa.eu/schemas/base2/2.0"
+  xmlns:ef="http://inspire.ec.europa.eu/schemas/ef/4.0"
+  xsi:schemaLocation="http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd
+  http://inspire.ec.europa.eu/schemas/ef/4.0 https://inspire.ec.europa.eu/schemas/ef/4.0/EnvironmentalMonitoringFacilities.xsd">
+  
+  <wfs:member>
+    <ef:EnvironmentalMonitoringFacility gml:id="WFS-NUQJBfcE_HuZVuirIatMHwlhgn6JTowsWbbpdOsuZ0659MPTTv3c4W9h69NG_lp6eYm_bh07q4tHTpwdL1_jbsXZtuldm0tLFlz6d1TTty2qv4Vahgo4hM7Hsw8.cnJJjEZ2XdkqaduW1V_CrUsFHEJwad3Php5ZZ2Hbl58MOPLXaFo6dODpev8bdi7Nt0rs2lfuw7cvPhhx5V.nJl3dNObTl5L.fTD0079y_Tu58NPLK7uejf3n4ueXl207s8PDww4tOzT08xNLn0w9NO_dJyVmMWDBywcNLn038sOfLJySXXG5z6b.WXJx65eXm_pyVxZtul06y5nTrn0w9NO_dzA-">
+      <gml:identifier codeSpace="http://xml.fmi.fi/namespace/stationcode/fmisid">100908</gml:identifier>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/name">Parainen Utö</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/geoid">-16000054</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/wmo">02981</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/region">Parainen</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/country">Finland</gml:name>
+      <ef:inspireId>
+        <ins_base:Identifier>
+          <ins_base:localId>100908</ins_base:localId>
+          <ins_base:namespace>http://xml.fmi.fi/namespace/identifier/station/inspire</ins_base:namespace>
+        </ins_base:Identifier>
+      </ef:inspireId>
+      <ef:name>Parainen Utö</ef:name>
+      <ef:mediaMonitored xlink:href="" nilReason="missing"/>
+      <ef:representativePoint>
+        <gml:Point gml:id="point-1" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4258" srsDimension="2">
+          <gml:pos>59.779094 21.374788</gml:pos>
+        </gml:Point>
+      </ef:representativePoint>
+      <ef:measurementRegime xlink:href="https://inspire.ec.europa.eu/codelist/MeasurementRegimeValue/continuousDataCollection"/>
+      <ef:mobile>false</ef:mobile>
+      <ef:operationalActivityPeriod>
+        <ef:OperationalActivityPeriod gml:id="oap-1-1">
+          <ef:activityTime>
+            <gml:TimePeriod gml:id="oap-tp-1-1">
+              <gml:beginPosition>1881-02-01T00:00:00Z</gml:beginPosition>
+              <gml:endPosition indeterminatePosition="now"/>
+            </gml:TimePeriod>
+          </ef:activityTime>
+        </ef:OperationalActivityPeriod>
+      </ef:operationalActivityPeriod>
+      <ef:belongsTo xlink:title="Automaattinen sääasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=121&amp;"/>
+      <ef:belongsTo xlink:title="Sadeasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=124&amp;"/>
+      <ef:belongsTo xlink:title="Auringonsäteilyasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=128&amp;"/>
+      <ef:belongsTo xlink:title="Ilmanlaadun tausta-asema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=129&amp;"/>
+      <ef:belongsTo xlink:title="Radioaktiivisuusasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=130&amp;"/>
+      <ef:belongsTo xlink:title="Tutkimusmittausasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=146&amp;"/>
+    </ef:EnvironmentalMonitoringFacility>
+  </wfs:member>
+  <wfs:member>
+    <ef:EnvironmentalMonitoringFacility gml:id="WFS-LxG3NBfTzVPdCH.Yp5uzoOERpA.JTowsWbbpdOsuZ0659MPTTv3c4W9h69NG_lp6eYm_bh07q4tHTpwdL1_jbsXZtuldm0tLFlz6d1TTty2qv4Vahgo4hM7Hsw8.cnJJjEZ2XdkqaduW1V_CrUsFHEJwad3Php5ZZ2Hbl58MOPLXaFo6dODpev8bdi7Nt0rs2lfuw7cvPhhx5V.nJl3dNObTl5L.fTD0079y_Tu58NPLK7uejf3n4ueXl207s8PDww4tOzT08xNLn0w9NO_dJyVmMWDBywctLn038sOfLJySXXG5z6b.WXJx65eXm_pyVxZtul06y5nTrn0w9NO_dzA-">
+      <gml:identifier codeSpace="http://xml.fmi.fi/namespace/stationcode/fmisid">100909</gml:identifier>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/name">Lemland Nyhamn</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/geoid">-16000086</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/wmo">02980</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/region">Lemland</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/country">Finland</gml:name>
+      <ef:inspireId>
+        <ins_base:Identifier>
+          <ins_base:localId>100909</ins_base:localId>
+          <ins_base:namespace>http://xml.fmi.fi/namespace/identifier/station/inspire</ins_base:namespace>
+        </ins_base:Identifier>
+      </ef:inspireId>
+      <ef:name>Lemland Nyhamn</ef:name>
+      <ef:mediaMonitored xlink:href="" nilReason="missing"/>
+      <ef:representativePoint>
+        <gml:Point gml:id="point-2" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4258" srsDimension="2">
+          <gml:pos>59.959108 19.953736</gml:pos>
+        </gml:Point>
+      </ef:representativePoint>
+      <ef:measurementRegime xlink:href="https://inspire.ec.europa.eu/codelist/MeasurementRegimeValue/continuousDataCollection"/>
+      <ef:mobile>false</ef:mobile>
+      <ef:operationalActivityPeriod>
+        <ef:OperationalActivityPeriod gml:id="oap-2-1">
+          <ef:activityTime>
+            <gml:TimePeriod gml:id="oap-tp-2-1">
+              <gml:beginPosition>1958-09-16T00:00:00Z</gml:beginPosition>
+              <gml:endPosition indeterminatePosition="now"/>
+            </gml:TimePeriod>
+          </ef:activityTime>
+        </ef:OperationalActivityPeriod>
+      </ef:operationalActivityPeriod>
+      <ef:belongsTo xlink:title="Automaattinen sääasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=121&amp;"/>
+    </ef:EnvironmentalMonitoringFacility>
+  </wfs:member>
+  <wfs:member>
+    <ef:EnvironmentalMonitoringFacility gml:id="WFS-xWHKihNxJdU.JLyns1b70BHizfqJTowsWbbpdOsuZ0659MPTTv3c4W9h69NG_lp6eYm_bh07q4tHTpwdL1_jbsXZtuldm0tLFlz6d1TTty2qv4Vahgo4hM7Hsw8.cnJJjEZ2XdkqaduW1V_CrUsFHEJwad3Php5ZZ2Hbl58MOPLXaFo6dODpev8bdi7Nt0rs2lfuw7cvPhhx5V.nJl3dNObTl5L.fTD0079y_Tu58NPLK7uejf3n4ueXl207s8PDww4tOzT08xNLn0w9NO_dJyVmMWDByzZNLn038sOfLJySXXG5z6b.WXJx65eXm_pyVxZtul06y5nTrn0w9NO_dzA-">
+      <gml:identifier codeSpace="http://xml.fmi.fi/namespace/stationcode/fmisid">100932</gml:identifier>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/name">Hanko Russarö</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/geoid">-16000163</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/wmo">02982</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/region">Hanko</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/country">Finland</gml:name>
+      <ef:inspireId>
+        <ins_base:Identifier>
+          <ins_base:localId>100932</ins_base:localId>
+          <ins_base:namespace>http://xml.fmi.fi/namespace/identifier/station/inspire</ins_base:namespace>
+        </ins_base:Identifier>
+      </ef:inspireId>
+      <ef:name>Hanko Russarö</ef:name>
+      <ef:mediaMonitored xlink:href="" nilReason="missing"/>
+      <ef:representativePoint>
+        <gml:Point gml:id="point-3" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4258" srsDimension="2">
+          <gml:pos>59.773633 22.948683</gml:pos>
+        </gml:Point>
+      </ef:representativePoint>
+      <ef:measurementRegime xlink:href="https://inspire.ec.europa.eu/codelist/MeasurementRegimeValue/continuousDataCollection"/>
+      <ef:mobile>false</ef:mobile>
+      <ef:operationalActivityPeriod>
+        <ef:OperationalActivityPeriod gml:id="oap-3-1">
+          <ef:activityTime>
+            <gml:TimePeriod gml:id="oap-tp-3-1">
+              <gml:beginPosition>1881-01-01T00:00:00Z</gml:beginPosition>
+              <gml:endPosition indeterminatePosition="now"/>
+            </gml:TimePeriod>
+          </ef:activityTime>
+        </ef:OperationalActivityPeriod>
+      </ef:operationalActivityPeriod>
+      <ef:belongsTo xlink:title="Automaattinen sääasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=121&amp;"/>
+    </ef:EnvironmentalMonitoringFacility>
+  </wfs:member>
+  <wfs:member>
+    <ef:EnvironmentalMonitoringFacility gml:id="WFS-3F4vRriCg2AlP4OiwYFg7cpyvDSJTowsWbbpdOsuZ0659MPTTv3c4W9h69NG_lp6eYm_bh07q4tHTpwdL1_jbsXZtuldm0tLFlz6d1TTty2qv4Vahgo4hM7Hsw8.cnJJjEZ2XdkqaduW1V_CrUsFHEJwad3Php5ZZ2Hbl58MOPLXaFo6dODpev8bdi7Nt0rs2lfuw7cvPhhx5V.nJl3dNObTl5L.fTD0079y_Tu58NPLK7uejf3n4ueXl207s8PDww4tOzT08xNLn0w9NO_dJyVmMWDBy2cNLn038sOfLJySXXG5z6b.WXJx65eXm_pyVxZtul06y5nTrn0w9NO_dzA-">
+      <gml:identifier codeSpace="http://xml.fmi.fi/namespace/stationcode/fmisid">100968</gml:identifier>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/name">Helsinki-Vantaa lentoasema</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/geoid">-16000063</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/wmo">02974</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/icao">EFHK</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/region">Vantaa</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/country">Finland</gml:name>
+      <ef:inspireId>
+        <ins_base:Identifier>
+          <ins_base:localId>100968</ins_base:localId>
+          <ins_base:namespace>http://xml.fmi.fi/namespace/identifier/station/inspire</ins_base:namespace>
+        </ins_base:Identifier>
+      </ef:inspireId>
+      <ef:name>Helsinki-Vantaa lentoasema</ef:name>
+      <ef:mediaMonitored xlink:href="" nilReason="missing"/>
+      <ef:representativePoint>
+        <gml:Point gml:id="point-4" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4258" srsDimension="2">
+          <gml:pos>60.329368 24.972740</gml:pos>
+        </gml:Point>
+      </ef:representativePoint>
+      <ef:measurementRegime xlink:href="https://inspire.ec.europa.eu/codelist/MeasurementRegimeValue/continuousDataCollection"/>
+      <ef:mobile>false</ef:mobile>
+      <ef:operationalActivityPeriod>
+        <ef:OperationalActivityPeriod gml:id="oap-4-1">
+          <ef:activityTime>
+            <gml:TimePeriod gml:id="oap-tp-4-1">
+              <gml:beginPosition>1952-11-01T00:00:00Z</gml:beginPosition>
+              <gml:endPosition indeterminatePosition="now"/>
+            </gml:TimePeriod>
+          </ef:activityTime>
+        </ef:OperationalActivityPeriod>
+      </ef:operationalActivityPeriod>
+      <ef:belongsTo xlink:title="Automaattinen sääasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=121&amp;"/>
+      <ef:belongsTo xlink:title="Sääasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=122&amp;"/>
+      <ef:belongsTo xlink:title="Auringonsäteilyasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=128&amp;"/>
+      <ef:belongsTo xlink:title="Testiasema (kehitys- ja testaustoiminta)" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=221&amp;"/>
+      <ef:belongsTo xlink:title="IL:n hallinnoima lentosääasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=224&amp;"/>
+    </ef:EnvironmentalMonitoringFacility>
+  </wfs:member>
+  <wfs:member>
+    <ef:EnvironmentalMonitoringFacility gml:id="WFS-JKwPbefhM0BP9vmgaZGHy6qay56JTowsWbbpdOsuZ0659MPTTv3c4W9h69NG_lp6eYm_bh07q4tHTpwdL1_jbsXZtuldm0tLFlz6d1TTty2qv4Vahgo4hM7Hsw8.cnJJjEZ2XdkqaduW1V_CrUsFHEJwad3Php5ZZ2Hbl58MOPLXaFo6dODpev8bdi7Nt0rs2lfuw7cvPhhx5V.nJl3dNObTl5L.fTD0079y_Tu58NPLK7uejf3n4ueXl207s8PDww4tOzT08xNLn0w9NO_dJyVmMWDBy2ctLn038sOfLJySXXG5z6b.WXJx65eXm_pyVxZtul06y5nTrn0w9NO_dzA-">
+      <gml:identifier codeSpace="http://xml.fmi.fi/namespace/stationcode/fmisid">100969</gml:identifier>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/name">Inkoo Bågaskär</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/geoid">-16000158</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/wmo">02984</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/region">Inkoo</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/country">Finland</gml:name>
+      <ef:inspireId>
+        <ins_base:Identifier>
+          <ins_base:localId>100969</ins_base:localId>
+          <ins_base:namespace>http://xml.fmi.fi/namespace/identifier/station/inspire</ins_base:namespace>
+        </ins_base:Identifier>
+      </ef:inspireId>
+      <ef:name>Inkoo Bågaskär</ef:name>
+      <ef:mediaMonitored xlink:href="" nilReason="missing"/>
+      <ef:representativePoint>
+        <gml:Point gml:id="point-5" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4258" srsDimension="2">
+          <gml:pos>59.931136 24.014082</gml:pos>
+        </gml:Point>
+      </ef:representativePoint>
+      <ef:measurementRegime xlink:href="https://inspire.ec.europa.eu/codelist/MeasurementRegimeValue/continuousDataCollection"/>
+      <ef:mobile>false</ef:mobile>
+      <ef:operationalActivityPeriod>
+        <ef:OperationalActivityPeriod gml:id="oap-5-1">
+          <ef:activityTime>
+            <gml:TimePeriod gml:id="oap-tp-5-1">
+              <gml:beginPosition>1954-10-01T00:00:00Z</gml:beginPosition>
+              <gml:endPosition indeterminatePosition="now"/>
+            </gml:TimePeriod>
+          </ef:activityTime>
+        </ef:OperationalActivityPeriod>
+      </ef:operationalActivityPeriod>
+      <ef:belongsTo xlink:title="Automaattinen sääasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=121&amp;"/>
+    </ef:EnvironmentalMonitoringFacility>
+  </wfs:member>
+  <wfs:member>
+    <ef:EnvironmentalMonitoringFacility gml:id="WFS-Ppp_smA4DBQsXg2olohZ_8vEae2JTowsWbbpdOsuZ0659MPTTv3c4W9h69NG_lp6eYm_bh07q4tHTpwdL1_jbsXZtuldm0tLFlz6d1TTty2qv4Vahgo4hM7Hsw8.cnJJjEZ2XdkqaduW1V_CrUsFHEJwad3Php5ZZ2Hbl58MOPLXaFo6dODpev8bdi7Nt0rs2lfuw7cvPhhx5V.nJl3dNObTl5L.fTD0079y_Tu58NPLK7uejf3n4ueXl207s8PDww4tOzT08xNLn0w9NO_dJyVmMWDFgzYNLn038sOfLJySXXG5z6b.WXJx65eXm_pyVxZtul06y5nTrn0w9NO_dzA-">
+      <gml:identifier codeSpace="http://xml.fmi.fi/namespace/stationcode/fmisid">101030</gml:identifier>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/name">Kotka Rankki</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/geoid">-16000076</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/wmo">02976</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/region">Kotka</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/country">Finland</gml:name>
+      <ef:inspireId>
+        <ins_base:Identifier>
+          <ins_base:localId>101030</ins_base:localId>
+          <ins_base:namespace>http://xml.fmi.fi/namespace/identifier/station/inspire</ins_base:namespace>
+        </ins_base:Identifier>
+      </ef:inspireId>
+      <ef:name>Kotka Rankki</ef:name>
+      <ef:mediaMonitored xlink:href="" nilReason="missing"/>
+      <ef:representativePoint>
+        <gml:Point gml:id="point-6" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4258" srsDimension="2">
+          <gml:pos>60.375377 26.958926</gml:pos>
+        </gml:Point>
+      </ef:representativePoint>
+      <ef:measurementRegime xlink:href="https://inspire.ec.europa.eu/codelist/MeasurementRegimeValue/continuousDataCollection"/>
+      <ef:mobile>false</ef:mobile>
+      <ef:operationalActivityPeriod>
+        <ef:OperationalActivityPeriod gml:id="oap-6-1">
+          <ef:activityTime>
+            <gml:TimePeriod gml:id="oap-tp-6-1">
+              <gml:beginPosition>1933-01-01T00:00:00Z</gml:beginPosition>
+              <gml:endPosition indeterminatePosition="now"/>
+            </gml:TimePeriod>
+          </ef:activityTime>
+        </ef:OperationalActivityPeriod>
+      </ef:operationalActivityPeriod>
+      <ef:belongsTo xlink:title="Automaattinen sääasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=121&amp;"/>
+      <ef:belongsTo xlink:title="Auringonsäteilyasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=128&amp;"/>
+    </ef:EnvironmentalMonitoringFacility>
+  </wfs:member>
+  <wfs:member>
+    <ef:EnvironmentalMonitoringFacility gml:id="WFS-rNBLkHqQTpRIkOiEs4iV1E5Of3SJTowsWbbpdOsuZ0659MPTTv3c4W9h69NG_lp6eYm_bh07q4tHTpwdL1_jbsXZtuldm0tLFlz6d1TTty2qv4Vahgo4hM7Hsw8.cnJJjEZ2XdkqaduW1V_CrUsFHEJwad3Php5ZZ2Hbl58MOPLXaFo6dODpev8bdi7Nt0rs2lfuw7cvPhhx5V.nJl3dNObTl5L.fTD0079y_Tu58NPLK7uejf3n4ueXl207s8PDww4tOzT08xNLn0w9NO_dJyVmMWDFg0aNLn038sOfLJySXXG5z6b.WXJx65eXm_pyVxZtul06y5nTrn0w9NO_dzA-">
+      <gml:identifier codeSpace="http://xml.fmi.fi/namespace/stationcode/fmisid">101044</gml:identifier>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/name">Pori lentoasema</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/geoid">-101044</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/wmo">02952</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/icao">EFPO</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/region">Pori</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/country">Finland</gml:name>
+      <ef:inspireId>
+        <ins_base:Identifier>
+          <ins_base:localId>101044</ins_base:localId>
+          <ins_base:namespace>http://xml.fmi.fi/namespace/identifier/station/inspire</ins_base:namespace>
+        </ins_base:Identifier>
+      </ef:inspireId>
+      <ef:name>Pori lentoasema</ef:name>
+      <ef:mediaMonitored xlink:href="" nilReason="missing"/>
+      <ef:representativePoint>
+        <gml:Point gml:id="point-7" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4258" srsDimension="2">
+          <gml:pos>61.460112 21.808395</gml:pos>
+        </gml:Point>
+      </ef:representativePoint>
+      <ef:measurementRegime xlink:href="https://inspire.ec.europa.eu/codelist/MeasurementRegimeValue/continuousDataCollection"/>
+      <ef:mobile>false</ef:mobile>
+      <ef:operationalActivityPeriod>
+        <ef:OperationalActivityPeriod gml:id="oap-7-1">
+          <ef:activityTime>
+            <gml:TimePeriod gml:id="oap-tp-7-1">
+              <gml:beginPosition>1945-01-01T00:00:00Z</gml:beginPosition>
+              <gml:endPosition indeterminatePosition="now"/>
+            </gml:TimePeriod>
+          </ef:activityTime>
+        </ef:OperationalActivityPeriod>
+      </ef:operationalActivityPeriod>
+      <ef:belongsTo xlink:title="Automaattinen sääasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=121&amp;"/>
+      <ef:belongsTo xlink:title="IL:n hallinnoima lentosääasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=224&amp;"/>
+    </ef:EnvironmentalMonitoringFacility>
+  </wfs:member>
+  <wfs:member>
+    <ef:EnvironmentalMonitoringFacility gml:id="WFS-BFu5KJPFc.oqFFs4G4mAsHdcuFWJTowsWbbpdOsuZ0659MPTTv3c4W9h69NG_lp6eYm_bh07q4tHTpwdL1_jbsXZtuldm0tLFlz6d1TTty2qv4Vahgo4hM7Hsw8.cnJJjEZ2XdkqaduW1V_CrUsFHEJwad3Php5ZZ2Hbl58MOPLXaFo6dODpev8bdi7Nt0rs2lfuw7cvPhhx5V.nJl3dNObTl5L.fTD0079y_Tu58NPLK7uejf3n4ueXl207s8PDww4tOzT08xNLn0w9NO_dJyVmMWDFg2atLn038sOfLJySXXG5z6b.WXJx65eXm_pyVxZtul06y5nTrn0w9NO_dzA-">
+      <gml:identifier codeSpace="http://xml.fmi.fi/namespace/stationcode/fmisid">101065</gml:identifier>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/name">Turku lentoasema</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/geoid">-101065</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/wmo">02972</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/icao">EFTU</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/region">Turku</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/country">Finland</gml:name>
+      <ef:inspireId>
+        <ins_base:Identifier>
+          <ins_base:localId>101065</ins_base:localId>
+          <ins_base:namespace>http://xml.fmi.fi/namespace/identifier/station/inspire</ins_base:namespace>
+        </ins_base:Identifier>
+      </ef:inspireId>
+      <ef:name>Turku lentoasema</ef:name>
+      <ef:mediaMonitored xlink:href="" nilReason="missing"/>
+      <ef:representativePoint>
+        <gml:Point gml:id="point-8" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4258" srsDimension="2">
+          <gml:pos>60.515647 22.279155</gml:pos>
+        </gml:Point>
+      </ef:representativePoint>
+      <ef:measurementRegime xlink:href="https://inspire.ec.europa.eu/codelist/MeasurementRegimeValue/continuousDataCollection"/>
+      <ef:mobile>false</ef:mobile>
+      <ef:operationalActivityPeriod>
+        <ef:OperationalActivityPeriod gml:id="oap-8-1">
+          <ef:activityTime>
+            <gml:TimePeriod gml:id="oap-tp-8-1">
+              <gml:beginPosition>1955-05-01T00:00:00Z</gml:beginPosition>
+              <gml:endPosition indeterminatePosition="now"/>
+            </gml:TimePeriod>
+          </ef:activityTime>
+        </ef:OperationalActivityPeriod>
+      </ef:operationalActivityPeriod>
+      <ef:belongsTo xlink:title="IL:n hallinnoima lentosääasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=224&amp;"/>
+    </ef:EnvironmentalMonitoringFacility>
+  </wfs:member>
+  <wfs:member>
+    <ef:EnvironmentalMonitoringFacility gml:id="WFS-ZGCOZXEJCGwvkGrkQKuxigfG87GJTowsWbbpdOsuZ0659MPTTv3c4W9h69NG_lp6eYm_bh07q4tHTpwdL1_jbsXZtuldm0tLFlz6d1TTty2qv4Vahgo4hM7Hsw8.cnJJjEZ2XdkqaduW1V_CrUsFHEJwad3Php5ZZ2Hbl58MOPLXaFo6dODpev8bdi7Nt0rs2lfuw7cvPhhx5V.nJl3dNObTl5L.fTD0079y_Tu58NPLK7uejf3n4ueXl207s8PDww4tOzT08xNLn0w9NO_dJyVmMWDFiwaNLn038sOfLJySXXG5z6b.WXJx65eXm_pyVxZtul06y5nTrn0w9NO_dzA-">
+      <gml:identifier codeSpace="http://xml.fmi.fi/namespace/stationcode/fmisid">101104</gml:identifier>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/name">Jokioinen Ilmala</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/geoid">-16000162</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/wmo">02963</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/region">Jokioinen</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/country">Finland</gml:name>
+      <ef:inspireId>
+        <ins_base:Identifier>
+          <ins_base:localId>101104</ins_base:localId>
+          <ins_base:namespace>http://xml.fmi.fi/namespace/identifier/station/inspire</ins_base:namespace>
+        </ins_base:Identifier>
+      </ef:inspireId>
+      <ef:name>Jokioinen Ilmala</ef:name>
+      <ef:mediaMonitored xlink:href="" nilReason="missing"/>
+      <ef:representativePoint>
+        <gml:Point gml:id="point-9" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4258" srsDimension="2">
+          <gml:pos>60.813972 23.498250</gml:pos>
+        </gml:Point>
+      </ef:representativePoint>
+      <ef:measurementRegime xlink:href="https://inspire.ec.europa.eu/codelist/MeasurementRegimeValue/continuousDataCollection"/>
+      <ef:mobile>false</ef:mobile>
+      <ef:operationalActivityPeriod>
+        <ef:OperationalActivityPeriod gml:id="oap-9-1">
+          <ef:activityTime>
+            <gml:TimePeriod gml:id="oap-tp-9-1">
+              <gml:beginPosition>1928-06-01T00:00:00Z</gml:beginPosition>
+              <gml:endPosition indeterminatePosition="now"/>
+            </gml:TimePeriod>
+          </ef:activityTime>
+        </ef:OperationalActivityPeriod>
+      </ef:operationalActivityPeriod>
+      <ef:belongsTo xlink:title="Automaattinen sääasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=121&amp;"/>
+      <ef:belongsTo xlink:title="Ulkomainen tai kolmannen osapuolen radioluotausasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=125&amp;"/>
+      <ef:belongsTo xlink:title="Radioluotausasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=127&amp;"/>
+      <ef:belongsTo xlink:title="Auringonsäteilyasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=128&amp;"/>
+    </ef:EnvironmentalMonitoringFacility>
+  </wfs:member>
+  <wfs:member>
+    <ef:EnvironmentalMonitoringFacility gml:id="WFS-JLSobe4rrKn1iBefQWWa.KPezHiJTowsWbbpdOsuZ0659MPTTv3c4W9h69NG_lp6eYm_bh07q4tHTpwdL1_jbsXZtuldm0tLFlz6d1TTty2qv4Vahgo4hM7Hsw8.cnJJjEZ2XdkqaduW1V_CrUsFHEJwad3Php5ZZ2Hbl58MOPLXaFo6dODpev8bdi7Nt0rs2lfuw7cvPhhx5V.nJl3dNObTl5L.fTD0079y_Tu58NPLK7uejf3n4ueXl207s8PDww4tOzT08xNLn0w9NO_dJyVmMWDFk1bNLn038sOfLJySXXG5z6b.WXJx65eXm_pyVxZtul06y5nTrn0w9NO_dzA-">
+      <gml:identifier codeSpace="http://xml.fmi.fi/namespace/stationcode/fmisid">101256</gml:identifier>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/name">Kaskinen Sälgrund</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/geoid">-16011874</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/wmo">02931</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/region">Kaskinen</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/country">Finland</gml:name>
+      <ef:inspireId>
+        <ins_base:Identifier>
+          <ins_base:localId>101256</ins_base:localId>
+          <ins_base:namespace>http://xml.fmi.fi/namespace/identifier/station/inspire</ins_base:namespace>
+        </ins_base:Identifier>
+      </ef:inspireId>
+      <ef:name>Kaskinen Sälgrund</ef:name>
+      <ef:mediaMonitored xlink:href="" nilReason="missing"/>
+      <ef:representativePoint>
+        <gml:Point gml:id="point-10" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4258" srsDimension="2">
+          <gml:pos>62.333816 21.190813</gml:pos>
+        </gml:Point>
+      </ef:representativePoint>
+      <ef:measurementRegime xlink:href="https://inspire.ec.europa.eu/codelist/MeasurementRegimeValue/continuousDataCollection"/>
+      <ef:mobile>false</ef:mobile>
+      <ef:operationalActivityPeriod>
+        <ef:OperationalActivityPeriod gml:id="oap-10-1">
+          <ef:activityTime>
+            <gml:TimePeriod gml:id="oap-tp-10-1">
+              <gml:beginPosition>1876-01-01T00:00:00Z</gml:beginPosition>
+              <gml:endPosition indeterminatePosition="now"/>
+            </gml:TimePeriod>
+          </ef:activityTime>
+        </ef:OperationalActivityPeriod>
+      </ef:operationalActivityPeriod>
+      <ef:belongsTo xlink:title="Automaattinen sääasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=121&amp;"/>
+    </ef:EnvironmentalMonitoringFacility>
+  </wfs:member>
+  <wfs:member>
+    <ef:EnvironmentalMonitoringFacility gml:id="WFS-D06jhaxflm7j.CvLCUC20fUSgM2JTowsWbbpdOsuZ0659MPTTv3c4W9h69NG_lp6eYm_bh07q4tHTpwdL1_jbsXZtuldm0tLFlz6d1TTty2qv4Vahgo4hM7Hsw8.cnJJjEZ2XdkqaduW1V_CrUsFHEJwad3Php5ZZ2Hbl58MOPLXaFo6dODpev8bdi7Nt0rs2lfuw7cvPhhx5V.nJl3dNObTl5L.fTD0079y_Tu58NPLK7uejf3n4ueXl207s8PDww4tOzT08xNLn0w9NO_dJyVmMWDFk5YtLn038sOfLJySXXG5z6b.WXJx65eXm_pyVxZtul06y5nTrn0w9NO_dzA-">
+      <gml:identifier codeSpace="http://xml.fmi.fi/namespace/stationcode/fmisid">101291</gml:identifier>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/name">Kankaanpää Niinisalo lentokenttä</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/geoid">-16000182</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/wmo">02753</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/region">Kankaanpää</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/country">Finland</gml:name>
+      <ef:inspireId>
+        <ins_base:Identifier>
+          <ins_base:localId>101291</ins_base:localId>
+          <ins_base:namespace>http://xml.fmi.fi/namespace/identifier/station/inspire</ins_base:namespace>
+        </ins_base:Identifier>
+      </ef:inspireId>
+      <ef:name>Kankaanpää Niinisalo lentokenttä</ef:name>
+      <ef:mediaMonitored xlink:href="" nilReason="missing"/>
+      <ef:representativePoint>
+        <gml:Point gml:id="point-11" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4258" srsDimension="2">
+          <gml:pos>61.838642 22.463678</gml:pos>
+        </gml:Point>
+      </ef:representativePoint>
+      <ef:measurementRegime xlink:href="https://inspire.ec.europa.eu/codelist/MeasurementRegimeValue/continuousDataCollection"/>
+      <ef:mobile>false</ef:mobile>
+      <ef:operationalActivityPeriod>
+        <ef:OperationalActivityPeriod gml:id="oap-11-1">
+          <ef:activityTime>
+            <gml:TimePeriod gml:id="oap-tp-11-1">
+              <gml:beginPosition>1940-07-01T00:00:00Z</gml:beginPosition>
+              <gml:endPosition indeterminatePosition="now"/>
+            </gml:TimePeriod>
+          </ef:activityTime>
+        </ef:OperationalActivityPeriod>
+      </ef:operationalActivityPeriod>
+      <ef:belongsTo xlink:title="Automaattinen sääasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=121&amp;"/>
+    </ef:EnvironmentalMonitoringFacility>
+  </wfs:member>
+  <wfs:member>
+    <ef:EnvironmentalMonitoringFacility gml:id="WFS-CcXfL_8q7e9GDNMe9t3ThgH2lpGJTowsWbbpdOsuZ0659MPTTv3c4W9h69NG_lp6eYm_bh07q4tHTpwdL1_jbsXZtuldm0tLFlz6d1TTty2qv4Vahgo4hM7Hsw8.cnJJjEZ2XdkqaduW1V_CrUsFHEJwad3Php5ZZ2Hbl58MOPLXaFo6dODpev8bdi7Nt0rs2lfuw7cvPhhx5V.nJl3dNObTl5L.fTD0079y_Tu58NPLK7uejf3n4ueXl207s8PDww4tOzT08xNLn0w9NO_dJyVmMWDFo2ZNLn038sOfLJySXXG5z6b.WXJx65eXm_pyVxZtul06y5nTrn0w9NO_dzA-">
+      <gml:identifier codeSpace="http://xml.fmi.fi/namespace/stationcode/fmisid">101462</gml:identifier>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/name">Vaasa lentoasema</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/geoid">-101462</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/wmo">02911</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/icao">EFVA</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/region">Vaasa</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/country">Finland</gml:name>
+      <ef:inspireId>
+        <ins_base:Identifier>
+          <ins_base:localId>101462</ins_base:localId>
+          <ins_base:namespace>http://xml.fmi.fi/namespace/identifier/station/inspire</ins_base:namespace>
+        </ins_base:Identifier>
+      </ef:inspireId>
+      <ef:name>Vaasa lentoasema</ef:name>
+      <ef:mediaMonitored xlink:href="" nilReason="missing"/>
+      <ef:representativePoint>
+        <gml:Point gml:id="point-12" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4258" srsDimension="2">
+          <gml:pos>63.058578 21.754597</gml:pos>
+        </gml:Point>
+      </ef:representativePoint>
+      <ef:measurementRegime xlink:href="https://inspire.ec.europa.eu/codelist/MeasurementRegimeValue/continuousDataCollection"/>
+      <ef:mobile>false</ef:mobile>
+      <ef:operationalActivityPeriod>
+        <ef:OperationalActivityPeriod gml:id="oap-12-1">
+          <ef:activityTime>
+            <gml:TimePeriod gml:id="oap-tp-12-1">
+              <gml:beginPosition>1946-09-01T00:00:00Z</gml:beginPosition>
+              <gml:endPosition indeterminatePosition="now"/>
+            </gml:TimePeriod>
+          </ef:activityTime>
+        </ef:OperationalActivityPeriod>
+      </ef:operationalActivityPeriod>
+      <ef:belongsTo xlink:title="IL:n hallinnoima lentosääasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=224&amp;"/>
+    </ef:EnvironmentalMonitoringFacility>
+  </wfs:member>
+  <wfs:member>
+    <ef:EnvironmentalMonitoringFacility gml:id="WFS-qfjpb3ehxzfs936_CmagnkZviFSJTowsWbbpdOsuZ0659MPTTv3c4W9h69NG_lp6eYm_bh07q4tHTpwdL1_jbsXZtuldm0tLFlz6d1TTty2qv4Vahgo4hM7Hsw8.cnJJjEZ2XdkqaduW1V_CrUsFHEJwad3Php5ZZ2Hbl58MOPLXaFo6dODpev8bdi7Nt0rs2lfuw7cvPhhx5V.nJl3dNObTl5L.fTD0079y_Tu58NPLK7uejf3n4ueXl207s8PDww4tOzT08xNLn0w9NO_dJyVmMWDFo2aNLn038sOfLJySXXG5z6b.WXJx65eXm_pyVxZtul06y5nTrn0w9NO_dzA-">
+      <gml:identifier codeSpace="http://xml.fmi.fi/namespace/stationcode/fmisid">101464</gml:identifier>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/name">Mustasaari Valassaaret</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/geoid">-16000000</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/wmo">02910</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/region">Mustasaari</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/country">Finland</gml:name>
+      <ef:inspireId>
+        <ins_base:Identifier>
+          <ins_base:localId>101464</ins_base:localId>
+          <ins_base:namespace>http://xml.fmi.fi/namespace/identifier/station/inspire</ins_base:namespace>
+        </ins_base:Identifier>
+      </ef:inspireId>
+      <ef:name>Mustasaari Valassaaret</ef:name>
+      <ef:mediaMonitored xlink:href="" nilReason="missing"/>
+      <ef:representativePoint>
+        <gml:Point gml:id="point-13" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4258" srsDimension="2">
+          <gml:pos>63.435083 21.068557</gml:pos>
+        </gml:Point>
+      </ef:representativePoint>
+      <ef:measurementRegime xlink:href="https://inspire.ec.europa.eu/codelist/MeasurementRegimeValue/continuousDataCollection"/>
+      <ef:mobile>false</ef:mobile>
+      <ef:operationalActivityPeriod>
+        <ef:OperationalActivityPeriod gml:id="oap-13-1">
+          <ef:activityTime>
+            <gml:TimePeriod gml:id="oap-tp-13-1">
+              <gml:beginPosition>1895-08-25T00:00:00Z</gml:beginPosition>
+              <gml:endPosition indeterminatePosition="now"/>
+            </gml:TimePeriod>
+          </ef:activityTime>
+        </ef:OperationalActivityPeriod>
+      </ef:operationalActivityPeriod>
+      <ef:belongsTo xlink:title="Automaattinen sääasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=121&amp;"/>
+    </ef:EnvironmentalMonitoringFacility>
+  </wfs:member>
+  <wfs:member>
+    <ef:EnvironmentalMonitoringFacility gml:id="WFS-wl6enUym_nTtAYlCTkHIjj7qnDyJTowsWbbpdOsuZ0659MPTTv3c4W9h69NG_lp6eYm_bh07q4tHTpwdL1_jbsXZtuldm0tLFlz6d1TTty2qv4Vahgo4hM7Hsw8.cnJJjEZ2XdkqaduW1V_CrUsFHEJwad3Php5ZZ2Hbl58MOPLXaFo6dODpev8bdi7Nt0rs2lfuw7cvPhhx5V.nJl3dNObTl5L.fTD0079y_Tu58NPLK7uejf3n4ueXl207s8PDww4tOzT08xNLn0w9NO_dJyVmMWDFqyYNLn038sOfLJySXXG5z6b.WXJx65eXm_pyVxZtul06y5nTrn0w9NO_dzA-">
+      <gml:identifier codeSpace="http://xml.fmi.fi/namespace/stationcode/fmisid">101520</gml:identifier>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/name">Ähtäri Inha</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/geoid">-16000130</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/wmo">02924</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/region">Ähtäri</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/country">Finland</gml:name>
+      <ef:inspireId>
+        <ins_base:Identifier>
+          <ins_base:localId>101520</ins_base:localId>
+          <ins_base:namespace>http://xml.fmi.fi/namespace/identifier/station/inspire</ins_base:namespace>
+        </ins_base:Identifier>
+      </ef:inspireId>
+      <ef:name>Ähtäri Inha</ef:name>
+      <ef:mediaMonitored xlink:href="" nilReason="missing"/>
+      <ef:representativePoint>
+        <gml:Point gml:id="point-14" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4258" srsDimension="2">
+          <gml:pos>62.554614 24.142386</gml:pos>
+        </gml:Point>
+      </ef:representativePoint>
+      <ef:measurementRegime xlink:href="https://inspire.ec.europa.eu/codelist/MeasurementRegimeValue/continuousDataCollection"/>
+      <ef:mobile>false</ef:mobile>
+      <ef:operationalActivityPeriod>
+        <ef:OperationalActivityPeriod gml:id="oap-14-1">
+          <ef:activityTime>
+            <gml:TimePeriod gml:id="oap-tp-14-1">
+              <gml:beginPosition>1912-01-01T00:00:00Z</gml:beginPosition>
+              <gml:endPosition indeterminatePosition="now"/>
+            </gml:TimePeriod>
+          </ef:activityTime>
+        </ef:OperationalActivityPeriod>
+      </ef:operationalActivityPeriod>
+      <ef:belongsTo xlink:title="Automaattinen sääasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=121&amp;"/>
+    </ef:EnvironmentalMonitoringFacility>
+  </wfs:member>
+  <wfs:member>
+    <ef:EnvironmentalMonitoringFacility gml:id="WFS-nr3jDzVkHU0WFfdjEL5unTugFwWJTowsWbbpdOsuZ0659MPTTv3c4W9h69NG_lp6eYm_bh07q4tHTpwdL1_jbsXZtuldm0tLFlz6d1TTty2qv4Vahgo4hM7Hsw8.cnJJjEZ2XdkqaduW1V_CrUsFHEJwad3Php5ZZ2Hbl58MOPLXaFo6dODpev8bdi7Nt0rs2lfuw7cvPhhx5V.nJl3dNObTl5L.fTD0079y_Tu58NPLK7uejf3n4ueXl207s8PDww4tOzT08xNLn0w9NO_dJyVmMWDFqzbtLn038sOfLJySXXG5z6b.WXJx65eXm_pyVxZtul06y5nTrn0w9NO_dzA-">
+      <gml:identifier codeSpace="http://xml.fmi.fi/namespace/stationcode/fmisid">101537</gml:identifier>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/name">Viitasaari Haapaniemi</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/geoid">-16000020</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/wmo">02915</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/region">Viitasaari</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/country">Finland</gml:name>
+      <ef:inspireId>
+        <ins_base:Identifier>
+          <ins_base:localId>101537</ins_base:localId>
+          <ins_base:namespace>http://xml.fmi.fi/namespace/identifier/station/inspire</ins_base:namespace>
+        </ins_base:Identifier>
+      </ef:inspireId>
+      <ef:name>Viitasaari Haapaniemi</ef:name>
+      <ef:mediaMonitored xlink:href="" nilReason="missing"/>
+      <ef:representativePoint>
+        <gml:Point gml:id="point-15" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4258" srsDimension="2">
+          <gml:pos>63.082247 25.858617</gml:pos>
+        </gml:Point>
+      </ef:representativePoint>
+      <ef:measurementRegime xlink:href="https://inspire.ec.europa.eu/codelist/MeasurementRegimeValue/continuousDataCollection"/>
+      <ef:mobile>false</ef:mobile>
+      <ef:operationalActivityPeriod>
+        <ef:OperationalActivityPeriod gml:id="oap-15-1">
+          <ef:activityTime>
+            <gml:TimePeriod gml:id="oap-tp-15-1">
+              <gml:beginPosition>1969-09-01T00:00:00Z</gml:beginPosition>
+              <gml:endPosition indeterminatePosition="now"/>
+            </gml:TimePeriod>
+          </ef:activityTime>
+        </ef:OperationalActivityPeriod>
+      </ef:operationalActivityPeriod>
+      <ef:belongsTo xlink:title="Automaattinen sääasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=121&amp;"/>
+    </ef:EnvironmentalMonitoringFacility>
+  </wfs:member>
+  <wfs:member>
+    <ef:EnvironmentalMonitoringFacility gml:id="WFS-wXX8.tSBsuq7K7w8Qi47hJWGttCJTowsWbbpdOsuZ0659MPTTv3c4W9h69NG_lp6eYm_bh07q4tHTpwdL1_jbsXZtuldm0tLFlz6d1TTty2qv4Vahgo4hM7Hsw8.cnJJjEZ2XdkqaduW1V_CrUsFHEJwad3Php5ZZ2Hbl58MOPLXaFo6dODpev8bdi7Nt0rs2lfuw7cvPhhx5V.nJl3dNObTl5L.fTD0079y_Tu58NPLK7uejf3n4ueXl207s8PDww4tOzT08xNLn0w9NO_dJyVmMWDFs3ZtLn038sOfLJySXXG5z6b.WXJx65eXm_pyVxZtul06y5nTrn0w9NO_dzA-">
+      <gml:identifier codeSpace="http://xml.fmi.fi/namespace/stationcode/fmisid">101673</gml:identifier>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/name">Kalajoki Ulkokalla</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/geoid">-16000045</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/wmo">02907</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/region">Kalajoki</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/country">Finland</gml:name>
+      <ef:inspireId>
+        <ins_base:Identifier>
+          <ins_base:localId>101673</ins_base:localId>
+          <ins_base:namespace>http://xml.fmi.fi/namespace/identifier/station/inspire</ins_base:namespace>
+        </ins_base:Identifier>
+      </ef:inspireId>
+      <ef:name>Kalajoki Ulkokalla</ef:name>
+      <ef:mediaMonitored xlink:href="" nilReason="missing"/>
+      <ef:representativePoint>
+        <gml:Point gml:id="point-16" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4258" srsDimension="2">
+          <gml:pos>64.330730 23.446270</gml:pos>
+        </gml:Point>
+      </ef:representativePoint>
+      <ef:measurementRegime xlink:href="https://inspire.ec.europa.eu/codelist/MeasurementRegimeValue/continuousDataCollection"/>
+      <ef:mobile>false</ef:mobile>
+      <ef:operationalActivityPeriod>
+        <ef:OperationalActivityPeriod gml:id="oap-16-1">
+          <ef:activityTime>
+            <gml:TimePeriod gml:id="oap-tp-16-1">
+              <gml:beginPosition>1876-06-01T00:00:00Z</gml:beginPosition>
+              <gml:endPosition indeterminatePosition="now"/>
+            </gml:TimePeriod>
+          </ef:activityTime>
+        </ef:OperationalActivityPeriod>
+      </ef:operationalActivityPeriod>
+      <ef:belongsTo xlink:title="Automaattinen sääasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=121&amp;"/>
+    </ef:EnvironmentalMonitoringFacility>
+  </wfs:member>
+  <wfs:member>
+    <ef:EnvironmentalMonitoringFacility gml:id="WFS-78ZPrCudfzWNOizHYLrYWfAiKLGJTowsWbbpdOsuZ0659MPTTv3c4W9h69NG_lp6eYm_bh07q4tHTpwdL1_jbsXZtuldm0tLFlz6d1TTty2qv4Vahgo4hM7Hsw8.cnJJjEZ2XdkqaduW1V_CrUsFHEJwad3Php5ZZ2Hbl58MOPLXaFo6dODpev8bdi7Nt0rs2lfuw7cvPhhx5V.nJl3dNObTl5L.fTD0079y_Tu58NPLK7uejf3n4ueXl207s8PDww4tOzT08xNLn0w9NO_dJyVmMWDFu3bNLn038sOfLJySXXG5z6b.WXJx65eXm_pyVxZtul06y5nTrn0w9NO_dzA-">
+      <gml:identifier codeSpace="http://xml.fmi.fi/namespace/stationcode/fmisid">101776</gml:identifier>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/name">Hailuoto Keskikylä</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/geoid">-16000042</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/wmo">02874</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/region">Hailuoto</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/country">Finland</gml:name>
+      <ef:inspireId>
+        <ins_base:Identifier>
+          <ins_base:localId>101776</ins_base:localId>
+          <ins_base:namespace>http://xml.fmi.fi/namespace/identifier/station/inspire</ins_base:namespace>
+        </ins_base:Identifier>
+      </ef:inspireId>
+      <ef:name>Hailuoto Keskikylä</ef:name>
+      <ef:mediaMonitored xlink:href="" nilReason="missing"/>
+      <ef:representativePoint>
+        <gml:Point gml:id="point-17" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4258" srsDimension="2">
+          <gml:pos>65.019670 24.727580</gml:pos>
+        </gml:Point>
+      </ef:representativePoint>
+      <ef:measurementRegime xlink:href="https://inspire.ec.europa.eu/codelist/MeasurementRegimeValue/continuousDataCollection"/>
+      <ef:mobile>false</ef:mobile>
+      <ef:operationalActivityPeriod>
+        <ef:OperationalActivityPeriod gml:id="oap-17-1">
+          <ef:activityTime>
+            <gml:TimePeriod gml:id="oap-tp-17-1">
+              <gml:beginPosition>1950-11-19T00:00:00Z</gml:beginPosition>
+              <gml:endPosition indeterminatePosition="now"/>
+            </gml:TimePeriod>
+          </ef:activityTime>
+        </ef:OperationalActivityPeriod>
+      </ef:operationalActivityPeriod>
+      <ef:belongsTo xlink:title="Automaattinen sääasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=121&amp;"/>
+    </ef:EnvironmentalMonitoringFacility>
+  </wfs:member>
+  <wfs:member>
+    <ef:EnvironmentalMonitoringFacility gml:id="WFS-1_gtyiY7dBfl0gVygjZrbUB6QNSJTowsWbbpdOsuZ0659MPTTv3c4W9h69NG_lp6eYm_bh07q4tHTpwdL1_jbsXZtuldm0tLFlz6d1TTty2qv4Vahgo4hM7Hsw8.cnJJjEZ2XdkqaduW1V_CrUsFHEJwad3Php5ZZ2Hbl58MOPLXaFo6dODpev8bdi7Nt0rs2lfuw7cvPhhx5V.nJl3dNObTl5L.fTD0079y_Tu58NPLK7uejf3n4ueXl207s8PDww4tOzT08xNLn0w9NO_dJyVmMWDFu4aNLn038sOfLJySXXG5z6b.WXJx65eXm_pyVxZtul06y5nTrn0w9NO_dzA-">
+      <gml:identifier codeSpace="http://xml.fmi.fi/namespace/stationcode/fmisid">101784</gml:identifier>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/name">Hailuoto Marjaniemi</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/geoid">-16000059</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/wmo">02873</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/region">Hailuoto</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/country">Finland</gml:name>
+      <ef:inspireId>
+        <ins_base:Identifier>
+          <ins_base:localId>101784</ins_base:localId>
+          <ins_base:namespace>http://xml.fmi.fi/namespace/identifier/station/inspire</ins_base:namespace>
+        </ins_base:Identifier>
+      </ef:inspireId>
+      <ef:name>Hailuoto Marjaniemi</ef:name>
+      <ef:mediaMonitored xlink:href="" nilReason="missing"/>
+      <ef:representativePoint>
+        <gml:Point gml:id="point-18" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4258" srsDimension="2">
+          <gml:pos>65.039750 24.561180</gml:pos>
+        </gml:Point>
+      </ef:representativePoint>
+      <ef:measurementRegime xlink:href="https://inspire.ec.europa.eu/codelist/MeasurementRegimeValue/continuousDataCollection"/>
+      <ef:mobile>false</ef:mobile>
+      <ef:operationalActivityPeriod>
+        <ef:OperationalActivityPeriod gml:id="oap-18-1">
+          <ef:activityTime>
+            <gml:TimePeriod gml:id="oap-tp-18-1">
+              <gml:beginPosition>1881-01-01T00:00:00Z</gml:beginPosition>
+              <gml:endPosition indeterminatePosition="now"/>
+            </gml:TimePeriod>
+          </ef:activityTime>
+        </ef:OperationalActivityPeriod>
+      </ef:operationalActivityPeriod>
+      <ef:belongsTo xlink:title="Automaattinen sääasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=121&amp;"/>
+      <ef:belongsTo xlink:title="Ilmanlaadun tausta-asema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=129&amp;"/>
+      <ef:belongsTo xlink:title="Tutkimusmittausasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=146&amp;"/>
+    </ef:EnvironmentalMonitoringFacility>
+  </wfs:member>
+  <wfs:member>
+    <ef:EnvironmentalMonitoringFacility gml:id="WFS-UD11dnYYZUkhDMwllttjbFISM0KJTowsWbbpdOsuZ0659MPTTv3c4W9h69NG_lp6eYm_bh07q4tHTpwdL1_jbsXZtuldm0tLFlz6d1TTty2qv4Vahgo4hM7Hsw8.cnJJjEZ2XdkqaduW1V_CrUsFHEJwad3Php5ZZ2Hbl58MOPLXaFo6dODpev8bdi7Nt0rs2lfuw7cvPhhx5V.nJl3dNObTl5L.fTD0079y_Tu58NPLK7uejf3n4ueXl207s8PDww4tOzT08xNLn0w9NO_dJyVmMWDFu4bNLn038sOfLJySXXG5z6b.WXJx65eXm_pyVxZtul06y5nTrn0w9NO_dzA-">
+      <gml:identifier codeSpace="http://xml.fmi.fi/namespace/stationcode/fmisid">101786</gml:identifier>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/name">Oulu lentoasema</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/geoid">-101786</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/wmo">02875</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/icao">EFOU</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/region">Oulu</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/country">Finland</gml:name>
+      <ef:inspireId>
+        <ins_base:Identifier>
+          <ins_base:localId>101786</ins_base:localId>
+          <ins_base:namespace>http://xml.fmi.fi/namespace/identifier/station/inspire</ins_base:namespace>
+        </ins_base:Identifier>
+      </ef:inspireId>
+      <ef:name>Oulu lentoasema</ef:name>
+      <ef:mediaMonitored xlink:href="" nilReason="missing"/>
+      <ef:representativePoint>
+        <gml:Point gml:id="point-19" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4258" srsDimension="2">
+          <gml:pos>64.935034 25.339195</gml:pos>
+        </gml:Point>
+      </ef:representativePoint>
+      <ef:measurementRegime xlink:href="https://inspire.ec.europa.eu/codelist/MeasurementRegimeValue/continuousDataCollection"/>
+      <ef:mobile>false</ef:mobile>
+      <ef:operationalActivityPeriod>
+        <ef:OperationalActivityPeriod gml:id="oap-19-1">
+          <ef:activityTime>
+            <gml:TimePeriod gml:id="oap-tp-19-1">
+              <gml:beginPosition>1953-08-01T00:00:00Z</gml:beginPosition>
+              <gml:endPosition indeterminatePosition="now"/>
+            </gml:TimePeriod>
+          </ef:activityTime>
+        </ef:OperationalActivityPeriod>
+      </ef:operationalActivityPeriod>
+      <ef:belongsTo xlink:title="IL:n hallinnoima lentosääasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=224&amp;"/>
+    </ef:EnvironmentalMonitoringFacility>
+  </wfs:member>
+  <wfs:member>
+    <ef:EnvironmentalMonitoringFacility gml:id="WFS-7lS1iRlXXomUe4.soMYt.of_TVaJTowsWbbpdOsuZ0659MPTTv3c4W9h69NG_lp6eYm_bh07q4tHTpwdL1_jbsXZtuldm0tLFlz6d1TTty2qv4Vahgo4hM7Hsw8.cnJJjEZ2XdkqaduW1V_CrUsFHEJwad3Php5ZZ2Hbl58MOPLXaFo6dODpev8bdi7Nt0rs2lfuw7cvPhhx5V.nJl3dNObTl5L.fTD0079y_Tu58NPLK7uejf3n4ueXl207s8PDww4tOzT08xNLn0w9NO_dJyVmMWDFw4bNLn038sOfLJySXXG5z6b.WXJx65eXm_pyVxZtul06y5nTrn0w9NO_dzA-">
+      <gml:identifier codeSpace="http://xml.fmi.fi/namespace/stationcode/fmisid">101886</gml:identifier>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/name">Kuusamo lentoasema</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/geoid">-16000052</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/wmo">02869</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/icao">EFKS</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/region">Kuusamo</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/country">Finland</gml:name>
+      <ef:inspireId>
+        <ins_base:Identifier>
+          <ins_base:localId>101886</ins_base:localId>
+          <ins_base:namespace>http://xml.fmi.fi/namespace/identifier/station/inspire</ins_base:namespace>
+        </ins_base:Identifier>
+      </ef:inspireId>
+      <ef:name>Kuusamo lentoasema</ef:name>
+      <ef:mediaMonitored xlink:href="" nilReason="missing"/>
+      <ef:representativePoint>
+        <gml:Point gml:id="point-20" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4258" srsDimension="2">
+          <gml:pos>65.993342 29.227150</gml:pos>
+        </gml:Point>
+      </ef:representativePoint>
+      <ef:measurementRegime xlink:href="https://inspire.ec.europa.eu/codelist/MeasurementRegimeValue/continuousDataCollection"/>
+      <ef:mobile>false</ef:mobile>
+      <ef:operationalActivityPeriod>
+        <ef:OperationalActivityPeriod gml:id="oap-20-1">
+          <ef:activityTime>
+            <gml:TimePeriod gml:id="oap-tp-20-1">
+              <gml:beginPosition>1908-07-01T00:00:00Z</gml:beginPosition>
+              <gml:endPosition indeterminatePosition="now"/>
+            </gml:TimePeriod>
+          </ef:activityTime>
+        </ef:OperationalActivityPeriod>
+      </ef:operationalActivityPeriod>
+      <ef:belongsTo xlink:title="Automaattinen sääasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=121&amp;"/>
+      <ef:belongsTo xlink:title="IL:n hallinnoima lentosääasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=224&amp;"/>
+    </ef:EnvironmentalMonitoringFacility>
+  </wfs:member>
+  <wfs:member>
+    <ef:EnvironmentalMonitoringFacility gml:id="WFS-LjG4M8EeTXiCg2TDJy2yzGFy9DmJTowsWbbpdOsuZ0659MPTTv3c4W9h69NG_lp6eYm_bh07q4tHTpwdL1_jbsXZtuldm0tLFlz6d1TTty2qv4Vahgo4hM7Hsw8.cnJJjEZ2XdkqaduW1V_CrUsFHEJwad3Php5ZZ2Hbl58MOPLXaFo6dODpev8bdi7Nt0rs2lfuw7cvPhhx5V.nJl3dNObTl5L.fTD0079y_Tu58NPLK7uejf3n4ueXl207s8PDww4tOzT08xNLn0w9NO_dJyVmMWDFyxaNLn038sOfLJySXXG5z6b.WXJx65eXm_pyVxZtul06y5nTrn0w9NO_dzA-">
+      <gml:identifier codeSpace="http://xml.fmi.fi/namespace/stationcode/fmisid">101914</gml:identifier>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/name">Pello kirkonkylä</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/geoid">-16000111</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/wmo">02844</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/region">Pello</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/country">Finland</gml:name>
+      <ef:inspireId>
+        <ins_base:Identifier>
+          <ins_base:localId>101914</ins_base:localId>
+          <ins_base:namespace>http://xml.fmi.fi/namespace/identifier/station/inspire</ins_base:namespace>
+        </ins_base:Identifier>
+      </ef:inspireId>
+      <ef:name>Pello kirkonkylä</ef:name>
+      <ef:mediaMonitored xlink:href="" nilReason="missing"/>
+      <ef:representativePoint>
+        <gml:Point gml:id="point-21" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4258" srsDimension="2">
+          <gml:pos>66.772783 23.963029</gml:pos>
+        </gml:Point>
+      </ef:representativePoint>
+      <ef:measurementRegime xlink:href="https://inspire.ec.europa.eu/codelist/MeasurementRegimeValue/continuousDataCollection"/>
+      <ef:mobile>false</ef:mobile>
+      <ef:operationalActivityPeriod>
+        <ef:OperationalActivityPeriod gml:id="oap-21-1">
+          <ef:activityTime>
+            <gml:TimePeriod gml:id="oap-tp-21-1">
+              <gml:beginPosition>1970-08-01T00:00:00Z</gml:beginPosition>
+              <gml:endPosition indeterminatePosition="now"/>
+            </gml:TimePeriod>
+          </ef:activityTime>
+        </ef:OperationalActivityPeriod>
+      </ef:operationalActivityPeriod>
+      <ef:belongsTo xlink:title="Automaattinen sääasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=121&amp;"/>
+    </ef:EnvironmentalMonitoringFacility>
+  </wfs:member>
+  <wfs:member>
+    <ef:EnvironmentalMonitoringFacility gml:id="WFS-GbDeumTmBcGlDUhydHwAOJz1mYiJTowsWbbpdOsuZ0659MPTTv3c4W9h69NG_lp6eYm_bh07q4tHTpwdL1_jbsXZtuldm0tLFlz6d1TTty2qv4Vahgo4hM7Hsw8.cnJJjEZ2XdkqaduW1V_CrUsFHEJwad3Php5ZZ2Hbl58MOPLXaFo6dODpev8bdi7Nt0rs2lfuw7cvPhhx5V.nJl3dNObTl5L.fTD0079y_Tu58NPLK7uejf3n4ueXl207s8PDww4tOzT08xNLn0w9NO_dJyVmMWDFyzZNLn038sOfLJySXXG5z6b.WXJx65eXm_pyVxZtul06y5nTrn0w9NO_dzA-">
+      <gml:identifier codeSpace="http://xml.fmi.fi/namespace/stationcode/fmisid">101932</gml:identifier>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/name">Sodankylä Tähtelä</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/geoid">-16000014</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/wmo">02836</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/region">Sodankylä</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/country">Finland</gml:name>
+      <ef:inspireId>
+        <ins_base:Identifier>
+          <ins_base:localId>101932</ins_base:localId>
+          <ins_base:namespace>http://xml.fmi.fi/namespace/identifier/station/inspire</ins_base:namespace>
+        </ins_base:Identifier>
+      </ef:inspireId>
+      <ef:name>Sodankylä Tähtelä</ef:name>
+      <ef:mediaMonitored xlink:href="" nilReason="missing"/>
+      <ef:representativePoint>
+        <gml:Point gml:id="point-22" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4258" srsDimension="2">
+          <gml:pos>67.366630 26.629010</gml:pos>
+        </gml:Point>
+      </ef:representativePoint>
+      <ef:measurementRegime xlink:href="https://inspire.ec.europa.eu/codelist/MeasurementRegimeValue/continuousDataCollection"/>
+      <ef:mobile>false</ef:mobile>
+      <ef:operationalActivityPeriod>
+        <ef:OperationalActivityPeriod gml:id="oap-22-1">
+          <ef:activityTime>
+            <gml:TimePeriod gml:id="oap-tp-22-1">
+              <gml:beginPosition>1891-01-01T00:00:00Z</gml:beginPosition>
+              <gml:endPosition indeterminatePosition="now"/>
+            </gml:TimePeriod>
+          </ef:activityTime>
+        </ef:OperationalActivityPeriod>
+      </ef:operationalActivityPeriod>
+      <ef:belongsTo xlink:title="Automaattinen sääasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=121&amp;"/>
+      <ef:belongsTo xlink:title="Ulkomainen tai kolmannen osapuolen radioluotausasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=125&amp;"/>
+      <ef:belongsTo xlink:title="Radioluotausasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=127&amp;"/>
+      <ef:belongsTo xlink:title="Auringonsäteilyasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=128&amp;"/>
+      <ef:belongsTo xlink:title="Ilmanlaadun tausta-asema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=129&amp;"/>
+      <ef:belongsTo xlink:title="Radioaktiivisuusasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=130&amp;"/>
+      <ef:belongsTo xlink:title="Tutkimusmittausasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=146&amp;"/>
+      <ef:belongsTo xlink:title="Testiasema (kehitys- ja testaustoiminta)" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=221&amp;"/>
+      <ef:belongsTo xlink:title="Ulkomainen tai kolmannen osapuolen magnetometriasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=461&amp;"/>
+    </ef:EnvironmentalMonitoringFacility>
+  </wfs:member>
+  <wfs:member>
+    <ef:EnvironmentalMonitoringFacility gml:id="WFS-Rjp63kZncPocISzPhwI4KML.ZJuJTowsWbbpdOsuZ0659MPTTv3c4W9h69NG_lp6eYm_bh07q4tHTpwdL1_jbsXZtuldm0tLFlz6d1TTty2qv4Vahgo4hM7Hsw8.cnJJjEZ2XdkqaduW1V_CrUsFHEJwad3Php5ZZ2Hbl58MOPLXaFo6dODpev8bdi7Nt0rs2lfuw7cvPhhx5V.nJl3dNObTl5L.fTD0079y_Tu58NPLK7uejf3n4ueXl207s8PDww4tOzT08xNLn0w9NO_dJyVmMWDJgxbNLn038sOfLJySXXG5z6b.WXJx65eXm_pyVxZtul06y5nTrn0w9NO_dzA-">
+      <gml:identifier codeSpace="http://xml.fmi.fi/namespace/stationcode/fmisid">102016</gml:identifier>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/name">Enontekiö Kilpisjärvi kyläkeskus</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/geoid">-16000109</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/wmo">02801</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/region">Enontekiö</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/country">Finland</gml:name>
+      <ef:inspireId>
+        <ins_base:Identifier>
+          <ins_base:localId>102016</ins_base:localId>
+          <ins_base:namespace>http://xml.fmi.fi/namespace/identifier/station/inspire</ins_base:namespace>
+        </ins_base:Identifier>
+      </ef:inspireId>
+      <ef:name>Enontekiö Kilpisjärvi kyläkeskus</ef:name>
+      <ef:mediaMonitored xlink:href="" nilReason="missing"/>
+      <ef:representativePoint>
+        <gml:Point gml:id="point-23" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4258" srsDimension="2">
+          <gml:pos>69.039049 20.813788</gml:pos>
+        </gml:Point>
+      </ef:representativePoint>
+      <ef:measurementRegime xlink:href="https://inspire.ec.europa.eu/codelist/MeasurementRegimeValue/continuousDataCollection"/>
+      <ef:mobile>false</ef:mobile>
+      <ef:operationalActivityPeriod>
+        <ef:OperationalActivityPeriod gml:id="oap-23-1">
+          <ef:activityTime>
+            <gml:TimePeriod gml:id="oap-tp-23-1">
+              <gml:beginPosition>1951-07-13T00:00:00Z</gml:beginPosition>
+              <gml:endPosition indeterminatePosition="now"/>
+            </gml:TimePeriod>
+          </ef:activityTime>
+        </ef:OperationalActivityPeriod>
+      </ef:operationalActivityPeriod>
+      <ef:belongsTo xlink:title="Automaattinen sääasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=121&amp;"/>
+    </ef:EnvironmentalMonitoringFacility>
+  </wfs:member>
+  <wfs:member>
+    <ef:EnvironmentalMonitoringFacility gml:id="WFS-Y3dLYZOJg57BtnbV0E9fdh43gTmJTowsWbbpdOsuZ0659MPTTv3c4W9h69NG_lp6eYm_bh07q4tHTpwdL1_jbsXZtuldm0tLFlz6d1TTty2qv4Vahgo4hM7Hsw8.cnJJjEZ2XdkqaduW1V_CrUsFHEJwad3Php5ZZ2Hbl58MOPLXaFo6dODpev8bdi7Nt0rs2lfuw7cvPhhx5V.nJl3dNObTl5L.fTD0079y_Tu58NPLK7uejf3n4ueXl207s8PDww4tOzT08xNLn0w9NO_dJyVmMWDJgzatLn038sOfLJySXXG5z6b.WXJx65eXm_pyVxZtul06y5nTrn0w9NO_dzA-">
+      <gml:identifier codeSpace="http://xml.fmi.fi/namespace/stationcode/fmisid">102035</gml:identifier>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/name">Utsjoki Kevo</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/geoid">-16000193</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/wmo">02805</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/region">Utsjoki</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/country">Finland</gml:name>
+      <ef:inspireId>
+        <ins_base:Identifier>
+          <ins_base:localId>102035</ins_base:localId>
+          <ins_base:namespace>http://xml.fmi.fi/namespace/identifier/station/inspire</ins_base:namespace>
+        </ins_base:Identifier>
+      </ef:inspireId>
+      <ef:name>Utsjoki Kevo</ef:name>
+      <ef:mediaMonitored xlink:href="" nilReason="missing"/>
+      <ef:representativePoint>
+        <gml:Point gml:id="point-24" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4258" srsDimension="2">
+          <gml:pos>69.756365 27.006784</gml:pos>
+        </gml:Point>
+      </ef:representativePoint>
+      <ef:measurementRegime xlink:href="https://inspire.ec.europa.eu/codelist/MeasurementRegimeValue/continuousDataCollection"/>
+      <ef:mobile>false</ef:mobile>
+      <ef:operationalActivityPeriod>
+        <ef:OperationalActivityPeriod gml:id="oap-24-1">
+          <ef:activityTime>
+            <gml:TimePeriod gml:id="oap-tp-24-1">
+              <gml:beginPosition>1961-10-01T00:00:00Z</gml:beginPosition>
+              <gml:endPosition indeterminatePosition="now"/>
+            </gml:TimePeriod>
+          </ef:activityTime>
+        </ef:OperationalActivityPeriod>
+      </ef:operationalActivityPeriod>
+      <ef:belongsTo xlink:title="Automaattinen sääasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=121&amp;"/>
+      <ef:belongsTo xlink:title="Auringonsäteilyasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=128&amp;"/>
+      <ef:belongsTo xlink:title="Magnetometriasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=135&amp;"/>
+      <ef:belongsTo xlink:title="Revontulikamera-asema (all-sky camera)" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=136&amp;"/>
+    </ef:EnvironmentalMonitoringFacility>
+  </wfs:member>
+  <wfs:member>
+    <ef:EnvironmentalMonitoringFacility gml:id="WFS-.OT7x4eTgy6mUZrPwaUwDaX137SJTowsWbbpdOsuZ0659MPTTv3c4W9h69NG_lp6eYm_bh07q4tHTpwdL1_jbsXZtuldm0tLFlz6d1TTty2qv4Vahgo4hM7Hsw8.cnJJjEZ2XdkqaduW1V_CrUsFHEJwad3Php5ZZ2Hbl58MOPLXaFo6dODpev8bdi7Nt0rs2lfuw7cvPhhx5V.nJl3dNObTl5L.fTD0079y_Tu58NPLK7uejf3n4ueXl207s8PDww4tOzT08xNLn0w9NO_dJyVmMWDJgzbNLn038sOfLJySXXG5z6b.WXJx65eXm_pyVxZtul06y5nTrn0w9NO_dzA-">
+      <gml:identifier codeSpace="http://xml.fmi.fi/namespace/stationcode/fmisid">102036</gml:identifier>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/name">Utsjoki Nuorgam</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/geoid">-16000015</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/wmo">02825</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/region">Utsjoki</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/country">Finland</gml:name>
+      <ef:inspireId>
+        <ins_base:Identifier>
+          <ins_base:localId>102036</ins_base:localId>
+          <ins_base:namespace>http://xml.fmi.fi/namespace/identifier/station/inspire</ins_base:namespace>
+        </ins_base:Identifier>
+      </ef:inspireId>
+      <ef:name>Utsjoki Nuorgam</ef:name>
+      <ef:mediaMonitored xlink:href="" nilReason="missing"/>
+      <ef:representativePoint>
+        <gml:Point gml:id="point-25" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4258" srsDimension="2">
+          <gml:pos>70.082028 27.896500</gml:pos>
+        </gml:Point>
+      </ef:representativePoint>
+      <ef:measurementRegime xlink:href="https://inspire.ec.europa.eu/codelist/MeasurementRegimeValue/continuousDataCollection"/>
+      <ef:mobile>false</ef:mobile>
+      <ef:operationalActivityPeriod>
+        <ef:OperationalActivityPeriod gml:id="oap-25-1">
+          <ef:activityTime>
+            <gml:TimePeriod gml:id="oap-tp-25-1">
+              <gml:beginPosition>1929-05-01T00:00:00Z</gml:beginPosition>
+              <gml:endPosition indeterminatePosition="now"/>
+            </gml:TimePeriod>
+          </ef:activityTime>
+        </ef:OperationalActivityPeriod>
+      </ef:operationalActivityPeriod>
+      <ef:belongsTo xlink:title="Automaattinen sääasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=121&amp;"/>
+    </ef:EnvironmentalMonitoringFacility>
+  </wfs:member>
+  <wfs:member>
+    <ef:EnvironmentalMonitoringFacility gml:id="WFS-Fn53DL4QvgzMU2ehJy11NqfzEtKJTowsWbbpdOsuZ0659MPTTv3c4W9h69NG_lp6eYm_bh07q4tHTpwdL1_jbsXZtuldm0tLFlz6d1TTty2qv4Vahgo4hM7Hsw8.cnJJjEZ2XdkqaduW1V_CrUsFHEJwad3Php5ZZ2Hbl58MOPLXaFo6dODpev8bdi7Nt0rs2lfuw7cvPhhx5V.nJl3dNObTl5L.fTD0079y_Tu58NPLK7uejf3n4ueXl207s8PDww4tOzT08xNLn0w9NO_dJyVmMWbdi5YNLn038sOfLJySXXG5z6b.WXJx65eXm_pyVxZtul06y5nTrn0w9NO_dzA-">
+      <gml:identifier codeSpace="http://xml.fmi.fi/namespace/stationcode/fmisid">137190</gml:identifier>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/name">Rovaniemi lentoasema</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/geoid">-137190</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/wmo">02845</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/icao">EFRO</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/region">Rovaniemi</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/country">Finland</gml:name>
+      <ef:inspireId>
+        <ins_base:Identifier>
+          <ins_base:localId>137190</ins_base:localId>
+          <ins_base:namespace>http://xml.fmi.fi/namespace/identifier/station/inspire</ins_base:namespace>
+        </ins_base:Identifier>
+      </ef:inspireId>
+      <ef:name>Rovaniemi lentoasema</ef:name>
+      <ef:mediaMonitored xlink:href="" nilReason="missing"/>
+      <ef:representativePoint>
+        <gml:Point gml:id="point-26" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4258" srsDimension="2">
+          <gml:pos>66.572759 25.848477</gml:pos>
+        </gml:Point>
+      </ef:representativePoint>
+      <ef:measurementRegime xlink:href="https://inspire.ec.europa.eu/codelist/MeasurementRegimeValue/continuousDataCollection"/>
+      <ef:mobile>false</ef:mobile>
+      <ef:operationalActivityPeriod>
+        <ef:OperationalActivityPeriod gml:id="oap-26-1">
+          <ef:activityTime>
+            <gml:TimePeriod gml:id="oap-tp-26-1">
+              <gml:beginPosition>1951-05-01T00:00:00Z</gml:beginPosition>
+              <gml:endPosition indeterminatePosition="now"/>
+            </gml:TimePeriod>
+          </ef:activityTime>
+        </ef:OperationalActivityPeriod>
+      </ef:operationalActivityPeriod>
+      <ef:belongsTo xlink:title="Automaattinen sääasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=121&amp;"/>
+      <ef:belongsTo xlink:title="Auringonsäteilyasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=128&amp;"/>
+      <ef:belongsTo xlink:title="Radioaktiivisuusasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=130&amp;"/>
+      <ef:belongsTo xlink:title="Testiasema (kehitys- ja testaustoiminta)" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=221&amp;"/>
+      <ef:belongsTo xlink:title="IL:n hallinnoima lentosääasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=224&amp;"/>
+    </ef:EnvironmentalMonitoringFacility>
+  </wfs:member>
+  <wfs:member>
+    <ef:EnvironmentalMonitoringFacility gml:id="WFS-OJUYr8k0hQhLPCvSU.AIA6U61a.JTowsWbbpdOsuZ0659MPTTv3c4W9h69NG_lp6eYm_bh07q4tHTpwdL1_jbsXZtuldm0tLFlz6d1TTty2qv4Vahgo4hM7Hsw8.cnJJjEZ2XdkqaduW1V_CrUsFHEJwad3Php5ZZ2Hbl58MOPLXaFo6dODpev8bdi7Nt0rs2lfuw7cvPhhx5V.nJl3dNObTl5L.fTD0079y_Tu58NPLK7uejf3n4ueXl207s8PDww4tOzT08xNLn0w9NO_dJyVmMWbdkwcNLn038sOfLJySXXG5z6b.WXJx65eXm_pyVxZtul06y5nTrn0w9NO_dzA-">
+      <gml:identifier codeSpace="http://xml.fmi.fi/namespace/stationcode/fmisid">137208</gml:identifier>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/name">Jyväskylä lentoasema</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/geoid">-137208</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/wmo">02935</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/icao">EFJY</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/region">Jyväskylä</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/country">Finland</gml:name>
+      <ef:inspireId>
+        <ins_base:Identifier>
+          <ins_base:localId>137208</ins_base:localId>
+          <ins_base:namespace>http://xml.fmi.fi/namespace/identifier/station/inspire</ins_base:namespace>
+        </ins_base:Identifier>
+      </ef:inspireId>
+      <ef:name>Jyväskylä lentoasema</ef:name>
+      <ef:mediaMonitored xlink:href="" nilReason="missing"/>
+      <ef:representativePoint>
+        <gml:Point gml:id="point-27" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4258" srsDimension="2">
+          <gml:pos>62.393322 25.688617</gml:pos>
+        </gml:Point>
+      </ef:representativePoint>
+      <ef:measurementRegime xlink:href="https://inspire.ec.europa.eu/codelist/MeasurementRegimeValue/continuousDataCollection"/>
+      <ef:mobile>false</ef:mobile>
+      <ef:operationalActivityPeriod>
+        <ef:OperationalActivityPeriod gml:id="oap-27-1">
+          <ef:activityTime>
+            <gml:TimePeriod gml:id="oap-tp-27-1">
+              <gml:beginPosition>1945-01-01T00:00:00Z</gml:beginPosition>
+              <gml:endPosition indeterminatePosition="now"/>
+            </gml:TimePeriod>
+          </ef:activityTime>
+        </ef:OperationalActivityPeriod>
+      </ef:operationalActivityPeriod>
+      <ef:belongsTo xlink:title="Automaattinen sääasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=121&amp;"/>
+      <ef:belongsTo xlink:title="Auringonsäteilyasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=128&amp;"/>
+      <ef:belongsTo xlink:title="Radioaktiivisuusasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=130&amp;"/>
+      <ef:belongsTo xlink:title="IL:n hallinnoima lentosääasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=224&amp;"/>
+    </ef:EnvironmentalMonitoringFacility>
+  </wfs:member>
+  <wfs:member>
+    <ef:EnvironmentalMonitoringFacility gml:id="WFS-vV7Pcj_ju8TIRNE7IZesxAVhfIyJTowsWbbpdOsuZ0659MPTTv3c4W9h69NG_lp6eYm_bh07q4tHTpwdL1_jbsXZtuldm0tLFlz6d1TTty2qv4Vahgo4hM7Hsw8.cnJJjEZ2XdkqaduW1V_CrUsFHEJwad3Php5ZZ2Hbl58MOPLXaFo6dODpev8bdi7Nt0rs2lfuw7cvPhhx5V.nJl3dNObTl5L.fTD0079y_Tu58NPLK7uejf3n4ueXl207s8PDww4tOzT08xNLn0w9NO_dJyVmOGrVqyZNLn038sOfLJySXXG5z6b.WXJx65eXm_pyVxZtul06y5nTrn0w9NO_dzA-">
+      <gml:identifier codeSpace="http://xml.fmi.fi/namespace/stationcode/fmisid">855522</gml:identifier>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/name">Mikkeli lentoasema</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/geoid">-855522</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/icao">EFMI</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/region">Mikkeli</gml:name>
+      <gml:name codeSpace="http://xml.fmi.fi/namespace/location/country">Finland</gml:name>
+      <ef:inspireId>
+        <ins_base:Identifier>
+          <ins_base:localId>855522</ins_base:localId>
+          <ins_base:namespace>http://xml.fmi.fi/namespace/identifier/station/inspire</ins_base:namespace>
+        </ins_base:Identifier>
+      </ef:inspireId>
+      <ef:name>Mikkeli lentoasema</ef:name>
+      <ef:mediaMonitored xlink:href="" nilReason="missing"/>
+      <ef:representativePoint>
+        <gml:Point gml:id="point-28" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4258" srsDimension="2">
+          <gml:pos>61.687510 27.206710</gml:pos>
+        </gml:Point>
+      </ef:representativePoint>
+      <ef:measurementRegime xlink:href="https://inspire.ec.europa.eu/codelist/MeasurementRegimeValue/continuousDataCollection"/>
+      <ef:mobile>false</ef:mobile>
+      <ef:operationalActivityPeriod>
+        <ef:OperationalActivityPeriod gml:id="oap-28-1">
+          <ef:activityTime>
+            <gml:TimePeriod gml:id="oap-tp-28-1">
+              <gml:beginPosition>1959-01-01T00:00:00Z</gml:beginPosition>
+              <gml:endPosition indeterminatePosition="now"/>
+            </gml:TimePeriod>
+          </ef:activityTime>
+        </ef:OperationalActivityPeriod>
+      </ef:operationalActivityPeriod>
+      <ef:belongsTo xlink:title="Automaattinen sääasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=121&amp;"/>
+      <ef:belongsTo xlink:title="IL:n hallinnoima lentosääasema" xlink:href="https://opendata.fmi.fi/wfs/eng?request=getFeature&amp;storedquery_id=fmi::ef::networks&amp;networkid=224&amp;"/>
+    </ef:EnvironmentalMonitoringFacility>
+  </wfs:member>
+</wfs:FeatureCollection>

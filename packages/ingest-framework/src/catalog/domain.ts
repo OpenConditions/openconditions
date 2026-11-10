@@ -95,6 +95,10 @@ export interface StreamingParse<F extends CatalogFeed = CatalogFeed> {
 /** How a domain reads one feed format. */
 export interface FeedFormat<F extends CatalogFeed = CatalogFeed> {
   id: string;
+  /** Source qualification gate, enforced before any worker or live checker acquisition. */
+  acquisitionBlocked?: string;
+  /** Hold acquisition roles provisionally until publication succeeds. */
+  transactionalRoles?: boolean;
   kind: "situations" | "measurements" | "features";
   /** Blocks worker acquisition until full-scope operator qualification is recorded. */
   acquisitionBlockedReason?: string;

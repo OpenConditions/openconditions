@@ -80,6 +80,7 @@ test("the Digitraffic feed polls the v2 API with the user and compression header
     "ca-eccc-weather",
     "de-dwd-cdc-weather",
     "fi-digitraffic-weather",
+    "fi-fmi-weather",
     "se-smhi-weather",
   ]);
   const feed = catalogFeed("fi-digitraffic-weather");

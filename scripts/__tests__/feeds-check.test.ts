@@ -708,3 +708,24 @@ it("loads the checker without a compiled storage package", () => {
   expect(result.stderr).toBe("");
   expect(result.status).toBe(0);
 });
+
+it("checks the enabled qualified FMI acquisition through the ordinary checker", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "fmi-check-"));
+  dirs.push(dir);
+  mkdirSync(join(dir, "weather"));
+  const { readCatalogDir } = await import("@openconditions/ingest-framework");
+  const { INGEST_DOMAINS } = await import("../../services/ingest/src/domains.js");
+  const definition = readCatalogDir(join(import.meta.dirname, "../../feeds"), INGEST_DOMAINS)
+    .files.flatMap((f) => f.feeds)
+    .find((f) => f.operator === "fmi")!;
+  delete definition.disabled;
+  writeFileSync(
+    join(dir, "weather/fi.jsonc"),
+    JSON.stringify({ $schema: "../schema/weather.schema.json", feeds: [definition] }),
+  );
+  const fetch = vi.fn(async () => new Response("unexpected"));
+  const results = await checkFeeds({ feedsDir: dir, fetch: fetch as typeof globalThis.fetch });
+  expect(fetch).toHaveBeenCalled();
+  expect(results).toHaveLength(1);
+  expect(results[0]?.message).not.toMatch(/qualification/);
+});

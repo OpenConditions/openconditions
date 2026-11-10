@@ -500,14 +500,45 @@ export async function runSource(src: CatalogFeed, deps: RunDeps): Promise<RunRes
     ? acquisitionBudget(src.acquisitionLimits, deps.fetch, deps.signal)
     : undefined;
   try {
+    const accepted = deps.roles;
+    const candidate =
+      accepted && formatOf(src).transactionalRoles
+        ? {
+            ...accepted,
+            lastFetchedAt: { ...accepted.lastFetchedAt },
+            payloads: { ...accepted.payloads },
+            urls: { ...accepted.urls },
+            items: { ...accepted.items },
+            failing: { ...accepted.failing },
+            answers: Object.fromEntries(
+              Object.entries(accepted.answers).map(([role, answers]) => [role, { ...answers }]),
+            ),
+          }
+        : undefined;
     const result = await runAttempt(
       src,
-      budget
-        ? { ...deps, fetch: budget.fetch, signal: budget.signal, acquisitionCheck: budget.check }
-        : deps,
+      {
+        ...deps,
+        ...(candidate ? { roles: candidate } : {}),
+        ...(budget
+          ? { fetch: budget.fetch, signal: budget.signal, acquisitionCheck: budget.check }
+          : {}),
+      },
       attempt,
       due,
     );
+    if (
+      candidate &&
+      accepted &&
+      result.error === undefined &&
+      (result.outcome === undefined ||
+        result.outcome === "validated_unchanged" ||
+        result.outcome === "changed" ||
+        result.outcome === "complete_empty")
+    ) {
+      Object.assign(accepted, candidate);
+      if (candidate.statusIndex === undefined) delete accepted.statusIndex;
+    }
     if (result.error || result.outcome === "partial") restoreRoles();
     return result;
   } catch (err) {
@@ -587,6 +618,7 @@ async function runAttempt(
     await recordStatus({ freshnessWindowSec: src.freshnessWindowSec, outcome: "error", error });
     return { count: 0, durationMs: Date.now() - start, error };
   }
+  if (format.acquisitionBlocked) throw new Error(format.acquisitionBlocked);
   const teeFor = (c: ReturnType<typeof capture>): StreamTeeFactory =>
     c ? archivingTee(c.archive, c.meta) : digestOnlyTee;
 
@@ -1675,6 +1707,7 @@ async function finishFeaturePoll(
   const stamp = (drafts: readonly RecordDraft[]) => drafts.map((d) => stampOne(d));
   const output = {
     ...(parse.publication ? { publication: parse.publication } : {}),
+    featuresComplete: parse.featuresComplete,
     features: stamp(parse.features),
     observations: stamp(parse.observations),
     offers: stamp(parse.offers),

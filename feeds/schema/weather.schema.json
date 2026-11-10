@@ -61,6 +61,7 @@
               "digitraffic-weather",
               "dwd-cdc-10min",
               "eccc-swob",
+              "fmi-weather",
               "smhi-metobs"
             ]
           },
