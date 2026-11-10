@@ -664,6 +664,10 @@
                 "type": "string",
                 "format": "uri"
               },
+              "credit": {
+                "type": "string",
+                "minLength": 1
+              },
               "imageRedistribution": {
                 "type": "string",
                 "enum": [

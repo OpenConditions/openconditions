@@ -681,7 +681,26 @@
             "properties": {
               "completeness": {
                 "type": "string",
-                "const": "complete"
+                "enum": [
+                  "complete",
+                  "partial"
+                ]
+              },
+              "qualification": {
+                "type": "string",
+                "enum": [
+                  "pending",
+                  "qualified"
+                ]
+              },
+              "minimumRecords": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "csv": {
+                "type": "boolean",
+                "const": true
               },
               "recordsPath": {
                 "type": "string",
@@ -1273,6 +1292,10 @@
                   }
                 ]
               },
+              "rejectConflictingViews": {
+                "type": "boolean",
+                "const": true
+              },
               "name": {
                 "anyOf": [
                   {
@@ -1838,6 +1861,31 @@
                 "additionalProperties": false
               },
               "detailUrl": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "field": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "pattern": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "field"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "credit": {
                 "anyOf": [
                   {
                     "type": "string",

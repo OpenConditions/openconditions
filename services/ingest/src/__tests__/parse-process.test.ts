@@ -43,6 +43,26 @@ describe("the parse process", { timeout: 60_000 }, () => {
     }
   });
 
+  it("enforces pending DriveBC qualification in the worker and preserves qualified row credits", async () => {
+    const original = repoFeed("ca-bc-drivebc-cameras");
+    const main = fixture("../../../../packages/cameras/src/__tests__/fixtures/ca-bc-drivebc.csv");
+    await expect(
+      child.parse({
+        feed: { ...original, snapshot: { ...original.snapshot!, qualification: "pending" } },
+        payloads: { main: [{ data: main, gzipped: false }] },
+        ctx,
+      }),
+    ).rejects.toThrow(/qualification pending/);
+    const feed = {
+      ...original,
+      snapshot: { ...original.snapshot!, qualification: "qualified" as const, minimumRecords: 1 },
+    };
+    const expected = inline(feed, main);
+    expect(
+      await child.parse({ feed, payloads: { main: [{ data: main, gzipped: false }] }, ctx }),
+    ).toEqual(expected);
+  });
+
   it("parses a register as the inline path does, held gzipped or as fetched", async () => {
     const feed = repoFeed("de-bnetza-charging");
     const expected = inline(feed, BNETZA);

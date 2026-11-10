@@ -171,7 +171,13 @@ export function attributionStamp(
   return (draft) => {
     const provenance = draft["provenance"] as Record<string, unknown> | undefined;
     if (provenance === undefined) return draft;
-    const publisher = warningPublisher(draft, src);
+    const cameraCredit =
+      draft["property"] === "camera.image"
+        ? AttributionPublisher.safeParse(
+            (provenance["attribution"] as Record<string, unknown> | undefined)?.["publisher"],
+          )
+        : undefined;
+    const publisher = cameraCredit?.success ? cameraCredit.data : warningPublisher(draft, src);
     const at = observedAt(draft) ?? polledAt;
     let feedAttribution = feedAttributions.get(at.getUTCFullYear());
     if (publisher === undefined && feedAttribution === undefined) {
@@ -435,7 +441,7 @@ export async function publishFlows(
  */
 export async function publishFeatures(
   sql: Sql,
-  src: Pick<CatalogFeed, "id" | "freshnessWindowSec">,
+  src: Pick<CatalogFeed, "id" | "freshnessWindowSec" | "snapshot">,
   input: {
     output: Pick<ParseOutput, "features" | "observations" | "offers" | "publication">;
     rejected: number;
@@ -474,11 +480,17 @@ export async function publishFeatures(
         ...writeContext(input),
         complete: {
           feature:
-            input.featuresComplete !== false && (output.publication?.featuresComplete ?? true),
-          offer: output.publication?.offersComplete ?? true,
+            src.snapshot?.completeness !== "partial" &&
+            input.featuresComplete !== false &&
+            (output.publication?.featuresComplete ?? true),
+          offer:
+            src.snapshot?.completeness !== "partial" &&
+            (output.publication?.offersComplete ?? true),
         },
         statesComplete:
-          input.statesComplete === true && (output.publication?.statesComplete ?? true),
+          src.snapshot?.completeness !== "partial" &&
+          input.statesComplete === true &&
+          (output.publication?.statesComplete ?? true),
         latestCache: cache,
       },
     );

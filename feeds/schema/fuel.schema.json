@@ -671,7 +671,26 @@
             "properties": {
               "completeness": {
                 "type": "string",
-                "const": "complete"
+                "enum": [
+                  "complete",
+                  "partial"
+                ]
+              },
+              "qualification": {
+                "type": "string",
+                "enum": [
+                  "pending",
+                  "qualified"
+                ]
+              },
+              "minimumRecords": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "csv": {
+                "type": "boolean",
+                "const": true
               },
               "recordsPath": {
                 "type": "string",

@@ -1,5 +1,5 @@
 import { parseXmlDocument } from "@openconditions/datex2";
-import type { CatalogFeed } from "@openconditions/ingest-framework";
+import { type CatalogFeed, decodeLayout } from "@openconditions/ingest-framework";
 
 /**
  * What a complete-snapshot feed's payload says about itself: whether the
@@ -59,6 +59,47 @@ export function inspectSnapshotCompleteness(
 ): SnapshotInspection {
   const contract = src.snapshot;
   if (!contract) return { complete: false, completeEmpty: false };
+  if (contract.qualification === "pending") {
+    throw new Error("snapshot completeness: inventory qualification pending");
+  }
+  if (contract.csv) {
+    for (const buffer of buffers) {
+      let quoted = false;
+      let columns = 1;
+      let expected: number | undefined;
+      for (let i = 0; i < buffer.length; i++) {
+        const ch = buffer[i];
+        if (ch === 34) {
+          if (quoted && buffer[i + 1] === 34) i++;
+          else quoted = !quoted;
+        } else if (!quoted && ch === 44) columns++;
+        else if (!quoted && ch === 10) {
+          expected ??= columns;
+          if (columns !== expected)
+            throw new Error("snapshot completeness: inconsistent CSV columns");
+          columns = 1;
+        }
+      }
+      if (quoted) throw new Error("snapshot completeness: unterminated CSV quote");
+      if (
+        buffer.length > 0 &&
+        buffer[buffer.length - 1] !== 10 &&
+        expected !== undefined &&
+        columns !== expected
+      ) {
+        throw new Error("snapshot completeness: truncated CSV row");
+      }
+    }
+    const records = buffers.flatMap((buffer) => decodeLayout("csv", buffer, {}));
+    if (records.length < (contract.minimumRecords ?? 1)) {
+      throw new Error("snapshot completeness: CSV below qualified minimum record count");
+    }
+    return {
+      complete: contract.completeness === "complete",
+      inputRecords: records.length,
+      completeEmpty: false,
+    };
+  }
   if (contract.recordElement) {
     let inputRecords = 0;
     for (const buffer of buffers) {
