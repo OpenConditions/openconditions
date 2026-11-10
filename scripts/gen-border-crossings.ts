@@ -117,7 +117,67 @@ async function listFeedGaps(crossings: readonly BorderCrossing[]): Promise<void>
   }
 }
 
+async function generateGranica() {
+  const evidence = JSON.parse(
+    readFileSync("packages/border/src/__tests__/fixtures/granica-geometry-evidence.json", "utf8"),
+  ) as {
+    inspectionDate: string;
+    records: {
+      unit: string;
+      entity: string;
+      revision: string;
+      longitude?: number;
+      latitude?: number;
+      coordinateLocation?: string;
+      retrievedAt?: string;
+    }[];
+  };
+  const curated: Record<string, { name: string; aliases: string[] }> = {
+    "401030": { name: "Medyka–Szeginie", aliases: ["Medyka", "Medyka-Szeginie"] },
+    "401060": { name: "Korczowa–Krakowiec", aliases: ["Korczowa", "Korczowa-Krakowiec"] },
+    "303020": { name: "Hrebenne–Rawa Ruska", aliases: ["Hrebenne", "Hrebenne-Rawa Ruska"] },
+  };
+  const crossings = evidence.records.map((r) => {
+    const c = curated[r.unit];
+    if (!c) throw new Error(`unknown Granica unit ${r.unit}`);
+    const parts = r.coordinateLocation?.match(/^(\d+)°(\d+)'([\d.]+) N, (\d+)°(\d+)'([\d.]+) E$/);
+    const decimal = (offset: number) =>
+      Number(parts![offset]) + Number(parts![offset + 1]) / 60 + Number(parts![offset + 2]) / 3600;
+    const lon = r.longitude ?? (parts ? decimal(4) : undefined);
+    const lat = r.latitude ?? (parts ? decimal(1) : undefined);
+    if (lon === undefined || lat === undefined) throw new Error(`unqualified geometry ${r.entity}`);
+    return {
+      unit: r.unit,
+      ...c,
+      wikidata: r.entity,
+      lon,
+      lat,
+      countries: ["PL", "UA"],
+      zone: "Europe/Warsaw",
+      cbp: [],
+      cbsa: [],
+      revision: r.revision,
+      retrievedAt: r.retrievedAt ?? evidence.inspectionDate,
+      evidence: r.retrievedAt ? "entity-json" : "indexed-entity-page",
+    };
+  });
+  if (crossings.length !== 3 || new Set(crossings.map((c) => c.unit)).size !== 3)
+    throw new Error("incomplete Granica joins");
+  writeFileSync(
+    "packages/border/src/snapshots/granica.json",
+    JSON.stringify(crossings, null, 2) + "\n",
+  );
+}
+
 async function main() {
+  // Offline regeneration retains the captured revision and retrieval evidence,
+  // including the distinction between direct JSON and indexed entity pages.
+  if (process.argv.includes("--granica")) {
+    if (!process.argv.includes("--offline"))
+      throw new Error("Granica requires --offline; refresh qualified evidence separately");
+    return generateGranica();
+  }
+
   const current = JSON.parse(readFileSync(OUT, "utf8")) as {
     crossings: (Curated & Partial<BorderCrossing>)[];
   };

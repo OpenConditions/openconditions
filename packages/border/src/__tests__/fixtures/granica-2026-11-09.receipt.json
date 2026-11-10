@@ -1,0 +1,52 @@
+{
+  "url": "https://granica.gov.pl/index.php/pl/czasy-oczekiwania/ukraina",
+  "startedAt": "2026-11-09T18:26:34.888824+00:00",
+  "status": 200,
+  "headers": {
+    "Date": "Mon, 09 Nov 2026 18:26:35 GMT",
+    "Expires": "Wed, 17 Aug 2005 00:00:00 GMT",
+    "Last-Modified": "Mon, 09 Nov 2026 18:26:35 GMT",
+    "Cache-Control": "no-store, no-cache, must-revalidate, post-check=0, pre-check=0",
+    "Content-Type": "text/html; charset=utf-8"
+  },
+  "finalUrl": "https://granica.gov.pl/index.php/pl/czasy-oczekiwania/ukraina",
+  "bytes": 29157,
+  "sha256": "20f75eb82d35edaa7a74e902a39f0208f012860168c472770821e59bddefa9c7",
+  "retrievedAt": "2026-11-09T18:26:35.741420+00:00",
+  "scope": "Country table extracted from response with universal-newline normalization; surrounding website excluded",
+  "tableSha256": "e4a7e05f18c1518b6b88c7649af7e141b08070e24e920f61106da1af410747e2",
+  "expected": [
+    {
+      "unit": "401030",
+      "minute": "19:00",
+      "car": "2:00",
+      "freight": "10:00",
+      "minutes": [120, 600],
+      "publishedAt": "2026-11-09T18:00:00Z",
+      "expiresAt": "2026-11-09T20:00:00Z"
+    },
+    {
+      "unit": "401060",
+      "minute": "19:01",
+      "car": "0:00",
+      "freight": "3:00",
+      "minutes": [0, 180],
+      "publishedAt": "2026-11-09T18:01:00Z",
+      "expiresAt": "2026-11-09T20:01:00Z"
+    },
+    {
+      "unit": "303020",
+      "minute": "19:22",
+      "car": "0:00",
+      "freight": "13:00",
+      "minutes": [0, 780],
+      "publishedAt": "2026-11-09T18:22:00Z",
+      "expiresAt": "2026-11-09T20:22:00Z"
+    }
+  ],
+  "clockInterpretation": "Source date 2026-11-09, Warsaw CET, start of published minute; response Date/Last-Modified are transport metadata only. [h] durations, not minute counts or total clearance time.",
+  "normalization": "CRLF and lone CR converted to LF; no other table changes",
+  "rawTableBytes": 4803,
+  "rawTableSha256": "d56e5ee4e5986560c09e9fe6410422713ee0fbcbba10359dfe5681da303e210c",
+  "tableBytes": 4723
+}

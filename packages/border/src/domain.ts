@@ -6,6 +6,7 @@ import {
 import { type BorderCatalogFeed, borderFeedShape } from "./feed-schema.js";
 import { parseCbp } from "./formats/cbp.js";
 import { parseCbsa } from "./formats/cbsa.js";
+import { parseGranica } from "./formats/granica.js";
 
 /** What a border feed publishes: crossings and how long their queues are. */
 export const BORDER_PRODUCTS = ["waits"] as const;
@@ -37,6 +38,10 @@ function waits(
 const FORMATS: FeedFormat<BorderCatalogFeed>[] = [
   waits("cbp-bwt", parseCbp),
   waits("cbsa-bwt", parseCbsa),
+  {
+    ...waits("granica-html", parseGranica),
+    produces: { kinds: ["border_crossing", "lane_group"], properties: ["border.wait"] },
+  },
 ];
 
 /**
