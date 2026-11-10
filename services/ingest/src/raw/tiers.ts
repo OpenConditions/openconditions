@@ -14,6 +14,7 @@ export function rawTierFor(
   src: Pick<CatalogFeed, "id" | "domain" | "format" | "rights" | "rawRetention">,
   payload: "feed" | "reference",
 ): RawTier | undefined {
+  if (src.rawRetention === "none") return undefined;
   const retention = src.rights.retention;
   if (retention === false) return undefined;
   if (retention !== true) return "hot";

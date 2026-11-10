@@ -1,0 +1,31 @@
+[
+  {
+    "url": "https://cwwp2.dot.ca.gov/data/d2/cms/cmsStatusD02.json",
+    "retrievedAt": "2026-11-07T07:36:59.350927+00:00",
+    "sha256": "0f903d06e65b248f78dee3d36030390432f75480fe1ed7e70c67abaf51b1ad6a",
+    "bytes": 124975,
+    "rows": 44
+  },
+  {
+    "url": "https://cwwp2.dot.ca.gov/data/d11/cms/cmsStatusD11.json",
+    "retrievedAt": "2026-11-07T07:37:00.920586+00:00",
+    "sha256": "946176aca8382177e85ecf754f525915bd4a149ef9baf3521f77fdcc79d095a2",
+    "bytes": 93747,
+    "rows": 80
+  },
+  {
+    "url": "https://cwwp2.dot.ca.gov/data/d12/cms/cmsStatusD12.json",
+    "retrievedAt": "2026-11-07T07:37:02.463882+00:00",
+    "sha256": "8d7a338388f3c240ca77f0a3473852b3709b0192d2ec29b550429b5ac9dab946",
+    "bytes": 76955,
+    "rows": 67
+  },
+  {
+    "url": "https://cwwp2.dot.ca.gov/data/d3/cms/cmsStatusD03.json",
+    "retrievedAt": "2026-11-07T07:34:30.583495+00:00",
+    "retrievalClock": "local download file mtime",
+    "sha256": "992b6f02c0f53c90bcb44f4fe547275c46ebc14ec5e3deea6f1b6435ce142c87",
+    "bytes": 122186,
+    "rows": 108
+  }
+]

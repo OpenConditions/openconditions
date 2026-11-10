@@ -1,0 +1,5 @@
+# Parkeringsregisteret fixture
+
+Retrieved anonymously on 2026-11-07 from the official dedicated host. The three ordinary area endpoints are [32771](https://parkreg-open.atlas.vegvesen.no/ws/no/vegvesen/veg/parkeringsomraade/parkeringsregisteret/v1/parkeringsomraade/32771), [98316](https://parkreg-open.atlas.vegvesen.no/ws/no/vegvesen/veg/parkeringsomraade/parkeringsregisteret/v1/parkeringsomraade/98316) and [98357](https://parkreg-open.atlas.vegvesen.no/ws/no/vegvesen/veg/parkeringsomraade/parkeringsregisteret/v1/parkeringsomraade/98357). This is a reduced structured sample, not a national export. Only inventory identifiers, provider names, coordinates, deactivation state and selected current-version fields are retained. Contacts, assessment prose, media references and historical payloads were removed. Tests construct historical versions and other edge cases synthetically.
+
+Inneholder data under Norsk lisens for offentlige data (NLOD) tilgjengeliggjort av Statens vegvesen. Normalisert av OpenConditions. [NLOD 2.0](https://data.norge.no/nlod/no/2.0); [product](https://dataut.vegvesen.no/dataset/parkeringsregisteret).

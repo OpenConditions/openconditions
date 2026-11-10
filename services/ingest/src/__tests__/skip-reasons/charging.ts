@@ -154,4 +154,7 @@ export const SAMPLES: SkipSamples = {
   },
 };
 
-export const EXEMPT: SkipExemptions = {};
+export const EXEMPT: SkipExemptions = {
+  "charging/pun":
+    "Atomic inventory parser: malformed rows and conflicting IDs fail the whole generation, never skip rows. Unknown representative connector tokens remain explicit UNKNOWN with raw token diagnostics.",
+};

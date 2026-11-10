@@ -981,6 +981,41 @@
         }
       ]
     },
+    "charging/it": {
+      "$schema": "../schema/charging.schema.json",
+      "feeds": [
+        {
+          "operator": "agid",
+          "qualifier": "pun",
+          "product": "charging",
+          "name": "GSE/MASE PUN charging inventory via Cruscotto Italia (AgID)",
+          "format": "pun",
+          "tier": "aggregator",
+          "endpoints": {
+            "main": {
+              "url": "https://cruscotto-italia.dati.gov.it/data/manifest.json",
+              "cadenceSec": 86400
+            }
+          },
+          "freshnessWindowSec": 172800,
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "GSE/MASE — PUN; Cruscotto Italia (AgID), CC BY 4.0 ex art. 52 c.2 D.Lgs 82/2005 (CAD). Normalized and deduplicated by OpenConditions; representative connector only.",
+          "terms": {
+            "url": "https://cruscotto-italia.dati.gov.it/api.html#condizioni",
+            "reviewedAt": "2026-11-07",
+            "note": "Public factual EVSE/location/CPO/representative connector inventory only. AgID's PUN-specific CC BY 4.0 distribution identifies GSE as holder; accepted with CAD Article 52 and AgID guidelines. Excludes media, personal contacts, availability, tariffs and payment claims. Mirror municipal coverage is not a complete national census. CRS is undeclared; named latitude/longitude fields and full-generation Istat boundary checks qualify geographic interpretation without a formal EPSG assertion. Full capture and worker/PostGIS/public API qualification completed 2026-11-09: 5618 shards, 80265 unique EVSEs, no availability observations. Persistent client coordination enforces one connection and at most one request per second, including retries, with retained host cooldown. Operators sharing an egress IP must coordinate aggregate traffic; a client cannot discover unrelated NAT users."
+          },
+          "privacyUrl": "https://www.agid.gov.it/it/privacy-policy",
+          "homepage": "https://cruscotto-italia.dati.gov.it/api.html",
+          "coverage": {
+            "countries": [
+              "IT"
+            ]
+          }
+        }
+      ]
+    },
     "charging/kr": {
       "$schema": "../schema/charging.schema.json",
       "feeds": [
@@ -3052,6 +3087,65 @@
       },
       "cadenceSec": 86400,
       "country": "HK"
+    },
+    {
+      "operator": "agid",
+      "qualifier": "pun",
+      "product": "charging",
+      "name": "GSE/MASE PUN charging inventory via Cruscotto Italia (AgID)",
+      "format": "pun",
+      "tier": "aggregator",
+      "endpoints": {
+        "main": {
+          "url": "https://cruscotto-italia.dati.gov.it/data/manifest.json",
+          "cadenceSec": 86400
+        }
+      },
+      "freshnessWindowSec": 172800,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "GSE/MASE — PUN; Cruscotto Italia (AgID), CC BY 4.0 ex art. 52 c.2 D.Lgs 82/2005 (CAD). Normalized and deduplicated by OpenConditions; representative connector only.",
+      "terms": {
+        "url": "https://cruscotto-italia.dati.gov.it/api.html#condizioni",
+        "reviewedAt": "2026-11-07",
+        "note": "Public factual EVSE/location/CPO/representative connector inventory only. AgID's PUN-specific CC BY 4.0 distribution identifies GSE as holder; accepted with CAD Article 52 and AgID guidelines. Excludes media, personal contacts, availability, tariffs and payment claims. Mirror municipal coverage is not a complete national census. CRS is undeclared; named latitude/longitude fields and full-generation Istat boundary checks qualify geographic interpretation without a formal EPSG assertion. Full capture and worker/PostGIS/public API qualification completed 2026-11-09: 5618 shards, 80265 unique EVSEs, no availability observations. Persistent client coordination enforces one connection and at most one request per second, including retries, with retained host cooldown. Operators sharing an egress IP must coordinate aggregate traffic; a client cannot discover unrelated NAT users."
+      },
+      "privacyUrl": "https://www.agid.gov.it/it/privacy-policy",
+      "homepage": "https://cruscotto-italia.dati.gov.it/api.html",
+      "coverage": {
+        "countries": [
+          "IT"
+        ]
+      },
+      "id": "it-agid-pun-charging",
+      "domain": "charging",
+      "region": "it",
+      "file": "feeds/charging/it.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": true,
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "changeNotice": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://cruscotto-italia.dati.gov.it/api.html#condizioni",
+        "reviewedAt": "2026-11-07"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
+      },
+      "restricted": false,
+      "cadenceSec": 86400,
+      "country": "IT"
     },
     {
       "operator": "keco",

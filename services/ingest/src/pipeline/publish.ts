@@ -171,7 +171,13 @@ export function attributionStamp(
   return (draft) => {
     const provenance = draft["provenance"] as Record<string, unknown> | undefined;
     if (provenance === undefined) return draft;
-    const publisher = warningPublisher(draft, src);
+    const cameraCredit =
+      draft["property"] === "camera.image"
+        ? AttributionPublisher.safeParse(
+            (provenance["attribution"] as Record<string, unknown> | undefined)?.["publisher"],
+          )
+        : undefined;
+    const publisher = cameraCredit?.success ? cameraCredit.data : warningPublisher(draft, src);
     const at = observedAt(draft) ?? polledAt;
     let feedAttribution = feedAttributions.get(at.getUTCFullYear());
     if (publisher === undefined && feedAttribution === undefined) {
@@ -227,7 +233,8 @@ export class UnlocatableRetainedError extends Error {}
  * Writes one poll's situations of an event feed and closes its attempt, in
  * one transaction under the source's lock, so the records, their revisions,
  * their binding work and the source status commit together. The snapshot is
- * complete: a stored situation it no longer holds is withdrawn, except that a
+ * complete unless `situationsComplete` is false: a stored situation it no longer
+ * holds is withdrawn only for a complete poll, except that a
  * situation still published but unplaceable this poll (`unlocatable`) is never
  * ended or stripped of an unplaceable record's effects by it — such a poll
  * fails as a whole instead, keeping the last good publication. A draft that
@@ -239,6 +246,7 @@ export async function publishSituations(
   src: Pick<CatalogFeed, "id" | "freshnessWindowSec">,
   input: {
     situations: readonly RecordDraft[];
+    situationsComplete?: boolean;
     unlocatable?: readonly string[];
     /** Local ids of the records behind `unlocatable`; a stored effect's id begins with its record's. */
     unlocatableRecords?: readonly string[];
@@ -272,14 +280,25 @@ export async function publishSituations(
           `(${unlocatable.length} unlocatable in source ${src.id})`,
       );
     }
-    const summary = await writeSnapshotIn(tx, src.id, { situations }, writeContext(input));
+    const summary = await writeSnapshotIn(
+      tx,
+      src.id,
+      { situations },
+      {
+        ...writeContext(input),
+        complete: { feature: true, situation: input.situationsComplete ?? true, offer: true },
+      },
+    );
     const [{ live }] = await tx<{ live: number }[]>`
       SELECT count(*)::int AS live FROM conditions.situation
        WHERE source_id = ${src.id} AND tombstoned_at IS NULL`;
     const counts = summary.counts.situation;
     await upsertSourceStatus(tx, src.id, {
       freshnessWindowSec: src.freshnessWindowSec,
-      outcome: situations.length === 0 ? "complete_empty" : "changed",
+      outcome:
+        situations.length === 0 && input.situationsComplete !== false
+          ? "complete_empty"
+          : "changed",
       attemptAt: input.poll.at,
       networkValidated: true,
       durationMs: input.durationMs,
@@ -422,9 +441,9 @@ export async function publishFlows(
  */
 export async function publishFeatures(
   sql: Sql,
-  src: Pick<CatalogFeed, "id" | "freshnessWindowSec">,
+  src: Pick<CatalogFeed, "id" | "freshnessWindowSec" | "snapshot">,
   input: {
-    output: Pick<ParseOutput, "features" | "observations" | "offers">;
+    output: Pick<ParseOutput, "features" | "observations" | "offers" | "publication">;
     rejected: number;
     poll: PollIdentity;
     durationMs: number;
@@ -466,14 +485,37 @@ export async function publishFeatures(
           "GeoFA: retained EVSE ownership conflict; preserving last-good publication",
         );
     }
+    if (output.publication?.sourcePublishedAt !== undefined) {
+      const [previous] = await tx<
+        { source_published_at: Date | null }[]
+      >`SELECT source_published_at FROM conditions.source_status WHERE source = ${src.id}`;
+      if (
+        previous?.source_published_at &&
+        Date.parse(output.publication.sourcePublishedAt) <=
+          new Date(previous.source_published_at).getTime()
+      )
+        throw new Error("source publication did not advance beyond the last accepted publication");
+    }
+
     const summary = await writeSnapshotIn(
       tx,
       src.id,
       { features: output.features, observations: output.observations, offers: output.offers },
       {
         ...writeContext(input),
-        complete: { feature: input.featuresComplete !== false, offer: true },
-        statesComplete: input.statesComplete === true,
+        complete: {
+          feature:
+            src.snapshot?.completeness !== "partial" &&
+            input.featuresComplete !== false &&
+            (output.publication?.featuresComplete ?? true),
+          offer:
+            src.snapshot?.completeness !== "partial" &&
+            (output.publication?.offersComplete ?? true),
+        },
+        statesComplete:
+          src.snapshot?.completeness !== "partial" &&
+          input.statesComplete === true &&
+          (output.publication?.statesComplete ?? true),
         latestCache: cache,
       },
     );
@@ -505,6 +547,11 @@ export async function publishFeatures(
       ...(input.warning ? { error: input.warning } : {}),
       publication: counts,
     });
+    if (output.publication?.sourcePublishedAt !== undefined) {
+      await tx`UPDATE conditions.source_status
+        SET source_published_at = ${output.publication.sourcePublishedAt}::timestamptz
+        WHERE source = ${src.id}`;
+    }
     return { summary, counts };
   }) as Promise<{ summary: WriteSummary; counts: PublicationCounts }>;
   return withCache(cache, published);

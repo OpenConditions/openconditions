@@ -157,6 +157,14 @@ async function checkFeed(
 
   if (feed.disabled)
     return { ...result("skipped", `disabled: ${feed.disabled.reason}`), skipReason: "disabled" };
+  if (feed.format === "pun")
+    return {
+      ...result(
+        "skipped",
+        "PUN full-generation acquisition requires the separate qualification route",
+      ),
+      skipReason: "configuration",
+    };
   if (keylessOnly && (feed.auth || feedCredentialNames(feed).some((name) => !name.setting))) {
     return {
       ...result("skipped", "keyless mode: configured credentials/auth are not tested"),

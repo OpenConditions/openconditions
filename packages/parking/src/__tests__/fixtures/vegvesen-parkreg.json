@@ -1,0 +1,73 @@
+[
+  {
+    "id": 32771,
+    "breddegrad": 59.920798,
+    "lengdegrad": 10.750878,
+    "deaktivert": null,
+    "aktivVersjon": {
+      "navn": "Maridalsveien 10",
+      "adresse": "Maridalsveien 10",
+      "postnummer": "0178",
+      "poststed": "OSLO",
+      "antallAvgiftsbelagtePlasser": 7,
+      "antallAvgiftsfriePlasser": 3,
+      "antallLadeplasser": 0,
+      "antallForflytningshemmede": 0,
+      "aktiveringstidspunkt": "2026-01-19T08:13:02Z",
+      "sistEndret": "2026-01-19T08:13:02Z",
+      "versjonsnummer": 2,
+      "sluttidspunkt": null,
+      "innfartsparkering": "NEI",
+      "typeParkeringsomrade": "LANGS_KJOREBANE"
+    },
+    "parkeringstilbyderNavn": "P-NORGE AS"
+  },
+  {
+    "id": 98316,
+    "breddegrad": 58.847013,
+    "lengdegrad": 5.738171,
+    "deaktivert": null,
+    "aktivVersjon": {
+      "navn": "Gjesdalbakken 9 AS / Sparkjøp",
+      "adresse": "Gjesdalbakken 9",
+      "postnummer": "4306",
+      "poststed": "SANDNES",
+      "antallAvgiftsbelagtePlasser": 30,
+      "antallAvgiftsfriePlasser": 16,
+      "antallLadeplasser": 0,
+      "antallForflytningshemmede": 4,
+      "aktiveringstidspunkt": "2026-09-15T07:08:49Z",
+      "sistEndret": "2026-09-15T07:08:49Z",
+      "versjonsnummer": 3,
+      "sluttidspunkt": null,
+      "innfartsparkering": "NEI",
+      "typeParkeringsomrade": "AVGRENSET_OMRADE"
+    },
+    "parkeringstilbyderNavn": "VESTPARK AS"
+  },
+  {
+    "id": 98357,
+    "breddegrad": 59.936775,
+    "lengdegrad": 10.753121,
+    "deaktivert": {
+      "deaktivertTidspunkt": "2025-04-12T13:36:41Z"
+    },
+    "aktivVersjon": {
+      "navn": "Midlertidige vedtak for PONTOPPIDANS GATE mellom DANNEVIGSVEIEN og STOCKFLETHS GATE",
+      "adresse": "PONTOPPIDANS GATE mellom DANNEVIGSVEIEN og STOCKFLETHS GATE",
+      "postnummer": "0462",
+      "poststed": "OSLO",
+      "antallAvgiftsbelagtePlasser": 0,
+      "antallAvgiftsfriePlasser": 1,
+      "antallLadeplasser": 0,
+      "antallForflytningshemmede": 0,
+      "aktiveringstidspunkt": "2025-03-06T13:31:54Z",
+      "sistEndret": "2025-03-06T13:31:54Z",
+      "versjonsnummer": 1,
+      "sluttidspunkt": "2025-04-12T13:36:41Z",
+      "innfartsparkering": "NEI",
+      "typeParkeringsomrade": "LANGS_KJOREBANE"
+    },
+    "parkeringstilbyderNavn": "OSLO KOMMUNE BYMILJØETATEN"
+  }
+]

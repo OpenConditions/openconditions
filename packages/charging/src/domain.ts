@@ -27,6 +27,7 @@ import { parseOcm } from "./formats/ocm.js";
 import { parseOcpi, parseOcpiStatus } from "./formats/ocpi.js";
 import { parseOicp, parseOicpStatus } from "./formats/oicp.js";
 import { parseOverpassCharging } from "./formats/overpass.js";
+import { parsePun } from "./formats/pun.js";
 import { parseTdx, parseTdxStatus } from "./formats/tdx.js";
 
 /** What a charging feed publishes: charging sites, their charge points' status and tariffs. */
@@ -154,6 +155,10 @@ const FORMATS: FeedFormat<ChargingCatalogFeed>[] = [
   ),
   // Per grid cell, full objects.
   sites("ocm", parseOcm),
+  {
+    ...sites("pun", parsePun),
+    produces: { kinds: ["charging_site", "evse", "connector"], properties: [] },
+  },
 ];
 
 const LAYOUTS: ReadonlySet<string> = new Set(CHARGING_LAYOUT_FORMATS);

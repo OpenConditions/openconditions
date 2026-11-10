@@ -3,7 +3,7 @@ import { type ZodRawShape, z } from "zod";
 import { FEED_QUALIFIER, FEED_TOKEN } from "./ids.js";
 import { MAX_UTC_MINUTES_BACK } from "./templates.js";
 
-const RAW_RETENTION_CLASSES = ["situation", "observation", "reference"] as const;
+const RAW_RETENTION_CLASSES = ["situation", "observation", "reference", "none"] as const;
 
 const FIELD_NAME = /^[a-z][a-z0-9_]*$/;
 const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/;
@@ -292,6 +292,13 @@ export const endpointSchema = z
      * from an old copy. Unset, a held answer stands in at any age.
      */
     maxPayloadAgeSec: z.number().int().positive().optional(),
+    /** Tighter response-byte and full-body deadline caps; never enlarge operator egress limits. */
+    budget: z
+      .strictObject({
+        maxBytes: z.number().int().positive().max(536870912),
+        deadlineSec: z.number().positive().max(900),
+      })
+      .optional(),
     /**
      * Seconds a request to this endpoint may take, body included, for a
      * publisher slower than the operator's `OPENCONDITIONS_FETCH_TIMEOUT_MS`
@@ -438,7 +445,11 @@ export const feedBaseShape = {
     .optional(),
   snapshot: z
     .object({
-      completeness: z.literal("complete"),
+      completeness: z.enum(["complete", "partial"]),
+      /** Pending qualification forbids publication, even if a local layer enables the feed. */
+      qualification: z.enum(["pending", "qualified"]).optional(),
+      minimumRecords: z.number().int().positive().optional(),
+      csv: z.literal(true).optional(),
       recordsPath: z.string().min(1).optional(),
       rootElement: z.string().min(1).optional(),
       publicationElement: z.string().min(1).optional(),
@@ -448,6 +459,18 @@ export const feedBaseShape = {
     })
     .strict()
     .superRefine((snapshot, ctx) => {
+      if (snapshot.completeness === "partial" && !snapshot.csv) {
+        ctx.addIssue({ code: "custom", message: "partial snapshot requires CSV validation" });
+      }
+      if (
+        snapshot.csv &&
+        (snapshot.recordsPath || snapshot.recordElement || snapshot.totalCountPath)
+      ) {
+        ctx.addIssue({ code: "custom", message: "CSV snapshot cannot use JSON/XML paths" });
+      }
+      if (snapshot.minimumRecords !== undefined && !snapshot.csv) {
+        ctx.addIssue({ code: "custom", message: "minimumRecords requires CSV snapshot" });
+      }
       if (snapshot.recordsPath && snapshot.recordElement) {
         ctx.addIssue({
           code: "custom",
