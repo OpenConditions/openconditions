@@ -136,8 +136,9 @@ Outside OpenMapX the same variables are plain environment variables; see
 
 ### Memory
 
-`service.json` limits the container to `OPENCONDITIONS_INGEST_MEMORY` (OpenMapX's
-`.env`; default `8g`). The image caps the V8 heap at 55% of that limit
+`service.json` limits the container to `8g`. The value is literal, because
+OpenMapX never expands variables in a community manifest; to change it, change
+`service.json`. The image caps the V8 heap at 55% of that limit
 (`NODE_OPTIONS=--max-old-space-size-percentage=55`; Node reads the cgroup
 limit), so raising or lowering the limit moves the heap with it: 4505 MB of
 heap under `8g`, 3379 MB under `6g`. The parse child below takes up to 30%,
@@ -253,8 +254,7 @@ that archived the payloads.
 Under OpenMapX the second process is the optional service
 `openconditions-ingest-heavy` (`services/ingest-heavy/service.json`): the same
 image with `OPENCONDITIONS_INGEST_ROLE=feeds`, its own volume, a memory limit of
-`OPENCONDITIONS_INGEST_HEAVY_MEMORY` (default `6g`, the floor for NDW's
-charging register) and the ingest service's fields. It is not part of the
+`6g` (the floor for NDW's charging register) and the ingest service's fields. It is not part of the
 extension's default install: OpenMapX enables every service an extension
 lists, and connects a community service to its database only when its
 `postgis` service names it in `communityNetworkAccess`, which names
