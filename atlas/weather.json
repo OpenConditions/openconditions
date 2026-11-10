@@ -228,6 +228,46 @@
           },
           "privacyUrl": "https://www.digitraffic.fi/en/privacy-policy/",
           "homepage": "https://www.digitraffic.fi/en/"
+        },
+        {
+          "operator": "fmi",
+          "product": "weather",
+          "name": "Finnish Meteorological Institute weather observations",
+          "format": "fmi-weather",
+          "tier": "authoritative",
+          "endpoints": {
+            "sites": {
+              "urls": [
+                "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=GetFeature&storedquery_id=fmi::ef::stations&networkid=121",
+                "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=GetFeature&storedquery_id=fmi::ef::stations&networkid=122",
+                "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=GetFeature&storedquery_id=fmi::ef::stations&networkid=224"
+              ],
+              "cadenceSec": 86400
+            },
+            "status": {
+              "url": "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=GetFeature&storedquery_id=fmi::observations::weather::multipointcoverage&bbox=19,59,32,70,epsg:4326&starttime={utcMinute-90}&endtime={utcMinute}&timestep=10&parameters=t2m,td,rh,ws_10min,wg_10min,wd_10min,vis&crs=EPSG::4326",
+              "cadenceSec": 600
+            }
+          },
+          "freshnessWindowSec": 3600,
+          "requestLimits": {
+            "perMinute": 60,
+            "perDay": 20000
+          },
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "Finnish Meteorological Institute; weather observations; normalized by OpenConditions; CC BY 4.0.",
+          "terms": {
+            "url": "https://en.ilmatieteenlaitos.fi/open-data-licence",
+            "reviewedAt": "2026-11-07"
+          },
+          "privacyUrl": "https://en.ilmatieteenlaitos.fi/data-protection",
+          "homepage": "https://en.ilmatieteenlaitos.fi/",
+          "coverage": {
+            "countries": [
+              "FI"
+            ]
+          }
         }
       ]
     },
@@ -611,6 +651,75 @@
         ]
       },
       "cadenceSec": 300,
+      "country": "FI"
+    },
+    {
+      "operator": "fmi",
+      "product": "weather",
+      "name": "Finnish Meteorological Institute weather observations",
+      "format": "fmi-weather",
+      "tier": "authoritative",
+      "endpoints": {
+        "sites": {
+          "urls": [
+            "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=GetFeature&storedquery_id=fmi::ef::stations&networkid=121",
+            "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=GetFeature&storedquery_id=fmi::ef::stations&networkid=122",
+            "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=GetFeature&storedquery_id=fmi::ef::stations&networkid=224"
+          ],
+          "cadenceSec": 86400
+        },
+        "status": {
+          "url": "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=GetFeature&storedquery_id=fmi::observations::weather::multipointcoverage&bbox=19,59,32,70,epsg:4326&starttime={utcMinute-90}&endtime={utcMinute}&timestep=10&parameters=t2m,td,rh,ws_10min,wg_10min,wd_10min,vis&crs=EPSG::4326",
+          "cadenceSec": 600
+        }
+      },
+      "freshnessWindowSec": 3600,
+      "requestLimits": {
+        "perMinute": 60,
+        "perDay": 20000
+      },
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Finnish Meteorological Institute; weather observations; normalized by OpenConditions; CC BY 4.0.",
+      "terms": {
+        "url": "https://en.ilmatieteenlaitos.fi/open-data-licence",
+        "reviewedAt": "2026-11-07"
+      },
+      "privacyUrl": "https://en.ilmatieteenlaitos.fi/data-protection",
+      "homepage": "https://en.ilmatieteenlaitos.fi/",
+      "coverage": {
+        "countries": [
+          "FI"
+        ]
+      },
+      "id": "fi-fmi-weather",
+      "domain": "weather",
+      "region": "fi",
+      "file": "feeds/weather/fi.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": true,
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "changeNotice": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://en.ilmatieteenlaitos.fi/open-data-licence",
+        "reviewedAt": "2026-11-07"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
+      },
+      "restricted": false,
+      "cadenceSec": 600,
       "country": "FI"
     },
     {

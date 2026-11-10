@@ -505,7 +505,10 @@ export async function publishFeatures(
   sql: Sql,
   src: Pick<CatalogFeed, "id" | "freshnessWindowSec" | "snapshot">,
   input: {
-    output: Pick<ParseOutput, "features" | "observations" | "offers" | "publication">;
+    output: Pick<
+      ParseOutput,
+      "features" | "observations" | "offers" | "publication" | "featuresComplete"
+    >;
     /** Current DWD metadata, checked against retained readings under the publication lock. */
     dwdStationPayloads?: FeedPayloads;
     /** SMHI requires all stored records and retained reading rights to agree before commit. */
@@ -597,6 +600,7 @@ export async function publishFeatures(
           feature:
             src.snapshot?.completeness !== "partial" &&
             input.featuresComplete !== false &&
+            output.featuresComplete !== false &&
             (output.publication?.featuresComplete ?? true),
           offer:
             src.snapshot?.completeness !== "partial" &&

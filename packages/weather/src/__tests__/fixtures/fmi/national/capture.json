@@ -1,0 +1,163 @@
+[
+  {
+    "name": "stations-121",
+    "url": "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=GetFeature&storedquery_id=fmi::ef::stations&networkid=121",
+    "retrievedAt": "2026-11-09T16:40:11.802963+00:00",
+    "completedAt": "2026-11-09T16:40:12.343390+00:00",
+    "status": 200,
+    "headers": [
+      ["content-type", "text/xml; charset=UTF-8"],
+      ["content-length", "465180"],
+      ["apisix-cache-status", "BYPASS"],
+      ["access-control-allow-origin", "*"],
+      ["cache-control", "public, max-age=86400, stale-while-revalidate=60, stale-if-error=86400"],
+      ["date", "Mon, 09 Nov 2026 16:40:12 GMT"],
+      ["expires", "Tue, 10 Nov 2026 16:40:12 GMT"],
+      ["last-modified", "Mon, 09 Nov 2026 16:40:12 GMT"],
+      ["server", "SmartMet Server (19:38:03 Oct 24 2026)"],
+      ["vary", "Accept-Encoding,fmi-apikey"],
+      ["connection", "close"]
+    ],
+    "bytes": 465180,
+    "sha256": "816103df17a68d4c178a213e17f4936319d27e357dc34763c716eca5aa8b3dc7",
+    "runtimeSec": 0.540961624996271
+  },
+  {
+    "name": "stations-122",
+    "url": "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=GetFeature&storedquery_id=fmi::ef::stations&networkid=122",
+    "retrievedAt": "2026-11-09T16:40:13.349740+00:00",
+    "completedAt": "2026-11-09T16:40:13.636128+00:00",
+    "status": 200,
+    "headers": [
+      ["content-type", "text/xml; charset=UTF-8"],
+      ["content-length", "77610"],
+      ["apisix-cache-status", "BYPASS"],
+      ["access-control-allow-origin", "*"],
+      ["cache-control", "public, max-age=86400, stale-while-revalidate=60, stale-if-error=86400"],
+      ["date", "Mon, 09 Nov 2026 16:40:13 GMT"],
+      ["expires", "Tue, 10 Nov 2026 16:40:13 GMT"],
+      ["last-modified", "Mon, 09 Nov 2026 16:40:13 GMT"],
+      ["server", "SmartMet Server (19:38:03 Oct 24 2026)"],
+      ["vary", "Accept-Encoding,fmi-apikey"],
+      ["connection", "close"]
+    ],
+    "bytes": 77610,
+    "sha256": "a85150c9a832110a1469c61cb760abd23993125d1108a1c4d0ff265a0cd76275",
+    "runtimeSec": 0.286545875002048
+  },
+  {
+    "name": "stations-224",
+    "url": "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=GetFeature&storedquery_id=fmi::ef::stations&networkid=224",
+    "retrievedAt": "2026-11-09T16:40:14.642160+00:00",
+    "completedAt": "2026-11-09T16:40:15.085868+00:00",
+    "status": 200,
+    "headers": [
+      ["content-type", "text/xml; charset=UTF-8"],
+      ["content-length", "70545"],
+      ["apisix-cache-status", "BYPASS"],
+      ["access-control-allow-origin", "*"],
+      ["cache-control", "public, max-age=86400, stale-while-revalidate=60, stale-if-error=86400"],
+      ["date", "Mon, 09 Nov 2026 16:40:14 GMT"],
+      ["expires", "Tue, 10 Nov 2026 16:40:14 GMT"],
+      ["last-modified", "Mon, 09 Nov 2026 16:40:14 GMT"],
+      ["server", "SmartMet Server (19:38:03 Oct 24 2026)"],
+      ["vary", "Accept-Encoding,fmi-apikey"],
+      ["connection", "close"]
+    ],
+    "bytes": 70545,
+    "sha256": "e1c60f46b8b23cd44d52674143b983be2eeea5e1bef8378085d57a627d61e858",
+    "runtimeSec": 0.4438076250080485
+  },
+  {
+    "name": "networks",
+    "url": "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=GetFeature&storedquery_id=fmi::ef::networks",
+    "retrievedAt": "2026-11-09T16:40:16.088377+00:00",
+    "completedAt": "2026-11-09T16:40:16.276074+00:00",
+    "status": 200,
+    "headers": [
+      ["content-type", "text/xml; charset=UTF-8"],
+      ["content-length", "33942"],
+      ["apisix-cache-status", "BYPASS"],
+      ["access-control-allow-origin", "*"],
+      ["cache-control", "public, max-age=86400, stale-while-revalidate=60, stale-if-error=86400"],
+      ["date", "Mon, 09 Nov 2026 16:40:16 GMT"],
+      ["expires", "Tue, 10 Nov 2026 16:40:16 GMT"],
+      ["last-modified", "Mon, 09 Nov 2026 16:40:16 GMT"],
+      ["server", "SmartMet Server (19:38:03 Oct 24 2026)"],
+      ["vary", "Accept-Encoding,fmi-apikey"],
+      ["connection", "close"]
+    ],
+    "bytes": 33942,
+    "sha256": "0009226f4d033d143d0ebad0f73391c2798065088d07fe2873a7d8d000c41fcd",
+    "runtimeSec": 0.18785479199141264
+  },
+  {
+    "name": "description",
+    "url": "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=DescribeStoredQueries&storedquery_id=fmi::observations::weather::multipointcoverage",
+    "retrievedAt": "2026-11-09T16:40:17.283493+00:00",
+    "completedAt": "2026-11-09T16:40:17.415202+00:00",
+    "status": 200,
+    "headers": [
+      ["content-type", "text/xml; charset=UTF-8"],
+      ["content-length", "4748"],
+      ["apisix-cache-status", "BYPASS"],
+      ["access-control-allow-origin", "*"],
+      ["cache-control", "public, max-age=60, stale-while-revalidate=60, stale-if-error=86400"],
+      ["date", "Mon, 09 Nov 2026 16:40:17 GMT"],
+      ["expires", "Mon, 09 Nov 2026 16:41:17 GMT"],
+      ["last-modified", "Mon, 09 Nov 2026 16:40:17 GMT"],
+      ["server", "SmartMet Server (19:38:03 Oct 24 2026)"],
+      ["vary", "Accept-Encoding,fmi-apikey"],
+      ["connection", "close"]
+    ],
+    "bytes": 4748,
+    "sha256": "f0d9175869b7064dfd069176aed3684528b4c3c2be208c7e1bee031da30cad8b",
+    "runtimeSec": 0.1318183749972377
+  },
+  {
+    "name": "observations",
+    "url": "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=GetFeature&storedquery_id=fmi::observations::weather::multipointcoverage&bbox=19,59,32,70,epsg:4326&starttime=2026-11-09T15:10:00Z&endtime=2026-11-09T16:40:00Z&timestep=10&parameters=t2m,td,rh,ws_10min,wg_10min,wd_10min,vis&crs=EPSG::4326",
+    "retrievedAt": "2026-11-09T16:40:18.421860+00:00",
+    "completedAt": "2026-11-09T16:40:18.839745+00:00",
+    "status": 200,
+    "headers": [
+      ["content-type", "text/xml; charset=UTF-8"],
+      ["content-length", "371682"],
+      ["apisix-cache-status", "BYPASS"],
+      ["access-control-allow-origin", "*"],
+      ["cache-control", "public, max-age=600, stale-while-revalidate=60, stale-if-error=86400"],
+      ["date", "Mon, 09 Nov 2026 16:40:18 GMT"],
+      ["expires", "Mon, 09 Nov 2026 16:50:18 GMT"],
+      ["last-modified", "Mon, 09 Nov 2026 16:40:18 GMT"],
+      ["server", "SmartMet Server (19:38:03 Oct 24 2026)"],
+      ["vary", "Accept-Encoding,fmi-apikey"],
+      ["connection", "close"]
+    ],
+    "bytes": 371682,
+    "sha256": "84d7b13457a71a2ffe9c6b5e20dd342154d48807379754ca3731db70c71c01a4",
+    "runtimeSec": 0.4182563329959521
+  },
+  {
+    "name": "properties",
+    "url": "https://opendata.fmi.fi/meta?observableProperty=observation&param=t2m,td,rh,ws_10min,wg_10min,wd_10min,ri_10min,r_1h,vis&language=eng",
+    "retrievedAt": "2026-11-09T16:40:19.840680+00:00",
+    "completedAt": "2026-11-09T16:40:19.980216+00:00",
+    "status": 200,
+    "headers": [
+      ["content-type", "text/xml; charset=UTF-8"],
+      ["content-length", "4891"],
+      ["apisix-cache-status", "BYPASS"],
+      ["access-control-allow-origin", "*"],
+      ["cache-control", "public, max-age=60, stale-while-revalidate=60, stale-if-error=86400"],
+      ["date", "Mon, 09 Nov 2026 16:40:19 GMT"],
+      ["expires", "Mon, 09 Nov 2026 16:41:19 GMT"],
+      ["last-modified", "Mon, 09 Nov 2026 16:40:19 GMT"],
+      ["server", "SmartMet Server (19:38:03 Oct 24 2026)"],
+      ["vary", "Accept-Encoding,fmi-apikey"],
+      ["connection", "close"]
+    ],
+    "bytes": 4891,
+    "sha256": "3759f4aeba726b8e800d4ee9f4cb3f26f0dd84f480da53d5304069b155e9529c",
+    "runtimeSec": 0.1395609580067685
+  }
+]

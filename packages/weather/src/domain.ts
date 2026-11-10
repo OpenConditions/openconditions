@@ -8,13 +8,26 @@ import { parseDigitrafficWeather, parseDigitrafficWeatherStatus } from "./format
 import { DIGITRAFFIC_SENSORS } from "./formats/digitraffic-sensors.js";
 import { DWD_PROPERTIES, DWD_ROLES, parseDwd } from "./formats/dwd.js";
 import { ECCC_MEASUREMENTS, parseEccc, parseEcccStatus } from "./formats/eccc.js";
-
+import { FMI_PARAMETERS, parseFmiWeather, parseFmiWeatherStatus } from "./formats/fmi.js";
 import { parseSmhi, parseSmhiStatus, SMHI_PARAMETERS } from "./formats/smhi.js";
 
 /** What a weather feed publishes: weather stations and what they measure now. */
 export const WEATHER_PRODUCTS = ["weather"] as const;
 
 const FORMATS: FeedFormat<WeatherCatalogFeed>[] = [
+  {
+    id: "fmi-weather",
+    transactionalRoles: true,
+    kind: "features",
+    products: WEATHER_PRODUCTS,
+    produces: {
+      kinds: ["weather_station", "sensor_channel"],
+      properties: FMI_PARAMETERS.map((p) => p.property),
+    },
+    endpoints: { sites: { required: true }, status: { required: true, status: true } },
+    parse: parseFmiWeather,
+    parseStatus: parseFmiWeatherStatus,
+  },
   {
     id: "eccc-swob",
     atomicCandidate: true,

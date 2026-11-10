@@ -29,7 +29,8 @@
   "dependencies": {
     "@openconditions/ingest-framework": "workspace:*",
     "@openconditions/model": "workspace:*",
-    "@openconditions/model-weather": "workspace:*"
+    "@openconditions/model-weather": "workspace:*",
+    "fast-xml-parser": "^5.11.2"
   },
   "devDependencies": {
     "@openconditions/conformance": "workspace:*",
