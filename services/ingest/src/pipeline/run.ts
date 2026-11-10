@@ -472,14 +472,19 @@ export async function runSource(src: CatalogFeed, deps: RunDeps): Promise<RunRes
     };
   }
   const priorRoles =
-    (formatOf(src).atomicCandidate || src.format === "smhi-metobs") && deps.roles
+    (formatOf(src).atomicCandidate ||
+      formatOf(src).atomicMeasurements ||
+      src.format === "smhi-metobs") &&
+    deps.roles
       ? (deserialize(serialize(deps.roles)) as RoleState)
       : undefined;
   const restoreRoles = () => {
     if (priorRoles && deps.roles) {
+      const failing = deps.roles.failing;
       for (const key of Object.keys(deps.roles))
         delete (deps.roles as unknown as Record<string, unknown>)[key];
       Object.assign(deps.roles, priorRoles);
+      if (formatOf(src).atomicMeasurements) deps.roles.failing = failing;
     }
   };
   const attemptAt = deps.now();
@@ -539,7 +544,12 @@ export async function runSource(src: CatalogFeed, deps: RunDeps): Promise<RunRes
       Object.assign(accepted, candidate);
       if (candidate.statusIndex === undefined) delete accepted.statusIndex;
     }
-    if (result.error || result.outcome === "partial") restoreRoles();
+    if (
+      result.error ||
+      result.outcome === "partial" ||
+      (formatOf(src).atomicMeasurements && (result.rejected ?? 0) > 0)
+    )
+      restoreRoles();
     return result;
   } catch (err) {
     restoreRoles();
@@ -1559,9 +1569,12 @@ async function finishEventPoll(
 async function finishFlowPoll(
   poll: PollContext,
   parse: FlowOutput,
-  format: Pick<FeedFormat, "mayBeEmpty" | "restatesTransient">,
+  format: Pick<FeedFormat, "mayBeEmpty" | "restatesTransient" | "atomicMeasurements">,
   skipped: SkipCounts,
 ): Promise<RunResult> {
+  if (format.atomicMeasurements && skippedRecords(skipped) > 0) {
+    return fail(poll, "error", "atomic measurements: malformed source records");
+  }
   const mayBeEmpty = format.mayBeEmpty === true;
   const { src, deps } = poll;
   let output = parse;
@@ -1611,6 +1624,7 @@ async function finishFlowPoll(
       output: stamped,
       situationsComplete: baselinesLoaded,
       restatesTransient: format.restatesTransient === true && poll.statesComplete,
+      atomic: format.atomicMeasurements === true,
       rejected: skippedRecords(skipped),
       poll: poll.identity,
       durationMs: Date.now() - poll.start,

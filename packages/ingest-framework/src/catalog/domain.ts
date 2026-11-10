@@ -116,6 +116,8 @@ export interface FeedFormat<F extends CatalogFeed = CatalogFeed> {
   atomicCandidate?: true;
   /** Revalidate source-clock freshness even when HTTP confirms held bytes unchanged. */
   reparseUnchanged?: true;
+  /** Fail the whole measurement publication on any canonical rejection. */
+  atomicMeasurements?: true;
   /**
    * A measurements format whose every poll restates each transient reading
    * still in effect (the latest position of every vehicle out): a transient

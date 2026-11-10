@@ -213,6 +213,8 @@ export const endpointSchema = z
       .union([
         z
           .object({
+            /** ArcGIS exceededTransferLimit continuation with monotonic OBJECTID validation. */
+            arcgis: z.literal(true).optional(),
             skipParam: z.string(),
             pageSize: z.number().int().positive(),
             mode: z.enum(["offset", "page"]).optional(),
