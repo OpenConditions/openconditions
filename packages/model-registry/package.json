@@ -48,7 +48,7 @@
     "@openconditions/hazards": "workspace:*",
     "@openconditions/parking": "workspace:*",
     "@openconditions/weather": "workspace:*",
-    "fast-xml-parser": "^5.11.2",
+    "fast-xml-parser": "^5.12.0",
     "tsup": "^9.0.0",
     "typescript": "^6.0.3",
     "vitest": "^5.0.5"

@@ -26,6 +26,15 @@ export const HAZARDS_PRODUCTS = ["alerts", "fires", "smoke", "quakes", "events"]
 
 const FORMATS: FeedFormat<HazardsCatalogFeed>[] = [
   {
+    id: "jma-xml",
+    kind: "situations",
+    products: ["quakes", "alerts"],
+    endpoints: { index: { required: true } },
+    parse: () => {
+      throw new Error("JMA requires durable worker reconciliation; stateless parsing is refused");
+    },
+  },
+  {
     id: "geonet",
     kind: "situations",
     products: ["quakes"],

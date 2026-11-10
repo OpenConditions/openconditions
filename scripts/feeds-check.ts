@@ -192,6 +192,13 @@ async function checkFeed(
   } catch (err) {
     return result("error", errorText(err));
   }
+  // A stateless probe cannot share JMA's durable deduplication/quota or reconcile
+  // rolling reports. Do not download a second copy or misreport index absence.
+  if (feed.format === "jma-xml")
+    return result(
+      "warning",
+      "JMA requires the durable worker with shared egress accounting; observed-report coverage is incomplete. Use the recorded acquisition/worker/API qualification receipt.",
+    );
   const secrets = feedSecretValues(feed, env);
   const redact = (s: string) => redactSecrets(redactUrl(s), secrets);
   const fetchFn = makeAuthorizedFetch(feed, baseFetch, env);

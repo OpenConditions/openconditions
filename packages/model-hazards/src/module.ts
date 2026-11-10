@@ -41,6 +41,7 @@ const cap = (vocabulary: string, table: Readonly<Record<string, string | null>>)
  * events and GDACS's RSS.
  */
 export const HAZARDS_SOURCE_FORMATS = [
+  "jma-xml",
   "nsw-rfs",
   "cap",
   "nws",
@@ -78,6 +79,9 @@ export const hazardsModule: RegistryModule = {
         "irwin",
         "nwcg:unique_fire_id",
         "usgs:event",
+        "jma:event",
+        "jma:message",
+        "jma:warning",
         "geonet:event",
         "gdacs:event",
         "glide",

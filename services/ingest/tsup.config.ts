@@ -22,6 +22,7 @@ export default defineConfig({
   // does the operator's OAuth2 login (`node dist/feed-auth.js` in the image).
   entry: {
     index: "src/index.ts",
+    "jma-native-child": "src/pipeline/jma-native-child.ts",
     "parse-child": "src/pipeline/parse-child.ts",
     "feed-auth": "src/ops/feed-auth.ts",
   },

@@ -57,11 +57,8 @@ function rootNamespace(text: string, alert: Record<string, unknown>): string | u
   ) {
     throw new CapReadError("CAP: cannot locate the alert document element", "malformed");
   }
-  // fast-xml-parser counts offsets after normalizing CRLF (and CR) to LF.
-  let start = 0;
-  for (let index = 0; index < offset; index++, start++) {
-    if (text[start] === "\r" && text[start + 1] === "\n") start++;
-  }
+  // fast-xml-parser 5.12+ reports offsets in the original, unnormalized input.
+  const start = offset;
   if (text[start] !== "<") {
     throw new CapReadError("CAP: cannot locate the alert document element", "malformed");
   }

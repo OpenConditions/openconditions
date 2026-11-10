@@ -660,6 +660,21 @@ describe("feeds:check", () => {
   });
 });
 
+it("keeps enabled JMA probes off the network outside the shared durable acquisition path", async () => {
+  const fetch = vi.fn(async () => {
+    throw new Error("must not duplicate JMA downloads");
+  });
+  const results = await checkFeeds({
+    feedsDir: join(import.meta.dirname, "../../feeds"),
+    files: [join(import.meta.dirname, "../../feeds/hazards/jp.jsonc")],
+    fetch,
+  });
+  expect(results).toHaveLength(2);
+  expect(results.map((r) => r.level)).toEqual(["warning", "warning"]);
+  expect(results.every((r) => r.message?.includes("incomplete"))).toBe(true);
+  expect(fetch).not.toHaveBeenCalled();
+});
+
 it("checks enabled GeoNet using full bounded reconciliation rather than capped discovery", async () => {
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date("2026-11-07T12:00:00Z"));

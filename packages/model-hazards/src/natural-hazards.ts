@@ -7,6 +7,8 @@ import {
 } from "@openconditions/model";
 import { z } from "zod";
 
+import { JmaDetails } from "./jma.js";
+
 const DOMAIN = "hazards";
 const V = "1.0";
 
@@ -78,6 +80,7 @@ export const naturalHazardKind = defineKind({
     sea_ice: ["iceberg", "lake_ice"],
   },
   details: (k) => ({
+    jma: JmaDetails.optional(),
     name: k.Text.optional(),
     /** The publisher's own page for this event. */
     detailUrl: z.url().optional(),

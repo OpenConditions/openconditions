@@ -3,6 +3,8 @@ import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { crc32 } from "node:zlib";
+import { runMigrations } from "@openconditions/core/server";
+import { readOutbox } from "@openconditions/federation";
 import {
   type CatalogFeed,
   type LookupFn,
@@ -15,10 +17,16 @@ import {
   sweepRecords,
   syncSources,
 } from "@openconditions/storage";
-import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
+import type { TestDatabase } from "@openconditions/test-database";
+import {
+  assertPostgisProfile,
+  POSTGIS_IMAGES,
+  postgisProfile,
+} from "@openconditions/test-database/profile";
 import Fastify, { type FastifyInstance } from "fastify";
-import type postgres from "postgres";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { registerApiRoutes } from "../api/routes.js";
 import { registerScope } from "../api/scope.js";
 import { formatOf } from "../domains.js";
@@ -61,30 +69,80 @@ let app: FastifyInstance;
 const apiSources = [...REPO_CATALOG.sources];
 const HAZARDS = REPO_CATALOG.feeds.filter((feed) => feed.domain === "hazards");
 
+// Outbox visibility depends on the server-wide xmin, not just this database.
+// Keep other suites' transactions outside this fixture's federation horizon.
+async function startHazardsDatabase(): Promise<TestDatabase> {
+  const profile = postgisProfile();
+  const container = await new GenericContainer(POSTGIS_IMAGES[profile])
+    .withEnvironment({
+      POSTGRES_DB: "conditions_test",
+      POSTGRES_USER: "oc",
+      POSTGRES_PASSWORD: "oc",
+    })
+    .withExposedPorts(5432)
+    .withWaitStrategy(Wait.forLogMessage(/database system is ready to accept connections/, 2))
+    .start();
+  const url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
+  const sql = postgres(url, { max: 4, onnotice: () => {} });
+  let closed = false;
+  const close = async () => {
+    if (closed) return;
+    closed = true;
+    try {
+      await sql.end();
+    } finally {
+      await container.stop();
+    }
+  };
+  try {
+    await assertPostgisProfile(sql, profile, {
+      fixture: "hazards.integration.test.ts",
+      containerId: container.getId(),
+    });
+    await runMigrations(url);
+    return { sql, url, close };
+  } catch (error) {
+    await close();
+    throw error;
+  }
+}
+
 beforeAll(async () => {
-  db = await createTestDatabase();
-  sql = db.sql;
-  await ensureObservationPartitions(sql, {
-    classes: retentionClasses(registry),
-    now: new Date("2026-10-07T03:00:00Z"),
-  });
-  await syncSources(
-    sql,
-    HAZARDS.map((feed) => ({ ...feed })),
-  );
-  app = Fastify();
-  registerScope(app, TOKEN);
-  registerApiRoutes(app, sql, {
-    registry,
-    now: () => new Date(clock),
-    catalog: { sources: apiSources },
-  });
-  await app.ready();
+  db = await startHazardsDatabase();
+  try {
+    sql = db.sql;
+    await ensureObservationPartitions(sql, {
+      classes: retentionClasses(registry),
+      now: new Date("2026-10-07T03:00:00Z"),
+    });
+    await syncSources(
+      sql,
+      HAZARDS.map((feed) => ({ ...feed })),
+    );
+    app = Fastify();
+    registerScope(app, TOKEN);
+    registerApiRoutes(app, sql, {
+      registry,
+      now: () => new Date(clock),
+      catalog: { sources: apiSources },
+    });
+    await app.ready();
+  } catch (error) {
+    try {
+      await app?.close();
+    } finally {
+      await db.close();
+    }
+    throw error;
+  }
 }, 180_000);
 
 afterAll(async () => {
-  await app?.close();
-  await db?.close();
+  try {
+    await app?.close();
+  } finally {
+    await db?.close();
+  }
 }, 30_000);
 
 /**
@@ -719,7 +777,7 @@ describe("hazards fires, quakes and smoke through the pipeline", () => {
 });
 
 describe("hazards feeds in the catalogue", () => {
-  it("holds the sixteen enabled feeds", () => {
+  it("holds the eighteen enabled feeds", () => {
     expect(HAZARDS.map((f) => f.id).sort()).toEqual([
       "ar-smn-alerts",
       "au-nsw-rfs-alerts",
@@ -729,6 +787,8 @@ describe("hazards feeds in the catalogue", () => {
       "eu-meteoalarm-alerts",
       "eumetsat-slstr-fires",
       "gdacs-events",
+      "jp-jma-alerts",
+      "jp-jma-quakes",
       "nasa-eonet-events",
       "nasa-firms-modis-fires",
       "nasa-firms-viirs-fires",
@@ -744,6 +804,807 @@ describe("hazards feeds in the catalogue", () => {
     const credit = (id: string) => HAZARDS.find((f) => f.id === id)?.attribution;
     expect(credit("gdacs-events")).toBe("GDACS, European Union (CC BY 4.0), modified");
     expect(credit("eu-effis-fires")).toMatch(/modified/);
+  });
+});
+
+describe("JMA durable worker publication", () => {
+  it("dispatches native reports, commits status and serves public API projections without CAP", async () => {
+    const feed = { ...repoFeed("jp-jma-quakes"), disabled: undefined };
+    await syncSources(sql, [feed]);
+    const jmaApp = Fastify();
+    registerScope(jmaApp, TOKEN);
+    registerApiRoutes(jmaApp, sql, {
+      registry,
+      now: () => new Date(clock),
+      catalog: {
+        ...REPO_CATALOG,
+        sources: [...REPO_CATALOG.sources, feed],
+      },
+    });
+    await jmaApp.ready();
+    const getJma = async (url: string) => {
+      const response = await jmaApp.inject({ url });
+      expect(response.statusCode).toBe(200);
+      return response.json() as Rec;
+    };
+    clock = "2012-02-14T12:43:00Z";
+    const message =
+      "https://www.data.jma.go.jp/developer/xml/data/20120214124253_0_VXSE52_010000.xml";
+    let index = `<feed xmlns="http://www.w3.org/2005/Atom"><updated>${clock}</updated><entry><id>${message}</id><link href="${message}"/></entry></feed>`;
+    let payload = fixture("jma/33_12_01_240613_VXSE52.xml");
+    const requested: string[] = [];
+    const deps = {
+      sql,
+      now: () => clock,
+      lookup: fakeLookup,
+      jmaNativeEntry: new URL("../../dist/jma-native-child.js", import.meta.url),
+      model: { registry, instanceId: "test.local" },
+      env: { OPENCONDITIONS_JMA_EGRESS_ID: "jma-api-test" },
+      fetch: (async (input) => {
+        requested.push(String(input));
+        return new Response(String(input).includes("/data/") ? payload : index);
+      }) as typeof fetch,
+    };
+    expect((await runSource(feed, deps)).count).toBe(1);
+    const records = (await getJma("/situations?domain=hazards&type=earthquake"))[
+      "records"
+    ] as Rec[];
+    const record = records.find((r) => (r["provenance"] as Rec)["sourceId"] === feed.id)!;
+    expect(record).toBeDefined();
+    expect(record["details"]).toMatchObject({
+      jma: { messageUrl: message, infoKindVersion: "1.0_1" },
+    });
+    expect(record["details"]).not.toHaveProperty("cap");
+    expect(record["details"]).not.toHaveProperty("magnitude");
+    expect(
+      (await jmaApp.inject({ url: `/situations/${encodeURIComponent(String(record["id"]))}` }))
+        .statusCode,
+    ).toBe(200);
+    const geo = await getJma("/situations.geojson?domain=hazards&type=earthquake");
+    expect((geo["features"] as Rec[]).length).toBeGreaterThan(0);
+    expect((await getJma("/sources"))["sources"]).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: feed.id })]),
+    );
+    const [status] =
+      await sql`SELECT last_outcome, active_event_count FROM conditions.source_status WHERE source=${feed.id}`;
+    expect(status).toMatchObject({ last_outcome: "partial", active_event_count: 1 });
+    clock = "2012-02-14T12:43:01Z";
+    expect((await runSource(feed, deps)).count).toBe(0);
+    const [cachedStatus] =
+      await sql`SELECT last_network_success_at FROM conditions.source_status WHERE source=${feed.id}`;
+    expect(new Date(cachedStatus!.last_network_success_at).toISOString()).toBe(
+      "2012-02-14T12:43:00.000Z",
+    );
+    const [cachedAttempt] =
+      await sql`SELECT network_validated, payload_hashes FROM conditions.source_poll_attempt WHERE source=${feed.id} ORDER BY id DESC LIMIT 1`;
+    expect(cachedAttempt!.network_validated).toBe(false);
+    expect(cachedAttempt!.payload_hashes).toHaveLength(1);
+    expect(requested.filter((u) => u === message)).toHaveLength(1);
+    const [before] = await sql`SELECT value FROM conditions.jma_state WHERE source=${feed.id}`;
+    clock = "2012-02-14T12:45:00Z";
+    const uncleared = message.replace("20120214124253", "20120214124453");
+    index = `<feed xmlns="http://www.w3.org/2005/Atom"><updated>${clock}</updated><entry><id>${uncleared}</id><link href="${uncleared}"/></entry></feed>`;
+    payload = Buffer.from(
+      payload
+        .toString()
+        .replace(
+          "<PublishingOffice>気象庁</PublishingOffice>",
+          "<PublishingOffice>uncleared</PublishingOffice>",
+        )
+        .replace("2012-02-14T12:42:53Z", "2012-02-14T12:44:53Z"),
+    );
+    await expect(runSource(feed, deps)).rejects.toThrow("office");
+    const [after] = await sql`SELECT value FROM conditions.jma_state WHERE source=${feed.id}`;
+    expect(after!.value).toEqual(before!.value);
+    expect((await getJma("/situations?domain=hazards&type=earthquake"))["records"]).toHaveLength(1);
+    await expect(
+      runSource({ ...repoFeed("jp-jma-alerts"), disabled: undefined }, deps),
+    ).rejects.toThrow("bootstrap");
+    await jmaApp.close();
+  });
+  it("serves complementary earthquake families and independent cancellations through the portable API", async () => {
+    const feed = { ...repoFeed("jp-jma-quakes"), disabled: undefined };
+    const quakeApp = Fastify();
+    registerScope(quakeApp, TOKEN);
+    registerApiRoutes(quakeApp, sql, {
+      registry,
+      now: () => new Date(clock),
+      catalog: { ...REPO_CATALOG, sources: [...REPO_CATALOG.sources, feed] },
+    });
+    await quakeApp.ready();
+    const event = "20091001134500";
+    let payload = Buffer.alloc(0);
+    let message = "";
+    const deps = {
+      sql,
+      now: () => clock,
+      lookup: fakeLookup,
+      jmaNativeEntry: new URL("../../dist/jma-native-child.js", import.meta.url),
+      model: { registry, instanceId: "test.local" },
+      env: { OPENCONDITIONS_JMA_EGRESS_ID: "jma-api-test" },
+      fetch: (async (input) =>
+        new Response(
+          String(input).includes("/data/")
+            ? payload
+            : `<feed xmlns="http://www.w3.org/2005/Atom"><updated>${clock}</updated><entry><id>${message}</id><link href="${message}"/></entry></feed>`,
+        )) as typeof fetch,
+    };
+    const native = async (
+      name: string,
+      family: string,
+      step: number,
+      transform = (xml: string) => xml,
+    ) => {
+      clock = new Date(Date.parse("2012-02-14T13:00:00Z") + step * 120000).toISOString();
+      message = `https://www.data.jma.go.jp/developer/xml/data/20120214${String(130000 + step * 200)}_0_${family}_010000.xml`;
+      payload = Buffer.from(
+        transform(fixture(`jma/${name}.xml`).toString())
+          .replace(/<DateTime>[^<]+<\/DateTime>/, `<DateTime>${clock}</DateTime>`)
+          .replace(/<EventID>[^<]+<\/EventID>/, `<EventID>${event}</EventID>`)
+          .replace("<Status>訓練</Status>", "<Status>通常</Status>"),
+      );
+      await runSource(feed, deps);
+      const r = await quakeApp.inject({ url: "/situations?domain=hazards&type=earthquake" });
+      expect(r.statusCode).toBe(200);
+      return (r.json()["records"] as Rec[]).find(
+        (r) => ((r["details"] as Rec)["jma"] as Rec)["eventId"] === event,
+      );
+    };
+    await native("32-35_01_02_240613_VXSE52", "VXSE52", 0);
+    const folded = await native("32-35_01_01_100806_VXSE51", "VXSE51", 1);
+    expect(folded?.["details"]).toMatchObject({
+      magnitude: { scale: "Mj" },
+      jma: { intensity: "6-" },
+    });
+    const combined = await native("32-35_01_03_240613_VXSE53", "VXSE53", 2);
+    expect(combined?.["details"]).toMatchObject({
+      jma: {
+        intensity: "5-",
+        shakingAreas: expect.arrayContaining([expect.objectContaining({ code: "2230600" })]),
+      },
+    });
+    const unknown52 = await native("33_12_01_240613_VXSE52", "VXSE52", 3, (xml) =>
+      xml.replace("深さ　１０ｋｍ", "ごく浅い"),
+    );
+    expect(unknown52?.["details"]).not.toHaveProperty("magnitude");
+    expect(unknown52?.["details"]).not.toHaveProperty("depth");
+    expect(unknown52?.["details"]).toMatchObject({ jma: { intensity: "5-" } });
+    const unknown53 = await native("32-35_01_03_240613_VXSE53", "VXSE53", 4, (xml) =>
+      xml
+        .replace(
+          /<OriginTime>[^<]+<\/OriginTime>/,
+          '<OriginTime xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>',
+        )
+        .replace(/(<jmx_eb:Magnitude[^>]*>)[^<]+/, "$1NaN")
+        .replace(/(<jmx_eb:Coordinate[^>]*>)[^<]+/, "$1"),
+    );
+    expect(unknown53?.["validity"]).not.toHaveProperty("start");
+    expect(unknown53?.["details"]).not.toHaveProperty("magnitude");
+    expect(unknown53?.["details"]).not.toHaveProperty("depth");
+    expect(unknown53?.["location"]).toMatchObject({ geometry: null });
+    const without53 = await native("32-35_06_06_100915_VXSE53", "VXSE53", 5);
+    expect(without53?.["details"]).toMatchObject({
+      jma: { intensity: "6-" },
+    });
+    expect(without53?.["validity"]).toMatchObject({ start: "2012-02-14T21:40:00+09:00" });
+    expect(without53?.["details"]).not.toHaveProperty("magnitude");
+    const without52 = await native("32-35_06_02_100915_VXSE52", "VXSE52", 6);
+    expect(without52?.["details"]).not.toHaveProperty("magnitude");
+    expect(without52?.["location"]).toMatchObject({ geometry: null });
+    expect(((without52?.["details"] ?? {}) as Rec)["jma"]).toMatchObject({ family: "VXSE51" });
+    const restored = await native("32-35_01_03_240613_VXSE53", "VXSE53", 7, (xml) =>
+      xml.replace(/<OriginTime>[^<]+<\/OriginTime>/, "<OriginTime/>"),
+    );
+    expect(restored?.["validity"]).not.toHaveProperty("start");
+    expect(JSON.stringify(restored?.["details"])).toContain("<OriginTime/>");
+    const omitted = await native("32-35_01_02_240613_VXSE52", "VXSE52", 8, (xml) =>
+      xml.replace(/<OriginTime>[^<]+<\/OriginTime>/, ""),
+    );
+    expect(omitted?.["validity"]).not.toHaveProperty("start");
+    await quakeApp.close();
+  });
+  it("publishes each warning family under an explicit incomplete contract and retains empty-index state", async () => {
+    const feed = { ...repoFeed("jp-jma-alerts"), disabled: undefined };
+    await syncSources(sql, [feed]);
+    const jmaApp = Fastify();
+    registerScope(jmaApp, TOKEN);
+    registerApiRoutes(jmaApp, sql, {
+      registry,
+      now: () => new Date(clock),
+      catalog: { ...REPO_CATALOG, sources: [...REPO_CATALOG.sources, feed] },
+    });
+    await jmaApp.ready();
+    const cases = [
+      ["VPWW55", "VPWW55_JPTF_170922.xml"],
+      ["VPWW56", "synthetic-jma-only-VPWW56.xml"],
+      ["VPWW57", "VPWW57_JPTF_151056.xml"],
+      ["VFVO50", "45_01_01_200522_VFVO50.xml"],
+    ];
+    const payloads = new Map<string, Buffer>();
+    for (const [family, name] of cases) {
+      payloads.set(
+        `https://www.data.jma.go.jp/developer/xml/data/20261107010000_0_${family}_010000.xml`,
+        Buffer.from(
+          fixture(`jma/${name}`)
+            .toString()
+            .replace(/<DateTime>[^<]+<\/DateTime>/, "<DateTime>2026-11-07T01:00:00Z</DateTime>"),
+        ),
+      );
+    }
+    clock = "2026-11-07T01:01:00Z";
+    let empty = false;
+    const deps = {
+      sql,
+      now: () => clock,
+      lookup: fakeLookup,
+      jmaNativeEntry: new URL("../../dist/jma-native-child.js", import.meta.url),
+      model: { registry, instanceId: "test.local" },
+      env: {
+        OPENCONDITIONS_JMA_EGRESS_ID: "warning-test",
+        OPENCONDITIONS_JMA_WARNING_COVERAGE: "incomplete",
+      },
+      fetch: (async (input) => {
+        const url = String(input);
+        if (payloads.has(url)) return new Response(new Uint8Array(payloads.get(url)!));
+        const family = url.includes("extra") ? "VPWW" : "VFVO";
+        return new Response(
+          `<feed xmlns="http://www.w3.org/2005/Atom"><updated>${clock}</updated>${
+            empty
+              ? ""
+              : [...payloads.keys()]
+                  .filter((u) => u.includes(family))
+                  .map((u) => `<entry><id>${u}</id><link href="${u}"/></entry>`)
+                  .join("")
+          }</feed>`,
+        );
+      }) as typeof fetch,
+    };
+    await runSource(feed, deps);
+    const response = await jmaApp.inject({ url: "/situations?domain=hazards" });
+    expect(response.statusCode).toBe(200);
+    const records = (response.json() as Rec)["records"] as Rec[];
+    const warnings = records.filter((r) => (r["provenance"] as Rec)["sourceId"] === feed.id);
+    expect(new Set(warnings.map((r) => ((r["details"] as Rec)["jma"] as Rec)["family"]))).toEqual(
+      new Set(cases.map((c) => c[0])),
+    );
+    for (const r of warnings) {
+      expect((r["location"] as Rec)["geometry"]).toBeNull();
+      expect(r["details"]).not.toHaveProperty("cap");
+      expect(
+        (await jmaApp.inject({ url: `/situations/${encodeURIComponent(String(r["id"]))}` }))
+          .statusCode,
+      ).toBe(200);
+    }
+    const [status] =
+      await sql`SELECT last_outcome FROM conditions.source_status WHERE source=${feed.id}`;
+    expect(status!.last_outcome).toBe("partial");
+    const [initialized] = await sql`SELECT value FROM conditions.jma_state WHERE source=${feed.id}`;
+    expect(initialized!.value.initialization).toMatchObject({
+      source: feed.id,
+      coverage: "incomplete",
+      method: "rolling-index-observed-reports",
+    });
+    expect(initialized!.value.initialization.payloadHashes).toHaveLength(4);
+    empty = true;
+    clock = "2026-11-07T01:03:00Z";
+    await runSource(feed, deps);
+    const retained = (await jmaApp.inject({ url: "/situations?domain=hazards" })).json() as Rec;
+    expect(
+      (retained["records"] as Rec[]).filter(
+        (r) => (r["provenance"] as Rec)["sourceId"] === feed.id,
+      ),
+    ).toHaveLength(warnings.length);
+    // Preserve native warning content; shift only fixture Control clocks so each
+    // official sequence can run through the same acquisition and restart path.
+    const timelines: [string, string, string[]][] = [
+      ["VPWW55", "170922", ["10"]],
+      ["VPWW55", "170925", ["03"]],
+      ["VPWW55", "170928", ["03", "43"]],
+      ["VPWW55", "170930", ["33"]],
+      ["VPWW55", "170932", ["03", "43"]],
+      ["VPWW55", "170934", ["03"]],
+      ["VPWW55", "170936", ["10"]],
+      ["VPWW55", "170938", []],
+      ["VPWW56", "170922", ["29"]],
+      ["VPWW56", "170925", ["09", "29"]],
+      ["VPWW56", "170928", ["29", "49"]],
+      ["VPWW56", "170930", ["29", "39"]],
+      ["VPWW56", "170932", ["29", "49"]],
+      ["VPWW56", "170936", ["29"]],
+      ["VPWW56", "170938", []],
+      ["VPWW57", "151056", ["19"]],
+      ["VPWW57", "151653", ["08"]],
+      ["VPWW57", "152115", ["48"]],
+      ["VPWW57", "160734", ["38"]],
+      ["VPWW57", "161105", ["48"]],
+      ["VPWW57", "161106", []],
+    ];
+    empty = false;
+    for (const [family, suffix, codes] of timelines) {
+      clock = later(clock, 120);
+      payloads.clear();
+      const stamp = clock.replace(/[-:TZ.]/g, "").slice(0, 14);
+      payloads.set(
+        `https://www.data.jma.go.jp/developer/xml/data/${stamp}_0_${family}_010000.xml`,
+        Buffer.from(
+          fixture(`jma/${family}_JPTF_${suffix}.xml`)
+            .toString()
+            .replace(/<DateTime>[^<]+<\/DateTime>/, `<DateTime>${clock}</DateTime>`),
+        ),
+      );
+      if (family === "VPWW56") {
+        const [before] = await sql`SELECT value FROM conditions.jma_state WHERE source=${feed.id}`;
+        await runSource(feed, deps);
+        const [after] = await sql`SELECT value FROM conditions.jma_state WHERE source=${feed.id}`;
+        expect(Object.entries(after!.value.areas).filter(([k]) => k.includes("VPWW56"))).toEqual(
+          Object.entries(before!.value.areas).filter(([k]) => k.includes("VPWW56")),
+        );
+        expect(after!.value.withheld).toBeDefined();
+        // Actual partner fixtures, including release, are withheld. The separate
+        // synthetic JMA-only landslide remains the last-good public record.
+        continue;
+      }
+      await runSource(feed, deps);
+      const result = (
+        await jmaApp.inject({ url: "/situations?domain=hazards&limit=1000" })
+      ).json() as Rec;
+      const current = (result["records"] as Rec[]).filter(
+        (r) => ((r["details"] as Rec)["jma"] as Rec | undefined)?.["family"] === family,
+      );
+      expect(
+        [
+          ...new Set(current.map((r) => ((r["details"] as Rec)["jma"] as Rec)["warningCode"])),
+        ].sort(),
+      ).toEqual(codes);
+    }
+    // Observed volcanic level-2 -> level-1 release; never infer a release from absence.
+    clock = later(clock, 120);
+    payloads.clear();
+    payloads.set(
+      "https://www.data.jma.go.jp/developer/xml/data/20261107020000_0_VFVO50_016000.xml",
+      Buffer.from(
+        fixture("jma/20261104010017_0_VFVO50_016000.xml")
+          .toString()
+          .replace(/<DateTime>[^<]+<\/DateTime>/, `<DateTime>${clock}</DateTime>`),
+      ),
+    );
+    await runSource(feed, deps);
+    const released = (
+      await jmaApp.inject({ url: "/situations?domain=hazards&limit=1000" })
+    ).json() as Rec;
+    const volcanoes = (released["records"] as Rec[]).filter(
+      (r) => ((r["details"] as Rec)["jma"] as Rec | undefined)?.["family"] === "VFVO50",
+    );
+    expect(volcanoes.every((r) => ((r["details"] as Rec)["jma"] as Rec)["eventId"] !== "105")).toBe(
+      true,
+    );
+    expect(volcanoes.some((r) => ((r["details"] as Rec)["jma"] as Rec)["eventId"] === "306")).toBe(
+      true,
+    );
+    const [releaseState] =
+      await sql`SELECT value FROM conditions.jma_state WHERE source=${feed.id}`;
+    const volcanoTombstones = Object.values(
+      releaseState!.value.areas as Record<string, { ended: boolean; warning: { area: string } }>,
+    ).filter((a) => a.warning.area === "105");
+    expect(volcanoTombstones.length).toBeGreaterThan(0);
+    expect(volcanoTombstones.every((a) => a.ended)).toBe(true);
+    await jmaApp.close();
+  });
+  it.each([false, true])(
+    "retains last-good warnings through mixed rights recovery and hidden terminals (reverse=%s)",
+    async (reverse) => {
+      const feed = {
+        ...repoFeed("jp-jma-alerts"),
+        id: `jp-jma-mixed-${reverse}`,
+        disabled: undefined,
+      };
+      await syncSources(sql, [feed]);
+      await sql`DELETE FROM conditions.jma_download`;
+      await sql`INSERT INTO conditions.federation_subscription (id, peer_id, delivery_mode, created_at, updated_at) VALUES (${feed.id}, ${feed.id}, 'pull', now(), now())`;
+      const api = Fastify();
+      registerScope(api, TOKEN);
+      registerApiRoutes(api, sql, {
+        registry,
+        now: () => new Date(clock),
+        catalog: { ...REPO_CATALOG, sources: [...REPO_CATALOG.sources, feed] },
+      });
+      await api.ready();
+      clock = "2026-11-09T11:17:00Z";
+      const base = fixtureText("jma/synthetic-jma-only-VPWW56.xml");
+      const body = (at: string, extra = "", cancelled = false) =>
+        base
+          .replace(/<DateTime>[^<]+<\/DateTime>/, `<DateTime>${at}</DateTime>`)
+          .replace("</Body>", `${extra}</Body>`)
+          .replace(
+            "<InfoType>発表</InfoType>",
+            cancelled ? "<InfoType>取消</InfoType>" : "<InfoType>発表</InfoType>",
+          );
+      const url = (stamp: string, family = "VPWW56") =>
+        `https://www.data.jma.go.jp/developer/xml/data/${stamp}_0_${family}_010000.xml`;
+      let selected = new Map([[url("20261109110000"), body("2026-11-09T11:00:00Z")]]);
+      const deps = {
+        sql,
+        now: () => clock,
+        lookup: fakeLookup,
+        jmaNativeEntry: new URL("../../dist/jma-native-child.js", import.meta.url),
+        model: { registry, instanceId: "test.local" },
+        env: {
+          OPENCONDITIONS_JMA_EGRESS_ID: "mixed",
+          OPENCONDITIONS_JMA_WARNING_COVERAGE: "incomplete",
+        },
+        fetch: (async (input) => {
+          const u = String(input);
+          if (selected.has(u)) return new Response(selected.get(u));
+          const links = [...selected.keys()].filter((k) =>
+            u.includes("extra") ? k.includes("VPWW") : k.includes("VFVO"),
+          );
+          return new Response(
+            `<feed xmlns="http://www.w3.org/2005/Atom"><updated>${clock}</updated>${links.map((k) => `<entry><id>${k}</id><link href="${k}"/></entry>`).join("")}</feed>`,
+            { headers: { etag: clock } },
+          );
+        }) as typeof fetch,
+      };
+      const records = async () =>
+        (
+          ((await api.inject({ url: "/situations?domain=hazards&limit=1000" })).json() as Rec)[
+            "records"
+          ] as Rec[]
+        ).filter((r) => (r["provenance"] as Rec)["sourceId"] === feed.id);
+      await runSource(feed, deps);
+      const initial = await records();
+      expect(initial.length).toBeGreaterThan(0);
+      const initial56 = initial.filter(
+        (r) => ((r["details"] as Rec)["jma"] as Rec)["family"] === "VPWW56",
+      );
+      clock = "2026-11-09T11:40:00Z";
+      const entries: [string, string][] = [
+        [
+          url("20261109113000"),
+          body("2026-11-09T11:30:00Z", "<Text>Copyright Partner</Text>", true),
+        ],
+        [
+          url("20261107070852", "VPWW55"),
+          fixtureText("jma/live-20261109/20261107070852_0_VPWW55_150000.xml"),
+        ],
+        [
+          url("20261104010017", "VFVO50"),
+          fixtureText("jma/live-20261109/20261104010017_0_VFVO50_016000.xml"),
+        ],
+      ];
+      selected = new Map(reverse ? entries.reverse() : entries);
+      await runSource(feed, deps);
+      const mixed = await records();
+      expect(mixed.some((r) => ((r["details"] as Rec)["jma"] as Rec)["family"] === "VPWW55")).toBe(
+        true,
+      );
+      expect(
+        mixed.filter((r) => ((r["details"] as Rec)["jma"] as Rec)["family"] === "VPWW56"),
+      ).toEqual(initial56);
+      const [held] = await sql`SELECT value FROM conditions.jma_state WHERE source=${feed.id}`;
+      expect(Object.values(held!.value.withheld)).toEqual([
+        expect.objectContaining({ controlAt: "2026-11-09T11:30:00Z" }),
+      ]);
+      expect(JSON.stringify(held!.value)).not.toContain("Copyright Partner");
+      // A new invocation after a gap reads packed JSONB, not in-memory admission state.
+      clock = "2026-11-09T12:00:00Z";
+      selected = new Map([[url("20261109112000"), body("2026-11-09T11:20:00Z")]]);
+      await runSource(feed, deps);
+      expect(await records()).toEqual(mixed);
+      for (const path of [
+        "/situations?domain=hazards&limit=1000",
+        "/situations.geojson?domain=hazards&limit=1000",
+        `/situations/${encodeURIComponent(String(initial56[0]!["id"]))}`,
+      ]) {
+        const response = await api.inject({ url: path });
+        expect(response.statusCode).toBe(200);
+        expect(response.body).not.toContain("Copyright Partner");
+        expect(response.body).toContain(feed.attribution);
+      }
+      expect(
+        JSON.stringify((await readOutbox(sql, { limit: 500, now: clock })).orderedItems),
+      ).not.toContain("Copyright Partner");
+      const [status] =
+        await sql`SELECT last_outcome FROM conditions.source_status WHERE source=${feed.id}`;
+      expect(status!.last_outcome).toBe("partial");
+      const { reconcileJmaIn } = await import("../pipeline/jma-state-store.js");
+      const { readJmaReport } = await import("@openconditions/hazards");
+      const [beforeRollback] =
+        await sql`SELECT value FROM conditions.jma_state WHERE source=${feed.id}`;
+      const cacheBefore = await sql`SELECT * FROM conditions.jma_download ORDER BY url`;
+      const terminal = readJmaReport(
+        Buffer.from(body("2026-11-09T12:01:00Z", "<Text>Copyright Partner</Text>", true)),
+        "VPWW56",
+      );
+      await expect(
+        reconcileJmaIn(
+          sql,
+          feed.id,
+          [terminal],
+          Date.parse("2026-11-09T12:02:00Z"),
+          true,
+          async () => {
+            throw new Error("forced publication rollback");
+          },
+          undefined,
+          true,
+        ),
+      ).rejects.toThrow("forced publication rollback");
+      const controller = new AbortController();
+      const publicBefore = await records();
+      const outboxBefore = JSON.stringify(
+        (await readOutbox(sql, { limit: 500, now: clock })).orderedItems,
+      );
+      const statusBefore =
+        await sql`SELECT * FROM conditions.source_status WHERE source=${feed.id}`;
+      await expect(
+        reconcileJmaIn(
+          sql,
+          feed.id,
+          [terminal],
+          Date.parse("2026-11-09T12:02:00Z"),
+          true,
+          async (tx) => {
+            await tx`UPDATE conditions.source_status SET last_outcome='failed' WHERE source=${feed.id}`;
+            controller.abort(new Error("controlled transaction cancellation"));
+          },
+          undefined,
+          true,
+          controller.signal,
+        ),
+      ).rejects.toThrow("controlled transaction cancellation");
+      expect(await records()).toEqual(publicBefore);
+      expect(
+        JSON.stringify((await readOutbox(sql, { limit: 500, now: clock })).orderedItems),
+      ).toEqual(outboxBefore);
+      expect(await sql`SELECT * FROM conditions.source_status WHERE source=${feed.id}`).toEqual(
+        statusBefore,
+      );
+      const [afterRollback] =
+        await sql`SELECT value FROM conditions.jma_state WHERE source=${feed.id}`;
+      expect(afterRollback!.value).toEqual(beforeRollback!.value);
+      expect(await sql`SELECT * FROM conditions.jma_download ORDER BY url`).toEqual(cacheBefore);
+      expect(await records()).toEqual(mixed);
+      await api.close();
+      await sql`DELETE FROM conditions.jma_download`;
+    },
+  );
+  it("withholds uncleared native material before state, public projections, federation and raw archive", async () => {
+    const feed = { ...repoFeed("jp-jma-quakes"), id: "jp-jma-rights", disabled: undefined };
+    await syncSources(sql, [feed]);
+    await sql`INSERT INTO conditions.federation_subscription
+      (id, peer_id, delivery_mode, created_at, updated_at)
+      VALUES ('jma-rights', 'jma-rights', 'pull', now(), now())`;
+    const api = Fastify();
+    registerScope(api, TOKEN);
+    registerApiRoutes(api, sql, {
+      registry,
+      now: () => new Date(clock),
+      catalog: { ...REPO_CATALOG, sources: [...REPO_CATALOG.sources, feed] },
+    });
+    await api.ready();
+    clock = "2026-11-07T03:00:00Z";
+    const clean = fixtureText("jma/33_12_01_240613_VXSE52.xml").replace(
+      "2012-02-14T12:42:53Z",
+      clock,
+    );
+    let message =
+      "https://www.data.jma.go.jp/developer/xml/data/20261107030000_0_VXSE52_010000.xml";
+    let payload = clean;
+    const fetcher = vi.fn(
+      async (input: Parameters<typeof fetch>[0]) =>
+        new Response(
+          String(input).includes("/data/")
+            ? payload
+            : `<feed xmlns="http://www.w3.org/2005/Atom"><updated>${clock}</updated><entry><id>${message}</id><link href="${message}"/></entry></feed>`,
+        ),
+    );
+    const deps = {
+      sql,
+      now: () => clock,
+      lookup: fakeLookup,
+      jmaNativeEntry: new URL("../../dist/jma-native-child.js", import.meta.url),
+      model: { registry, instanceId: "test.local" },
+      env: { OPENCONDITIONS_JMA_EGRESS_ID: "rights-test" },
+      fetch: fetcher as typeof fetch,
+    };
+    await runSource(feed, deps);
+    const listing = (
+      await api.inject({ url: "/situations?domain=hazards&limit=1000" })
+    ).json() as Rec;
+    const record = (listing["records"] as Rec[]).find(
+      (r) => (r["provenance"] as Rec)["sourceId"] === feed.id,
+    )!;
+    expect(record).toBeDefined();
+    expect(JSON.stringify(record)).toContain(feed.attribution);
+    const urls = [
+      "/situations?domain=hazards&limit=1000",
+      "/situations.geojson?domain=hazards&limit=1000",
+      `/situations/${encodeURIComponent(String(record["id"]))}`,
+    ];
+    const before = await Promise.all(urls.map(async (url) => (await api.inject({ url })).json()));
+    const [state] = await sql`SELECT value FROM conditions.jma_state WHERE source=${feed.id}`;
+    const exported = await readOutbox(sql, { limit: 500, now: clock });
+    expect(JSON.stringify(exported.orderedItems)).toContain(feed.id);
+    const mutations = [
+      clean.replace("<OriginTime>", '<OriginTime xmlnsghost:nil="true">'),
+      clean.replace('encoding="UTF-8"', 'encoding="UTF-8" credit="Copyright Partner"'),
+      ...[
+        "<Text>&#x8ee2;&#x8f09;&#x7981;&#x6b62;</Text>",
+        "<Text>&#169; Partner</Text>",
+        ...[0, 1, 11, 0xfffe, 0xffff].map((point) => `<Text>${String.fromCodePoint(point)}</Text>`),
+        '<Text description="&#67;opyright Partner">native</Text>',
+        "<!-- Copyright Partner; all rights reserved -->",
+        "<![CDATA[Copyright Partner]]>",
+        "<?credit Copyright Partner?>",
+      ].flatMap((extra) =>
+        ["発表", "取消"].map((kind) =>
+          clean
+            .replace("<InfoType>発表</InfoType>", "<InfoType>" + kind + "</InfoType>")
+            .replace("</Body>", extra + "</Body>"),
+        ),
+      ),
+      clean.replace(
+        'xmlns:jmx_eb="http://xml.kishou.go.jp/jmaxml1/elementBasis1/"',
+        'xmlns:jmx_eb="http://xml.kishou.go.jp/jmaxml1/body/meteorology1/"',
+      ),
+      clean.replace(
+        "<OriginTime>",
+        '<OriginTime xmlns:nilx="http://www.w3.org/2001/XMLSchema-instance" nilx:nil="true">',
+      ),
+
+      clean.replace(
+        "<PublishingOffice>気象庁</PublishingOffice>",
+        "<PublishingOffice>uncleared</PublishingOffice>",
+      ),
+      clean.replace(
+        "<EditorialOffice>気象庁本庁</EditorialOffice>",
+        "<EditorialOffice>uncleared</EditorialOffice>",
+      ),
+      clean.replace(
+        "</Body>",
+        '<OfficeInfo><Office type="補足情報担当"><Name>uncleared</Name></Office></OfficeInfo></Body>',
+      ),
+      clean.replace("</Body>", "<Credit>uncleared</Credit></Body>"),
+      clean.replace("</Body>", "<Text>転載禁止</Text></Body>"),
+      clean.replace("</Body>", '<Text rights="reserved">unchanged</Text></Body>'),
+      // Restricted cancellation must not erase a previously cleared event.
+      clean
+        .replace("<InfoType>発表</InfoType>", "<InfoType>取消</InfoType>")
+        .replace("</Body>", "<Text>再配布禁止</Text></Body>"),
+    ];
+    for (const [i, native] of mutations.entries()) {
+      clock = later(clock, 120);
+      message = `https://www.data.jma.go.jp/developer/xml/data/2026110703${String(2 + i * 2).padStart(2, "0")}00_0_VXSE52_010000.xml`;
+      payload = native.replace("2026-11-07T03:00:00Z", clock);
+      await expect(runSource(feed, deps)).rejects.toThrow("JMA:");
+      const [after] = await sql`SELECT value FROM conditions.jma_state WHERE source=${feed.id}`;
+      expect(after!.value).toEqual(state!.value);
+      for (const [n, url] of urls.entries()) {
+        const response = await api.inject({ url });
+        expect(response.statusCode).toBe(200);
+        const body = response.json() as Rec;
+        const previous = before[n] as Rec;
+        // Collection metadata reflects the failed poll; canonical records remain unchanged.
+        expect(body["records"] ?? body["features"] ?? body).toEqual(
+          previous["records"] ?? previous["features"] ?? previous,
+        );
+      }
+      expect(await readOutbox(sql, { limit: 500, now: clock })).toEqual(exported);
+      const [attempt] =
+        await sql`SELECT outcome FROM conditions.source_poll_attempt WHERE source=${feed.id} ORDER BY id DESC LIMIT 1`;
+      expect(attempt!.outcome).toBe("failed");
+    }
+    const raw = {
+      capture: vi.fn(async () => {}),
+      writer: vi.fn(async () => undefined),
+      finish: vi.fn(async () => {}),
+    };
+    fetcher.mockClear();
+    await expect(runSource(feed, { ...deps, raw })).rejects.toThrow("raw archive");
+    expect(fetcher).not.toHaveBeenCalled();
+    expect(raw.capture).not.toHaveBeenCalled();
+    expect(raw.writer).not.toHaveBeenCalled();
+    expect(raw.finish).not.toHaveBeenCalled();
+    const rows = await sql`SELECT 1 FROM conditions.raw_payload WHERE source_id=${feed.id}`;
+    expect(rows).toHaveLength(0);
+    await api.close();
+  });
+});
+
+describe("JMA retained operational byte qualification", () => {
+  it("publishes exact bounded official quake/rain bytes and retains incomplete state on restart", async () => {
+    const now = "2026-11-09T11:20:00Z";
+    clock = now;
+    const quakes = repoFeed("jp-jma-quakes");
+    const alerts = repoFeed("jp-jma-alerts");
+    expect(quakes.disabled).toBeUndefined();
+    expect(alerts.disabled).toBeUndefined();
+    await syncSources(sql, [quakes, alerts]);
+    const files = [
+      "20261109045431_0_VXSE51_010000.xml",
+      "20261109045644_0_VXSE52_010000.xml",
+      "20261109050528_0_VXSE53_010000.xml",
+      "20261107070852_0_VPWW55_150000.xml",
+    ];
+    const payloads = new Map(
+      files.map((name) => [
+        `https://www.data.jma.go.jp/developer/xml/data/${name}`,
+        fixture(`jma/live-20261109/${name}`),
+      ]),
+    );
+    const calls: string[] = [];
+    const deps = {
+      sql,
+      now: () => clock,
+      lookup: fakeLookup,
+      jmaNativeEntry: new URL("../../dist/jma-native-child.js", import.meta.url),
+      model: { registry, instanceId: "test.local" },
+      env: {
+        OPENCONDITIONS_JMA_EGRESS_ID: "retained-operational",
+        OPENCONDITIONS_JMA_WARNING_COVERAGE: "incomplete",
+      },
+      fetch: (async (input) => {
+        const url = String(input);
+        calls.push(url);
+        const body = payloads.get(url);
+        if (body) return new Response(new Uint8Array(body));
+        // Deliberately bounded selection, not an unmodified provider index or census.
+        const selected = [...payloads.keys()].filter((u) =>
+          u.includes(url.includes("extra") ? "VPWW" : "VXSE"),
+        );
+        return new Response(
+          `<feed xmlns="http://www.w3.org/2005/Atom"><updated>${clock}</updated>${selected.map((u) => `<entry><id>${u}</id><link href="${u}"/></entry>`).join("")}</feed>`,
+        );
+      }) as typeof fetch,
+    };
+    const app = Fastify();
+    registerScope(app, TOKEN);
+    registerApiRoutes(app, sql, { registry, now: () => new Date(clock), catalog: REPO_CATALOG });
+    await app.ready();
+    try {
+      await runSource(quakes, deps);
+      await runSource(alerts, deps);
+      const response = await app.inject({ url: "/situations?domain=hazards&limit=1000" });
+      expect(response.statusCode).toBe(200);
+      const records = (response.json() as Rec)["records"] as Rec[];
+      const native = records.filter((r) =>
+        [quakes.id, alerts.id].includes((r["provenance"] as Rec)["sourceId"] as string),
+      );
+      const quake = native.find((r) => JSON.stringify(r).includes("20261109045644_0_VXSE52"));
+      expect(quake?.["details"]).toMatchObject({
+        magnitude: { value: 5.9, scale: "Mj" },
+        depth: { value: 10000, unit: "m" },
+      });
+      expect((quake?.["location"] as Rec)?.["geometry"]).toMatchObject({
+        type: "Point",
+        coordinates: [142.2, 36.2],
+      });
+      const rain = native.filter(
+        (r) => ((r["details"] as Rec)["jma"] as Rec)?.["family"] === "VPWW55",
+      );
+      expect(rain.length).toBeGreaterThan(0);
+      for (const record of rain) {
+        expect((record["location"] as Rec)["geometry"]).toBeNull();
+        expect(record["details"]).not.toHaveProperty("cap");
+        expect(JSON.stringify(record)).toContain("Japan Meteorological Agency");
+        expect(
+          (await app.inject({ url: `/situations/${encodeURIComponent(String(record["id"]))}` }))
+            .statusCode,
+        ).toBe(200);
+      }
+      const [state] = await sql`SELECT value FROM conditions.jma_state WHERE source=${alerts.id}`;
+      expect(state!.value.initialization.coverage).toBe("incomplete");
+      // Fresh invocation reuses persisted payloads and retains the original fetch clock.
+      clock = "2026-11-09T11:20:01Z";
+      await runSource(alerts, { ...deps });
+      for (const u of payloads.keys()) expect(calls.filter((c) => c === u)).toHaveLength(1);
+      expect((await app.inject({ url: "/sources" })).statusCode).toBe(200);
+      expect((await app.inject({ url: "/situations.geojson?domain=hazards" })).statusCode).toBe(
+        200,
+      );
+    } finally {
+      await app.close();
+    }
   });
 });
 

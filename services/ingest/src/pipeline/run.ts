@@ -51,6 +51,7 @@ import { loadBaselineMap } from "./baseline-store.js";
 import { bindRecords } from "./bind-records.js";
 import { bodyStreamFrom } from "./body-stream.js";
 import { runGeonet } from "./geonet.js";
+import { runJma } from "./jma-run.js";
 import { streamFeed } from "./measured-data.js";
 import { type ParseGate, payloadBytes } from "./parse-gate.js";
 import { type ParseProcess, ParseProcessError } from "./parse-process.js";
@@ -221,6 +222,8 @@ export interface RunResult {
 }
 
 export interface RunDeps {
+  /** Native child entry override, matching ParseProcess entry injection for built-runtime tests. */
+  jmaNativeEntry?: URL;
   fetchState?: import("@openconditions/ingest-framework").FetchState;
   acquisitionCheck?: () => void;
   sql: Sql;
@@ -505,6 +508,7 @@ export async function runSource(src: CatalogFeed, deps: RunDeps): Promise<RunRes
     ? acquisitionBudget(src.acquisitionLimits, deps.fetch, deps.signal)
     : undefined;
   try {
+    if (src.format === "jma-xml") return await runJma(src, deps, attempt);
     const accepted = deps.roles;
     const candidate =
       accepted && formatOf(src).transactionalRoles
