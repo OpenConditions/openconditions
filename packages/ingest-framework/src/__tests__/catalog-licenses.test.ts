@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { LICENSES, licenseInfo } from "../catalog/licenses.js";
 
 describe("licence registry", () => {
-  it("holds the thirty-nine licences in use", () => {
-    expect(LICENSES).toHaveLength(39);
+  it("holds the forty licences in use", () => {
+    expect(LICENSES).toHaveLength(40);
   });
 
   it("every licence id is an SPDX id, LicenseRef- or NOASSERTION", () => {
@@ -32,6 +32,20 @@ describe("licence registry", () => {
       commercialUse: null,
       attributionRequired: null,
       retention: null,
+      shareAlike: false,
+    });
+  });
+
+  it("registers the exact New Zealand port with its adaptation and attribution duties", () => {
+    expect(licenseInfo("LicenseRef-CC-BY-3.0-NZ")).toMatchObject({
+      url: "https://creativecommons.org/licenses/by/3.0/nz/",
+      display: true,
+      redistribution: true,
+      derivedRedistribution: true,
+      commercialUse: true,
+      attributionRequired: true,
+      changeNotice: true,
+      retention: true,
       shareAlike: false,
     });
   });

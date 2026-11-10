@@ -1,0 +1,95 @@
+{
+  "type": "FeatureCollection",
+  "numberMatched": 4,
+  "name": "infos_cameras",
+  "features": [
+    {
+      "type": "Feature",
+      "id": 3998,
+      "properties": {
+        "IDEcamera": "3998",
+        "NumeroCamera": "Q5413",
+        "DescriptionLocalisationFr": "Aut. 540 (direction ouest) à la hauteur du boul. Wilfrid-Hamel",
+        "DescriptionLocalisationEn": "Aut. 540 (westward) at boul. Wilfrid-Hamel",
+        "DateDebutDiffusion": "2023/12/14",
+        "NumeroRoute": "00540",
+        "NomRegionDiffusion": "Québec (Capitale-Nationale)",
+        "OrdreAffichage": "0",
+        "NomPosteFrontalier": "",
+        "NomPontFrontalier": "",
+        "URL_FLUX_DONNEE": "https://www.quebec511.info/Carte/Fenetres/FenetreVideo.html?id=3998"
+      },
+      "bbox": [-71.35488, 46.78853, -71.35488, 46.78853],
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-71.35488, 46.78853]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 3887,
+      "properties": {
+        "IDEcamera": "3887",
+        "NumeroCamera": "Q28901",
+        "DescriptionLocalisationFr": "Route 289 à la hauteur du chemin du Mont-Bleu (Pohénégamook)",
+        "DescriptionLocalisationEn": "Route 289 at chemin du Mont-Bleu (Pohénégamook)",
+        "DateDebutDiffusion": "2020/12/11",
+        "NumeroRoute": "00289",
+        "NomRegionDiffusion": "Bas-Saint-Laurent—Gaspésie—Îles-de-la-Madeleine",
+        "OrdreAffichage": "0",
+        "NomPosteFrontalier": "",
+        "NomPontFrontalier": "",
+        "URL_FLUX_DONNEE": "https://www.quebec511.info/Carte/Fenetres/FenetreVideo.html?id=3887"
+      },
+      "bbox": [-69.39384, 47.54148, -69.39384, 47.54148],
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-69.39384, 47.54148]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 4057,
+      "properties": {
+        "IDEcamera": "4057",
+        "NumeroCamera": "T2410101",
+        "DescriptionLocalisationFr": "Route 241 à la hauteur du boulevard de Bromont (Bromont)",
+        "DescriptionLocalisationEn": "Route 241 at boulevard de Bromont (Bromont)",
+        "DateDebutDiffusion": "2025/01/17",
+        "NumeroRoute": "00241",
+        "NomRegionDiffusion": "Estrie",
+        "OrdreAffichage": "0",
+        "NomPosteFrontalier": "",
+        "NomPontFrontalier": "",
+        "URL_FLUX_DONNEE": "https://www.quebec511.info/Carte/Fenetres/FenetreVideo.html?id=4057"
+      },
+      "bbox": [-72.64774, 45.32044, -72.64774, 45.32044],
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-72.64774, 45.32044]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 3920,
+      "properties": {
+        "IDEcamera": "3920",
+        "NumeroCamera": "G1485",
+        "DescriptionLocalisationFr": "Route 148 (direction est) à la hauteur du boul. des Grives",
+        "DescriptionLocalisationEn": "Route 148 (eastward) at boul. des Grives",
+        "DateDebutDiffusion": "2022/01/25",
+        "NumeroRoute": "00148",
+        "NomRegionDiffusion": "Outaouais",
+        "OrdreAffichage": "0",
+        "NomPosteFrontalier": "",
+        "NomPontFrontalier": "",
+        "URL_FLUX_DONNEE": "https://www.quebec511.info/Carte/Fenetres/FenetreVideo.html?id=3920"
+      },
+      "bbox": [-75.77414, 45.43274, -75.77414, 45.43274],
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-75.77414, 45.43274]
+      }
+    }
+  ]
+}

@@ -20,6 +20,7 @@ const REPEATED = new Set([
 
 const parser = new XMLParser({
   removeNSPrefix: true,
+  htmlEntities: true,
   parseTagValue: false,
   captureMetaData: true,
   isArray: (tag) => REPEATED.has(tag),
@@ -148,7 +149,7 @@ function decode(body: Buffer): string {
  * that declares no namespace at all is read as CAP 1.2. The text is decoded
  * as its XML declaration says ({@link decode}).
  */
-export function readCapXml(body: Buffer): CapAlert {
+export function readCapXml(body: Buffer, requireNamespace = false): CapAlert {
   const text = decode(body);
   if (/<!ENTITY/i.test(text)) {
     throw new CapReadError("CAP: XML entity declarations are not allowed", "malformed");
@@ -165,6 +166,8 @@ export function readCapXml(body: Buffer): CapAlert {
     );
   }
   const namespace = rootNamespace(text, alert);
+  if (requireNamespace && namespace === undefined)
+    throw new CapReadError("CAP: missing CAP 1.2 namespace", "malformed");
   if (namespace !== undefined && namespace !== CAP_1_2_NAMESPACE) {
     throw EARLIER_CAP.test(namespace)
       ? new CapReadError(`CAP: ${namespace} is not CAP 1.2`, "unsupported_version")

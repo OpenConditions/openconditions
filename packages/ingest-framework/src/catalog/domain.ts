@@ -44,9 +44,13 @@ export type FeedPayloads = Readonly<Record<string, readonly Buffer[]>>;
 export interface ParseContext {
   /** When the poll fetched its payloads (ISO instant); dates readings the source leaves undated. */
   fetchedAt: string;
+  /** Optional acquisition upper bound; does not date observations or identify source revisions. */
+  publicationExpiresAt?: string;
   cadenceSec: number;
   /** Decoded reference data by role. */
   reference: Readonly<Record<string, unknown>>;
+  /** Acquisition URL and decoded-byte identity, by role; never source document metadata. */
+  payloadEvidence?: Readonly<Record<string, readonly PayloadDigest[]>>;
   /**
    * The grid cell an on-demand read fetched the payloads for: a source whose
    * answer reaches past the cell's edges keeps only what lies inside it.
@@ -91,7 +95,13 @@ export interface StreamingParse<F extends CatalogFeed = CatalogFeed> {
 /** How a domain reads one feed format. */
 export interface FeedFormat<F extends CatalogFeed = CatalogFeed> {
   id: string;
+  /** Source qualification gate, enforced before any worker or live checker acquisition. */
+  acquisitionBlocked?: string;
+  /** Hold acquisition roles provisionally until publication succeeds. */
+  transactionalRoles?: boolean;
   kind: "situations" | "measurements" | "features";
+  /** Blocks worker acquisition until full-scope operator qualification is recorded. */
+  acquisitionBlockedReason?: string;
   /** The products a feed of this format may carry. */
   products: readonly string[];
   /** The feature and offer kinds and the properties the format emits, which on-demand routing reads. */
@@ -102,6 +112,12 @@ export interface FeedFormat<F extends CatalogFeed = CatalogFeed> {
    * empty answer, not a failure that keeps the last publication.
    */
   mayBeEmpty?: true;
+  /** Reject the whole candidate if any canonical record fails; retain role state until publication. */
+  atomicCandidate?: true;
+  /** Revalidate source-clock freshness even when HTTP confirms held bytes unchanged. */
+  reparseUnchanged?: true;
+  /** Fail the whole measurement publication on any canonical rejection. */
+  atomicMeasurements?: true;
   /**
    * A measurements format whose every poll restates each transient reading
    * still in effect (the latest position of every vehicle out): a transient
@@ -109,6 +125,8 @@ export interface FeedFormat<F extends CatalogFeed = CatalogFeed> {
    * ended, such as the place a vehicle has since moved on from.
    */
   restatesTransient?: true;
+  /** Retained responses must be parsed and their publisher clock validated even after HTTP 304. */
+  sourceClock?: true;
   endpoints: Readonly<Record<string, EndpointRole>>;
   /** One poll's payloads as record drafts; throws when a payload cannot be read. */
   parse(feed: F, payloads: FeedPayloads, ctx: ParseContext): ParseOutput;

@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -657,4 +658,74 @@ describe("feeds:check", () => {
     expect(md).toContain("@ada");
     expect(md).not.toContain("lu-good-events");
   });
+});
+
+it("checks enabled GeoNet using full bounded reconciliation rather than capped discovery", async () => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date("2026-11-07T12:00:00Z"));
+  const fixture = `${process.cwd()}/packages/hazards/src/__tests__/fixtures/geonet/`;
+  const api = JSON.stringify({
+    type: "FeatureCollection",
+    features: [JSON.parse(readFileSync(`${fixture}history.geojson`, "utf8")).features[0]],
+  });
+  const xml = readFileSync(`${fixture}event.xml`);
+  const calls: string[] = [];
+  try {
+    const results = await checkFeeds({
+      feedsDir: `${process.cwd()}/feeds`,
+      files: [`${process.cwd()}/feeds/hazards/nz.jsonc`],
+      fetch: (async (url) => {
+        calls.push(String(url));
+        return new Response(String(url).includes("service.geonet") ? xml : api);
+      }) as typeof fetch,
+    });
+    expect(results).toHaveLength(1);
+    expect(results[0]).toMatchObject({ level: "ok", records: 1 });
+    expect(calls.filter((u) => u.includes("starttime="))).toHaveLength(3);
+    expect(calls.some((u) => u.includes("/history/"))).toBe(true);
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+it("loads the checker without a compiled storage package", () => {
+  const result = spawnSync(
+    process.execPath,
+    [
+      "--import",
+      "tsx",
+      "--input-type=module",
+      "-e",
+      `import { registerHooks } from "node:module";
+       registerHooks({ resolve(specifier, context, nextResolve) {
+         if (specifier === "@openconditions/storage") throw new Error("storage build unavailable");
+         return nextResolve(specifier, context);
+       }});
+       await import("./scripts/feeds-check.ts");`,
+    ],
+    { cwd: new URL("../../", import.meta.url), encoding: "utf8" },
+  );
+  expect(result.stderr).toBe("");
+  expect(result.status).toBe(0);
+});
+
+it("checks the enabled qualified FMI acquisition through the ordinary checker", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "fmi-check-"));
+  dirs.push(dir);
+  mkdirSync(join(dir, "weather"));
+  const { readCatalogDir } = await import("@openconditions/ingest-framework");
+  const { INGEST_DOMAINS } = await import("../../services/ingest/src/domains.js");
+  const definition = readCatalogDir(join(import.meta.dirname, "../../feeds"), INGEST_DOMAINS)
+    .files.flatMap((f) => f.feeds)
+    .find((f) => f.operator === "fmi")!;
+  delete definition.disabled;
+  writeFileSync(
+    join(dir, "weather/fi.jsonc"),
+    JSON.stringify({ $schema: "../schema/weather.schema.json", feeds: [definition] }),
+  );
+  const fetch = vi.fn(async () => new Response("unexpected"));
+  const results = await checkFeeds({ feedsDir: dir, fetch: fetch as typeof globalThis.fetch });
+  expect(fetch).toHaveBeenCalled();
+  expect(results).toHaveLength(1);
+  expect(results[0]?.message).not.toMatch(/qualification/);
 });

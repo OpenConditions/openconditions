@@ -123,6 +123,8 @@ const geojsonFlowMappingSchema = z
  * but an endpoint with a decoder.
  */
 const roadsFeedExtension = {
+  caltransSnapshotQualified: z.literal(true).optional(),
+  caltransDistrict: z.number().int().min(1).max(12).optional(),
   /** Field mapping for `format: "geojson"` and `"flatjson"` feeds. */
   geojson: geoJsonMappingSchema.optional(),
   /** Field mapping for `format: "geojson-flow"` feeds. */

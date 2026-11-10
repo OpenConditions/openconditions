@@ -592,6 +592,9 @@ importers:
       fast-xml-parser:
         specifier: ^5.11.2
         version: 5.11.2
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
     devDependencies:
       '@openconditions/conformance':
         specifier: workspace:*
@@ -620,6 +623,9 @@ importers:
       '@openconditions/model':
         specifier: workspace:*
         version: link:../model
+      fast-xml-parser:
+        specifier: ^5.11.2
+        version: 5.11.2
       impit:
         specifier: ^0.14.7
         version: 0.14.8
@@ -1257,6 +1263,9 @@ importers:
       '@openconditions/model-weather':
         specifier: workspace:*
         version: link:../model-weather
+      fast-xml-parser:
+        specifier: ^5.11.2
+        version: 5.11.2
     devDependencies:
       '@openconditions/conformance':
         specifier: workspace:*
@@ -1471,6 +1480,9 @@ importers:
         specifier: ^4.6.7
         version: 4.6.7
     devDependencies:
+      '@openconditions/federation':
+        specifier: workspace:*
+        version: link:../../packages/federation
       '@openconditions/test-database':
         specifier: workspace:*
         version: link:../../packages/test-database

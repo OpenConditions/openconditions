@@ -9,6 +9,7 @@ export * from "./formats/ibi511.js";
 export * from "./formats/layout.js";
 export * from "./formats/nps.js";
 export * from "./formats/overpass.js";
+export * from "./formats/quebec-cameras.js";
 export * from "./formats/tdx.js";
 export * from "./formats/tfl.js";
 export * from "./formats/trafikverket.js";

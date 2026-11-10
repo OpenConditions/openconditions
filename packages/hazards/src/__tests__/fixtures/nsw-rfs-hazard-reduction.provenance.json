@@ -1,0 +1,27 @@
+{
+  "url": "https://www.rfs.nsw.gov.au/feeds/majorIncidentsCAP.xml",
+  "finalUrl": "https://www.rfs.nsw.gov.au/feeds/majorIncidentsCAP.xml",
+  "status": 200,
+  "started": "2026-11-10T01:38:32.104325+00:00",
+  "finished": "2026-11-10T01:38:32.883031+00:00",
+  "headers": {
+    "Date": "Tue, 10 Nov 2026 01:38:32 GMT",
+    "Content-Type": "text/xml",
+    "Content-Length": "82781",
+    "Cache-Control": "max-age=30, must-revalidate",
+    "ETag": "\"b8de5e7a470d528763c40ed931f95b2f\"",
+    "Last-Modified": "Tue, 10 Nov 2026 01:36:46 GMT"
+  },
+  "bytes": 82781,
+  "sha256": "15e6ab13bc5dabcae49a75b1b9d04fed93b46f329cccf8c59a4215a7e67d8884",
+  "budget": {
+    "GET": 1,
+    "retry": 0,
+    "maxBytes": 4194304,
+    "timeoutSec": 30,
+    "cadenceSec": 1800
+  },
+  "license": "CC BY 3.0 AU",
+  "attribution": "NSW Rural Fire Service",
+  "modifications": "XML body unmodified; response metadata restricted to relevant public cache and content headers."
+}

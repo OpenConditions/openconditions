@@ -1,5 +1,176 @@
 {
   "files": {
+    "weather/ca": {
+      "$schema": "../schema/weather.schema.json",
+      "feeds": [
+        {
+          "operator": "eccc",
+          "product": "weather",
+          "name": "ECCC MSC/CA land-station weather observations",
+          "format": "eccc-swob",
+          "tier": "authoritative",
+          "endpoints": {
+            "sites": {
+              "url": "https://api.weather.gc.ca/collections/swob-stations/items?f=json&data_provider=MSC&dataset_network=CA&limit=1000",
+              "headers": {
+                "User-Agent": "OpenConditions/1.0 (+https://openconditions.org)",
+                "Accept": "application/geo+json"
+              },
+              "cadenceSec": 86400,
+              "maxResponseBytes": 8388608
+            },
+            "status": {
+              "url": "https://api.weather.gc.ca/collections/swob-realtime/items?f=json&data_pvdr-value=MSC&dataset=msc-observation-atmospheric-surface_weather-ca-1.1-ascii&datetime={utcMinute-90}/{utcMinute}&limit=2000&sortby=date_tm-value&properties=id,url,dataset,msc_id-value,data_pvdr-value,date_tm-value,obs_date_tm,processed_date_tm,cor-value,cor-uom,data_attrib_not-value,air_temp,air_temp-uom,air_temp-qa,rel_hum,rel_hum-uom,rel_hum-qa,avg_wnd_spd_10m_pst10mts,avg_wnd_spd_10m_pst10mts-uom,avg_wnd_spd_10m_pst10mts-qa,avg_wnd_spd_10m_pst10mts-data_flag-value,avg_wnd_spd_10m_pst10mts-data_flag-uom,avg_wnd_spd_10m_pst10mts-data_flag-code_src,avg_wnd_dir_10m_pst10mts,avg_wnd_dir_10m_pst10mts-uom,avg_wnd_dir_10m_pst10mts-qa,avg_wnd_dir_10m_pst10mts-data_flag-value,avg_wnd_dir_10m_pst10mts-data_flag-uom,avg_wnd_dir_10m_pst10mts-data_flag-code_src,pcpn_amt_pst1hr,pcpn_amt_pst1hr-uom,pcpn_amt_pst1hr-qa,pcpn_amt_pst1hr-data_flag-value,pcpn_amt_pst1hr-data_flag-uom,pcpn_amt_pst1hr-data_flag-code_src",
+              "headers": {
+                "User-Agent": "OpenConditions/1.0 (+https://openconditions.org)",
+                "Accept": "application/geo+json"
+              },
+              "cadenceSec": 600,
+              "maxPayloadAgeSec": 3600,
+              "maxResponseBytes": 8388608
+            }
+          },
+          "freshnessWindowSec": 3600,
+          "requestLimits": {
+            "perMinute": 6
+          },
+          "license": "LicenseRef-ECCC-Data-Servers-End-use",
+          "licenseUrl": "https://eccc-msc.github.io/open-data/licence/readme_en/",
+          "attribution": "Data Source: Environment and Climate Change Canada",
+          "terms": {
+            "url": "https://eccc-msc.github.io/open-data/usage-policy/readme_en/",
+            "reviewedAt": "2026-11-09"
+          },
+          "privacyUrl": "https://www.canada.ca/en/transparency/privacy.html",
+          "homepage": "https://eccc-msc.github.io/open-data/msc-data/obs_station/readme_obs_insitu_en/"
+        }
+      ]
+    },
+    "weather/de": {
+      "$schema": "../schema/weather.schema.json",
+      "feeds": [
+        {
+          "operator": "dwd",
+          "qualifier": "cdc",
+          "product": "weather",
+          "name": "DWD CDC current meteorological station observations",
+          "format": "dwd-cdc-10min",
+          "tier": "authoritative",
+          "endpoints": {
+            "tu_stations": {
+              "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/air_temperature/now/zehn_now_tu_Beschreibung_Stationen.txt",
+              "cadenceSec": 86400,
+              "timeoutSec": 30
+            },
+            "tu_listing": {
+              "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/air_temperature/now/",
+              "cadenceSec": 3600,
+              "timeoutSec": 30
+            },
+            "tu": {
+              "url": "{item}",
+              "each": {
+                "role": "tu_listing",
+                "links": [
+                  "href=\"(10minutenwerte_TU_\\d{5}_now\\.zip)\"[^\\n]*?</a>\\s+([^\\r\\n]+)"
+                ],
+                "revalidateSec": 3600,
+                "maxItems": 1600
+              },
+              "cadenceSec": 3600,
+              "timeoutSec": 30
+            },
+            "rr_stations": {
+              "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/precipitation/now/zehn_now_rr_Beschreibung_Stationen.txt",
+              "cadenceSec": 86400,
+              "timeoutSec": 30
+            },
+            "rr_listing": {
+              "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/precipitation/now/",
+              "cadenceSec": 3600,
+              "timeoutSec": 30
+            },
+            "rr": {
+              "url": "{item}",
+              "each": {
+                "role": "rr_listing",
+                "links": [
+                  "href=\"(10minutenwerte_nieder_\\d{5}_now\\.zip)\"[^\\n]*?</a>\\s+([^\\r\\n]+)"
+                ],
+                "revalidateSec": 3600,
+                "maxItems": 1600
+              },
+              "cadenceSec": 3600,
+              "timeoutSec": 30
+            },
+            "ff_stations": {
+              "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/wind/now/zehn_now_ff_Beschreibung_Stationen.txt",
+              "cadenceSec": 86400,
+              "timeoutSec": 30
+            },
+            "ff_listing": {
+              "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/wind/now/",
+              "cadenceSec": 3600,
+              "timeoutSec": 30
+            },
+            "ff": {
+              "url": "{item}",
+              "each": {
+                "role": "ff_listing",
+                "links": [
+                  "href=\"(10minutenwerte_wind_\\d{5}_now\\.zip)\"[^\\n]*?</a>\\s+([^\\r\\n]+)"
+                ],
+                "revalidateSec": 3600,
+                "maxItems": 1600
+              },
+              "cadenceSec": 3600,
+              "timeoutSec": 30
+            },
+            "fx_stations": {
+              "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/extreme_wind/now/zehn_now_fx_Beschreibung_Stationen.txt",
+              "cadenceSec": 86400,
+              "timeoutSec": 30
+            },
+            "fx_listing": {
+              "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/extreme_wind/now/",
+              "cadenceSec": 3600,
+              "timeoutSec": 30
+            },
+            "fx": {
+              "url": "{item}",
+              "each": {
+                "role": "fx_listing",
+                "links": [
+                  "href=\"(10minutenwerte_extrema_wind_\\d{5}_now\\.zip)\"[^\\n]*?</a>\\s+([^\\r\\n]+)"
+                ],
+                "revalidateSec": 3600,
+                "maxItems": 1600
+              },
+              "cadenceSec": 3600,
+              "timeoutSec": 30
+            }
+          },
+          "freshnessWindowSec": 3600,
+          "acquisitionLimits": {
+            "requests": 3000,
+            "bytes": 16777216,
+            "deadlineSec": 1200
+          },
+          "requestLimits": {
+            "perMinute": 240
+          },
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "Quelle: Deutscher Wetterdienst; CC BY 4.0; station identifiers, units and observations normalized by OpenConditions.",
+          "terms": {
+            "url": "https://opendata.dwd.de/climate_environment/CDC/Terms_of_use.pdf",
+            "reviewedAt": "2026-11-07"
+          },
+          "privacyUrl": "https://www.dwd.de/DE/service/datenschutz/datenschutz_node.html",
+          "homepage": "https://opendata.dwd.de/climate_environment/CDC/"
+        }
+      ]
+    },
     "weather/fi": {
       "$schema": "../schema/weather.schema.json",
       "feeds": [
@@ -57,11 +228,342 @@
           },
           "privacyUrl": "https://www.digitraffic.fi/en/privacy-policy/",
           "homepage": "https://www.digitraffic.fi/en/"
+        },
+        {
+          "operator": "fmi",
+          "product": "weather",
+          "name": "Finnish Meteorological Institute weather observations",
+          "format": "fmi-weather",
+          "tier": "authoritative",
+          "endpoints": {
+            "sites": {
+              "urls": [
+                "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=GetFeature&storedquery_id=fmi::ef::stations&networkid=121",
+                "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=GetFeature&storedquery_id=fmi::ef::stations&networkid=122",
+                "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=GetFeature&storedquery_id=fmi::ef::stations&networkid=224"
+              ],
+              "cadenceSec": 86400
+            },
+            "status": {
+              "url": "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=GetFeature&storedquery_id=fmi::observations::weather::multipointcoverage&bbox=19,59,32,70,epsg:4326&starttime={utcMinute-90}&endtime={utcMinute}&timestep=10&parameters=t2m,td,rh,ws_10min,wg_10min,wd_10min,vis&crs=EPSG::4326",
+              "cadenceSec": 600
+            }
+          },
+          "freshnessWindowSec": 3600,
+          "requestLimits": {
+            "perMinute": 60,
+            "perDay": 20000
+          },
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "Finnish Meteorological Institute; weather observations; normalized by OpenConditions; CC BY 4.0.",
+          "terms": {
+            "url": "https://en.ilmatieteenlaitos.fi/open-data-licence",
+            "reviewedAt": "2026-11-07"
+          },
+          "privacyUrl": "https://en.ilmatieteenlaitos.fi/data-protection",
+          "homepage": "https://en.ilmatieteenlaitos.fi/",
+          "coverage": {
+            "countries": [
+              "FI"
+            ]
+          }
+        }
+      ]
+    },
+    "weather/se": {
+      "$schema": "../schema/weather.schema.json",
+      "feeds": [
+        {
+          "operator": "smhi",
+          "product": "weather",
+          "name": "SMHI CORE meteorological observations",
+          "format": "smhi-metobs",
+          "tier": "authoritative",
+          "endpoints": {
+            "sites": {
+              "urls": [
+                "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/1.json?measuringStations=core",
+                "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/39.json?measuringStations=core",
+                "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/6.json?measuringStations=core",
+                "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/12.json?measuringStations=core",
+                "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/3.json?measuringStations=core",
+                "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/4.json?measuringStations=core",
+                "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/21.json?measuringStations=core",
+                "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/7.json?measuringStations=core"
+              ],
+              "cadenceSec": 86400
+            },
+            "status": {
+              "urls": [
+                "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/1/station-set/all/period/latest-hour/data.json?measuringStations=core",
+                "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/39/station-set/all/period/latest-hour/data.json?measuringStations=core",
+                "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/6/station-set/all/period/latest-hour/data.json?measuringStations=core",
+                "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/12/station-set/all/period/latest-hour/data.json?measuringStations=core",
+                "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/3/station-set/all/period/latest-hour/data.json?measuringStations=core",
+                "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/4/station-set/all/period/latest-hour/data.json?measuringStations=core",
+                "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/21/station-set/all/period/latest-hour/data.json?measuringStations=core",
+                "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/7/station-set/all/period/latest-hour/data.json?measuringStations=core"
+              ],
+              "cadenceSec": 600
+            }
+          },
+          "snapshot": {
+            "completeness": "complete"
+          },
+          "freshnessWindowSec": 3600,
+          "extrasAllow": [
+            "owner",
+            "measuringStations"
+          ],
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "Source: SMHI; normalized by OpenConditions; CC BY 4.0",
+          "terms": {
+            "url": "https://www.smhi.se/data/om-smhis-data/villkor-for-anvandning",
+            "reviewedAt": "2026-11-08"
+          },
+          "privacyUrl": "https://www.smhi.se/om-smhi/hantering-av-personuppgifter",
+          "homepage": "https://www.smhi.se/",
+          "coverage": {
+            "countries": [
+              "SE"
+            ]
+          }
         }
       ]
     }
   },
   "feeds": [
+    {
+      "operator": "eccc",
+      "product": "weather",
+      "name": "ECCC MSC/CA land-station weather observations",
+      "format": "eccc-swob",
+      "tier": "authoritative",
+      "endpoints": {
+        "sites": {
+          "url": "https://api.weather.gc.ca/collections/swob-stations/items?f=json&data_provider=MSC&dataset_network=CA&limit=1000",
+          "headers": {
+            "User-Agent": "OpenConditions/1.0 (+https://openconditions.org)",
+            "Accept": "application/geo+json"
+          },
+          "cadenceSec": 86400,
+          "maxResponseBytes": 8388608
+        },
+        "status": {
+          "url": "https://api.weather.gc.ca/collections/swob-realtime/items?f=json&data_pvdr-value=MSC&dataset=msc-observation-atmospheric-surface_weather-ca-1.1-ascii&datetime={utcMinute-90}/{utcMinute}&limit=2000&sortby=date_tm-value&properties=id,url,dataset,msc_id-value,data_pvdr-value,date_tm-value,obs_date_tm,processed_date_tm,cor-value,cor-uom,data_attrib_not-value,air_temp,air_temp-uom,air_temp-qa,rel_hum,rel_hum-uom,rel_hum-qa,avg_wnd_spd_10m_pst10mts,avg_wnd_spd_10m_pst10mts-uom,avg_wnd_spd_10m_pst10mts-qa,avg_wnd_spd_10m_pst10mts-data_flag-value,avg_wnd_spd_10m_pst10mts-data_flag-uom,avg_wnd_spd_10m_pst10mts-data_flag-code_src,avg_wnd_dir_10m_pst10mts,avg_wnd_dir_10m_pst10mts-uom,avg_wnd_dir_10m_pst10mts-qa,avg_wnd_dir_10m_pst10mts-data_flag-value,avg_wnd_dir_10m_pst10mts-data_flag-uom,avg_wnd_dir_10m_pst10mts-data_flag-code_src,pcpn_amt_pst1hr,pcpn_amt_pst1hr-uom,pcpn_amt_pst1hr-qa,pcpn_amt_pst1hr-data_flag-value,pcpn_amt_pst1hr-data_flag-uom,pcpn_amt_pst1hr-data_flag-code_src",
+          "headers": {
+            "User-Agent": "OpenConditions/1.0 (+https://openconditions.org)",
+            "Accept": "application/geo+json"
+          },
+          "cadenceSec": 600,
+          "maxPayloadAgeSec": 3600,
+          "maxResponseBytes": 8388608
+        }
+      },
+      "freshnessWindowSec": 3600,
+      "requestLimits": {
+        "perMinute": 6
+      },
+      "license": "LicenseRef-ECCC-Data-Servers-End-use",
+      "licenseUrl": "https://eccc-msc.github.io/open-data/licence/readme_en/",
+      "attribution": "Data Source: Environment and Climate Change Canada",
+      "terms": {
+        "url": "https://eccc-msc.github.io/open-data/usage-policy/readme_en/",
+        "reviewedAt": "2026-11-09"
+      },
+      "privacyUrl": "https://www.canada.ca/en/transparency/privacy.html",
+      "homepage": "https://eccc-msc.github.io/open-data/msc-data/obs_station/readme_obs_insitu_en/",
+      "id": "ca-eccc-weather",
+      "domain": "weather",
+      "region": "ca",
+      "file": "feeds/weather/ca.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": true,
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "changeNotice": false,
+        "retention": true,
+        "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://eccc-msc.github.io/open-data/usage-policy/readme_en/",
+        "reviewedAt": "2026-11-09"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "CA"
+        ]
+      },
+      "cadenceSec": 600,
+      "country": "CA"
+    },
+    {
+      "operator": "dwd",
+      "qualifier": "cdc",
+      "product": "weather",
+      "name": "DWD CDC current meteorological station observations",
+      "format": "dwd-cdc-10min",
+      "tier": "authoritative",
+      "endpoints": {
+        "tu_stations": {
+          "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/air_temperature/now/zehn_now_tu_Beschreibung_Stationen.txt",
+          "cadenceSec": 86400,
+          "timeoutSec": 30
+        },
+        "tu_listing": {
+          "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/air_temperature/now/",
+          "cadenceSec": 3600,
+          "timeoutSec": 30
+        },
+        "tu": {
+          "url": "{item}",
+          "each": {
+            "role": "tu_listing",
+            "links": [
+              "href=\"(10minutenwerte_TU_\\d{5}_now\\.zip)\"[^\\n]*?</a>\\s+([^\\r\\n]+)"
+            ],
+            "revalidateSec": 3600,
+            "maxItems": 1600
+          },
+          "cadenceSec": 3600,
+          "timeoutSec": 30
+        },
+        "rr_stations": {
+          "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/precipitation/now/zehn_now_rr_Beschreibung_Stationen.txt",
+          "cadenceSec": 86400,
+          "timeoutSec": 30
+        },
+        "rr_listing": {
+          "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/precipitation/now/",
+          "cadenceSec": 3600,
+          "timeoutSec": 30
+        },
+        "rr": {
+          "url": "{item}",
+          "each": {
+            "role": "rr_listing",
+            "links": [
+              "href=\"(10minutenwerte_nieder_\\d{5}_now\\.zip)\"[^\\n]*?</a>\\s+([^\\r\\n]+)"
+            ],
+            "revalidateSec": 3600,
+            "maxItems": 1600
+          },
+          "cadenceSec": 3600,
+          "timeoutSec": 30
+        },
+        "ff_stations": {
+          "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/wind/now/zehn_now_ff_Beschreibung_Stationen.txt",
+          "cadenceSec": 86400,
+          "timeoutSec": 30
+        },
+        "ff_listing": {
+          "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/wind/now/",
+          "cadenceSec": 3600,
+          "timeoutSec": 30
+        },
+        "ff": {
+          "url": "{item}",
+          "each": {
+            "role": "ff_listing",
+            "links": [
+              "href=\"(10minutenwerte_wind_\\d{5}_now\\.zip)\"[^\\n]*?</a>\\s+([^\\r\\n]+)"
+            ],
+            "revalidateSec": 3600,
+            "maxItems": 1600
+          },
+          "cadenceSec": 3600,
+          "timeoutSec": 30
+        },
+        "fx_stations": {
+          "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/extreme_wind/now/zehn_now_fx_Beschreibung_Stationen.txt",
+          "cadenceSec": 86400,
+          "timeoutSec": 30
+        },
+        "fx_listing": {
+          "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/extreme_wind/now/",
+          "cadenceSec": 3600,
+          "timeoutSec": 30
+        },
+        "fx": {
+          "url": "{item}",
+          "each": {
+            "role": "fx_listing",
+            "links": [
+              "href=\"(10minutenwerte_extrema_wind_\\d{5}_now\\.zip)\"[^\\n]*?</a>\\s+([^\\r\\n]+)"
+            ],
+            "revalidateSec": 3600,
+            "maxItems": 1600
+          },
+          "cadenceSec": 3600,
+          "timeoutSec": 30
+        }
+      },
+      "freshnessWindowSec": 3600,
+      "acquisitionLimits": {
+        "requests": 3000,
+        "bytes": 16777216,
+        "deadlineSec": 1200
+      },
+      "requestLimits": {
+        "perMinute": 240
+      },
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Quelle: Deutscher Wetterdienst; CC BY 4.0; station identifiers, units and observations normalized by OpenConditions.",
+      "terms": {
+        "url": "https://opendata.dwd.de/climate_environment/CDC/Terms_of_use.pdf",
+        "reviewedAt": "2026-11-07"
+      },
+      "privacyUrl": "https://www.dwd.de/DE/service/datenschutz/datenschutz_node.html",
+      "homepage": "https://opendata.dwd.de/climate_environment/CDC/",
+      "id": "de-dwd-cdc-weather",
+      "domain": "weather",
+      "region": "de",
+      "file": "feeds/weather/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": true,
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "changeNotice": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://opendata.dwd.de/climate_environment/CDC/Terms_of_use.pdf",
+        "reviewedAt": "2026-11-07"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 3600,
+      "country": "DE"
+    },
     {
       "operator": "digitraffic",
       "product": "weather",
@@ -150,6 +652,161 @@
       },
       "cadenceSec": 300,
       "country": "FI"
+    },
+    {
+      "operator": "fmi",
+      "product": "weather",
+      "name": "Finnish Meteorological Institute weather observations",
+      "format": "fmi-weather",
+      "tier": "authoritative",
+      "endpoints": {
+        "sites": {
+          "urls": [
+            "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=GetFeature&storedquery_id=fmi::ef::stations&networkid=121",
+            "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=GetFeature&storedquery_id=fmi::ef::stations&networkid=122",
+            "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=GetFeature&storedquery_id=fmi::ef::stations&networkid=224"
+          ],
+          "cadenceSec": 86400
+        },
+        "status": {
+          "url": "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=GetFeature&storedquery_id=fmi::observations::weather::multipointcoverage&bbox=19,59,32,70,epsg:4326&starttime={utcMinute-90}&endtime={utcMinute}&timestep=10&parameters=t2m,td,rh,ws_10min,wg_10min,wd_10min,vis&crs=EPSG::4326",
+          "cadenceSec": 600
+        }
+      },
+      "freshnessWindowSec": 3600,
+      "requestLimits": {
+        "perMinute": 60,
+        "perDay": 20000
+      },
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Finnish Meteorological Institute; weather observations; normalized by OpenConditions; CC BY 4.0.",
+      "terms": {
+        "url": "https://en.ilmatieteenlaitos.fi/open-data-licence",
+        "reviewedAt": "2026-11-07"
+      },
+      "privacyUrl": "https://en.ilmatieteenlaitos.fi/data-protection",
+      "homepage": "https://en.ilmatieteenlaitos.fi/",
+      "coverage": {
+        "countries": [
+          "FI"
+        ]
+      },
+      "id": "fi-fmi-weather",
+      "domain": "weather",
+      "region": "fi",
+      "file": "feeds/weather/fi.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": true,
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "changeNotice": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://en.ilmatieteenlaitos.fi/open-data-licence",
+        "reviewedAt": "2026-11-07"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
+      },
+      "restricted": false,
+      "cadenceSec": 600,
+      "country": "FI"
+    },
+    {
+      "operator": "smhi",
+      "product": "weather",
+      "name": "SMHI CORE meteorological observations",
+      "format": "smhi-metobs",
+      "tier": "authoritative",
+      "endpoints": {
+        "sites": {
+          "urls": [
+            "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/1.json?measuringStations=core",
+            "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/39.json?measuringStations=core",
+            "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/6.json?measuringStations=core",
+            "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/12.json?measuringStations=core",
+            "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/3.json?measuringStations=core",
+            "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/4.json?measuringStations=core",
+            "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/21.json?measuringStations=core",
+            "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/7.json?measuringStations=core"
+          ],
+          "cadenceSec": 86400
+        },
+        "status": {
+          "urls": [
+            "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/1/station-set/all/period/latest-hour/data.json?measuringStations=core",
+            "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/39/station-set/all/period/latest-hour/data.json?measuringStations=core",
+            "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/6/station-set/all/period/latest-hour/data.json?measuringStations=core",
+            "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/12/station-set/all/period/latest-hour/data.json?measuringStations=core",
+            "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/3/station-set/all/period/latest-hour/data.json?measuringStations=core",
+            "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/4/station-set/all/period/latest-hour/data.json?measuringStations=core",
+            "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/21/station-set/all/period/latest-hour/data.json?measuringStations=core",
+            "https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/7/station-set/all/period/latest-hour/data.json?measuringStations=core"
+          ],
+          "cadenceSec": 600
+        }
+      },
+      "snapshot": {
+        "completeness": "complete"
+      },
+      "freshnessWindowSec": 3600,
+      "extrasAllow": [
+        "owner",
+        "measuringStations"
+      ],
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Source: SMHI; normalized by OpenConditions; CC BY 4.0",
+      "terms": {
+        "url": "https://www.smhi.se/data/om-smhis-data/villkor-for-anvandning",
+        "reviewedAt": "2026-11-08"
+      },
+      "privacyUrl": "https://www.smhi.se/om-smhi/hantering-av-personuppgifter",
+      "homepage": "https://www.smhi.se/",
+      "coverage": {
+        "countries": [
+          "SE"
+        ]
+      },
+      "id": "se-smhi-weather",
+      "domain": "weather",
+      "region": "se",
+      "file": "feeds/weather/se.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": true,
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "changeNotice": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://www.smhi.se/data/om-smhis-data/villkor-for-anvandning",
+        "reviewedAt": "2026-11-08"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
+      },
+      "restricted": false,
+      "cadenceSec": 600,
+      "country": "SE"
     }
   ]
 }

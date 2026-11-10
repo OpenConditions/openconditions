@@ -14,6 +14,31 @@ vi.mock("../pipeline/source-status.js", async (importOriginal) => ({
 const feed = testFeed({ id: "demo" });
 
 describe("scheduleFeed", () => {
+  it("schedules qualified PUN by default while a disabled entry always wins", () => {
+    const feed = repoFeed("it-agid-pun-charging");
+    const sql = {} as never;
+    const fetch = vi.fn();
+    const context = {
+      sql,
+      statusStore: new FeedStatusStore(),
+      deps: { sql, fetch, now: () => "2026-11-09T02:00:00Z" },
+      env: {},
+    };
+    const { disabled: _disabled, ...enabled } = feed;
+    const job = scheduleFeed(enabled, context);
+    try {
+      expect(job).toBeDefined();
+    } finally {
+      job?.stop();
+    }
+    expect(
+      scheduleFeed(
+        { ...enabled, disabled: { reason: "operator stop", since: "2026-11-09" } },
+        context,
+      ),
+    ).toBeUndefined();
+    expect(fetch).not.toHaveBeenCalled();
+  });
   it("a feed without its credential is skipped with the env var named", async () => {
     const ohgo = repoFeed("us-oh-ohgo-flow");
     const fetchSpy = vi.fn();

@@ -14,11 +14,12 @@ export function setupRelease(fullSource = false) {
   if (fullSource) {
     for (const name of readdirSync(f.repo))
       if (name !== ".git") rmSync(join(f.repo, name), { recursive: true, force: true });
-    const archive = execFileSync("git", ["--no-replace-objects", "archive", "HEAD"], {
+    const archive = join(f.repo, ".git/source.tar");
+    execFileSync("git", ["--no-replace-objects", "archive", "--output", archive, "HEAD"], {
       cwd: root,
-      maxBuffer: 64 * 1024 * 1024,
     });
-    execFileSync("tar", ["-xf", "-", "-C", f.repo], { input: archive });
+    execFileSync("tar", ["-xf", archive, "-C", f.repo]);
+    rmSync(archive);
   }
   for (const p of [
     "extension.json",
