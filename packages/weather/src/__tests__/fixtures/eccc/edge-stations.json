@@ -1,0 +1,63 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "615TST2",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-79.802347, 43.301136, 77.54]
+      },
+      "properties": {
+        "iata_id": "CT12",
+        "name": "BURLINGTON TEST DECK",
+        "wmo_id": null,
+        "msc_id": "615TST2",
+        "data_provider": "MSC",
+        "dataset_network": "CA",
+        "auto_man": "AUTO",
+        "province_territory": "Ontario"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "613F606",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-79.25, 42.8667, 185.0]
+      },
+      "properties": {
+        "iata_id": "CWPC",
+        "name": "PORT COLBORNE (AUT)",
+        "wmo_id": 71463,
+        "msc_id": "613F606",
+        "data_provider": "MSC",
+        "dataset_network": "CA",
+        "auto_man": "AUTO",
+        "province_territory": "Ontario"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "6134F10",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-80.0494, 42.5486, 180.0]
+      },
+      "properties": {
+        "iata_id": "CWPS",
+        "name": "LONG POINT (AUT)",
+        "wmo_id": 71464,
+        "msc_id": "6134F10",
+        "data_provider": "MSC",
+        "dataset_network": "CA",
+        "auto_man": "AUTO",
+        "province_territory": "Ontario"
+      }
+    }
+  ],
+  "numberMatched": 3,
+  "numberReturned": 3,
+  "links": [],
+  "timeStamp": "2026-11-08T02:00:25.621471Z"
+}

@@ -36,9 +36,10 @@ export const PRECIPITATION_TYPES = [
   "freezing_rain",
 ] as const;
 
-/** The wire formats weather parses: Fintraffic Digitraffic's road weather station API. */
+/** The wire formats weather parses: Digitraffic, ECCC SWOB, DWD CDC and SMHI Metobs. */
 export const WEATHER_SOURCE_FORMATS = [
   "digitraffic-weather",
+  "eccc-swob",
   "dwd-cdc-10min",
   "smhi-metobs",
 ] as const;

@@ -519,8 +519,9 @@ export async function publishFeatures(
     warning?: string;
     /** Every role's states are in the output: a polled series it does not state has ended. */
     statesComplete?: boolean;
-    /** False for a nontransactional inventory traversal: absent features survive. */
     featuresComplete?: boolean;
+    atomicCandidate?: boolean;
+    observationRevisions?: import("@openconditions/ingest-framework").ObservationRevision[];
   },
 ): Promise<{ summary: WriteSummary; counts: PublicationCounts }> {
   const cache = latestCache.begin(src.id);
@@ -590,6 +591,8 @@ export async function publishFeatures(
       { features: output.features, observations: output.observations, offers: output.offers },
       {
         ...writeContext(input),
+        atomicCandidate: input.atomicCandidate === true,
+        observationRevisions: input.observationRevisions,
         complete: {
           feature:
             src.snapshot?.completeness !== "partial" &&
@@ -663,6 +666,8 @@ export async function publishReadings(
   src: Pick<CatalogFeed, "id" | "freshnessWindowSec">,
   input: {
     observations: readonly RecordDraft[];
+    atomicCandidate?: boolean;
+    observationRevisions?: import("@openconditions/ingest-framework").ObservationRevision[];
     /** SMHI requires all stored records and retained reading rights to agree before commit. */
     atomicCoherence?: boolean;
     rejected: number;
@@ -681,7 +686,13 @@ export async function publishReadings(
       tx,
       src.id,
       { observations: input.observations },
-      { ...writeContext(input), complete: false, latestCache: cache },
+      {
+        ...writeContext(input),
+        complete: false,
+        latestCache: cache,
+        atomicCandidate: input.atomicCandidate === true,
+        observationRevisions: input.observationRevisions,
+      },
     );
     if (input.atomicCoherence) {
       if (summary.rejected.length > 0 || summary.observations.withheld !== undefined)

@@ -1,3 +1,4 @@
+import { deserialize, serialize } from "node:v8";
 import type { RawTier } from "@openconditions/core/server";
 import type {
   CatalogFeed,
@@ -322,7 +323,11 @@ export function feedFetch(
   const timeoutSec = role === undefined ? undefined : src.endpoints[role]?.timeoutSec;
   return makeAuthorizedFetch(
     src,
-    guardedFeedFetch(deps, timeoutSec),
+    guardedFeedFetch(
+      deps,
+      timeoutSec,
+      role === undefined ? undefined : src.endpoints[role]?.maxResponseBytes,
+    ),
     deps.env ?? process.env,
     Date.now,
     deps.grants,
@@ -339,8 +344,10 @@ export function feedFetch(
 export function guardedFeedFetch(
   deps: { fetch: typeof fetch; lookup?: LookupFn },
   timeoutSec?: number,
+  maxResponseBytes?: number,
 ): typeof fetch {
   const opts = guardOptionsFromEnv();
+  if (maxResponseBytes !== undefined) opts.maxBytes = Math.min(opts.maxBytes, maxResponseBytes);
   if (timeoutSec !== undefined) opts.timeoutMs = Math.max(opts.timeoutMs, timeoutSec * 1000);
   return guardedFetch(deps.fetch, opts, {}, deps.lookup);
 }
@@ -464,21 +471,16 @@ export async function runSource(src: CatalogFeed, deps: RunDeps): Promise<RunRes
       error: `SMHI qualification gate: ${src.disabled.reason}`,
     };
   }
-  // SMHI's eight-parameter publication is atomic, including its held acquisition state.
-  const previousRoles =
-    src.format === "smhi-metobs" && deps.roles
-      ? Object.fromEntries(
-          Object.entries(deps.roles).map(([key, value]) => [
-            key,
-            value instanceof Map ? new Map(value) : { ...value },
-          ]),
-        )
+  const priorRoles =
+    (formatOf(src).atomicCandidate || src.format === "smhi-metobs") && deps.roles
+      ? (deserialize(serialize(deps.roles)) as RoleState)
       : undefined;
   const restoreRoles = () => {
-    if (!previousRoles || !deps.roles) return;
-    for (const key of Object.keys(deps.roles))
-      delete (deps.roles as unknown as Record<string, unknown>)[key];
-    Object.assign(deps.roles, previousRoles);
+    if (priorRoles && deps.roles) {
+      for (const key of Object.keys(deps.roles))
+        delete (deps.roles as unknown as Record<string, unknown>)[key];
+      Object.assign(deps.roles, priorRoles);
+    }
   };
   const attemptAt = deps.now();
   if (src.rawRetention === "none" && deps.roles !== undefined) {
@@ -660,6 +662,7 @@ async function runAttempt(
     ...(acceptFetch ? { acceptFetch } : {}),
     ...(warning ? { warning } : {}),
     statesComplete: !leftOut,
+    atomicCandidate: format.atomicCandidate === true,
     ...(smnWindow ? { smnWindow } : {}),
   });
   const finish = (parse: ParseOutput, dwdStationPayloads?: FeedPayloads): Promise<RunResult> => {
@@ -857,10 +860,18 @@ async function runAttempt(
             role,
             src.format === "smhi-metobs"
               ? smhiHttpPolicy(deps.roles).wrap(
-                  guardedFeedFetch(deps, src.endpoints[role]?.timeoutSec),
+                  guardedFeedFetch(
+                    deps,
+                    src.endpoints[role]?.timeoutSec,
+                    src.endpoints[role]?.maxResponseBytes,
+                  ),
                   httpDeadline,
                 )
-              : guardedFeedFetch(deps, src.endpoints[role]?.timeoutSec),
+              : guardedFeedFetch(
+                  deps,
+                  src.endpoints[role]?.timeoutSec,
+                  src.endpoints[role]?.maxResponseBytes,
+                ),
             {
               state: deps.fetchState,
               resolvers: domainOf(src).resolvers,
@@ -1309,6 +1320,7 @@ interface PollContext {
   warning?: string;
   /** Every data role's states are in the parse: none was left out. */
   statesComplete: boolean;
+  atomicCandidate: boolean;
 }
 
 /** Records a failure that keeps the last good publication, and the run's result for it. */
@@ -1652,7 +1664,9 @@ async function finishFeaturePoll(
       return fail(poll, "failed", "source-clock snapshot requires successful current roles");
   }
   const shrunk =
-    nonWithdrawing || (parse.featuresComplete === true && parse.features.length === 0)
+    parse.featuresComplete === false ||
+    nonWithdrawing ||
+    (parse.featuresComplete === true && parse.features.length === 0)
       ? undefined
       : await shrinkTripped(deps.sql, src.id, parse.features.length, deps.now());
   if (shrunk) return failShrunk(poll, "features", "features", parse.features.length, shrunk);
@@ -1679,6 +1693,8 @@ async function finishFeaturePoll(
       statesComplete: poll.statesComplete && parse.featuresComplete !== false,
       featuresComplete: nonWithdrawing ? false : parse.featuresComplete,
       atomicCoherence: src.format === "smhi-metobs",
+      atomicCandidate: poll.atomicCandidate,
+      observationRevisions: parse.observationRevisions,
       ...(poll.warning ? { warning: poll.warning } : {}),
     });
     poll.attempt.closed = true;
@@ -1733,6 +1749,8 @@ async function finishStatusPoll(
   try {
     published = await publishReadings(deps.sql, src, {
       observations,
+      atomicCandidate: poll.atomicCandidate,
+      observationRevisions: output.observationRevisions,
       atomicCoherence: src.format === "smhi-metobs",
       rejected: output.rejected + skippedRecords(skipped),
       poll: poll.identity,

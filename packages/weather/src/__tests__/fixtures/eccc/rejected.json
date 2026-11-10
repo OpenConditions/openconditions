@@ -1,0 +1,384 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "id": "2026-11-08-0100-CT12-AUTO-swob.xml",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-79.802347, 43.301136, 77.54]
+      },
+      "properties": {
+        "id": "2026-11-08-0100-CT12-AUTO-swob.xml",
+        "url": "https://dd.weather.gc.ca//20261108/WXO-DD/observations/swob-ml/20261108/CT12/2026-11-08-0100-CT12-AUTO-swob.xml",
+        "dataset": "msc-observation-atmospheric-surface_weather-ca-1.1-ascii",
+        "msc_id-value": "615TST2",
+        "data_pvdr-value": "MSC",
+        "date_tm-value": "2026-11-08T01:00:00.000Z",
+        "obs_date_tm": "2026-11-08T01:00:00.000Z",
+        "processed_date_tm": "2026-11-08T01:01:12.960Z",
+        "air_temp": 9.3,
+        "air_temp-uom": "\u00b0C",
+        "air_temp-qa": -10,
+        "rel_hum": 77,
+        "rel_hum-uom": "%",
+        "rel_hum-qa": -10,
+        "avg_wnd_spd_10m_pst10mts": 10.0,
+        "avg_wnd_spd_10m_pst10mts-uom": "km/h",
+        "avg_wnd_spd_10m_pst10mts-qa": -10,
+        "avg_wnd_dir_10m_pst10mts": 274,
+        "avg_wnd_dir_10m_pst10mts-uom": "\u00b0",
+        "avg_wnd_dir_10m_pst10mts-qa": -10,
+        "pcpn_amt_pst1hr": 4.2,
+        "pcpn_amt_pst1hr-uom": "mm",
+        "pcpn_amt_pst1hr-qa": -10
+      }
+    },
+    {
+      "id": "2026-11-08-0100-CGMA-AUTO-swob.xml",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-73.766773, 45.463549, 29.2]
+      },
+      "properties": {
+        "id": "2026-11-08-0100-CGMA-AUTO-swob.xml",
+        "url": "https://dd.weather.gc.ca//20261108/WXO-DD/observations/swob-ml/20261108/CGMA/2026-11-08-0100-CGMA-AUTO-swob.xml",
+        "dataset": "msc-observation-atmospheric-surface_weather-ca-1.1-ascii",
+        "msc_id-value": "702S007",
+        "data_pvdr-value": "MSC",
+        "date_tm-value": "2026-11-08T01:00:00.000Z",
+        "obs_date_tm": "2026-11-08T01:00:00.000Z",
+        "processed_date_tm": "2026-11-08T01:00:44.371Z",
+        "air_temp": 5.1,
+        "air_temp-uom": "\u00b0C",
+        "air_temp-qa": 100,
+        "rel_hum": 82,
+        "rel_hum-uom": "%",
+        "rel_hum-qa": 100,
+        "avg_wnd_spd_10m_pst10mts": 13.8,
+        "avg_wnd_spd_10m_pst10mts-uom": "km/h",
+        "avg_wnd_spd_10m_pst10mts-qa": 100,
+        "avg_wnd_dir_10m_pst10mts": 13,
+        "avg_wnd_dir_10m_pst10mts-uom": "\u00b0",
+        "avg_wnd_dir_10m_pst10mts-qa": 100,
+        "pcpn_amt_pst1hr": 0,
+        "pcpn_amt_pst1hr-uom": "mm",
+        "pcpn_amt_pst1hr-qa": 100
+      }
+    },
+    {
+      "id": "2026-11-08-0100-CVVK-AUTO-swob.xml",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-119.29047, 50.239472, 546.97]
+      },
+      "properties": {
+        "id": "2026-11-08-0100-CVVK-AUTO-swob.xml",
+        "url": "https://dd.weather.gc.ca//20261108/WXO-DD/observations/swob-ml/20261108/CVVK/2026-11-08-0100-CVVK-AUTO-swob.xml",
+        "dataset": "msc-observation-atmospheric-surface_weather-ca-1.1-ascii",
+        "msc_id-value": "1128592",
+        "data_pvdr-value": "MSC",
+        "date_tm-value": "2026-11-08T01:00:00.000Z",
+        "obs_date_tm": "2026-11-08T01:00:00.000Z",
+        "processed_date_tm": "2026-11-08T01:00:58.420Z",
+        "air_temp": 7.3,
+        "air_temp-uom": "\u00b0C",
+        "air_temp-qa": 100,
+        "rel_hum": 86,
+        "rel_hum-uom": "%",
+        "rel_hum-qa": 100,
+        "avg_wnd_spd_10m_pst10mts": 0.4,
+        "avg_wnd_spd_10m_pst10mts-uom": "km/h",
+        "avg_wnd_spd_10m_pst10mts-qa": 100,
+        "avg_wnd_dir_10m_pst10mts": 278,
+        "avg_wnd_dir_10m_pst10mts-uom": "\u00b0",
+        "avg_wnd_dir_10m_pst10mts-qa": 100,
+        "pcpn_amt_pst1hr": 0,
+        "pcpn_amt_pst1hr-uom": "mm",
+        "pcpn_amt_pst1hr-qa": 100
+      }
+    },
+    {
+      "id": "2026-11-08-0100-CWPC-AUTO-swob.xml",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-79.25, 42.8667, 185.0]
+      },
+      "properties": {
+        "id": "2026-11-08-0100-CWPC-AUTO-swob.xml",
+        "url": "https://dd.weather.gc.ca//20261108/WXO-DD/observations/swob-ml/20261108/CWPC/2026-11-08-0100-CWPC-AUTO-swob.xml",
+        "dataset": "msc-observation-atmospheric-surface_weather-ca-1.1-ascii",
+        "msc_id-value": "613F606",
+        "data_pvdr-value": "MSC",
+        "date_tm-value": "2026-11-08T01:00:00.000Z",
+        "obs_date_tm": "2026-11-08T01:00:00.000Z",
+        "processed_date_tm": "2026-11-08T01:01:05.042Z",
+        "air_temp": 8.1,
+        "air_temp-uom": "\u00b0C",
+        "air_temp-qa": -10,
+        "rel_hum": 79,
+        "rel_hum-uom": "%",
+        "rel_hum-qa": -10,
+        "avg_wnd_spd_10m_pst10mts": 0.1,
+        "avg_wnd_spd_10m_pst10mts-uom": "km/h",
+        "avg_wnd_spd_10m_pst10mts-qa": -10,
+        "avg_wnd_dir_10m_pst10mts": 307,
+        "avg_wnd_dir_10m_pst10mts-uom": "\u00b0",
+        "avg_wnd_dir_10m_pst10mts-qa": -10
+      }
+    },
+    {
+      "id": "2026-11-08-0100-CWAQ-AUTO-swob.xml",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-105.490473, 49.057766, 762.187]
+      },
+      "properties": {
+        "id": "2026-11-08-0100-CWAQ-AUTO-swob.xml",
+        "url": "https://dd.weather.gc.ca//20261108/WXO-DD/observations/swob-ml/20261108/CWAQ/2026-11-08-0100-CWAQ-AUTO-swob.xml",
+        "dataset": "msc-observation-atmospheric-surface_weather-ca-1.1-ascii",
+        "msc_id-value": "40318MN",
+        "data_pvdr-value": "MSC",
+        "date_tm-value": "2026-11-08T01:00:00.000Z",
+        "obs_date_tm": "2026-11-08T01:00:00.000Z",
+        "processed_date_tm": "2026-11-08T01:02:45.689Z",
+        "air_temp": 4.4,
+        "air_temp-uom": "\u00b0C",
+        "air_temp-qa": 100,
+        "rel_hum": 41,
+        "rel_hum-uom": "%",
+        "rel_hum-qa": 100,
+        "avg_wnd_spd_10m_pst10mts": 7.5,
+        "avg_wnd_spd_10m_pst10mts-uom": "km/h",
+        "avg_wnd_spd_10m_pst10mts-qa": 100,
+        "avg_wnd_dir_10m_pst10mts": 308,
+        "avg_wnd_dir_10m_pst10mts-uom": "\u00b0",
+        "avg_wnd_dir_10m_pst10mts-qa": 100,
+        "pcpn_amt_pst1hr": 0,
+        "pcpn_amt_pst1hr-uom": "mm",
+        "pcpn_amt_pst1hr-qa": 100
+      }
+    },
+    {
+      "id": "2026-11-08-0100-CWSP-AUTO-swob.xml",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-123.921, 48.3768, 17.289]
+      },
+      "properties": {
+        "id": "2026-11-08-0100-CWSP-AUTO-swob.xml",
+        "url": "https://dd.weather.gc.ca//20261108/WXO-DD/observations/swob-ml/20261108/CWSP/2026-11-08-0100-CWSP-AUTO-swob.xml",
+        "dataset": "msc-observation-atmospheric-surface_weather-ca-1.1-ascii",
+        "msc_id-value": "1017254",
+        "data_pvdr-value": "MSC",
+        "date_tm-value": "2026-11-08T01:00:00.000Z",
+        "obs_date_tm": "2026-11-08T01:00:00.000Z",
+        "processed_date_tm": "2026-11-08T01:02:59.939Z",
+        "air_temp": 10.5,
+        "air_temp-uom": "\u00b0C",
+        "air_temp-qa": 100,
+        "rel_hum": 95,
+        "rel_hum-uom": "%",
+        "rel_hum-qa": 100,
+        "pcpn_amt_pst1hr": 0,
+        "pcpn_amt_pst1hr-uom": "mm",
+        "pcpn_amt_pst1hr-qa": 100
+      }
+    },
+    {
+      "id": "2026-11-08-0100-CWPS-AUTO-swob.xml",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-80.0494, 42.5486, 180.0]
+      },
+      "properties": {
+        "id": "2026-11-08-0100-CWPS-AUTO-swob.xml",
+        "url": "https://dd.weather.gc.ca//20261108/WXO-DD/observations/swob-ml/20261108/CWPS/2026-11-08-0100-CWPS-AUTO-swob.xml",
+        "dataset": "msc-observation-atmospheric-surface_weather-ca-1.1-ascii",
+        "msc_id-value": "6134F10",
+        "data_pvdr-value": "MSC",
+        "date_tm-value": "2026-11-08T01:00:00.000Z",
+        "obs_date_tm": "2026-11-08T01:00:00.000Z",
+        "processed_date_tm": "2026-11-08T01:31:34.695Z",
+        "air_temp": 7.0,
+        "air_temp-uom": "\u00b0C",
+        "air_temp-qa": -10,
+        "rel_hum": 90,
+        "rel_hum-uom": "%",
+        "rel_hum-qa": -10,
+        "avg_wnd_spd_10m_pst10mts": 0.0,
+        "avg_wnd_spd_10m_pst10mts-uom": "km/h",
+        "avg_wnd_spd_10m_pst10mts-qa": -10,
+        "avg_wnd_dir_10m_pst10mts": 360,
+        "avg_wnd_dir_10m_pst10mts-uom": "\u00b0",
+        "avg_wnd_dir_10m_pst10mts-qa": -10
+      }
+    },
+    {
+      "id": "2026-11-08-0200-CWSP-AUTO-swob.xml",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-123.921, 48.3768, 17.289]
+      },
+      "properties": {
+        "id": "2026-11-08-0200-CWSP-AUTO-swob.xml",
+        "url": "https://dd.weather.gc.ca//20261108/WXO-DD/observations/swob-ml/20261108/CWSP/2026-11-08-0200-CWSP-AUTO-swob.xml",
+        "dataset": "msc-observation-atmospheric-surface_weather-ca-1.1-ascii",
+        "msc_id-value": "1017254",
+        "data_pvdr-value": "MSC",
+        "date_tm-value": "2026-11-08T02:00:00.000Z",
+        "obs_date_tm": "2026-11-08T02:00:00.000Z",
+        "processed_date_tm": "2026-11-08T02:00:45.834Z",
+        "air_temp": 11.2,
+        "air_temp-uom": "\u00b0C",
+        "air_temp-qa": 100,
+        "rel_hum": 97,
+        "rel_hum-uom": "%",
+        "rel_hum-qa": 100,
+        "pcpn_amt_pst1hr": 2.8,
+        "pcpn_amt_pst1hr-uom": "mm",
+        "pcpn_amt_pst1hr-qa": 100
+      }
+    },
+    {
+      "id": "2026-11-08-0200-CVVK-AUTO-swob.xml",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-119.29047, 50.239472, 546.97]
+      },
+      "properties": {
+        "id": "2026-11-08-0200-CVVK-AUTO-swob.xml",
+        "url": "https://dd.weather.gc.ca//20261108/WXO-DD/observations/swob-ml/20261108/CVVK/2026-11-08-0200-CVVK-AUTO-swob.xml",
+        "dataset": "msc-observation-atmospheric-surface_weather-ca-1.1-ascii",
+        "msc_id-value": "1128592",
+        "data_pvdr-value": "MSC",
+        "date_tm-value": "2026-11-08T02:00:00.000Z",
+        "obs_date_tm": "2026-11-08T02:00:00.000Z",
+        "processed_date_tm": "2026-11-08T02:03:20.051Z",
+        "air_temp": 7.2,
+        "air_temp-uom": "\u00b0C",
+        "air_temp-qa": 100,
+        "rel_hum": 84,
+        "rel_hum-uom": "%",
+        "rel_hum-qa": 100,
+        "avg_wnd_spd_10m_pst10mts": 3.4,
+        "avg_wnd_spd_10m_pst10mts-uom": "km/h",
+        "avg_wnd_spd_10m_pst10mts-qa": 100,
+        "avg_wnd_dir_10m_pst10mts": 304,
+        "avg_wnd_dir_10m_pst10mts-uom": "\u00b0",
+        "avg_wnd_dir_10m_pst10mts-qa": 100,
+        "pcpn_amt_pst1hr": 0,
+        "pcpn_amt_pst1hr-uom": "mm",
+        "pcpn_amt_pst1hr-qa": 100
+      }
+    },
+    {
+      "id": "2026-11-08-0200-CGMA-AUTO-swob.xml",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-73.766773, 45.463549, 29.2]
+      },
+      "properties": {
+        "id": "2026-11-08-0200-CGMA-AUTO-swob.xml",
+        "url": "https://dd.weather.gc.ca//20261108/WXO-DD/observations/swob-ml/20261108/CGMA/2026-11-08-0200-CGMA-AUTO-swob.xml",
+        "dataset": "msc-observation-atmospheric-surface_weather-ca-1.1-ascii",
+        "msc_id-value": "702S007",
+        "data_pvdr-value": "MSC",
+        "date_tm-value": "2026-11-08T02:00:00.000Z",
+        "obs_date_tm": "2026-11-08T02:00:00.000Z",
+        "processed_date_tm": "2026-11-08T02:01:04.203Z",
+        "air_temp": 5.1,
+        "air_temp-uom": "\u00b0C",
+        "air_temp-qa": 100,
+        "rel_hum": 81,
+        "rel_hum-uom": "%",
+        "rel_hum-qa": 100,
+        "avg_wnd_spd_10m_pst10mts": 11.2,
+        "avg_wnd_spd_10m_pst10mts-uom": "km/h",
+        "avg_wnd_spd_10m_pst10mts-qa": 100,
+        "avg_wnd_dir_10m_pst10mts": 22,
+        "avg_wnd_dir_10m_pst10mts-uom": "\u00b0",
+        "avg_wnd_dir_10m_pst10mts-qa": 100,
+        "pcpn_amt_pst1hr": 0,
+        "pcpn_amt_pst1hr-uom": "mm",
+        "pcpn_amt_pst1hr-qa": 100
+      }
+    },
+    {
+      "id": "2026-11-08-0200-CWPC-AUTO-swob.xml",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-79.25, 42.8667, 185.0]
+      },
+      "properties": {
+        "id": "2026-11-08-0200-CWPC-AUTO-swob.xml",
+        "url": "https://dd.weather.gc.ca//20261108/WXO-DD/observations/swob-ml/20261108/CWPC/2026-11-08-0200-CWPC-AUTO-swob.xml",
+        "dataset": "msc-observation-atmospheric-surface_weather-ca-1.1-ascii",
+        "msc_id-value": "613F606",
+        "data_pvdr-value": "MSC",
+        "date_tm-value": "2026-11-08T02:00:00.000Z",
+        "obs_date_tm": "2026-11-08T02:00:00.000Z",
+        "processed_date_tm": "2026-11-08T02:02:14.677Z",
+        "air_temp": 8.1,
+        "air_temp-uom": "\u00b0C",
+        "air_temp-qa": -10,
+        "rel_hum": 82,
+        "rel_hum-uom": "%",
+        "rel_hum-qa": -10,
+        "avg_wnd_spd_10m_pst10mts": 0.1,
+        "avg_wnd_spd_10m_pst10mts-uom": "km/h",
+        "avg_wnd_spd_10m_pst10mts-qa": -10,
+        "avg_wnd_dir_10m_pst10mts": 297,
+        "avg_wnd_dir_10m_pst10mts-uom": "\u00b0",
+        "avg_wnd_dir_10m_pst10mts-qa": -10
+      }
+    },
+    {
+      "id": "2026-11-08-0200-CT12-AUTO-swob.xml",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-79.802347, 43.301136, 77.54]
+      },
+      "properties": {
+        "id": "2026-11-08-0200-CT12-AUTO-swob.xml",
+        "url": "https://dd.weather.gc.ca//20261108/WXO-DD/observations/swob-ml/20261108/CT12/2026-11-08-0200-CT12-AUTO-swob.xml",
+        "dataset": "msc-observation-atmospheric-surface_weather-ca-1.1-ascii",
+        "msc_id-value": "615TST2",
+        "data_pvdr-value": "MSC",
+        "date_tm-value": "2026-11-08T02:00:00.000Z",
+        "obs_date_tm": "2026-11-08T02:00:00.000Z",
+        "processed_date_tm": "2026-11-08T02:02:14.421Z",
+        "air_temp": 9.4,
+        "air_temp-uom": "\u00b0C",
+        "air_temp-qa": -10,
+        "rel_hum": 81,
+        "rel_hum-uom": "%",
+        "rel_hum-qa": -10,
+        "avg_wnd_spd_10m_pst10mts": 13.6,
+        "avg_wnd_spd_10m_pst10mts-uom": "km/h",
+        "avg_wnd_spd_10m_pst10mts-qa": -10,
+        "avg_wnd_dir_10m_pst10mts": 263,
+        "avg_wnd_dir_10m_pst10mts-uom": "\u00b0",
+        "avg_wnd_dir_10m_pst10mts-qa": -10,
+        "pcpn_amt_pst1hr": 7.7,
+        "pcpn_amt_pst1hr-uom": "mm",
+        "pcpn_amt_pst1hr-qa": -10
+      }
+    }
+  ],
+  "numberMatched": 12,
+  "numberReturned": 12,
+  "links": [],
+  "timeStamp": "2026-11-08T02:05:08.791192Z"
+}

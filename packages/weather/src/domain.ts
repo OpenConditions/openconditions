@@ -7,6 +7,7 @@ import { type WeatherCatalogFeed, weatherFeedShape } from "./feed-schema.js";
 import { parseDigitrafficWeather, parseDigitrafficWeatherStatus } from "./formats/digitraffic.js";
 import { DIGITRAFFIC_SENSORS } from "./formats/digitraffic-sensors.js";
 import { DWD_PROPERTIES, DWD_ROLES, parseDwd } from "./formats/dwd.js";
+import { ECCC_MEASUREMENTS, parseEccc, parseEcccStatus } from "./formats/eccc.js";
 
 import { parseSmhi, parseSmhiStatus, SMHI_PARAMETERS } from "./formats/smhi.js";
 
@@ -14,6 +15,16 @@ import { parseSmhi, parseSmhiStatus, SMHI_PARAMETERS } from "./formats/smhi.js";
 export const WEATHER_PRODUCTS = ["weather"] as const;
 
 const FORMATS: FeedFormat<WeatherCatalogFeed>[] = [
+  {
+    id: "eccc-swob",
+    atomicCandidate: true,
+    kind: "features",
+    products: WEATHER_PRODUCTS,
+    produces: { kinds: ["weather_station"], properties: ECCC_MEASUREMENTS.map((s) => s.property) },
+    endpoints: { sites: { required: true }, status: { required: true, status: true } },
+    parse: parseEccc,
+    parseStatus: parseEcccStatus,
+  },
   {
     id: "dwd-cdc-10min",
     kind: "features",

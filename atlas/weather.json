@@ -1,5 +1,51 @@
 {
   "files": {
+    "weather/ca": {
+      "$schema": "../schema/weather.schema.json",
+      "feeds": [
+        {
+          "operator": "eccc",
+          "product": "weather",
+          "name": "ECCC MSC/CA land-station weather observations",
+          "format": "eccc-swob",
+          "tier": "authoritative",
+          "endpoints": {
+            "sites": {
+              "url": "https://api.weather.gc.ca/collections/swob-stations/items?f=json&data_provider=MSC&dataset_network=CA&limit=1000",
+              "headers": {
+                "User-Agent": "OpenConditions/1.0 (+https://openconditions.org)",
+                "Accept": "application/geo+json"
+              },
+              "cadenceSec": 86400,
+              "maxResponseBytes": 8388608
+            },
+            "status": {
+              "url": "https://api.weather.gc.ca/collections/swob-realtime/items?f=json&data_pvdr-value=MSC&dataset=msc-observation-atmospheric-surface_weather-ca-1.1-ascii&datetime={utcMinute-90}/{utcMinute}&limit=2000&sortby=date_tm-value&properties=id,url,dataset,msc_id-value,data_pvdr-value,date_tm-value,obs_date_tm,processed_date_tm,cor-value,cor-uom,data_attrib_not-value,air_temp,air_temp-uom,air_temp-qa,rel_hum,rel_hum-uom,rel_hum-qa,avg_wnd_spd_10m_pst10mts,avg_wnd_spd_10m_pst10mts-uom,avg_wnd_spd_10m_pst10mts-qa,avg_wnd_spd_10m_pst10mts-data_flag-value,avg_wnd_spd_10m_pst10mts-data_flag-uom,avg_wnd_spd_10m_pst10mts-data_flag-code_src,avg_wnd_dir_10m_pst10mts,avg_wnd_dir_10m_pst10mts-uom,avg_wnd_dir_10m_pst10mts-qa,avg_wnd_dir_10m_pst10mts-data_flag-value,avg_wnd_dir_10m_pst10mts-data_flag-uom,avg_wnd_dir_10m_pst10mts-data_flag-code_src,pcpn_amt_pst1hr,pcpn_amt_pst1hr-uom,pcpn_amt_pst1hr-qa,pcpn_amt_pst1hr-data_flag-value,pcpn_amt_pst1hr-data_flag-uom,pcpn_amt_pst1hr-data_flag-code_src",
+              "headers": {
+                "User-Agent": "OpenConditions/1.0 (+https://openconditions.org)",
+                "Accept": "application/geo+json"
+              },
+              "cadenceSec": 600,
+              "maxPayloadAgeSec": 3600,
+              "maxResponseBytes": 8388608
+            }
+          },
+          "freshnessWindowSec": 3600,
+          "requestLimits": {
+            "perMinute": 6
+          },
+          "license": "LicenseRef-ECCC-Data-Servers-End-use",
+          "licenseUrl": "https://eccc-msc.github.io/open-data/licence/readme_en/",
+          "attribution": "Data Source: Environment and Climate Change Canada",
+          "terms": {
+            "url": "https://eccc-msc.github.io/open-data/usage-policy/readme_en/",
+            "reviewedAt": "2026-11-09"
+          },
+          "privacyUrl": "https://www.canada.ca/en/transparency/privacy.html",
+          "homepage": "https://eccc-msc.github.io/open-data/msc-data/obs_station/readme_obs_insitu_en/"
+        }
+      ]
+    },
     "weather/de": {
       "$schema": "../schema/weather.schema.json",
       "feeds": [
@@ -249,6 +295,81 @@
     }
   },
   "feeds": [
+    {
+      "operator": "eccc",
+      "product": "weather",
+      "name": "ECCC MSC/CA land-station weather observations",
+      "format": "eccc-swob",
+      "tier": "authoritative",
+      "endpoints": {
+        "sites": {
+          "url": "https://api.weather.gc.ca/collections/swob-stations/items?f=json&data_provider=MSC&dataset_network=CA&limit=1000",
+          "headers": {
+            "User-Agent": "OpenConditions/1.0 (+https://openconditions.org)",
+            "Accept": "application/geo+json"
+          },
+          "cadenceSec": 86400,
+          "maxResponseBytes": 8388608
+        },
+        "status": {
+          "url": "https://api.weather.gc.ca/collections/swob-realtime/items?f=json&data_pvdr-value=MSC&dataset=msc-observation-atmospheric-surface_weather-ca-1.1-ascii&datetime={utcMinute-90}/{utcMinute}&limit=2000&sortby=date_tm-value&properties=id,url,dataset,msc_id-value,data_pvdr-value,date_tm-value,obs_date_tm,processed_date_tm,cor-value,cor-uom,data_attrib_not-value,air_temp,air_temp-uom,air_temp-qa,rel_hum,rel_hum-uom,rel_hum-qa,avg_wnd_spd_10m_pst10mts,avg_wnd_spd_10m_pst10mts-uom,avg_wnd_spd_10m_pst10mts-qa,avg_wnd_spd_10m_pst10mts-data_flag-value,avg_wnd_spd_10m_pst10mts-data_flag-uom,avg_wnd_spd_10m_pst10mts-data_flag-code_src,avg_wnd_dir_10m_pst10mts,avg_wnd_dir_10m_pst10mts-uom,avg_wnd_dir_10m_pst10mts-qa,avg_wnd_dir_10m_pst10mts-data_flag-value,avg_wnd_dir_10m_pst10mts-data_flag-uom,avg_wnd_dir_10m_pst10mts-data_flag-code_src,pcpn_amt_pst1hr,pcpn_amt_pst1hr-uom,pcpn_amt_pst1hr-qa,pcpn_amt_pst1hr-data_flag-value,pcpn_amt_pst1hr-data_flag-uom,pcpn_amt_pst1hr-data_flag-code_src",
+          "headers": {
+            "User-Agent": "OpenConditions/1.0 (+https://openconditions.org)",
+            "Accept": "application/geo+json"
+          },
+          "cadenceSec": 600,
+          "maxPayloadAgeSec": 3600,
+          "maxResponseBytes": 8388608
+        }
+      },
+      "freshnessWindowSec": 3600,
+      "requestLimits": {
+        "perMinute": 6
+      },
+      "license": "LicenseRef-ECCC-Data-Servers-End-use",
+      "licenseUrl": "https://eccc-msc.github.io/open-data/licence/readme_en/",
+      "attribution": "Data Source: Environment and Climate Change Canada",
+      "terms": {
+        "url": "https://eccc-msc.github.io/open-data/usage-policy/readme_en/",
+        "reviewedAt": "2026-11-09"
+      },
+      "privacyUrl": "https://www.canada.ca/en/transparency/privacy.html",
+      "homepage": "https://eccc-msc.github.io/open-data/msc-data/obs_station/readme_obs_insitu_en/",
+      "id": "ca-eccc-weather",
+      "domain": "weather",
+      "region": "ca",
+      "file": "feeds/weather/ca.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": true,
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "changeNotice": false,
+        "retention": true,
+        "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://eccc-msc.github.io/open-data/usage-policy/readme_en/",
+        "reviewedAt": "2026-11-09"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "CA"
+        ]
+      },
+      "cadenceSec": 600,
+      "country": "CA"
+    },
     {
       "operator": "dwd",
       "qualifier": "cdc",

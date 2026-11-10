@@ -814,6 +814,21 @@ export const federationSubscription = conditionsSchema.table(
   ],
 );
 
+/** Durable latest provider revision, including explicit suppression with no public reading. */
+export const observationRevision = conditionsSchema.table(
+  "observation_revision",
+  {
+    sourceId: text("source_id").notNull(),
+    featureId: text("feature_id").notNull(),
+    property: text("property").notNull(),
+    measuredAt: timestamp("measured_at", { withTimezone: true }).notNull(),
+    rank: text("rank").notNull(),
+    signature: text("signature").notNull(),
+    suppressed: boolean("suppressed").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.sourceId, t.featureId, t.property] })],
+);
+
 /** Last wholly accepted GeoNet acquisition; publication shares its transaction. */
 export const geonetCoverage = conditionsSchema.table("geonet_coverage", {
   revisions: jsonb("revisions").notNull().default({}),

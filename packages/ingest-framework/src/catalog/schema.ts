@@ -312,6 +312,12 @@ export const endpointSchema = z
      * publisher slower than the operator's `OPENCONDITIONS_FETCH_TIMEOUT_MS`
      * (60 s by default) allows. It lengthens that limit and never shortens it.
      */
+    maxResponseBytes: z
+      .number()
+      .int()
+      .positive()
+      .max(512 * 1024 * 1024)
+      .optional(),
     timeoutSec: z.number().int().positive().max(900).optional(),
     /**
      * A role of changes that asks for those since its previous answer: each

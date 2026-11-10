@@ -1,0 +1,40 @@
+{
+  "capturedDateUTC": "2026-11-08",
+  "attribution": "Data Source: Environment and Climate Change Canada",
+  "license": "LicenseRef-ECCC-Data-Servers-End-use",
+  "licenseUrl": "https://eccc-msc.github.io/open-data/licence/readme_en/",
+  "privacy": "Public station weather and metadata only; no credentials, people, accounts or contact.",
+  "sources": [
+    {
+      "file": "caab.json",
+      "url": "https://api.weather.gc.ca/collections/swob-realtime/items?f=json&url=CAAB&sortby=-date_tm-value&limit=1",
+      "sha256": "cd27dc3750a8847a3a3c7f0a91911b8fc5422c32118522eda3a1e95cda4e5d34",
+      "bytes": 7304
+    },
+    {
+      "file": "stations.json",
+      "url": "https://api.weather.gc.ca/collections/swob-stations/items?f=json&data_provider=MSC&dataset_network=CA&limit=1000",
+      "sha256": "f5e8e33ac47022b43d2b0e53b4d62feed7db63b44f70db6f258e851b645b73c8",
+      "bytes": 168926
+    },
+    {
+      "file": "marine.json",
+      "url": "https://api.weather.gc.ca/collections/swob-realtime/items?f=json&sortby=-date_tm-value&limit=1&properties=id,dataset,data_pvdr-value,msc_id-value,date_tm-value,obs_date_tm,processed_date_tm",
+      "sha256": "4bfe3c457c8398eafa248d76e838c062c250524c2c7393dd7854ec8857e261e9",
+      "bytes": 1829
+    },
+    {
+      "file": "guide.pdf",
+      "url": "https://collaboration.cmc.ec.gc.ca/cmc/cmos/public_doc/msc-data/obs_station/SWOB-ML_Product_User_Guide_e.pdf",
+      "sha256": "6d4cccdedffa2288308266e7a708203d20e2ca6a1e8c37f17f5f98b7b35952b0",
+      "bytes": 3879011
+    }
+  ],
+  "current": {
+    "url": "https://api.weather.gc.ca/collections/swob-realtime/items?f=json&data_pvdr-value=MSC&dataset=msc-observation-atmospheric-surface_weather-ca-1.1-ascii&limit=2000&sortby=date_tm-value&datetime=2026-11-08T00:35:00Z/2026-11-08T02:05:00Z&properties=id,url,dataset,msc_id-value,data_pvdr-value,date_tm-value,obs_date_tm,processed_date_tm,cor-value,cor-uom,data_attrib_not-value,air_temp,air_temp-uom,air_temp-qa,rel_hum,rel_hum-uom,rel_hum-qa,avg_wnd_spd_10m_pst10mts,avg_wnd_spd_10m_pst10mts-uom,avg_wnd_spd_10m_pst10mts-qa,avg_wnd_spd_10m_pst10mts-data_flag-value,avg_wnd_spd_10m_pst10mts-data_flag-uom,avg_wnd_spd_10m_pst10mts-data_flag-code_src,avg_wnd_dir_10m_pst10mts,avg_wnd_dir_10m_pst10mts-uom,avg_wnd_dir_10m_pst10mts-qa,avg_wnd_dir_10m_pst10mts-data_flag-value,avg_wnd_dir_10m_pst10mts-data_flag-uom,avg_wnd_dir_10m_pst10mts-data_flag-code_src,pcpn_amt_pst1hr,pcpn_amt_pst1hr-uom,pcpn_amt_pst1hr-qa,pcpn_amt_pst1hr-data_flag-value,pcpn_amt_pst1hr-data_flag-uom,pcpn_amt_pst1hr-data_flag-code_src",
+    "retrievedAt": "2026-11-08T02:05:09.792823+00:00",
+    "sha256": "ee75da0a2e02daf6ca73973b81a75e34182567f6f42e01197268d5c860940407",
+    "bytes": 983595
+  },
+  "fixtureEdits": "Stations trimmed to first two; rejected selected from current slice (suppressed or unmatched). Counts and links adapted only for these test collections. CAAB and marine retained whole; formatter whitespace only. Synthetic mutations are in tests. edge-stations.json selects the captured MSC inventory entries for the suppressed-temperature cases."
+}

@@ -108,6 +108,8 @@ export interface FeedFormat<F extends CatalogFeed = CatalogFeed> {
    * empty answer, not a failure that keeps the last publication.
    */
   mayBeEmpty?: true;
+  /** Reject the whole candidate if any canonical record fails; retain role state until publication. */
+  atomicCandidate?: true;
   /** Revalidate source-clock freshness even when HTTP confirms held bytes unchanged. */
   reparseUnchanged?: true;
   /**

@@ -60,6 +60,7 @@
             "enum": [
               "digitraffic-weather",
               "dwd-cdc-10min",
+              "eccc-swob",
               "smhi-metobs"
             ]
           },
@@ -386,6 +387,11 @@
                     "deadlineSec"
                   ],
                   "additionalProperties": false
+                },
+                "maxResponseBytes": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 536870912
                 },
                 "timeoutSec": {
                   "type": "integer",

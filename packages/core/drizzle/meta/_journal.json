@@ -687,6 +687,13 @@
       "when": 1794273434227,
       "tag": "0097_geonet_coverage",
       "breakpoints": true
+    },
+    {
+      "idx": 98,
+      "version": "7",
+      "when": 1794341624308,
+      "tag": "0098_observation_revision",
+      "breakpoints": true
     }
   ]
 }

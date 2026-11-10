@@ -401,6 +401,11 @@
                   ],
                   "additionalProperties": false
                 },
+                "maxResponseBytes": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 536870912
+                },
                 "timeoutSec": {
                   "type": "integer",
                   "exclusiveMinimum": 0,
