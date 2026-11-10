@@ -1,0 +1,155 @@
+[
+  {
+    "identifier": "2026-11-07T20:51:00.0000000:684655",
+    "incident": "684655",
+    "sent": "2026-11-07T20:51:00+11:00",
+    "effective": "2026-11-07T20:51:00+11:00",
+    "expires": "2026-11-09T04:12:40+11:00",
+    "instruction": "A fire has started There is no immediate danger. Stay up to date in case the situation changes",
+    "coordinates": [149.284033, -31.2829810009999]
+  },
+  {
+    "identifier": "2026-11-07T18:18:00.0000000:684577",
+    "incident": "684577",
+    "sent": "2026-11-07T18:18:00+11:00",
+    "effective": "2026-11-07T18:18:00+11:00",
+    "expires": "2026-11-09T04:12:40+11:00",
+    "instruction": "A fire has started There is no immediate danger. Stay up to date in case the situation changes",
+    "coordinates": [148.607437133, -32.3318519589999]
+  },
+  {
+    "identifier": "2026-11-07T18:12:00.0000000:684615",
+    "incident": "684615",
+    "sent": "2026-11-07T18:12:00+11:00",
+    "effective": "2026-11-07T18:12:00+11:00",
+    "expires": "2026-11-09T04:12:40+11:00",
+    "instruction": "A fire has started There is no immediate danger. Stay up to date in case the situation changes",
+    "coordinates": [146.897003174, -34.030643464]
+  },
+  {
+    "identifier": "2026-11-07T18:09:00.0000000:684405",
+    "incident": "684405",
+    "sent": "2026-11-07T18:09:00+11:00",
+    "effective": "2026-11-07T18:09:00+11:00",
+    "expires": "2026-11-09T04:12:40+11:00",
+    "instruction": "A fire has started There is no immediate danger. Stay up to date in case the situation changes",
+    "coordinates": [150.729978, -32.2603609999999]
+  },
+  {
+    "identifier": "2026-11-07T18:01:00.0000000:684427",
+    "incident": "684427",
+    "sent": "2026-11-07T18:01:00+11:00",
+    "effective": "2026-11-07T18:01:00+11:00",
+    "expires": "2026-11-09T04:12:40+11:00",
+    "instruction": "A fire has started There is no immediate danger. Stay up to date in case the situation changes",
+    "coordinates": [143.841998577, -35.145424164]
+  },
+  {
+    "identifier": "2026-11-07T18:51:00.0000000:684326",
+    "incident": "684326",
+    "sent": "2026-11-07T18:51:00+11:00",
+    "effective": "2026-11-07T18:51:00+11:00",
+    "expires": "2026-11-09T04:12:40+11:00",
+    "instruction": "A fire has started There is no immediate danger. Stay up to date in case the situation changes",
+    "coordinates": [151.141654014, -30.62417511]
+  },
+  {
+    "identifier": "2026-11-08T01:36:00.0000000:684426",
+    "incident": "684426",
+    "sent": "2026-11-08T01:36:00+11:00",
+    "effective": "2026-11-08T01:36:00+11:00",
+    "expires": "2026-11-09T04:12:40+11:00",
+    "instruction": "A fire has started There is no immediate danger. Stay up to date in case the situation changes",
+    "coordinates": [145.93514, -34.886321]
+  },
+  {
+    "identifier": "2026-11-07T17:37:00.0000000:684599",
+    "incident": "684599",
+    "sent": "2026-11-07T17:37:00+11:00",
+    "effective": "2026-11-07T17:37:00+11:00",
+    "expires": "2026-11-09T04:12:40+11:00",
+    "instruction": "A fire has started There is no immediate danger. Stay up to date in case the situation changes",
+    "coordinates": [151.373275757, -32.830249786]
+  },
+  {
+    "identifier": "2026-11-08T03:21:00.0000000:684669",
+    "incident": "684669",
+    "sent": "2026-11-08T03:21:00+11:00",
+    "effective": "2026-11-08T03:21:00+11:00",
+    "expires": "2026-11-09T04:12:40+11:00",
+    "instruction": "A fire has started There is no immediate danger. Stay up to date in case the situation changes",
+    "coordinates": [151.492444, -32.881382]
+  },
+  {
+    "identifier": "2026-11-07T17:36:00.0000000:684527",
+    "incident": "684527",
+    "sent": "2026-11-07T17:36:00+11:00",
+    "effective": "2026-11-07T17:36:00+11:00",
+    "expires": "2026-11-09T04:12:40+11:00",
+    "instruction": "A fire has started There is no immediate danger. Stay up to date in case the situation changes",
+    "coordinates": [151.495788574, -32.8385429379999]
+  },
+  {
+    "identifier": "2026-11-07T22:13:00.0000000:684656",
+    "incident": "684656",
+    "sent": "2026-11-07T22:13:00+11:00",
+    "effective": "2026-11-07T22:13:00+11:00",
+    "expires": "2026-11-09T04:12:40+11:00",
+    "instruction": "A fire has started There is no immediate danger. Stay up to date in case the situation changes",
+    "coordinates": [149.284698487, -31.282989502]
+  },
+  {
+    "identifier": "2026-11-07T17:32:00.0000000:684594",
+    "incident": "684594",
+    "sent": "2026-11-07T17:32:00+11:00",
+    "effective": "2026-11-07T17:32:00+11:00",
+    "expires": "2026-11-09T04:12:40+11:00",
+    "instruction": "A fire has started There is no immediate danger. Stay up to date in case the situation changes",
+    "coordinates": [151.503799439, -32.8300132749999]
+  },
+  {
+    "identifier": "2026-11-08T01:39:00.0000000:684665",
+    "incident": "684665",
+    "sent": "2026-11-08T01:39:00+11:00",
+    "effective": "2026-11-08T01:39:00+11:00",
+    "expires": "2026-11-09T04:12:40+11:00",
+    "instruction": "A fire has started There is no immediate danger. Stay up to date in case the situation changes",
+    "coordinates": [150.937728882, -31.101566315]
+  },
+  {
+    "identifier": "2026-11-07T18:06:00.0000000:684312",
+    "incident": "684312",
+    "sent": "2026-11-07T18:06:00+11:00",
+    "effective": "2026-11-07T18:06:00+11:00",
+    "expires": "2026-11-09T04:12:40+11:00",
+    "instruction": "Unknown",
+    "coordinates": [151.174898, -31.1104369999999]
+  },
+  {
+    "identifier": "2026-11-07T18:01:00.0000000:684536",
+    "incident": "684536",
+    "sent": "2026-11-07T18:01:00+11:00",
+    "effective": "2026-11-07T18:01:00+11:00",
+    "expires": "2026-11-09T04:12:40+11:00",
+    "instruction": "Unknown",
+    "coordinates": [151.389097999, -32.821136]
+  },
+  {
+    "identifier": "2026-11-07T15:44:00.0000000:684617",
+    "incident": "684617",
+    "sent": "2026-11-07T15:44:00+11:00",
+    "effective": "2026-11-07T15:44:00+11:00",
+    "expires": "2026-11-09T04:12:40+11:00",
+    "instruction": "Unknown",
+    "coordinates": [149.547149659, -34.869159698]
+  },
+  {
+    "identifier": "2026-11-07T15:36:00.0000000:683824",
+    "incident": "683824",
+    "sent": "2026-11-07T15:36:00+11:00",
+    "effective": "2026-11-07T15:36:00+11:00",
+    "expires": "2026-11-09T04:12:40+11:00",
+    "instruction": "Unknown",
+    "coordinates": [150.670394898, -35.071166992]
+  }
+]

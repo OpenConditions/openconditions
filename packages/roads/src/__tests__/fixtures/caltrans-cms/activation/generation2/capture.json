@@ -1,0 +1,254 @@
+[
+  {
+    "url": "https://cwwp2.dot.ca.gov/data/d1/cms/cmsStatusD01.json",
+    "start": "2026-11-09T02:29:09.088965+00:00",
+    "status": 200,
+    "headers": {
+      "Server": "nginx/1.14.1",
+      "Date": "Mon, 09 Nov 2026 02:29:09 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "32678",
+      "Last-Modified": "Mon, 09 Nov 2026 02:29:04 GMT",
+      "Connection": "close",
+      "ETag": "\"6af12ff0-7fa6\"",
+      "Access-Control-Allow-Origin": "*",
+      "Accept-Ranges": "bytes"
+    },
+    "bytes": 32678,
+    "sha256": "d51829c4ed47bf405377861e47122236ae61ab3bb71edf77e60dc9cc23809c40",
+    "rows": 28,
+    "elapsedSec": 0.8142771249986254,
+    "end": "2026-11-09T02:29:09.903263+00:00"
+  },
+  {
+    "url": "https://cwwp2.dot.ca.gov/data/d2/cms/cmsStatusD02.json",
+    "start": "2026-11-09T02:29:09.904277+00:00",
+    "status": 200,
+    "headers": {
+      "Server": "nginx/1.14.1",
+      "Date": "Mon, 09 Nov 2026 02:29:10 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "124975",
+      "Last-Modified": "Mon, 09 Nov 2026 02:25:20 GMT",
+      "Connection": "close",
+      "ETag": "\"6af12f10-1e82f\"",
+      "Access-Control-Allow-Origin": "*",
+      "Accept-Ranges": "bytes"
+    },
+    "bytes": 124975,
+    "sha256": "5601066bbe003cc3bac28ff1987cc79a0d31549003a3ee2d25127d5bd4f58816",
+    "rows": 44,
+    "elapsedSec": 1.1185643330027233,
+    "end": "2026-11-09T02:29:11.022881+00:00"
+  },
+  {
+    "url": "https://cwwp2.dot.ca.gov/data/d3/cms/cmsStatusD03.json",
+    "start": "2026-11-09T02:29:11.023852+00:00",
+    "status": 200,
+    "headers": {
+      "Server": "nginx/1.14.1",
+      "Date": "Mon, 09 Nov 2026 02:29:11 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "122297",
+      "Last-Modified": "Mon, 09 Nov 2026 02:28:30 GMT",
+      "Connection": "close",
+      "ETag": "\"6af12fce-1ddb9\"",
+      "Access-Control-Allow-Origin": "*",
+      "Accept-Ranges": "bytes"
+    },
+    "bytes": 122297,
+    "sha256": "f50dfdddeb3ed95e33a1fc3c8de96ee269acd71aa92f46d5a448fd5a5bdf2778",
+    "rows": 108,
+    "elapsedSec": 1.1393538339980296,
+    "end": "2026-11-09T02:29:12.163231+00:00"
+  },
+  {
+    "url": "https://cwwp2.dot.ca.gov/data/d4/cms/cmsStatusD04.json",
+    "start": "2026-11-09T02:29:12.163914+00:00",
+    "status": 200,
+    "headers": {
+      "Server": "nginx/1.14.1",
+      "Date": "Mon, 09 Nov 2026 02:29:12 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "219363",
+      "Last-Modified": "Mon, 09 Nov 2026 02:28:34 GMT",
+      "Connection": "close",
+      "ETag": "\"6af12fd2-358e3\"",
+      "Access-Control-Allow-Origin": "*",
+      "Accept-Ranges": "bytes"
+    },
+    "bytes": 219363,
+    "sha256": "d0d033d9cabd89dcb05a626edc43b9c0febaa53f23344bb6421fdc247ac5e644",
+    "rows": 189,
+    "elapsedSec": 2.221979374997318,
+    "end": "2026-11-09T02:29:14.385910+00:00"
+  },
+  {
+    "url": "https://cwwp2.dot.ca.gov/data/d5/cms/cmsStatusD05.json",
+    "start": "2026-11-09T02:29:14.386735+00:00",
+    "status": 200,
+    "headers": {
+      "Server": "nginx/1.14.1",
+      "Date": "Mon, 09 Nov 2026 02:29:14 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "24829",
+      "Last-Modified": "Mon, 09 Nov 2026 02:29:04 GMT",
+      "Connection": "close",
+      "ETag": "\"6af12ff0-60fd\"",
+      "Access-Control-Allow-Origin": "*",
+      "Accept-Ranges": "bytes"
+    },
+    "bytes": 24829,
+    "sha256": "af7e2129f97dbf739f3e5e63ee97491cd16da78fab85857f7536589f86645828",
+    "rows": 22,
+    "elapsedSec": 0.7994772500023828,
+    "end": "2026-11-09T02:29:15.186233+00:00"
+  },
+  {
+    "url": "https://cwwp2.dot.ca.gov/data/d6/cms/cmsStatusD06.json",
+    "start": "2026-11-09T02:29:15.187420+00:00",
+    "status": 200,
+    "headers": {
+      "Server": "nginx/1.14.1",
+      "Date": "Mon, 09 Nov 2026 02:29:15 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "132336",
+      "Last-Modified": "Mon, 09 Nov 2026 02:29:04 GMT",
+      "Connection": "close",
+      "ETag": "\"6af12ff0-204f0\"",
+      "Access-Control-Allow-Origin": "*",
+      "Accept-Ranges": "bytes"
+    },
+    "bytes": 132336,
+    "sha256": "29f2588786c002ba8ce2e1208d2a8e44deb4d24384f8b63b95c8401a30de17fc",
+    "rows": 118,
+    "elapsedSec": 1.1265485410040128,
+    "end": "2026-11-09T02:29:16.313996+00:00"
+  },
+  {
+    "url": "https://cwwp2.dot.ca.gov/data/d7/cms/cmsStatusD07.json",
+    "start": "2026-11-09T02:29:16.314629+00:00",
+    "status": 200,
+    "headers": {
+      "Server": "nginx/1.14.1",
+      "Date": "Mon, 09 Nov 2026 02:29:16 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "167155",
+      "Last-Modified": "Mon, 09 Nov 2026 02:29:04 GMT",
+      "Connection": "close",
+      "ETag": "\"6af12ff0-28cf3\"",
+      "Access-Control-Allow-Origin": "*",
+      "Accept-Ranges": "bytes"
+    },
+    "bytes": 167155,
+    "sha256": "5d97a4be67136294da03f7083e5a9a1a96c386f5b3e10331d86151be3cd20dae",
+    "rows": 145,
+    "elapsedSec": 1.3012190000008559,
+    "end": "2026-11-09T02:29:17.615864+00:00"
+  },
+  {
+    "url": "https://cwwp2.dot.ca.gov/data/d8/cms/cmsStatusD08.json",
+    "start": "2026-11-09T02:29:17.616864+00:00",
+    "status": 200,
+    "headers": {
+      "Server": "nginx/1.14.1",
+      "Date": "Mon, 09 Nov 2026 02:29:18 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "108970",
+      "Last-Modified": "Mon, 09 Nov 2026 02:29:03 GMT",
+      "Connection": "close",
+      "ETag": "\"6af12fef-1a9aa\"",
+      "Access-Control-Allow-Origin": "*",
+      "Accept-Ranges": "bytes"
+    },
+    "bytes": 108970,
+    "sha256": "419b5443561ad86f7ce955ce7f4af38aac3d81409a18f2ad18576c1feb50d4f9",
+    "rows": 94,
+    "elapsedSec": 1.1141262919991277,
+    "end": "2026-11-09T02:29:18.731015+00:00"
+  },
+  {
+    "url": "https://cwwp2.dot.ca.gov/data/d9/cms/cmsStatusD09.json",
+    "start": "2026-11-09T02:29:18.731752+00:00",
+    "status": 200,
+    "headers": {
+      "Server": "nginx/1.14.1",
+      "Date": "Mon, 09 Nov 2026 02:29:19 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "17243",
+      "Last-Modified": "Mon, 09 Nov 2026 02:29:03 GMT",
+      "Connection": "close",
+      "ETag": "\"6af12fef-435b\"",
+      "Access-Control-Allow-Origin": "*",
+      "Accept-Ranges": "bytes"
+    },
+    "bytes": 17243,
+    "sha256": "e24124554056fc51096bde7bdd369f20909a2411e88070cdc3e74c1c2414700d",
+    "rows": 15,
+    "elapsedSec": 0.641015499997593,
+    "end": "2026-11-09T02:29:19.372784+00:00"
+  },
+  {
+    "url": "https://cwwp2.dot.ca.gov/data/d10/cms/cmsStatusD10.json",
+    "start": "2026-11-09T02:29:19.373606+00:00",
+    "status": 200,
+    "headers": {
+      "Server": "nginx/1.14.1",
+      "Date": "Mon, 09 Nov 2026 02:29:19 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "120345",
+      "Last-Modified": "Mon, 09 Nov 2026 02:29:04 GMT",
+      "Connection": "close",
+      "ETag": "\"6af12ff0-1d619\"",
+      "Access-Control-Allow-Origin": "*",
+      "Accept-Ranges": "bytes"
+    },
+    "bytes": 120345,
+    "sha256": "7c1e9f22f9af1d1169c2cd3a32eae19664aec089611e9e6684f59ff4549b8da7",
+    "rows": 107,
+    "elapsedSec": 0.9580560409958707,
+    "end": "2026-11-09T02:29:20.331677+00:00"
+  },
+  {
+    "url": "https://cwwp2.dot.ca.gov/data/d11/cms/cmsStatusD11.json",
+    "start": "2026-11-09T02:29:20.332221+00:00",
+    "status": 200,
+    "headers": {
+      "Server": "nginx/1.14.1",
+      "Date": "Mon, 09 Nov 2026 02:29:20 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "94480",
+      "Last-Modified": "Mon, 09 Nov 2026 02:28:53 GMT",
+      "Connection": "close",
+      "ETag": "\"6af12fe5-17110\"",
+      "Access-Control-Allow-Origin": "*",
+      "Accept-Ranges": "bytes"
+    },
+    "bytes": 94480,
+    "sha256": "63dd0258e151808b56eccb2eb3161bd6a62d2d2741c2537542ac8c17c237c833",
+    "rows": 80,
+    "elapsedSec": 0.9455776249960763,
+    "end": "2026-11-09T02:29:21.277811+00:00"
+  },
+  {
+    "url": "https://cwwp2.dot.ca.gov/data/d12/cms/cmsStatusD12.json",
+    "start": "2026-11-09T02:29:21.278738+00:00",
+    "status": 200,
+    "headers": {
+      "Server": "nginx/1.14.1",
+      "Date": "Mon, 09 Nov 2026 02:29:21 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "77163",
+      "Last-Modified": "Mon, 09 Nov 2026 02:28:23 GMT",
+      "Connection": "close",
+      "ETag": "\"6af12fc7-12d6b\"",
+      "Access-Control-Allow-Origin": "*",
+      "Accept-Ranges": "bytes"
+    },
+    "bytes": 77163,
+    "sha256": "b0c2068ed255544c4d94d20fd47581deca10daa5382add2d367dd94144477409",
+    "rows": 67,
+    "elapsedSec": 1.1302016670015291,
+    "end": "2026-11-09T02:29:22.408964+00:00"
+  }
+]

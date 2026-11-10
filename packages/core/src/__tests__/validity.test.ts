@@ -138,3 +138,13 @@ describe("withPolledValidity", () => {
     expect(db.calls).toEqual([]);
   });
 });
+
+it("caps successful polling at a publisher snapshot expiry", async () => {
+  const r = reading({
+    freshness: { fetchedAt: "2026-10-07T11:00:00Z", expiresAt: "2026-10-07T11:30:00Z" },
+  });
+  const [out] = await withPolledValidity(runner({ "fr-irve": "2026-10-07T12:28:00Z" }), registry, [
+    r,
+  ]);
+  expect(out?.["validUntil"]).toBe("2026-10-07T11:30:00.000Z");
+});

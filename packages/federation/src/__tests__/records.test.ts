@@ -1,5 +1,6 @@
 import {
   buildRegistry,
+  contentHash,
   type FusableObservation,
   fuse,
   fusedObservation,
@@ -446,4 +447,12 @@ describe("reading a peer's outbox entry", () => {
       expect((read as { entry: object }).entry).not.toHaveProperty("cadenceSec");
     }
   });
+});
+
+it("federation snapshot hashes the actual extras-disabled record", () => {
+  const original = feedClosure();
+  const snapshot = federatedSnapshot(original, { federateExtras: false })!;
+  expect(snapshot.extras).toBeUndefined();
+  expect(snapshot.contentHash).toBe(contentHash(snapshot as unknown as Record<string, unknown>));
+  expect(original.extras).toEqual({ situationRecordExtension: "x" });
 });

@@ -282,6 +282,8 @@ export interface Restriction {
  * carry. The situation assembler prefers these over the legacy fields.
  */
 export interface SituationHints {
+  /** Publisher identifiers retained independently of the chosen record identity. */
+  externalIds?: Array<{ scheme: string; id: string; authority?: string }>;
   /** The classification from the source's own codes, via the roads crosswalk. */
   classification?: RoadClassification;
   /**

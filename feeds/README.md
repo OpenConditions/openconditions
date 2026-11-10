@@ -237,7 +237,7 @@ plain GeoJSON, JSON or CSV table is written in the generic layout of that name
 needs no code. A standard or a publisher's own API has a format of its own:
 `datex2` (DATEX II v2 or v3 site table and status), `datex2-light` (DATEX II
 Light JSON), `parkapi-v3`, `db-bahnpark`, `rdw`, `sbb`, `opendatahub`, `hdb`,
-`utmc`, `tfnsw` and `overpass` (OpenStreetMap, on demand). The formats are in
+`utmc`, `tfnsw`, `taipei` and `overpass` (OpenStreetMap, on demand). The formats are in
 `packages/parking/src/domain.ts`.
 
 The charging product is:
@@ -1100,3 +1100,15 @@ schemas or documentation changes alone do not fan out live requests; regular CI
 still lints the complete catalogue. Parser errors remain gating, network failures
 remain warnings, and unavailable keyed feeds remain skipped. This workflow uses
 unprivileged PR execution without provider secrets; it is not a new required check.
+
+### Taipei off-street XML
+
+`tw-tpe-pma-parking` joins the required `sites` and `status` XML resources of [dataset 128435](https://data.gov.tw/dataset/128435). It covers registered public and private off-street inventory, with category availability for a subset; it does not cover curbside parking or interpret tariff rules. The XML parser preserves publisher string IDs, static TYPE values, Chinese names, addresses, opening-hours text and tariff text. It never falls back to the legacy JSON resources.
+
+Five canonical categories are represented as components: car, ordinary motorcycle, bus, disabled and pregnancy/family. Reserved categories overlap vehicle totals and are never summed. A car count is not a site-wide total. Heavy motorcycles remain in retained raw XML because the current vehicle/user-group identity cannot distinguish them from ordinary motorcycles. Negative values including `-9`, missing values, malformed counts and counts above capacity produce no reading; zero remains zero. No open/closed state is inferred.
+
+Site coordinates use TWD97 TM2 121 (EPSG:3826), independently checked against PROJ 9.8.1. Entrance `Xcod` is latitude and `Ycod` longitude. Multiple valid entrances are retained; missing and zero placeholders are omitted. Invalid site geometry rejects the candidate instead of withdrawing a previous site. Root `UPDATETIME` is a publication snapshot in Asia/Taipei, not an individual counter measurement. Observations are dated to that snapshot and retain `provenance.sourceUpdatedAt` separately from `freshness.fetchedAt`. Status snapshots must be younger than the configured 1,800 seconds and cannot be future-dated. Inventory has a two-day maximum source age to allow daily acquisition. Publisher expiry caps API validity and fusion even for bulk change-only counts. The last accepted publisher clock is stored transactionally under the source lock. A newer publication within the age limit is accepted even when it predates the previous retrieval. Same-clock and backwards publications cannot advance source success. HTTP 304 validates transport separately and still checks the retained XML clocks; it cannot renew publisher freshness. Held failed roles cannot authorize publication. Migration `0093_source_publication_clock` adds the durable clock independently of other feed PRs.
+
+The authored feed is enabled for partial inventory and the five supported availability categories, with `taipei.qualifiedSnapshot: false`. Missing features and series retain their last-good records; source-based expiry removes stale availability from public output even when no later poll succeeds. Full-snapshot authority remains separate: `taipei.qualifiedSnapshot: true` grants inventory withdrawal and omitted-series ending only after independent evidence establishes those semantics. Syntactic XML validity, received-row accounting, HTTP 200 and absence of pagination do not establish completeness. The catalogue does not claim a physical parking census. This parser never grants offer withdrawal authority. Existing shrink confirmation still requires three qualifying polls over at least ten minutes for large reductions. Empty, failed, error, truncated, duplicate-ID and orphan-status documents fail without replacing the last good publication. Daily sites and five-minute status cadences are conservative operator choices, not provider quotas or service guarantees.
+
+The exact dataset grants redistribution under [OGDL Taiwan 1.0](https://data.gov.tw/license). Retain the agency, year, release names, version, release statement and licence link in the catalogue attribution. Upstream records still pass the shared rights filter; an unknown upstream grant does not inherit this dataset's grant. Real reduced fixtures retain whole PARK entries and the original root clocks; their retrieval metadata and full-document hashes are in `taipei-provenance.json`. These fixtures and disposable database/API tests do not establish production activation.

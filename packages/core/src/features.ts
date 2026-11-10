@@ -1,5 +1,6 @@
 import {
   canonicalIdOf,
+  contentHash,
   type LinkableFeature,
   parseRecordId,
   survivorRank,
@@ -214,7 +215,7 @@ export function canonicalFeatureRecord(
   // A survivor without a name takes the first name a member has, in rank order.
   const named = (m: Rec) => ((m["name"] as unknown[] | undefined) ?? []).length > 0;
   const name = named(survivor) ? undefined : others.find(named)?.["name"];
-  return {
+  const canonical: Rec = {
     ...record,
     ...(name === undefined ? {} : { name }),
     id,
@@ -230,4 +231,8 @@ export function canonicalFeatureRecord(
       },
     },
   };
+  // This is a new complete model, not the survivor's content identity. Partial
+  // collection views may subsequently omit components while referencing it.
+  if (canonical["contentHash"] !== undefined) canonical["contentHash"] = contentHash(canonical);
+  return canonical;
 }

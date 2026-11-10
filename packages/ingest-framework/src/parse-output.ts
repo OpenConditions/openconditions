@@ -57,11 +57,29 @@ export interface StatusSubject {
  */
 export type StatusIndex = ReadonlyMap<string, readonly StatusSubject[]>;
 
+/** Trusted native RFS clocks; never populated from catalogue or payload configuration. */
+export interface NswRfsOrdering {
+  published: string;
+  incidents: { id: string; sent: string; content: string; expiry: string }[];
+}
+
 /** What one poll of a feed parsed into, per record class. */
 export interface ParseOutput {
-  /** False when feature membership does not authorize withdrawals. */
+  /** False when the provider's current-snapshot contract is not qualified; the worker must retain last-good publication. */
+  snapshotQualified?: boolean;
+  nswRfsOrdering?: NswRfsOrdering;
+  /** Explicit publication authority; omitted fields preserve existing formats. */
+  publication?: {
+    featuresComplete: boolean;
+    offersComplete: boolean;
+    statesComplete: boolean;
+    sourcePublishedAt?: string;
+  };
+  /** Explicit false preserves absent features and display series until provider qualification. */
   featuresComplete?: boolean;
   situations: RecordDraft[];
+  /** False withholds absence-based withdrawal; omitted preserves the format's established complete publication. Independent of received-row accounting. */
+  situationsComplete?: boolean;
   features: RecordDraft[];
   observations: RecordDraft[];
   offers: RecordDraft[];
@@ -73,6 +91,21 @@ export interface ParseOutput {
   statusIndex?: StatusIndex;
   /** The publisher cut its answer at a result cap: records past it are missing. */
   truncated?: boolean;
+  /** SMN rolling bulletin: explicit decisions, never absence authority. */
+  smn?: {
+    partial: true;
+    accepted: number;
+    terminal: number;
+    retained: number;
+    expired: number;
+    withheld: number;
+    diagnostics: { variant: string; reason: string; references: unknown[] }[];
+    suppress: string[];
+  };
+  /** Exact reviewed feature publication verified by its parser. Shrink guards still apply. */
+  qualifiedFeatureSnapshot?: boolean;
+  /** The format independently qualified the entire feature snapshot, including an empty one. */
+  featureSnapshotComplete?: true;
 }
 
 /** What a status-only poll parsed into: readings, and the status records it could not use. */

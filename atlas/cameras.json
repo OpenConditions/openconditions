@@ -78,6 +78,81 @@
       "$schema": "../schema/cameras.schema.json",
       "feeds": [
         {
+          "subdivision": "bc",
+          "operator": "drivebc",
+          "product": "cameras",
+          "name": "DriveBC Ministry highway cameras",
+          "format": "csv",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://catalogue.data.gov.bc.ca/dataset/6b39a910-6c77-476f-ac96-7b4f18849b1c/resource/a9d52d85-8402-4ce7-b2ac-a2779837c48a/download/webcams.csv",
+              "cadenceSec": 86400
+            }
+          },
+          "snapshot": {
+            "completeness": "partial",
+            "qualification": "qualified",
+            "minimumRecords": 1000,
+            "csv": true
+          },
+          "freshnessWindowSec": 172800,
+          "requestLimits": {
+            "perDay": 2
+          },
+          "rawRetention": "reference",
+          "license": "LicenseRef-OGL-BC",
+          "licenseUrl": "https://pub.data.gov.bc.ca/license/OGL-vbc2.0.pdf",
+          "attribution": "Contains information licensed under the Open Government Licence – British Columbia.",
+          "terms": {
+            "url": "https://github.com/bcgov/drivebc-webcam-api",
+            "reviewedAt": "2026-11-07",
+            "note": "OGL-BC v2 covers the Ministry-owned catalogue product; the Ministry explicitly releases webcam images and data for commercial use. Preserve row credits and actual future exceptions. Excludes website-only partner IDs, replay and archives. Image age and availability are unknown; inventory retrieval is not image capture. CKAN generic open/content flags conflict with the express grant."
+          },
+          "privacyUrl": "https://www2.gov.bc.ca/gov/content/home/privacy",
+          "homepage": "https://catalogue.data.gov.bc.ca/dataset/bc-highwaycams",
+          "coverage": {
+            "countries": [
+              "CA-BC"
+            ]
+          },
+          "layout": {
+            "lon": "longitude",
+            "lat": "latitude"
+          },
+          "cameras": {
+            "imageHosts": [
+              "www.drivebc.ca/images/"
+            ],
+            "groupBy": "cam_group",
+            "viewKey": "id",
+            "rejectConflictingViews": true,
+            "name": "camName",
+            "lang": "en",
+            "type": "traffic",
+            "description": "caption",
+            "road": "highway_number",
+            "viewName": "camName",
+            "direction": {
+              "field": "orientation",
+              "map": {
+                "N": "N",
+                "NE": "NE",
+                "E": "E",
+                "SE": "SE",
+                "S": "S",
+                "SW": "SW",
+                "W": "W",
+                "NW": "NW"
+              }
+            },
+            "imageUrl": "links_imageURL",
+            "detailUrl": "links_camDetailsPage",
+            "credit": "credit",
+            "imageRedistribution": "allowed"
+          }
+        },
+        {
           "subdivision": "on",
           "operator": "511",
           "product": "cameras",
@@ -123,6 +198,44 @@
             "imageHosts": [
               "511on.ca"
             ],
+            "imageRedistribution": "unknown"
+          }
+        },
+        {
+          "subdivision": "qc",
+          "operator": "mtmd",
+          "product": "cameras",
+          "name": "Québec MTMD camera inventory",
+          "format": "quebec-cameras",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://ws.mapserver.transports.gouv.qc.ca/swtq?service=wfs&version=2.0.0&request=getfeature&typename=ms:infos_cameras&outfile=Camera&srsname=EPSG:4326&outputformat=geojson",
+              "cadenceSec": 86400
+            }
+          },
+          "snapshot": {
+            "completeness": "complete",
+            "recordsPath": "features",
+            "totalCountPath": "numberMatched"
+          },
+          "freshnessWindowSec": 172800,
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "Ministère des Transports et de la Mobilité durable — Caméra de circulation, Données Québec. Normalized data (modified). Dataset published 2023-01-13T19:37:25.323000; metadata updated 2026-11-08T13:20:07.995965; GeoJSON resource updated 2026-11-08T13:18:37.447818 (source dates, timezone unspecified); consulted 2026-11-09. https://www.donneesquebec.ca/recherche/dataset/camera-de-circulation",
+          "terms": {
+            "url": "https://www.donneesquebec.ca/licence/#cc-by",
+            "reviewedAt": "2026-11-09",
+            "note": "CC BY 4.0 covers exported inventory metadata and supplied external link values only. Linked Québec 511 player content and imagery are not licensed by this dataset. No imagery acquisition or redistribution. DateDebutDiffusion is publication-start metadata, not a frame clock. Dataset modification dates have unknown timezone. Inventory count agreement is not a permanent census or equipment availability guarantee."
+          },
+          "privacyUrl": "https://www.quebec.ca/politique-confidentialite",
+          "homepage": "https://www.donneesquebec.ca/recherche/dataset/camera-de-circulation",
+          "coverage": {
+            "countries": [
+              "CA-QC"
+            ]
+          },
+          "cameras": {
             "imageRedistribution": "unknown"
           }
         }
@@ -1627,6 +1740,110 @@
       "country": "AU"
     },
     {
+      "subdivision": "bc",
+      "operator": "drivebc",
+      "product": "cameras",
+      "name": "DriveBC Ministry highway cameras",
+      "format": "csv",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://catalogue.data.gov.bc.ca/dataset/6b39a910-6c77-476f-ac96-7b4f18849b1c/resource/a9d52d85-8402-4ce7-b2ac-a2779837c48a/download/webcams.csv",
+          "cadenceSec": 86400
+        }
+      },
+      "snapshot": {
+        "completeness": "partial",
+        "qualification": "qualified",
+        "minimumRecords": 1000,
+        "csv": true
+      },
+      "freshnessWindowSec": 172800,
+      "requestLimits": {
+        "perDay": 2
+      },
+      "rawRetention": "reference",
+      "license": "LicenseRef-OGL-BC",
+      "licenseUrl": "https://pub.data.gov.bc.ca/license/OGL-vbc2.0.pdf",
+      "attribution": "Contains information licensed under the Open Government Licence – British Columbia.",
+      "terms": {
+        "url": "https://github.com/bcgov/drivebc-webcam-api",
+        "reviewedAt": "2026-11-07",
+        "note": "OGL-BC v2 covers the Ministry-owned catalogue product; the Ministry explicitly releases webcam images and data for commercial use. Preserve row credits and actual future exceptions. Excludes website-only partner IDs, replay and archives. Image age and availability are unknown; inventory retrieval is not image capture. CKAN generic open/content flags conflict with the express grant."
+      },
+      "privacyUrl": "https://www2.gov.bc.ca/gov/content/home/privacy",
+      "homepage": "https://catalogue.data.gov.bc.ca/dataset/bc-highwaycams",
+      "coverage": {
+        "countries": [
+          "CA-BC"
+        ]
+      },
+      "layout": {
+        "lon": "longitude",
+        "lat": "latitude"
+      },
+      "cameras": {
+        "imageHosts": [
+          "www.drivebc.ca/images/"
+        ],
+        "groupBy": "cam_group",
+        "viewKey": "id",
+        "rejectConflictingViews": true,
+        "name": "camName",
+        "lang": "en",
+        "type": "traffic",
+        "description": "caption",
+        "road": "highway_number",
+        "viewName": "camName",
+        "direction": {
+          "field": "orientation",
+          "map": {
+            "N": "N",
+            "NE": "NE",
+            "E": "E",
+            "SE": "SE",
+            "S": "S",
+            "SW": "SW",
+            "W": "W",
+            "NW": "NW"
+          }
+        },
+        "imageUrl": "links_imageURL",
+        "detailUrl": "links_camDetailsPage",
+        "credit": "credit",
+        "imageRedistribution": "allowed"
+      },
+      "id": "ca-bc-drivebc-cameras",
+      "domain": "cameras",
+      "region": "ca",
+      "file": "feeds/cameras/ca.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": true,
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "changeNotice": false,
+        "retention": true,
+        "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://github.com/bcgov/drivebc-webcam-api",
+        "reviewedAt": "2026-11-07"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
+      },
+      "restricted": false,
+      "cadenceSec": 86400,
+      "country": "CA"
+    },
+    {
       "subdivision": "on",
       "operator": "511",
       "product": "cameras",
@@ -1702,6 +1919,73 @@
       },
       "restricted": false,
       "cadenceSec": 3600,
+      "country": "CA"
+    },
+    {
+      "subdivision": "qc",
+      "operator": "mtmd",
+      "product": "cameras",
+      "name": "Québec MTMD camera inventory",
+      "format": "quebec-cameras",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://ws.mapserver.transports.gouv.qc.ca/swtq?service=wfs&version=2.0.0&request=getfeature&typename=ms:infos_cameras&outfile=Camera&srsname=EPSG:4326&outputformat=geojson",
+          "cadenceSec": 86400
+        }
+      },
+      "snapshot": {
+        "completeness": "complete",
+        "recordsPath": "features",
+        "totalCountPath": "numberMatched"
+      },
+      "freshnessWindowSec": 172800,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Ministère des Transports et de la Mobilité durable — Caméra de circulation, Données Québec. Normalized data (modified). Dataset published 2023-01-13T19:37:25.323000; metadata updated 2026-11-08T13:20:07.995965; GeoJSON resource updated 2026-11-08T13:18:37.447818 (source dates, timezone unspecified); consulted 2026-11-09. https://www.donneesquebec.ca/recherche/dataset/camera-de-circulation",
+      "terms": {
+        "url": "https://www.donneesquebec.ca/licence/#cc-by",
+        "reviewedAt": "2026-11-09",
+        "note": "CC BY 4.0 covers exported inventory metadata and supplied external link values only. Linked Québec 511 player content and imagery are not licensed by this dataset. No imagery acquisition or redistribution. DateDebutDiffusion is publication-start metadata, not a frame clock. Dataset modification dates have unknown timezone. Inventory count agreement is not a permanent census or equipment availability guarantee."
+      },
+      "privacyUrl": "https://www.quebec.ca/politique-confidentialite",
+      "homepage": "https://www.donneesquebec.ca/recherche/dataset/camera-de-circulation",
+      "coverage": {
+        "countries": [
+          "CA-QC"
+        ]
+      },
+      "cameras": {
+        "imageRedistribution": "unknown"
+      },
+      "id": "ca-qc-mtmd-cameras",
+      "domain": "cameras",
+      "region": "ca",
+      "file": "feeds/cameras/ca.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": true,
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "changeNotice": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://www.donneesquebec.ca/licence/#cc-by",
+        "reviewedAt": "2026-11-09"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
+      },
+      "restricted": false,
+      "cadenceSec": 86400,
       "country": "CA"
     },
     {

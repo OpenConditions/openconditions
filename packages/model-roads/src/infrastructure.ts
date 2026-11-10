@@ -83,6 +83,7 @@ export const ROADS_INFRASTRUCTURE_KINDS = [
        * link (and licence below) rather than the survivor's.
        */
       detailUrl: z.url().optional(),
+      credit: z.string().min(1).optional(),
       /** What the licence of this view's image allows: republish it, or only link to it. */
       imageRedistribution: z.enum(["allowed", "link_only", "unknown"]).optional(),
     }),

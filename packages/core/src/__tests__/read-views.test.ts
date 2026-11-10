@@ -1,3 +1,4 @@
+import { contentHash } from "@openconditions/model";
 import { describe, expect, it } from "vitest";
 import { canonicalFeatureRecord, withoutComponents } from "../features.js";
 import { seriesResolution } from "../observations.js";
@@ -195,4 +196,20 @@ describe("seriesResolution", () => {
     expect(seriesResolution(speed, { from: daysAgo(9), now, requested: "raw" })).toBe("raw");
     expect(seriesResolution(speed, { from: daysAgo(1), now, requested: "daily" })).toBeUndefined();
   });
+});
+
+it("canonical features hash the completed canonical model without mutating member identities", () => {
+  const a = station("oc:feature:a:1", "a", ["e5"]);
+  const b = station("oc:feature:b:1", "b", ["E5", "diesel"]);
+  a.contentHash = contentHash(a);
+  b.contentHash = contentHash(b);
+  const original = JSON.stringify([a, b]);
+  const complete = canonicalFeatureRecord(cluster, [a, b])!;
+  expect(complete.contentHash).toBe(contentHash(JSON.parse(JSON.stringify(complete))));
+  expect(complete.contentHash).not.toBe(a.contentHash);
+  expect(JSON.stringify([a, b])).toBe(original);
+});
+it("canonical features preserve absence of an optional member hash", () => {
+  const a = station("oc:feature:a:1", "a", ["e5"]);
+  expect(canonicalFeatureRecord(cluster, [a])).not.toHaveProperty("contentHash");
 });
