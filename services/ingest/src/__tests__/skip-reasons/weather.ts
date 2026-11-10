@@ -16,7 +16,48 @@ const zip = (role: string, fields: string, values: string, id = "00044") =>
       data: `STATIONS_ID;MESS_DATUM;QN;${fields};eor\n${Number(id)};202607311150;3;${values};eor\n`,
     },
   ]);
+const at = Date.parse("2026-07-31T12:00:00Z");
+const parameters = [
+  ["1", "celsius"],
+  ["39", "celsius"],
+  ["6", "procent"],
+  ["12", "meter"],
+  ["3", "grader"],
+  ["4", "meter per sekund"],
+  ["21", "meter per sekund"],
+  ["7", "millimeter"],
+] as const;
+const smhiStation = {
+  key: "123",
+  name: "Test",
+  owner: "SMHI",
+  measuringStations: "CORE",
+  active: true,
+  longitude: 18,
+  latitude: 60,
+  from: 0,
+  to: at,
+};
 export const SAMPLES: SkipSamples = {
+  "weather/smhi-metobs": {
+    reason: "unknown_value",
+    payloads: {
+      sites: parameters.map(([key, unit]) =>
+        JSON.stringify({ key, unit, updated: at, valueType: "SAMPLING", station: [smhiStation] }),
+      ),
+      status: parameters.map(([key, unit]) =>
+        JSON.stringify({
+          parameter: { key, unit },
+          updated: at,
+          period: { key: "latest-hour", from: at - 3599000, to: at },
+          station: [
+            { ...smhiStation, value: key === "1" ? [{ date: at, value: "0", quality: "R" }] : [] },
+          ],
+        }),
+      ),
+    },
+  },
+
   "weather/dwd-cdc-10min": {
     reason: "no_geometry",
     payloads: {
