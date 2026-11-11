@@ -15,7 +15,7 @@ dependencies = [
     "openlr-dereferencer==1.2.0",
     "shapely==2.2.0",
     "geographiclib==2.1",
-    "psycopg[binary]==3.3.6",
+    "psycopg[binary]==3.3.8",
     "psycopg-pool==3.3.3",
     "osmium==4.3.2",
 ]
@@ -29,7 +29,7 @@ dev = [
     "pytest==9.2.0",
     "httpx2==2.16.0",
     "testcontainers==4.15.0",
-    "ruff==0.17.3",
+    "ruff==0.17.4",
     "pip-audit==2.10.1",
 ]
 
