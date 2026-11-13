@@ -92,9 +92,10 @@ escapes it.
   `OPENCONDITIONS_OPERATOR_TOKEN_FILE` that is set but unreadable or empty
   stops the service at boot, naming the file and the cause.
   - `DATABASE_URL` is required: the service refuses to start without it. On the
-    shared OpenMapX database it is
-    `postgresql://postgres:<POSTGRES_PASSWORD>@postgis:5432/openmapx`, with the
-    deployment's own PostgreSQL password.
+    shared OpenMapX database it connects as the service's own role, for example
+    `postgresql://openconditions_ingest:<password>@postgis:5432/openmapx`.
+    Never use the PostgreSQL superuser: create the role as OpenMapX's community
+    extensions guide describes.
   - `OPENCONDITIONS_OPERATOR_TOKEN` must equal OpenMapX's own
     `OPENCONDITIONS_OPERATOR_TOKEN` (its `.env`), which `app-api` and the
     data-manager send as their bearer token; the two are set separately.
