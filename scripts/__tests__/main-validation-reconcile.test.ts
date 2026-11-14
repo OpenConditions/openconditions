@@ -67,6 +67,8 @@ interface Fixture {
   branch?: string;
   dispatchStatus?: number;
   readback?: Row;
+  /** Successive created-run reads; the last entry repeats once exhausted. */
+  readbackSequence?: Row[];
   advance?: boolean;
   transient?: number;
   alwaysTransient?: boolean;
@@ -88,6 +90,7 @@ async function fixture(options: Fixture = {}) {
   let refs = 0;
   let transients = options.transient ?? 0;
   let detailReads = 0;
+  let readbackReads = 0;
   const server = createServer(async (req, res) => {
     let text = "";
     for await (const chunk of req) text += chunk;
@@ -152,8 +155,11 @@ async function fixture(options: Fixture = {}) {
         options.dispatchStatus ?? 200,
       );
     }
-    if (url.pathname === `${prefix}/actions/runs/22`)
+    if (url.pathname === `${prefix}/actions/runs/22`) {
+      const sequence = options.readbackSequence;
+      if (sequence?.length) return send(sequence[Math.min(readbackReads++, sequence.length - 1)]);
       return send(options.readback ?? state.find((r) => r.id === 22));
+    }
     if (url.pathname === `${prefix}/actions/runs/11`) {
       detailReads++;
       return send(
@@ -180,8 +186,10 @@ async function fixture(options: Fixture = {}) {
     `import { createGithubApi, reconcileMainValidation } from ${JSON.stringify(helper)};
 let elapsed = 0;
 const api = createGithubApi('fixture-token', { fetch: (url, init) => fetch(url.replace('https://api.github.com', ${JSON.stringify(base)}), init), sleep: async (ms) => { elapsed += ms; }, now: () => elapsed });
-try { console.log(JSON.stringify(await reconcileMainValidation({ api, repository: '${repo}', now: () => Number(process.env.FIXTURE_NOW) }))); }
+const sleeps = [];
+try { console.log(JSON.stringify(await reconcileMainValidation({ api, repository: '${repo}', now: () => Number(process.env.FIXTURE_NOW), sleep: async (ms) => { sleeps.push(ms); } }))); }
 catch (error) { console.error(error.message); process.exitCode = 1; }
+finally { console.error('readback-sleeps ' + JSON.stringify(sleeps)); }
 `,
   );
   async function execute(at = options.wallClock ?? wallClock) {
@@ -430,7 +438,56 @@ describe("trusted main reconciliation command adapter", () => {
     const f = await fixture({
       readback: run({ id: 22, event: "workflow_dispatch", head_sha: other }),
     });
-    expect((await f.execute()).status).toBe(1);
+    const out = await f.execute();
+    expect(out.status).toBe(1);
+    expect(out.stderr).toContain("invalid CI run readback");
+    // Identity mismatches fail on the first read; only recovery markers wait.
+    expect(out.stderr).toContain("readback-sleeps []");
+    expect(f.requests.filter((r) => r.path === `${prefix}/actions/runs/22`)).toHaveLength(1);
+  });
+  it("waits a bounded time for the created run's recovery title to render", async () => {
+    const recovery = {
+      id: 22,
+      event: "workflow_dispatch",
+      status: "queued",
+      conclusion: null,
+      actor: { login: "github-actions[bot]" },
+    };
+    const f = await fixture({
+      readbackSequence: [
+        run({ ...recovery, display_title: "CI" }),
+        run({ ...recovery, display_title: "CI" }),
+        run({ ...recovery, display_title: `Main validation recovery ${sha}` }),
+      ],
+    });
+    const out = await f.execute();
+    expect(out.status, out.stderr).toBe(0);
+    expect(JSON.parse(out.stdout)).toMatchObject({ status: "dispatched", runId: 22 });
+    expect(out.stderr).toContain("readback-sleeps [2000,2000]");
+    expect(f.requests.filter((r) => r.method === "POST")).toHaveLength(1);
+    expect(f.requests.filter((r) => r.path === `${prefix}/actions/runs/22`)).toHaveLength(3);
+  });
+  it("still fails visibly, with the observed markers, when the recovery title never renders", async () => {
+    const f = await fixture({
+      readbackSequence: [
+        run({
+          id: 22,
+          event: "workflow_dispatch",
+          status: "queued",
+          conclusion: null,
+          display_title: "CI",
+          actor: { login: "github-actions[bot]" },
+        }),
+      ],
+    });
+    const out = await f.execute();
+    expect(out.status).toBe(1);
+    expect(out.stderr).toContain(
+      'dispatch readback did not match automatic recovery (run 22: event "workflow_dispatch", title "CI", actor "github-actions[bot]")',
+    );
+    expect(out.stderr).toContain("readback-sleeps [2000,2000,2000,2000]");
+    expect(f.requests.filter((r) => r.method === "POST")).toHaveLength(1);
+    expect(f.requests.filter((r) => r.path === `${prefix}/actions/runs/22`)).toHaveLength(5);
   });
   it("never retries an ambiguous POST and discovers its retained attempt next time", async () => {
     const f = await fixture({ dispatchStatus: 503 });
