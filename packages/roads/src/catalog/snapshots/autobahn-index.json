@@ -2871,39 +2871,6 @@
     "selectionState": "approved"
   },
   {
-    "qualifier": "a542-warning",
-    "name": "Autobahn A542 — warning",
-    "endpoints": {
-      "main": {
-        "url": "https://verkehr.autobahn.de/o/autobahn/A542/services/warning",
-        "cadenceSec": 300
-      }
-    },
-    "selectionState": "approved"
-  },
-  {
-    "qualifier": "a542-closure",
-    "name": "Autobahn A542 — closure",
-    "endpoints": {
-      "main": {
-        "url": "https://verkehr.autobahn.de/o/autobahn/A542/services/closure",
-        "cadenceSec": 300
-      }
-    },
-    "selectionState": "approved"
-  },
-  {
-    "qualifier": "a542-roadworks",
-    "name": "Autobahn A542 — roadworks",
-    "endpoints": {
-      "main": {
-        "url": "https://verkehr.autobahn.de/o/autobahn/A542/services/roadworks",
-        "cadenceSec": 900
-      }
-    },
-    "selectionState": "approved"
-  },
-  {
     "qualifier": "a544-warning",
     "name": "Autobahn A544 — warning",
     "endpoints": {
@@ -3201,6 +3168,39 @@
     "selectionState": "approved"
   },
   {
+    "qualifier": "a623-warning",
+    "name": "Autobahn A623 — warning",
+    "endpoints": {
+      "main": {
+        "url": "https://verkehr.autobahn.de/o/autobahn/A623/services/warning",
+        "cadenceSec": 300
+      }
+    },
+    "selectionState": "approved"
+  },
+  {
+    "qualifier": "a623-closure",
+    "name": "Autobahn A623 — closure",
+    "endpoints": {
+      "main": {
+        "url": "https://verkehr.autobahn.de/o/autobahn/A623/services/closure",
+        "cadenceSec": 300
+      }
+    },
+    "selectionState": "approved"
+  },
+  {
+    "qualifier": "a623-roadworks",
+    "name": "Autobahn A623 — roadworks",
+    "endpoints": {
+      "main": {
+        "url": "https://verkehr.autobahn.de/o/autobahn/A623/services/roadworks",
+        "cadenceSec": 900
+      }
+    },
+    "selectionState": "approved"
+  },
+  {
     "qualifier": "a640-warning",
     "name": "Autobahn A640 — warning",
     "endpoints": {
@@ -3492,72 +3492,6 @@
     "endpoints": {
       "main": {
         "url": "https://verkehr.autobahn.de/o/autobahn/A671/services/roadworks",
-        "cadenceSec": 900
-      }
-    },
-    "selectionState": "approved"
-  },
-  {
-    "qualifier": "a861-warning",
-    "name": "Autobahn A861 — warning",
-    "endpoints": {
-      "main": {
-        "url": "https://verkehr.autobahn.de/o/autobahn/A861/services/warning",
-        "cadenceSec": 300
-      }
-    },
-    "selectionState": "approved"
-  },
-  {
-    "qualifier": "a861-closure",
-    "name": "Autobahn A861 — closure",
-    "endpoints": {
-      "main": {
-        "url": "https://verkehr.autobahn.de/o/autobahn/A861/services/closure",
-        "cadenceSec": 300
-      }
-    },
-    "selectionState": "approved"
-  },
-  {
-    "qualifier": "a861-roadworks",
-    "name": "Autobahn A861 — roadworks",
-    "endpoints": {
-      "main": {
-        "url": "https://verkehr.autobahn.de/o/autobahn/A861/services/roadworks",
-        "cadenceSec": 900
-      }
-    },
-    "selectionState": "approved"
-  },
-  {
-    "qualifier": "a864-warning",
-    "name": "Autobahn A864 — warning",
-    "endpoints": {
-      "main": {
-        "url": "https://verkehr.autobahn.de/o/autobahn/A864/services/warning",
-        "cadenceSec": 300
-      }
-    },
-    "selectionState": "approved"
-  },
-  {
-    "qualifier": "a864-closure",
-    "name": "Autobahn A864 — closure",
-    "endpoints": {
-      "main": {
-        "url": "https://verkehr.autobahn.de/o/autobahn/A864/services/closure",
-        "cadenceSec": 300
-      }
-    },
-    "selectionState": "approved"
-  },
-  {
-    "qualifier": "a864-roadworks",
-    "name": "Autobahn A864 — roadworks",
-    "endpoints": {
-      "main": {
-        "url": "https://verkehr.autobahn.de/o/autobahn/A864/services/roadworks",
         "cadenceSec": 900
       }
     },
