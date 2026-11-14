@@ -17,7 +17,7 @@
       "PORT": "4200",
       "HOST": "0.0.0.0"
     },
-    "memory": "${OPENCONDITIONS_CONTRIBUTIONS_MEMORY:-1g}",
+    "memory": "1g",
     "restart": "unless-stopped",
     "dependsOn": [
       {

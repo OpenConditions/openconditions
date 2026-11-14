@@ -176,8 +176,8 @@ ENV NODE_ENV=production
 ENV PORT=4100
 ENV HOST=0.0.0.0
 # Bounds the V8 old space at 55% of the container's memory limit (Node reads the
-# cgroup limit), so it follows OPENCONDITIONS_INGEST_MEMORY: 4505 MB under the
-# default 8g. The parse child takes up to 30% beside it, and the rest is the
+# cgroup limit), so it follows the container's limit: 4505 MB under the 8g in
+# service.json. The parse child takes up to 30% beside it, and the rest is the
 # off-heap headroom (fetch buffers, gunzip, zstd, the young generation): the
 # two heaps full at once still fit the limit. The national charging registers
 # (IRVE, BNetzA, NDW, OCPDB) each need several hundred MB of heap from parse to

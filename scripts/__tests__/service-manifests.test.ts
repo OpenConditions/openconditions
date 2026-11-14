@@ -129,6 +129,19 @@ describe("service manifests on OpenMapX's config model", () => {
     }
   });
 
+  // OpenMapX escapes every `$` in a community manifest, so a Compose variable
+  // reaches Docker as literal text and invalidates the whole project.
+  test.each(manifests)("%s: no value anywhere names a Compose variable", (_dir, m) => {
+    expect(JSON.stringify(m)).not.toContain("${");
+  });
+
+  test.each(manifests)("%s: container.memory is a literal size of at least 6m", (_dir, m) => {
+    const match = /^(\d+)([kmg])$/.exec(m.container.memory ?? "");
+    expect(match, m.container.memory).not.toBeNull();
+    const bytes = Number(match![1]) * 1024 ** { k: 1, m: 2, g: 3 }[match![2] as "k" | "m" | "g"];
+    expect(bytes).toBeGreaterThanOrEqual(6 * 1024 ** 2);
+  });
+
   test.each(manifests)("%s: no environment entry names a config field", (_dir, m) => {
     const fields = Object.keys(properties(m));
     for (const key of Object.keys(m.container.environment ?? {})) {
@@ -225,10 +238,10 @@ describe("service manifests on OpenMapX's config model", () => {
     },
   );
 
-  test("ingest: the container gets 8g unless the operator says otherwise", () => {
+  test("ingest: the container gets a literal 8g", () => {
     // The service's heap (55%) and the parse child's (30%) both fit; a segment
     // region's weekly rebuild needs about 1.7 GB of the service's heap.
-    expect(manifest("ingest").container.memory).toBe("${OPENCONDITIONS_INGEST_MEMORY:-8g}");
+    expect(manifest("ingest").container.memory).toBe("8g");
   });
 
   test("ingest: what it writes lands on its one volume", () => {
@@ -261,7 +274,7 @@ describe("service manifests on OpenMapX's config model", () => {
     });
     // Its raw payloads lie on its own volume, which its own eviction keeps.
     expect(m.volumes?.map((v) => v.mountAt)).toEqual(["/data"]);
-    expect(m.container.memory).toBe("${OPENCONDITIONS_INGEST_HEAVY_MEMORY:-6g}");
+    expect(m.container.memory).toBe("6g");
     // The primary migrates, syncs the catalogue and creates the partitions it writes into.
     expect(m.container.dependsOn).toContainEqual({
       service: "openconditions-ingest",

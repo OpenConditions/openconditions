@@ -19,7 +19,7 @@
       "OPENCONDITIONS_FEDERATION_REGISTRY_CACHE": "/data/registry",
       "TMPDIR": "/data"
     },
-    "memory": "${OPENCONDITIONS_FEDERATION_MEMORY:-512m}",
+    "memory": "512m",
     "restart": "unless-stopped",
     "dependsOn": [
       {

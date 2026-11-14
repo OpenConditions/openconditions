@@ -18,7 +18,7 @@
       "OPENCONDITIONS_RAW_DIR": "/data/raw",
       "OPENCONDITIONS_STATE_DIR": "/data"
     },
-    "memory": "${OPENCONDITIONS_INGEST_HEAVY_MEMORY:-6g}",
+    "memory": "6g",
     "restart": "unless-stopped",
     "dependsOn": [
       {
