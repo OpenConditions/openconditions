@@ -77,8 +77,10 @@ reaches the container verbatim, so `service.json` declares these as
 `configSchema` fields. The secrets are vault secrets the operator sets once in
 the admin services panel (`openconditions-contributions-api`, Credentials);
 OpenMapX mounts each as a file and sets `<KEY>_FILE`. On the shared OpenMapX
-database `DATABASE_URL` is
-`postgresql://postgres:<POSTGRES_PASSWORD>@postgis:5432/openmapx`. The
+database `DATABASE_URL` connects as this service's own role, for example
+`postgresql://openconditions_contributions:<password>@postgis:5432/openmapx`.
+Never use the PostgreSQL superuser: create the role as OpenMapX's community
+extensions guide describes. The
 settings are set in the same panel, or as
 `SERVICE_OPENCONDITIONS_CONTRIBUTIONS_API_<KEY>` in OpenMapX's `.env`.
 Settings kept in OpenMapX's `.env` are applied with

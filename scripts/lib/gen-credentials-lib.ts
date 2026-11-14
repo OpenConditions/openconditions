@@ -171,7 +171,7 @@ export const SERVICE_FIELDS: Readonly<Record<string, ServiceField>> = {
   DATABASE_URL: {
     title: "Database URL",
     description:
-      "Required. PostgreSQL/PostGIS connection URL of the shared OpenMapX database, e.g. postgresql://postgres:<POSTGRES_PASSWORD>@postgis:5432/openmapx. The service refuses to start without it.",
+      "Required. PostgreSQL/PostGIS connection URL of the shared OpenMapX database for a dedicated role, e.g. postgresql://openconditions_ingest:<password>@postgis:5432/openmapx. Never use the PostgreSQL superuser; create the role as OpenMapX's community extensions guide describes. The service refuses to start without it.",
     secret: true,
   },
   OPENCONDITIONS_OPERATOR_TOKEN: {
