@@ -103,7 +103,14 @@ test("parent wall-clock timer interrupts actual CPU decoding after child readine
   gone(pid);
 });
 
-test("actual native decoder heap exhaustion is contained and next task succeeds", async () => {
+// Hosted runners took about 9s to reach the 256 MB heap limit, and the dying child still had not
+// exited at 10s (plausibly while the runner's core-dump handler drained it). The budget must cover both,
+// or the caller's own abort wins and the containment path under test is never observed.
+const OOM_BUDGET_MS = 60_000;
+
+test("actual native decoder heap exhaustion is contained and next task succeeds", {
+  timeout: OOM_BUDGET_MS + 15_000,
+}, async () => {
   let pid = 0;
   const session: JmaNativeSession = {
     entry: new URL("../../../dist/jma-native-child.js", import.meta.url),
@@ -114,7 +121,7 @@ test("actual native decoder heap exhaustion is contained and next task succeeds"
       `<feed xmlns="http://www.w3.org/2005/Atom"><updated>2026-11-09T11:00:00Z</updated>${Array.from({ length: 700_000 }, (_, i) => `<x${i}/>`).join("")}</feed>`,
     ).toString("base64"),
   };
-  const signal = AbortSignal.timeout(10_000);
+  const signal = AbortSignal.timeout(OOM_BUDGET_MS);
   const diagnostics = observeOomFork(signal);
   try {
     diagnostics.record("call");
