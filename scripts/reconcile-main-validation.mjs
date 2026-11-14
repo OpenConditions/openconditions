@@ -68,7 +68,15 @@ export function createGithubApi(token, adapter = {}) {
   };
 }
 
-export async function reconcileMainValidation({ api, repository, now = Date.now }) {
+const readbackAttempts = 5;
+const readbackDelayMs = 2000;
+
+export async function reconcileMainValidation({
+  api,
+  repository,
+  now = Date.now,
+  sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+}) {
   assert(/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository), "invalid repository");
   const root = `/repos/${repository}`;
   const repo = await api(root);
@@ -257,17 +265,28 @@ export async function reconcileMainValidation({ api, repository, now = Date.now 
     positiveInteger(created?.workflow_run_id),
     "dispatch did not return a run identity; next backstop must reconcile",
   );
-  const run = validateRun(
-    await api(`${root}/actions/runs/${created.workflow_run_id}`),
-    created.workflow_run_id,
-  );
-  assert(
-    run.event === "workflow_dispatch" &&
+  // A just-created run can be served before GitHub renders its run-name, so the
+  // recovery title may lag the dispatch. Identity (repository, workflow, SHA,
+  // branch) is still validated on every read and fails immediately; only the
+  // recovery markers get a short bounded wait before the run counts as foreign.
+  let run;
+  for (let attempt = 1; ; attempt++) {
+    run = validateRun(
+      await api(`${root}/actions/runs/${created.workflow_run_id}`),
+      created.workflow_run_id,
+    );
+    if (
+      run.event === "workflow_dispatch" &&
       run.display_title === recoveryTitle &&
-      run.actor?.login === "github-actions[bot]",
-    "dispatch readback did not match automatic recovery",
+      run.actor?.login === "github-actions[bot]"
+    )
+      return receipt("dispatched", run);
+    if (attempt >= readbackAttempts) break;
+    await sleep(readbackDelayMs);
+  }
+  throw new Error(
+    `dispatch readback did not match automatic recovery (run ${run.id}: event ${JSON.stringify(run.event)}, title ${JSON.stringify(run.display_title)}, actor ${JSON.stringify(run.actor?.login ?? null)})`,
   );
-  return receipt("dispatched", run);
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
