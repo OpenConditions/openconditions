@@ -231,16 +231,21 @@ export function createInMemoryRateLimiter(options: RateLimiterOptions = {}): InM
   };
 }
 
+/** The longest text an IPv6 address with a zone can be; anything longer is not one. */
+const MAX_ADDRESS_LENGTH = 100;
+
 /** The eight 16-bit groups of an IPv6 address, or undefined when it is not one. */
 function ipv6Groups(address: string): number[] | undefined {
-  const plain = address.replace(/%.*$/, "");
+  if (address.length > MAX_ADDRESS_LENGTH) return undefined;
+  const zone = address.indexOf("%");
+  const plain = zone === -1 ? address : address.slice(0, zone);
   if (!isIPv6(plain)) return undefined;
   let text = plain.toLowerCase();
   // A dotted IPv4 tail (`::ffff:192.0.2.1`) stands for the last two groups.
-  const tail = /(\d+)\.(\d+)\.(\d+)\.(\d+)$/.exec(text);
-  if (tail !== null) {
-    const [a, b, c, d] = tail.slice(1).map(Number) as [number, number, number, number];
-    text = `${text.slice(0, tail.index)}${((a << 8) | b).toString(16)}:${((c << 8) | d).toString(16)}`;
+  if (text.includes(".")) {
+    const cut = text.lastIndexOf(":") + 1;
+    const [a = 0, b = 0, c = 0, d = 0] = text.slice(cut).split(".").map(Number);
+    text = `${text.slice(0, cut)}${((a << 8) | b).toString(16)}:${((c << 8) | d).toString(16)}`;
   }
   const [head = "", rest] = text.split("::");
   const front = head === "" ? [] : head.split(":");
