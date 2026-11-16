@@ -715,6 +715,13 @@
       "when": 1794869175858,
       "tag": "0101_federation_journal_epoch",
       "breakpoints": true
+    },
+    {
+      "idx": 102,
+      "version": "7",
+      "when": 1794869800588,
+      "tag": "0102_federation_subscription_lease",
+      "breakpoints": true
     }
   ]
 }

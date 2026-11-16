@@ -146,6 +146,7 @@ export type {
 export {
   ensurePeerSubscription,
   peerRouteUrl,
+  SUBSCRIPTION_RENEW_BEFORE_SEC,
   signedPeerRequest,
   verifyPeerResponse,
 } from "./peer-subscribe.js";
@@ -196,10 +197,12 @@ export {
   createSubscription,
   DELIVERY_MODES,
   deleteSubscription,
+  expireSubscriptions,
   filterIsBounded,
   getSubscription,
   type InboxHosts,
   listSubscriptions,
+  SUBSCRIPTION_LEASE_SEC,
   SubscriptionConflictError,
   SubscriptionValidationError,
   updateSubscription,

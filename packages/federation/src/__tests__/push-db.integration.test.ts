@@ -143,7 +143,7 @@ async function webhookSubFromNow(opts: {
   );
   const start = encodeOutboxCursor(await frontier());
   await sql`UPDATE conditions.federation_subscription SET cursor = ${start} WHERE id = ${sub.id}`;
-  return (await getSubscription(sql, sub.id))!;
+  return (await getSubscription(sql, sub.id, NOW))!;
 }
 
 beforeAll(async () => {
@@ -182,7 +182,7 @@ describe("deliverWebhook — signed page, cursor advance, priority gating", () =
     expect(captured[0]!.signatureOk).toBe(true);
     expect(captured[0]!.items.map(localOf)).toEqual(["push-a", "push-b"]);
 
-    const after = await getSubscription(sql, sub.id);
+    const after = await getSubscription(sql, sub.id, NOW);
     expect(after!.cursor).toBe(captured[0]!.cursor);
     expect(after!.pushFailures).toBe(0);
   }, 30_000);
@@ -202,7 +202,7 @@ describe("deliverWebhook — signed page, cursor advance, priority gating", () =
     );
     const start = encodeOutboxCursor(await frontier());
     await sql`UPDATE conditions.federation_subscription SET cursor = ${start} WHERE id = ${sub.id}`;
-    const fresh = (await getSubscription(sql, sub.id))!;
+    const fresh = (await getSubscription(sql, sub.id, NOW))!;
 
     // X (priority) FIRST, then Y (non-priority) — Y trails X in the journal.
     await insertEvent("pri-closure", { kind: "incident", lon: 12.4 });
@@ -222,7 +222,7 @@ describe("deliverWebhook — signed page, cursor advance, priority gating", () =
     expect(captured[0]!.items.map(localOf)).toEqual(["pri-closure"]);
 
     // The push cursor stops ON the closure — NOT past the trailing roadwork.
-    const after = await getSubscription(sql, sub.id);
+    const after = await getSubscription(sql, sub.id, NOW);
     expect(after!.cursor).toBe(closureCursor);
 
     // Completeness: the peer's OWN pull (not priorityOnly) from its start cursor
@@ -242,7 +242,7 @@ describe("deliverWebhook — signed page, cursor advance, priority gating", () =
     );
     const start = encodeOutboxCursor(await frontier());
     await sql`UPDATE conditions.federation_subscription SET cursor = ${start} WHERE id = ${sub.id}`;
-    const fresh = (await getSubscription(sql, sub.id))!;
+    const fresh = (await getSubscription(sql, sub.id, NOW))!;
 
     // Three non-priority events then one priority, delivered with limit=2 — a
     // post-filter approach would starve (scan 2 roadworks, keep none, re-scan);
@@ -349,7 +349,7 @@ describe("deliverWebhook — the journal's epoch", () => {
     await insertEvent("epoch-ahead", { kind: "incident", lon: 48.5 });
     await sql`
       UPDATE conditions.federation_subscription SET cursor = '900000000000.1' WHERE id = ${sub.id}`;
-    const ahead = (await getSubscription(sql, sub.id))!;
+    const ahead = (await getSubscription(sql, sub.id, NOW))!;
 
     const { fetchImpl, captured } = mockInbox([200]);
     const outcome = await deliverWebhook(sql, ahead, {
@@ -360,7 +360,7 @@ describe("deliverWebhook — the journal's epoch", () => {
     });
     expect(outcome).toEqual({ status: "reset" });
     expect(captured).toHaveLength(0);
-    const reset = (await getSubscription(sql, sub.id))!;
+    const reset = (await getSubscription(sql, sub.id, NOW))!;
     expect(reset.cursor).toBe("0.0");
     expect(reset.revision).toBe(ahead.revision + 1);
 
@@ -392,7 +392,7 @@ describe("deliverWebhook — failure disables push after the threshold", () => {
         partOf: PARTOF,
         now: NOW,
       });
-      sub = (await getSubscription(sql, sub.id))!;
+      sub = (await getSubscription(sql, sub.id, NOW))!;
       expect(sub.pushFailures).toBe(i);
       // Cursor never advances on failure — the peer's pull catch-up stays gap-free.
       expect(sub.cursor).toBe(cursorBefore);
@@ -437,7 +437,7 @@ describe("deliverWebhook — priorityOnly=false is full-fidelity; push and pull 
 
     // Second push is DROPPED (inbox 5xx): the publisher does NOT advance the
     // cursor, so nothing is acked past [a,b].
-    const sub2 = (await getSubscription(sql, sub.id))!;
+    const sub2 = (await getSubscription(sql, sub.id, NOW))!;
     const second = mockInbox([503]);
     const out2 = await deliverWebhook(sql, sub2, {
       signingKey,
@@ -447,7 +447,7 @@ describe("deliverWebhook — priorityOnly=false is full-fidelity; push and pull 
       limit: 2,
     });
     expect(out2.status).toBe("failed");
-    const afterDrop = await getSubscription(sql, sub.id);
+    const afterDrop = await getSubscription(sql, sub.id, NOW);
     expect(afterDrop!.cursor).toBe(peerLastCursor); // unchanged past the acked page
 
     // FALLBACK: the peer pulls /peer/outbox from the last cursor it saw. It gets
@@ -479,7 +479,7 @@ describe("deliverWebhook — priorityOnly push (priority) + peer pull (all) = ev
     );
     const startCursor = encodeOutboxCursor(await frontier());
     await sql`UPDATE conditions.federation_subscription SET cursor = ${startCursor} WHERE id = ${sub.id}`;
-    const fresh = (await getSubscription(sql, sub.id))!;
+    const fresh = (await getSubscription(sql, sub.id, NOW))!;
 
     // Priority and non-priority matching events, interleaved.
     await insertEvent("mix-p1", { kind: "incident", lon: 24.1 });
@@ -501,7 +501,7 @@ describe("deliverWebhook — priorityOnly push (priority) + peer pull (all) = ev
     const pushedPriority = [...first.captured[0]!.items.map(localOf)];
 
     // Second priority push (P2) is DROPPED → cursor NOT advanced past P1.
-    const afterAck = (await getSubscription(sql, sub.id))!;
+    const afterAck = (await getSubscription(sql, sub.id, NOW))!;
     const cursorAfterAck = afterAck.cursor;
     const second = mockInbox([500]);
     const out2 = await deliverWebhook(sql, afterAck, {
@@ -513,7 +513,7 @@ describe("deliverWebhook — priorityOnly push (priority) + peer pull (all) = ev
     });
     expect(out2.status).toBe("failed");
     expect(second.captured[0]!.items.map(localOf)).toEqual(["mix-p2"]);
-    const afterDrop = (await getSubscription(sql, sub.id))!;
+    const afterDrop = (await getSubscription(sql, sub.id, NOW))!;
     expect(afterDrop.cursor).toBe(cursorAfterAck); // priority cursor unadvanced
 
     // A re-push from the unadvanced cursor re-sends P2 (idempotent) — no priority
@@ -550,7 +550,7 @@ describe("subscription edits during delivery", () => {
       let sub = await webhookSubFromNow({ priorityOnly: true, bbox: [10, 40, 12, 60] });
       await insertEvent(`repair-${status}`, { lon: 10.5 });
       await sql`UPDATE conditions.federation_subscription SET push_failures = 4 WHERE id = ${sub.id}`;
-      sub = (await getSubscription(sql, sub.id))!;
+      sub = (await getSubscription(sql, sub.id, NOW))!;
       const started = deferred<void>();
       const response = deferred<Response>();
       const pending = deliverWebhook(sql, sub, {
@@ -571,7 +571,7 @@ describe("subscription edits during delivery", () => {
       );
       response.resolve(new Response(null, { status }));
       expect(await pending).toEqual({ status: "obsolete" });
-      expect(await getSubscription(sql, sub.id)).toEqual(repaired);
+      expect(await getSubscription(sql, sub.id, NOW)).toEqual(repaired);
       const destinations: string[] = [];
       const outcome = await deliverWebhook(sql, repaired!, {
         signingKey,
@@ -594,7 +594,7 @@ describe("subscription edits during delivery", () => {
       updateSubscription(sql, sub, { inboxUrl: "https://repaired.example.org/inbox" }, NOW),
       updateSubscription(sql, sub, { priorityOnly: false }, NOW),
     ]);
-    const current = (await getSubscription(sql, sub.id))!;
+    const current = (await getSubscription(sql, sub.id, NOW))!;
     expect(current).toMatchObject({
       inboxUrl: "https://repaired.example.org/inbox",
       priorityOnly: false,
@@ -609,7 +609,7 @@ describe("subscription edits during delivery", () => {
       },
     });
     expect(outcome.status).toBe("obsolete");
-    expect(await getSubscription(sql, sub.id)).toEqual(current);
+    expect(await getSubscription(sql, sub.id, NOW)).toEqual(current);
   });
 });
 
@@ -679,12 +679,38 @@ describe("runWebhookDeliveryCycle — who is pushed what", () => {
     expect(await cycle(0)).toMatchObject({ attempted: 1, delivered: 0, failed: 0, deferred: 1 });
     expect(await cycle(10)).toMatchObject({ attempted: 0 });
     expect(await cycle(31)).toMatchObject({ attempted: 1, deferred: 1 });
-    expect(await getSubscription(sql, sub.id)).toMatchObject({
+    expect(await getSubscription(sql, sub.id, NOW)).toMatchObject({
       pushFailures: 0,
       status: "active",
       cursor: sub.cursor,
     });
     expect(await cycle(62)).toMatchObject({ attempted: 1, delivered: 1 });
     expect(answers).toEqual([]);
+  });
+
+  it("pushes nothing to a subscription whose lease ran out", async () => {
+    await sql`DELETE FROM conditions.federation_subscription`;
+    const sub = await webhookSubFromNow({ priorityOnly: false, bbox: [4, 50, 6, 54] });
+    await insertEvent("lapsed");
+    const lapsed = mockInbox([200]);
+    const expired = await runWebhookDeliveryCycle(sql, {
+      signingKey,
+      fetchImpl: lapsed.fetchImpl,
+      partOf: PARTOF,
+      now: sub.expiresAt,
+    });
+    expect(expired).toMatchObject({ attempted: 0 });
+    expect(lapsed.captured).toEqual([]);
+
+    const live = mockInbox([200]);
+    const justBefore = new Date(Date.parse(sub.expiresAt) - 1000).toISOString();
+    expect(
+      await runWebhookDeliveryCycle(sql, {
+        signingKey,
+        fetchImpl: live.fetchImpl,
+        partOf: PARTOF,
+        now: justBefore,
+      }),
+    ).toMatchObject({ attempted: 1, delivered: 1 });
   });
 });

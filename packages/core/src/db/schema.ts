@@ -816,6 +816,12 @@ export const federationBlocklist = conditionsSchema.table("federation_blocklist"
  * threshold the row flips to `push_disabled` and the publisher stops pushing —
  * the peer keeps every event via pull. A recovered peer re-enables push with a
  * PATCH (which resets the counter and status).
+ *
+ * `expires_at` is the subscription's lease: every accepted PATCH renews it,
+ * and a subscription not renewed in time stops acting, is no longer shown to
+ * its peer and is deleted, so a peer that disappeared stops having this
+ * instance journal for it. The default only fills rows written before the
+ * lease existed; the code always writes it.
  */
 export const federationSubscription = conditionsSchema.table(
   "federation_subscription",
@@ -832,6 +838,9 @@ export const federationSubscription = conditionsSchema.table(
     status: text("status").notNull().default("active"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true })
+      .notNull()
+      .default(sql`now() + interval '30 days'`),
   },
   (t) => [
     index("idx_federation_subscription_peer").on(t.peerId),

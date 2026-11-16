@@ -1,8 +1,10 @@
 import { runMigrations } from "@openconditions/core/server";
 import {
+  expireSubscriptions,
   generateInstanceKey,
   type InstanceKey,
   type RecordOutboxEntry,
+  SUBSCRIPTION_LEASE_SEC,
   signMessage,
 } from "@openconditions/federation";
 import {
@@ -796,6 +798,100 @@ describe("one subscription per delivery target", () => {
       });
       expect(res.statusCode).toBe(409);
       expect(res.json().existingId).toBe(first);
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+});
+
+describe("subscription leases", () => {
+  const DAY_MS = 86_400_000;
+  const T0 = "2026-07-01T00:00:00.000Z";
+  const at = (days: number) => new Date(Date.parse(T0) + days * DAY_MS).toISOString();
+  let clock = T0;
+
+  beforeEach(async () => {
+    await sql`DELETE FROM conditions.federation_subscription`;
+    clock = T0;
+  });
+
+  const request = async (
+    app: Awaited<ReturnType<typeof build>>,
+    method: "GET" | "PATCH" | "DELETE" | "POST",
+    path: string,
+    body?: unknown,
+  ) => {
+    const req = await signed(peerA, method, path, body);
+    return app.inject({ method, url: path, headers: req.headers, payload: req.payload });
+  };
+
+  it("leases a new subscription for 30 days and renews it with every accepted PATCH", async () => {
+    expect(SUBSCRIPTION_LEASE_SEC).toBe(30 * 86_400);
+    const app = await build({ sql, env: enabledEnv, logger: false, now: () => clock });
+    try {
+      const created = await request(app, "POST", "/peer/subscriptions", { deliveryMode: "pull" });
+      expect(created.statusCode).toBe(201);
+      const { id, expiresAt } = created.json();
+      expect(expiresAt).toBe(at(30));
+
+      clock = at(20);
+      const listed = await request(app, "GET", "/peer/subscriptions");
+      expect(listed.json().subscriptions.map((s: { expiresAt: string }) => s.expiresAt)).toEqual([
+        at(30),
+      ]);
+      // A PATCH that changes nothing renews it all the same.
+      const renewed = await request(app, "PATCH", `/peer/subscriptions/${id}`, {});
+      expect(renewed.statusCode).toBe(200);
+      expect(renewed.json().expiresAt).toBe(at(50));
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+
+  it("treats a subscription whose lease ran out as gone, and lets the peer create it again", async () => {
+    const app = await build({ sql, env: enabledEnv, logger: false, now: () => clock });
+    try {
+      const id = await createSub(app, peerA, { deliveryMode: "pull" });
+      clock = at(30);
+      for (const method of ["GET", "PATCH", "DELETE"] as const) {
+        const res = await request(
+          app,
+          method,
+          `/peer/subscriptions/${id}`,
+          method === "PATCH" ? {} : undefined,
+        );
+        expect(res.statusCode, method).toBe(404);
+      }
+      const listed = await request(app, "GET", "/peer/subscriptions");
+      expect(listed.json().subscriptions).toEqual([]);
+      const stream = await request(app, "GET", `/peer/stream?subscriptionId=${id}`);
+      expect(stream.statusCode).toBe(404);
+
+      // Still stored, but it does not answer 409 for the one created again.
+      const again = await request(app, "POST", "/peer/subscriptions", { deliveryMode: "pull" });
+      expect(again.statusCode).toBe(201);
+      expect(again.json().expiresAt).toBe(at(60));
+      const rows = await sql<{ id: string }[]>`SELECT id FROM conditions.federation_subscription`;
+      expect(rows.map((r) => r.id)).toEqual([again.json().id]);
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+
+  it("deletes only the subscriptions whose lease ran out", async () => {
+    const app = await build({ sql, env: enabledEnv, logger: false, now: () => clock });
+    try {
+      const old = await createSub(app, peerA, { deliveryMode: "pull" });
+      clock = at(10);
+      const fresh = await createSub(app, peerA, {
+        deliveryMode: "webhook",
+        inboxUrl: "https://peer-a.example.net/inbox",
+        filter: { bbox: [4, 50, 6, 54] },
+      });
+      expect(await expireSubscriptions(sql, at(29))).toEqual([]);
+      expect(await expireSubscriptions(sql, at(30))).toEqual([{ id: old, peerId: "peer-a" }]);
+      const rows = await sql<{ id: string }[]>`SELECT id FROM conditions.federation_subscription`;
+      expect(rows.map((r) => r.id)).toEqual([fresh]);
     } finally {
       await app.close();
     }

@@ -238,7 +238,8 @@ export interface WebhookCycleResult {
 
 /**
  * Runs one delivery pass over every active webhook subscription (the cron body).
- * A `push_disabled` row is skipped — that peer is on pull now — and so is the
+ * A `push_disabled` row is skipped — that peer is on pull now — and so is one
+ * whose lease ran out (it no longer acts; the expiry deletes it), and the
  * row of a peer blocked or no longer pinned here: transport to a peer this
  * instance stopped trusting stops with it, its cursor kept. Each subscriber is
  * pushed only its tier's window ({@link WebhookCycleOptions.floorFor}), and a
@@ -252,9 +253,10 @@ export async function runWebhookDeliveryCycle(
 ): Promise<WebhookCycleResult> {
   const { floorFor, backoff, ...deliver } = opts;
   const nowMs = Date.parse(opts.now ?? new Date().toISOString());
+  const at = new Date(nowMs);
   const rows = await sql<{ id: string }[]>`
     SELECT id FROM conditions.federation_subscription
-    WHERE delivery_mode = 'webhook' AND status = 'active'
+    WHERE delivery_mode = 'webhook' AND status = 'active' AND expires_at > ${at}
     ORDER BY created_at ASC`;
 
   const result: WebhookCycleResult = {
@@ -279,8 +281,9 @@ export async function runWebhookDeliveryCycle(
         status: FederationSubscription["status"];
         created_at: Date;
         updated_at: Date;
+        expires_at: Date;
       }[]
-    >`SELECT * FROM conditions.federation_subscription WHERE id = ${id}`;
+    >`SELECT * FROM conditions.federation_subscription WHERE id = ${id} AND expires_at > ${at}`;
     if (!row || row.delivery_mode !== "webhook" || row.status !== "active") continue;
     if ((backoff?.get(row.id) ?? 0) > nowMs) continue;
     const floor = floorFor?.(row.peer_id);
@@ -298,6 +301,7 @@ export async function runWebhookDeliveryCycle(
       status: row.status,
       createdAt: row.created_at.toISOString(),
       updatedAt: row.updated_at.toISOString(),
+      expiresAt: row.expires_at.toISOString(),
     };
     result.attempted += 1;
     const outcome = await deliverWebhook(sql, subscription, {
