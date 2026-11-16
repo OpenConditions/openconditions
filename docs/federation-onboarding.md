@@ -393,6 +393,16 @@ and one that loses the lock's connection stops. A peer holds one pull
 subscription and one webhook per inbox here; a second is refused with `409`
 naming the one held, which the peer patches.
 
+### Restoring or moving the database
+
+A journal cursor is a pair of a Postgres transaction id and a sequence number, so it only means something within one history of the database. The journal's epoch (`conditions.federation_journal`, one row) names that history, and every page of the outbox and backfill states it. When the epoch changes, the journal is emptied of everything but its delete entries, every push cursor goes back to the start, and the journal seed journals the current records again for the subscriptions that exist. The deletes are kept, erasures included, because nothing would journal them again and a subscriber may not have read them yet. A subscriber that sees the new epoch reads the journal again from the start: the deletes first, then what is live, landing what it already holds as stale.
+
+The service starts a new epoch by itself at boot when transaction ids went back, which is what a logical restore (`pg_dump` and `pg_restore`, or a move to another server that way) does, and when the Postgres timeline changed, after point-in-time recovery or a promotion. Nothing in the database says that it was rolled back from a filesystem snapshot or an older base backup: after such a restore, run `DELETE FROM conditions.federation_journal;` before starting the service, and it starts a new epoch. A subscriber that asks with a cursor the restored journal has not reached is told so (`cursorAhead`) and starts again from the beginning too, as does a push cursor that is ahead. A new epoch that was not needed, for example after `pg_upgrade` of a cluster that was once promoted, costs one re-read of the journal by each subscriber and is otherwise safe.
+
+### Journal lag
+
+A page serves only entries that no older transaction can still precede, so a write transaction that stays open anywhere on the Postgres server holds back every entry committed after it began. The service checks this every minute and logs a warning while entries have been held back longer than the actor's `convergenceBound`, naming the application whose transaction is open when its role may see it, and one line when the lag is gone. `GET /status/journal` answers the epoch, when the oldest held-back entry was journalled (`heldSince`, null when none is) and how many seconds ago (`lagSec`). `/status` stays the container health check and does not include it.
+
 ### Peers on a private network
 
 Requests to peers, their archives and their inboxes go through the egress

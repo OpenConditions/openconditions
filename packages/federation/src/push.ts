@@ -78,6 +78,7 @@ export type DeliverWebhookOutcome =
   | { status: "obsolete" }
   | { status: "delivered"; delivered: number; advancedTo: string; httpStatus: number }
   | { status: "empty"; delivered: 0; advancedTo: string }
+  | { status: "reset" }
   | { status: "deferred"; retryAfterSec: number; httpStatus: number }
   | { status: "failed"; pushFailures: number; httpStatus?: number }
   | { status: "disabled"; pushFailures: number; httpStatus?: number };
@@ -98,7 +99,10 @@ export type DeliverWebhookOutcome =
  *    peer's pull catch-up is gap-free;
  *  - when the (priority-restricted) scan is empty: advances the cursor over any
  *    scanned priority rows that the subscriber filter then dropped, without a
- *    POST — no priority row that matches is ever skipped.
+ *    POST — no priority row that matches is ever skipped;
+ *  - when the cursor is ahead of the journal (the database went back without
+ *    a new epoch): `reset`, the cursor goes back to the start without a POST,
+ *    and the next cycle pushes from there.
  */
 export async function deliverWebhook(
   sql: postgres.Sql,
@@ -120,6 +124,14 @@ export async function deliverWebhook(
     partOf: opts.partOf,
     now,
   });
+
+  if (page.cursorAhead === true) {
+    const reset = await sql`
+      UPDATE conditions.federation_subscription
+      SET cursor = '0.0', revision = revision + 1, updated_at = ${new Date(now)}
+      WHERE id = ${subscription.id} AND revision = ${subscription.revision}`;
+    return reset.count === 0 ? { status: "obsolete" } : { status: "reset" };
+  }
 
   // The scan is already priority-restricted at SQL when priorityOnly, so
   // orderedItems are exactly the push-channel items the subscriber filter kept.
@@ -143,6 +155,7 @@ export async function deliverWebhook(
     type: "OrderedCollectionPage",
     partOf: opts.partOf,
     highWaterMark: page.highWaterMark,
+    epoch: page.epoch,
     // A self-describing hint that this push carries the priority subsequence, so
     // a defensive peer knows to run an independent pull for completeness. The
     // pull response never sets it.

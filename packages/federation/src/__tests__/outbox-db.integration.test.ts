@@ -12,11 +12,15 @@ import {
 } from "@openconditions/storage";
 import type postgres from "postgres";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { ensureJournalEpoch } from "../journal.js";
 import {
   decodeOutboxCursor,
   encodeOutboxCursor,
+  OUTBOX_CURSOR_START,
+  OUTBOX_DEFAULT_LIMIT,
   type OutboxCursor,
   type OutboxPage,
+  outboxEtag,
   readOutbox,
 } from "../outbox.js";
 import type { OutboxEntry, RecordOutboxEntry } from "../record-filter.js";
@@ -735,6 +739,52 @@ describe("readOutbox: the composite (txid, seq) cursor page", () => {
       [situationId("pri-works"), "delete"],
     ]);
     expect(page.priorityRestricted).toBe(true);
+  });
+});
+
+describe("readOutbox: the journal's epoch", () => {
+  const storedEpoch = async () =>
+    (
+      await sql<{ epoch: string }[]>`SELECT epoch::text AS epoch FROM conditions.federation_journal`
+    )[0]!.epoch;
+
+  it("states the epoch on every page", async () => {
+    await writeOwn(sql, incidentDraft("epoch-page"));
+    const page = await readOutbox(sql, { now: NOW });
+    expect(page.epoch).toBe(await storedEpoch());
+    expect(page.cursorAhead).toBeUndefined();
+  });
+
+  it("says a cursor this journal has not reached is ahead, with no entries", async () => {
+    await writeOwn(sql, incidentDraft("epoch-ahead"));
+    const page = await readOutbox(sql, { after: "900000000000.3", now: NOW, limit: 1 });
+    expect(page.cursorAhead).toBe(true);
+    expect(page.orderedItems).toEqual([]);
+    expect(page.highWaterMark).toBe("900000000000.3");
+    expect(page.next).toBeUndefined();
+    expect(page.epoch).toBe(await storedEpoch());
+  });
+
+  it("never says the start cursor is ahead, nor one it handed out", async () => {
+    expect((await readOutbox(sql, { now: NOW })).cursorAhead).toBeUndefined();
+    expect((await readOutbox(sql, { after: "0.0", now: NOW })).cursorAhead).toBeUndefined();
+    await writeOwn(sql, incidentDraft("epoch-handed-out"));
+    const first = await readOutbox(sql, { now: NOW });
+    const next = await readOutbox(sql, { after: first.highWaterMark, now: NOW });
+    expect(next.cursorAhead).toBeUndefined();
+  });
+
+  it("gives an unchanged page of another epoch another ETag", async () => {
+    const page = await readOutbox(sql, { now: NOW });
+    const etag = (epoch: string) =>
+      outboxEtag(page.highWaterMark, epoch, OUTBOX_CURSOR_START, OUTBOX_DEFAULT_LIMIT, undefined);
+    await sql`DELETE FROM conditions.federation_journal`;
+    const started = await ensureJournalEpoch(sql, { now: NOW });
+    expect(started.started).toBe(true);
+    const fresh = await readOutbox(sql, { now: NOW });
+    expect(fresh.highWaterMark).toBe(page.highWaterMark);
+    expect(fresh.epoch).toBe(started.epoch);
+    expect(etag(fresh.epoch)).not.toBe(etag(page.epoch));
   });
 });
 

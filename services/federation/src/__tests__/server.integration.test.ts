@@ -57,6 +57,7 @@ describe("federation disabled (the default)", () => {
       for (const path of [
         "/.well-known/openconditions/actor.json",
         "/.well-known/openconditions/peers.json",
+        "/status/journal",
       ]) {
         const res = await app.inject({ method: "GET", url: path });
         expect(res.statusCode).toBe(404);
@@ -116,6 +117,19 @@ describe("federation enabled", () => {
     await expect(build({ sql, env: self, logger: false })).rejects.toThrow(/is this instance/);
     const archive = { ...ENABLED_ENV, OPENCONDITIONS_FEDERATION_ARCHIVE_URL: "/srv/archive" };
     await expect(build({ sql, env: archive, logger: false })).rejects.toThrow(/ARCHIVE_URL/);
+  }, 30_000);
+
+  it("reports the journal's epoch and fence lag at /status/journal", async () => {
+    const app = await build({ sql, env: ENABLED_ENV, logger: false, now: () => NOW });
+    try {
+      const res = await app.inject({ method: "GET", url: "/status/journal" });
+      expect(res.statusCode).toBe(200);
+      const [{ epoch }] = await sql<{ epoch: string }[]>`
+        SELECT epoch::text AS epoch FROM conditions.federation_journal`;
+      expect(res.json()).toEqual({ epoch, heldSince: null, lagSec: 0 });
+    } finally {
+      await app.close();
+    }
   }, 30_000);
 
   it("bootstraps an instance key and serves the actor document as plain JSON", async () => {

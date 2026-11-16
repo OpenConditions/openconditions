@@ -24,6 +24,7 @@ import {
   outboxEtag,
   PEERS_WELL_KNOWN_PATH,
   type RateLimiter,
+  readJournalLag,
   signingKeyOf,
   signMessage,
 } from "@openconditions/federation";
@@ -60,6 +61,9 @@ const INBOX_PATH = "/peer/inbox";
 
 /** The authenticated, tier-bounded history read (pull outbox with a time floor). */
 const BACKFILL_PATH = "/peer/backfill";
+
+/** The journal's epoch and fence lag. */
+const JOURNAL_STATUS_PATH = "/status/journal";
 
 export interface BuildOptions {
   sql: postgres.Sql;
@@ -110,6 +114,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
 
   if (!settings.enabled) {
     for (const path of [
+      JOURNAL_STATUS_PATH,
       ACTOR_WELL_KNOWN_PATH,
       PEERS_WELL_KNOWN_PATH,
       OUTBOX_PATH,
@@ -148,6 +153,13 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
   async function signingKey(): Promise<InstanceKey> {
     return signingKeyOf(await activeKeys(), now())!;
   }
+
+  // How far the journal's fence lags: the epoch, and since when committed
+  // entries wait behind an open transaction. Which session holds them is not
+  // said here: that would publish other applications' names.
+  app.get(JOURNAL_STATUS_PATH, async (_req, reply) => {
+    return reply.send(await readJournalLag(sql, now()));
+  });
 
   app.get(ACTOR_WELL_KNOWN_PATH, async (_req, reply) => {
     const doc = buildActorDocument(actorConfig, await activeKeys(), advertisedSchemaVersions);
@@ -233,6 +245,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     });
     const etag = outboxEtag(
       page.highWaterMark,
+      page.epoch,
       parsed.after,
       limit,
       parsed.filter,

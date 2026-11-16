@@ -20,6 +20,13 @@
  * names the peer's archive, which lands first (`importArchive`): a new peer,
  * or one that was away longer than its window, starts from the archive's
  * night and the pages carry the rest.
+ *
+ * Every page names the epoch of the peer's journal, which the cursor is kept
+ * with. A page of another epoch, or one that says the cursor is ahead of the
+ * peer's journal (its database went back), voids the cursor: it goes back to
+ * the start, that page is not landed, and the journal is read again from the
+ * start, landing what this instance already holds as stale. One such reset
+ * is followed per pull and per hour; another is refused as the peer's fault.
  */
 import { ingestFederatedPage } from "@openconditions/contributions-api/federation/inbox";
 import {
@@ -79,6 +86,11 @@ export interface PullResult {
   beyondWindow?: true;
   /** What the peer's archive landed, when the pull read it. */
   archive?: { accepted: number; stale: number; skipped: number };
+  /**
+   * The cursor went back to the start because the peer's journal started
+   * over: a new epoch, or a cursor ahead of the peer's journal.
+   */
+  reset?: "epoch" | "ahead";
   /** Why the pull stopped short, when it did. */
   error?: string;
 }
@@ -97,27 +109,86 @@ export function filterQuery(filter: RecordFilter): URLSearchParams {
   return params;
 }
 
-async function readCursor(sql: postgres.Sql, peerId: string): Promise<string> {
-  const [row] = await sql<{ cursor: string }[]>`
-    SELECT cursor FROM conditions.federation_peer_cursor WHERE peer_instance_id = ${peerId}`;
-  return row?.cursor ?? "0.0";
+/** The least time between two resets of one peer's cursor that are followed. */
+export const CURSOR_RESET_MIN_INTERVAL_MS = 60 * 60 * 1000;
+
+/** The longest journal epoch a page may name. */
+const MAX_EPOCH_LENGTH = 64;
+
+interface StoredCursor {
+  cursor: string;
+  /** The epoch of the peer's journal the cursor belongs to; null before the first page. */
+  journalEpoch: string | null;
+  /** When the cursor was last reset because the peer's journal started over. */
+  cursorResetAt: Date | null;
 }
 
-/** Moves the cursor to `cursor`, never back past one stored meanwhile. */
+async function readCursor(sql: postgres.Sql, peerId: string): Promise<StoredCursor> {
+  const [row] = await sql<
+    { cursor: string; journal_epoch: string | null; cursor_reset_at: Date | null }[]
+  >`
+    SELECT cursor, journal_epoch, cursor_reset_at
+      FROM conditions.federation_peer_cursor WHERE peer_instance_id = ${peerId}`;
+  return {
+    cursor: row?.cursor ?? "0.0",
+    journalEpoch: row?.journal_epoch ?? null,
+    cursorResetAt: row?.cursor_reset_at ?? null,
+  };
+}
+
+/**
+ * Moves the cursor to `cursor` of the peer's journal `epoch`, never back past
+ * one stored meanwhile.
+ */
 async function storeCursor(
   sql: postgres.Sql,
   peerId: string,
   cursor: string,
+  epoch: string,
   now: string,
 ): Promise<void> {
   await sql`
-    INSERT INTO conditions.federation_peer_cursor AS held (peer_instance_id, cursor, updated_at)
-    VALUES (${peerId}, ${cursor}, ${now})
+    INSERT INTO conditions.federation_peer_cursor AS held
+      (peer_instance_id, cursor, updated_at, journal_epoch)
+    VALUES (${peerId}, ${cursor}, ${now}, ${epoch})
     ON CONFLICT (peer_instance_id) DO UPDATE
-      SET cursor = excluded.cursor, updated_at = excluded.updated_at
+      SET cursor = excluded.cursor, updated_at = excluded.updated_at,
+          journal_epoch = excluded.journal_epoch
       WHERE (split_part(held.cursor, '.', 1)::numeric, split_part(held.cursor, '.', 2)::numeric)
           < (split_part(excluded.cursor, '.', 1)::numeric,
              split_part(excluded.cursor, '.', 2)::numeric)`;
+}
+
+/** Notes the epoch of the peer's journal the cursor belongs to, the cursor left as it is. */
+async function adoptEpoch(
+  sql: postgres.Sql,
+  peerId: string,
+  epoch: string,
+  now: string,
+): Promise<void> {
+  await sql`
+    INSERT INTO conditions.federation_peer_cursor (peer_instance_id, updated_at, journal_epoch)
+    VALUES (${peerId}, ${now}, ${epoch})
+    ON CONFLICT (peer_instance_id) DO UPDATE SET journal_epoch = excluded.journal_epoch`;
+}
+
+/**
+ * Sets the cursor back to the start of the peer's journal `epoch`: the one
+ * write that moves it back.
+ */
+async function resetCursor(
+  sql: postgres.Sql,
+  peerId: string,
+  epoch: string,
+  now: string,
+): Promise<void> {
+  await sql`
+    INSERT INTO conditions.federation_peer_cursor
+      (peer_instance_id, cursor, updated_at, journal_epoch, cursor_reset_at)
+    VALUES (${peerId}, '0.0', ${now}, ${epoch}, ${now})
+    ON CONFLICT (peer_instance_id) DO UPDATE
+      SET cursor = '0.0', updated_at = excluded.updated_at,
+          journal_epoch = excluded.journal_epoch, cursor_reset_at = excluded.cursor_reset_at`;
 }
 
 /** The least time between two archives of one peer landed here. */
@@ -224,6 +295,7 @@ export async function pullPeer(
   peer: PeerRecord & { pull: { filter: RecordFilter } },
   ctx: PullContext,
 ): Promise<PullResult> {
+  const stored = await readCursor(sql, peer.instanceId);
   const result: PullResult = {
     pages: 0,
     accepted: 0,
@@ -231,7 +303,7 @@ export async function pullPeer(
     tombstoned: 0,
     liveness: 0,
     skipped: 0,
-    cursor: await readCursor(sql, peer.instanceId),
+    cursor: stored.cursor,
   };
   if (await isPeerBlocked(sql, peer.instanceId)) {
     return { ...result, error: "the peer is blocked here" };
@@ -282,6 +354,8 @@ export async function pullPeer(
     }
     let page: {
       highWaterMark?: unknown;
+      epoch?: unknown;
+      cursorAhead?: unknown;
       next?: unknown;
       beyondWindow?: unknown;
       archive?: unknown;
@@ -299,6 +373,42 @@ export async function pullPeer(
     const items = page.orderedItems as unknown[];
     if (items.length > PULL_PAGE_LIMIT) {
       return refuse("schema", `the page holds more than ${PULL_PAGE_LIMIT} entries`);
+    }
+    const epoch = page.epoch;
+    if (typeof epoch !== "string" || epoch.length === 0 || epoch.length > MAX_EPOCH_LENGTH) {
+      return refuse("schema", "the page names no journal epoch");
+    }
+    const ahead = page.cursorAhead === true;
+    const otherEpoch = stored.journalEpoch !== null && stored.journalEpoch !== epoch;
+    if (ahead || otherEpoch) {
+      if (result.cursor === "0.0" && ahead) {
+        return refuse("schema", "the page says the start of the journal is ahead of it");
+      }
+      if (result.cursor !== "0.0") {
+        // The cursor belongs to a history the peer's journal no longer has.
+        if (result.reset !== undefined) {
+          return refuse("schema", "the peer's journal restarted again within this pull");
+        }
+        const nowMs = Date.parse(ctx.now());
+        if (
+          stored.cursorResetAt !== null &&
+          nowMs - stored.cursorResetAt.getTime() < CURSOR_RESET_MIN_INTERVAL_MS
+        ) {
+          return refuse("schema", "the peer's journal restarted again within the hour");
+        }
+        await resetCursor(sql, peer.instanceId, epoch, ctx.now());
+        stored.journalEpoch = epoch;
+        stored.cursorResetAt = new Date(nowMs);
+        result.cursor = "0.0";
+        result.reset = otherEpoch ? "epoch" : "ahead";
+        catchingUp = true;
+        continue;
+      }
+    }
+    if (stored.journalEpoch !== epoch) {
+      // The first page of the peer's journal, or a start cursor of a new epoch.
+      await adoptEpoch(sql, peer.instanceId, epoch, ctx.now());
+      stored.journalEpoch = epoch;
     }
     const inWindow = (item: unknown) => {
       const at = entryCursor(item);
@@ -368,7 +478,7 @@ export async function pullPeer(
       await recordPeerFailure(sql, peer.instanceId, "schema", ctx.now(), landed.skipped.length);
     }
     if (!after(result.cursor, frontier)) break;
-    await storeCursor(sql, peer.instanceId, frontier, ctx.now());
+    await storeCursor(sql, peer.instanceId, frontier, epoch, ctx.now());
     result.cursor = frontier;
     if (page.next === undefined) break;
     catchingUp = true;
