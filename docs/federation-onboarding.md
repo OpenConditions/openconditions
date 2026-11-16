@@ -8,6 +8,8 @@ governance-review process. Read it together with
 [federation-gdpr.md](./federation-gdpr.md), which frames what the deletion and
 data-protection machinery does and does not guarantee.
 
+What instances send each other, and how they sign and check it, is specified in the [federation wire protocol](./federation-protocol.md).
+
 > **Status — read this first.** The machinery below (registry schema, TUF
 > signing/verification, daily sync, bilateral bootstrap) is built and tested in
 > CI against a **TEST trust root**. The following are deliberately **not** done

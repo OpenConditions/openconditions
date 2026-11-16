@@ -20,6 +20,13 @@
 import { sharedSchemaMajors } from "@openconditions/model";
 
 /**
+ * The version of the federation protocol this implementation speaks, as
+ * docs/federation-protocol.md describes it. An instance advertises it in its
+ * actor's `capabilities.protocolVersion` (or `protocolVersions`).
+ */
+export const FEDERATION_PROTOCOL_VERSION = "0.2";
+
+/**
  * The negotiation input — the subset of `ActorCapabilities` the intersection
  * reads (an `ActorCapabilities` value is assignable to it). Each side carries a
  * single `protocolVersion`; an instance MAY additionally advertise the full set

@@ -1,0 +1,34 @@
+{
+  "description": "A signed GET of the outbox and the signed page that answers it, bound to that request. The key is the RFC 9421 Appendix B.1.4 test-key-ed25519, a published test key: never use it for anything else.",
+  "protocolVersion": "0.2",
+  "key": {
+    "source": "RFC 9421 Appendix B.1.4 test-key-ed25519",
+    "privateKeyPkcs8Base64": "MC4CAQAwBQYDK2VwBCIEIJ+DYvh6SEqVTm50DFtMDoQikTmiCqirVv9mWG9qfSnF",
+    "publicKeySpkiBase64": "MCowBQYDK2VwAyEAJrQLj5P/89iXES9+vFgrIy29clF9CC/oPPsw3c5D0bs=",
+    "keyId": "z6Mkh4LmfP1ev9MNPGr7JbEbtD6BD4fsu1duEj83PMCs3xHG"
+  },
+  "created": 1767225600,
+  "expires": 1767225660,
+  "request": {
+    "method": "GET",
+    "url": "https://publisher.example/peer/outbox?after=0.0&limit=100",
+    "nonce": "c0ffee00-0000-4000-8000-000000000001",
+    "signatureBase": "\"@method\": GET\n\"@target-uri\": https://publisher.example/peer/outbox?after=0.0&limit=100\n\"@signature-params\": (\"@method\" \"@target-uri\");created=1767225600;expires=1767225660;keyid=\"z6Mkh4LmfP1ev9MNPGr7JbEbtD6BD4fsu1duEj83PMCs3xHG\";nonce=\"c0ffee00-0000-4000-8000-000000000001\";tag=\"openconditions-federation\"",
+    "headers": {
+      "Signature-Input": "oc=(\"@method\" \"@target-uri\");created=1767225600;expires=1767225660;keyid=\"z6Mkh4LmfP1ev9MNPGr7JbEbtD6BD4fsu1duEj83PMCs3xHG\";nonce=\"c0ffee00-0000-4000-8000-000000000001\";tag=\"openconditions-federation\"",
+      "Signature": "oc=:P1GH0Q735zfXe81nSbKWIZP3DKzX28Bd8d3MC8Y18KxEb2tW3JCf+ZzQEPfDI2dxzY+CL1EO+Wb7t3g8yXz9AQ==:"
+    }
+  },
+  "response": {
+    "status": 200,
+    "nonce": "c0ffee00-0000-4000-8000-000000000002",
+    "body": "{\"type\":\"OrderedCollectionPage\",\"partOf\":\"https://publisher.example/peer/outbox\",\"highWaterMark\":\"0.0\",\"epoch\":\"3f0c2a5e-8b1d-4c7e-9a64-5d2f1b0e7c93\",\"orderedItems\":[]}",
+    "signatureBase": "\"@status\": 200\n\"@method\";req: GET\n\"@target-uri\";req: https://publisher.example/peer/outbox?after=0.0&limit=100\n\"signature\";req: oc=:P1GH0Q735zfXe81nSbKWIZP3DKzX28Bd8d3MC8Y18KxEb2tW3JCf+ZzQEPfDI2dxzY+CL1EO+Wb7t3g8yXz9AQ==:\n\"content-type\": application/json\n\"content-digest\": sha-256=:Unf3/MSI/ga0n5zrpmXyX5R95lN6ocXOTICS8YaBW0c=:\n\"@signature-params\": (\"@status\" \"@method\";req \"@target-uri\";req \"signature\";req \"content-type\" \"content-digest\");created=1767225600;expires=1767225660;keyid=\"z6Mkh4LmfP1ev9MNPGr7JbEbtD6BD4fsu1duEj83PMCs3xHG\";nonce=\"c0ffee00-0000-4000-8000-000000000002\";tag=\"openconditions-federation\"",
+    "headers": {
+      "content-type": "application/json",
+      "Content-Digest": "sha-256=:Unf3/MSI/ga0n5zrpmXyX5R95lN6ocXOTICS8YaBW0c=:",
+      "Signature-Input": "oc=(\"@status\" \"@method\";req \"@target-uri\";req \"signature\";req \"content-type\" \"content-digest\");created=1767225600;expires=1767225660;keyid=\"z6Mkh4LmfP1ev9MNPGr7JbEbtD6BD4fsu1duEj83PMCs3xHG\";nonce=\"c0ffee00-0000-4000-8000-000000000002\";tag=\"openconditions-federation\"",
+      "Signature": "oc=:KUv1erk4HYxAe38Ev3G+MkUOa6TzTCp/R5M9u2yvOy4NeD41Z17lfRJSSkMYpnTrjB2Tzp+KlI1aqUacdmKzDg==:"
+    }
+  }
+}

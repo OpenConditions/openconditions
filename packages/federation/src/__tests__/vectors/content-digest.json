@@ -1,0 +1,20 @@
+{
+  "description": "RFC 9530 Content-Digest values: what a signer sends for a body, and what a verifier accepts.",
+  "cases": [
+    {
+      "body": "{\"hello\": \"world\"}",
+      "contentDigest": "sha-256=:X48E9qOokqqrvdts8nOJRJN3OWDUoyWxBf7kbu9DBPE=:",
+      "source": "RFC 9530 Appendix D"
+    },
+    {
+      "body": "{\"type\":\"OrderedCollectionPage\",\"partOf\":\"https://publisher.example/peer/outbox\",\"highWaterMark\":\"0.0\",\"epoch\":\"3f0c2a5e-8b1d-4c7e-9a64-5d2f1b0e7c93\",\"orderedItems\":[]}",
+      "contentDigest": "sha-256=:Unf3/MSI/ga0n5zrpmXyX5R95lN6ocXOTICS8YaBW0c=:",
+      "source": "the page in signing.json"
+    },
+    {
+      "body": "",
+      "contentDigest": "sha-256=:47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=:",
+      "source": "an empty body"
+    }
+  ]
+}

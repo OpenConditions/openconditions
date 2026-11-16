@@ -1,0 +1,47 @@
+{
+  "description": "Journal cursors on the wire, \"<txid>.<seq>\", both non-negative decimal integers. Entries are ordered by txid, then seq, as numbers.",
+  "valid": [
+    {
+      "wire": "0.0",
+      "txid": "0",
+      "seq": 0
+    },
+    {
+      "wire": "1000.14",
+      "txid": "1000",
+      "seq": 14
+    },
+    {
+      "wire": "1001.11",
+      "txid": "1001",
+      "seq": 11
+    },
+    {
+      "wire": "99.900",
+      "txid": "99",
+      "seq": 900
+    },
+    {
+      "wire": "18446744073709551615.9007199254740991",
+      "txid": "18446744073709551615",
+      "seq": 9007199254740991
+    }
+  ],
+  "invalid": [
+    "",
+    "abc",
+    "12",
+    "12.",
+    ".5",
+    "-1.0",
+    "1.-1",
+    "1.2.3",
+    "1.5e3",
+    " 1.2",
+    "1.9007199254740992"
+  ],
+  "ascending": ["0.0", "99.900", "1000.12", "1000.14", "1001.11", "1001.13"],
+  "notes": {
+    "1000.14 before 1001.11": "a transaction that took a higher seq but has the lower txid sorts first"
+  }
+}

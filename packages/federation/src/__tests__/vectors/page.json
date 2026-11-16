@@ -1,0 +1,115 @@
+{
+  "description": "An outbox page as /peer/outbox or /peer/backfill serves it and a webhook push sends it: one change, a retraction ordered by revision, an erasure and a source's liveness. The record is the publisher's own, sealed for schema kernel and situation/incident as this build registers them.",
+  "protocolVersion": "0.2",
+  "publisherInstanceId": "publisher.example",
+  "page": {
+    "type": "OrderedCollectionPage",
+    "partOf": "https://publisher.example/peer/outbox",
+    "highWaterMark": "7320.44",
+    "epoch": "3f0c2a5e-8b1d-4c7e-9a64-5d2f1b0e7c93",
+    "orderedItems": [
+      {
+        "seq": 41,
+        "txid": "7311",
+        "operation": "update",
+        "recordClass": "situation",
+        "recordId": "oc:situation:nl-ndw-events:NDW04_123456",
+        "canonicalId": "fffcec2c3b973dc63d9dfe7119f04f20eda656240033dfa2c4d1a30fc63e1a7b",
+        "kind": "incident",
+        "domain": "roads",
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "record": {
+          "id": "oc:situation:nl-ndw-events:NDW04_123456",
+          "temporality": "live",
+          "location": {
+            "geometry": {
+              "type": "Point",
+              "coordinates": [5.1214, 52.0907]
+            },
+            "extent": "point",
+            "geometryOrigin": "source",
+            "fuzziness": "exact"
+          },
+          "provenance": {
+            "origin": "feed",
+            "sourceId": "nl-ndw-events",
+            "sourceFormat": "datex2",
+            "accessMode": "bulk",
+            "recordId": "NDW04_123456",
+            "attribution": {
+              "provider": "NDW",
+              "license": "CC0-1.0"
+            },
+            "privacy": {
+              "class": "authoritative"
+            },
+            "instanceId": "publisher.example"
+          },
+          "freshness": {
+            "fetchedAt": "2026-01-01T00:00:00.000Z"
+          },
+          "class": "situation",
+          "kind": "incident",
+          "type": "obstruction",
+          "planned": false,
+          "certainty": "observed",
+          "severity": {
+            "label": "moderate",
+            "source": "derived"
+          },
+          "validity": {
+            "status": "active",
+            "start": "2026-01-01T00:00:00.000Z"
+          },
+          "effects": [],
+          "details": {
+            "kind": "incident",
+            "v": 1
+          },
+          "canonicalId": "fffcec2c3b973dc63d9dfe7119f04f20eda656240033dfa2c4d1a30fc63e1a7b",
+          "domain": "roads",
+          "revision": 3,
+          "recordedAt": "2026-01-01T00:00:00.000Z",
+          "contentHash": "90048fd3bd1dc1c6af06afc0eafe11de25bffa65b95fff944c084fcb9ca62cd2"
+        }
+      },
+      {
+        "seq": 42,
+        "txid": "7315",
+        "operation": "delete",
+        "recordClass": "situation",
+        "recordId": "oc:situation:nl-ndw-events:NDW04_123456",
+        "canonicalId": "fffcec2c3b973dc63d9dfe7119f04f20eda656240033dfa2c4d1a30fc63e1a7b",
+        "kind": "incident",
+        "domain": "roads",
+        "createdAt": "2026-01-01T00:20:00.000Z",
+        "tombstone": true,
+        "reason": "withdrawn",
+        "revision": 3
+      },
+      {
+        "seq": 43,
+        "txid": "7315",
+        "operation": "delete",
+        "recordClass": "situation",
+        "recordId": "oc:situation:nl-ndw-events:NDW04_654321",
+        "canonicalId": "4e7d0c3b9a2f61e85d17c0a9b3f24e6d8c51a07f92be3d64c8a1f5e02b79d3c6",
+        "kind": "incident",
+        "domain": "roads",
+        "createdAt": "2026-01-01T00:20:00.000Z",
+        "tombstone": true,
+        "reason": "rights_revoked"
+      },
+      {
+        "seq": 44,
+        "txid": "7320",
+        "operation": "liveness",
+        "sourceId": "nl-ndw-events",
+        "domain": "roads",
+        "polledAt": "2026-01-01T00:21:00.000Z",
+        "cadenceSec": 60,
+        "createdAt": "2026-01-01T00:21:00.000Z"
+      }
+    ]
+  }
+}
