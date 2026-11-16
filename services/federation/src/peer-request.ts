@@ -5,7 +5,7 @@
  * instance's CONFIGURED baseUrl (not the request Host), so a peer signs the
  * logical actor URL and the check is independent of proxies/loopback sockets.
  */
-import { type BlockList, isIPv4 } from "node:net";
+import { type BlockList, isIP, isIPv4 } from "node:net";
 import type { TLSSocket } from "node:tls";
 import {
   authenticatePeerRequest,
@@ -64,6 +64,13 @@ export function socketMtlsContext(req: FastifyRequest): MtlsContext | undefined 
   };
 }
 
+/** Whether `address` (an IPv4-mapped IPv6 address counting as its IPv4 address) is one of `proxies`. */
+export function isTrustedProxy(proxies: BlockList, address: string | undefined): boolean {
+  const plain = (address ?? "").replace(/^::ffff:(?=\d+\.)/i, "");
+  if (plain === "" || isIP(plain) === 0) return false;
+  return proxies.check(plain, isIPv4(plain) ? "ipv4" : "ipv6");
+}
+
 /**
  * Reads the client-certificate verdict a TLS-terminating proxy passes on: a
  * fingerprint in `header` is a certificate the proxy verified, its absence
@@ -75,10 +82,8 @@ export function socketMtlsContext(req: FastifyRequest): MtlsContext | undefined 
  */
 export function proxyMtlsContext(header: string, proxies?: BlockList) {
   return (req: FastifyRequest): MtlsContext | undefined => {
-    if (proxies !== undefined) {
-      const address = (req.socket.remoteAddress ?? "").replace(/^::ffff:(?=\d+\.)/, "");
-      const family = isIPv4(address) ? "ipv4" : "ipv6";
-      if (address === "" || !proxies.check(address, family)) return undefined;
+    if (proxies !== undefined && !isTrustedProxy(proxies, req.socket.remoteAddress)) {
+      return undefined;
     }
     const value = req.headers[header];
     if (typeof value !== "string" || value.includes(",")) return undefined;

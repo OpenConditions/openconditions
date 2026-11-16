@@ -5,10 +5,15 @@
  * the pinned `keyid` (T1 peers registry), and a peer may only see/modify its
  * OWN subscriptions.
  *
- * Push (webhook/sse) is a LATENCY optimization over the pull contract — the SSE
- * stream, like a webhook push, carries the outbox's composite `(txid, seq)`
- * cursor on every event, so a disconnected peer resumes from the last cursor it
- * saw (reconnect OR pull `/peer/outbox?after=<cursor>`) with no gap.
+ * Push (webhook/sse) is a LATENCY optimization over the pull contract. The SSE
+ * stream carries the outbox's composite `(txid, seq)` cursor as every event's
+ * id, and never stores how far it got: server-sent events have no
+ * acknowledgement, so it cannot know what arrived. The client holds the
+ * cursor. A reconnect names the last one it saw (`after`, or the
+ * `Last-Event-ID` an EventSource sends) and resumes after it; without one
+ * the stream starts at the subscription's stored cursor. The first event
+ * states the journal's epoch and where the stream starts, so the client keeps
+ * the epoch with the cursor as a pull subscriber does.
  *
  * The signed `@target-uri` is reconstructed from the instance's CONFIGURED
  * baseUrl (not the request Host), so a peer signs the logical actor URL and the
@@ -18,6 +23,7 @@
 import {
   type CreateSubscriptionInput,
   createSubscription,
+  decodeOutboxCursor,
   deleteSubscription,
   encodeOutboxCursor,
   type FederationSubscription,
@@ -26,6 +32,8 @@ import {
   listSubscriptions,
   type MtlsContext,
   type NonceStore,
+  OUTBOX_CURSOR_START,
+  readCursorStanding,
   readOutbox,
   SubscriptionConflictError,
   SubscriptionValidationError,
@@ -41,6 +49,12 @@ import { SseStreamPump } from "./stream-pump.js";
 
 const SUBSCRIPTIONS_PATH = "/peer/subscriptions";
 const STREAM_PATH = "/peer/stream";
+
+/** The stream's query: the subscription, and optionally the cursor to resume after. */
+interface StreamQuery {
+  subscriptionId?: string;
+  after?: string;
+}
 
 /** How often the SSE channel re-polls the outbox for new entries + heartbeats. */
 const STREAM_POLL_MS = 3_000;
@@ -196,7 +210,7 @@ export function registerSubscriptionRoutes(
     return reply.status(204).send();
   });
 
-  app.get<{ Querystring: { subscriptionId?: string } }>(STREAM_PATH, async (req, reply) => {
+  app.get<{ Querystring: StreamQuery }>(STREAM_PATH, async (req, reply) => {
     const peerId = await requirePeer(ctx, req, reply);
     if (peerId === null) return reply;
     if (await respondIfBlocked(ctx.sql, peerId, reply)) return reply;
@@ -208,6 +222,15 @@ export function registerSubscriptionRoutes(
     const subscriptionId = req.query.subscriptionId;
     if (subscriptionId === undefined || subscriptionId.length === 0) {
       return reply.status(400).send({ error: "subscriptionId query parameter is required" });
+    }
+    // The cursor the client resumes after: `after` (part of the signed target
+    // URI), else the Last-Event-ID an EventSource sends when it reconnects.
+    const resumeAfter = req.query.after ?? req.headers["last-event-id"];
+    if (
+      resumeAfter !== undefined &&
+      (typeof resumeAfter !== "string" || decodeOutboxCursor(resumeAfter) === null)
+    ) {
+      return reply.status(400).send({ error: 'the cursor must be a "<txid>.<seq>" cursor' });
     }
     const subscription = await loadOwned(ctx, subscriptionId, peerId, reply);
     if (subscription === null) return reply;
@@ -224,6 +247,13 @@ export function registerSubscriptionRoutes(
     // never scanned, so a Tier-0 peer cannot replay pre-24h history over SSE.
     const tier = ctx.peers.find(peerId)?.trustTier ?? 0;
 
+    // A cursor ahead of the journal belongs to a history the database no
+    // longer has: the stream starts from the beginning and says so, and the
+    // client resets its cursor as a pull subscriber would.
+    const requested = resumeAfter ?? subscription.cursor;
+    const standing = await readCursorStanding(ctx.sql, requested);
+    const start = standing.cursorAhead ? encodeOutboxCursor(OUTBOX_CURSOR_START) : requested;
+
     reply.hijack();
     reply.raw.writeHead(200, {
       "Content-Type": "text/event-stream",
@@ -231,6 +261,12 @@ export function registerSubscriptionRoutes(
       Connection: "keep-alive",
       "X-Accel-Buffering": "no",
     });
+    const journal = {
+      epoch: standing.epoch,
+      cursor: start,
+      ...(standing.cursorAhead ? { cursorAhead: true } : {}),
+    };
+    reply.raw.write(`event: journal\ndata: ${JSON.stringify(journal)}\n\n`);
 
     // The pump owns the cursor + backpressure state. It reads a limit-capped,
     // filter/tier-scoped page each tick and advances the cursor ONLY over frames
@@ -259,10 +295,10 @@ export function registerSubscriptionRoutes(
         },
         onError: (err) => req.log.error(err, "[peer/stream] poll failed"),
       },
-      subscription.cursor,
+      start,
     );
 
-    await pump.tick(); // initial snapshot from the subscription's cursor
+    await pump.tick(); // initial snapshot from the start cursor
     const poll = setInterval(() => void pump.tick(), STREAM_POLL_MS);
     // The heartbeat stands down while paused or while the socket already needs a
     // drain, so an idle journal + a stalled peer cannot buffer pings unboundedly

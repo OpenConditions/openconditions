@@ -43,7 +43,7 @@ export interface BackfillRouteContext {
   archiveUrl: string;
   /** Loads the newest active signing key (self-healing a rotation). */
   signingKey: () => Promise<InstanceKey>;
-  /** Shared per-peer transport rate limiter (inbox + backfill). */
+  /** Shared per-peer transport rate limiter (inbox, backfill and outbox). */
   rateLimiter: RateLimiter;
   /** Resolves the request's TLS client-cert context for the optional mTLS gate. */
   mtlsContextFor?: (req: FastifyRequest) => MtlsContext | undefined;
