@@ -37,6 +37,11 @@ updates:
       # the import-boundary check use; move compiler majors as one migration.
       - dependency-name: "typescript"
         update-types: ["version-update:semver-major"]
+      # The public OCPI package ships @types/node as a dependency for its Buffer
+      # signatures and supports Node 24, so its typings stay on the Node 24 line.
+      # Move @types/node majors with the Node runtime, not via Dependabot.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: "/"
@@ -49,6 +54,12 @@ updates:
     labels: [dependencies, ci]
     commit-message:
       prefix: ci
+    groups:
+      # One PR for all action updates: CodeQL's init, analyze and upload-sarif
+      # steps must run the same version, so separate PRs each fail.
+      github-actions:
+        applies-to: version-updates
+        patterns: ["*"]
     ignore:
       # Pinned fork that provides the Node 24 runtime; the upstream 2.6.1 tag
       # regresses the runtime, so update this action by hand, not via Dependabot.
