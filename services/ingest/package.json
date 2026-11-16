@@ -47,7 +47,7 @@
     "@openconditions/federation": "workspace:*",
     "@openconditions/test-database": "workspace:*",
     "@types/node": "^26.6.6",
-    "eventsource": "5.1.4",
+    "eventsource": "5.1.5",
     "hyparquet": "1.33.0",
     "testcontainers": "^12.2.1",
     "tsup": "^9.0.0",
