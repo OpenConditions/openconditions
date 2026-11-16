@@ -4,9 +4,11 @@ export type {
   ActorCoverage,
   ActorDocument,
   ActorPublicKey,
+  ConfiguredCapabilities,
 } from "./actor.js";
 export {
   ACTOR_WELL_KNOWN_PATH,
+  actorCapabilities,
   buildActorDocument,
   FEDERATION_JSON,
   PEERS_WELL_KNOWN_PATH,
@@ -193,6 +195,7 @@ export {
   DEFAULT_MIN_EVIDENCE_TIER,
   EVIDENCE_TIERS,
   federatedSnapshot,
+  RECORD_FILTER_KEYS,
 } from "./record-filter.js";
 export type { RegistryEntry, RegistryOperator } from "./registry.js";
 export { parseRegistryEntry, registryEntryFileName, registryToPeerRecords } from "./registry.js";

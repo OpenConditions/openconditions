@@ -43,10 +43,6 @@ const ACTOR_CONFIG = {
   trustTier: 1,
   capabilities: {
     protocolVersion: "0.1",
-    wireFormats: ["application/activity+json"],
-    deliveryModes: ["pull", "webhook", "sse"],
-    subscriptionFilters: ["bbox"],
-    maxEventRate: 10,
     convergenceBound: 300,
   },
 };

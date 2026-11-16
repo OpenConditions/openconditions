@@ -2,8 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   type ActorConfig,
   buildActorDocument,
+  DELIVERY_MODES,
+  FEDERATION_JSON,
   generateInstanceKey,
   parseActorConfig,
+  RECORD_FILTER_KEYS,
 } from "../index.js";
 
 const NOW = "2026-01-01T00:00:00.000Z";
@@ -20,10 +23,6 @@ function config(overrides: Partial<ActorConfig> = {}): ActorConfig {
     trustTier: 1,
     capabilities: {
       protocolVersion: "0.1",
-      wireFormats: ["application/activity+json"],
-      deliveryModes: ["pull"],
-      subscriptionFilters: ["bbox", "classes", "kinds"],
-      maxEventRate: 10,
       convergenceBound: 300,
     },
     ...overrides,
@@ -66,6 +65,33 @@ describe("buildActorDocument", () => {
     const key = await generateInstanceKey(NOW);
     const doc = buildActorDocument(config(), [key], VERSIONS);
     expect(doc.capabilities.schemaVersions).toEqual(VERSIONS);
+  });
+
+  it("advertises what the build does: its wire format, delivery modes and filter keys", async () => {
+    const key = await generateInstanceKey(NOW);
+    const doc = buildActorDocument(config(), [key], VERSIONS);
+    expect(doc.capabilities).toEqual({
+      protocolVersion: "0.1",
+      convergenceBound: 300,
+      schemaVersions: VERSIONS,
+      wireFormats: [FEDERATION_JSON],
+      deliveryModes: ["pull", "webhook", "sse"],
+      subscriptionFilters: [
+        "bbox",
+        "classes",
+        "kinds",
+        "domains",
+        "properties",
+        "privacyClasses",
+        "minEvidenceTier",
+        "maxAgeSec",
+        "sourceLiveness",
+      ],
+    });
+    expect(doc.capabilities.deliveryModes).toEqual([...DELIVERY_MODES]);
+    expect(doc.capabilities.subscriptionFilters).toEqual([...RECORD_FILTER_KEYS]);
+    expect("maxEventRate" in doc.capabilities).toBe(false);
+    expect("mtlsRequired" in doc.capabilities).toBe(false);
   });
 
   it("serves each active key as a Multikey entry keyed by its multibase", async () => {
@@ -169,5 +195,22 @@ describe("parseActorConfig", () => {
     expect(() =>
       parseActorConfig({ ...cfg, capabilities: { ...cfg.capabilities, schemaVersions: ["1"] } }),
     ).toThrow(/capabilities\.schemaVersions/);
+  });
+
+  it("refuses what the build advertises, and the fields that are gone", () => {
+    const cfg = config();
+    const configured = (extra: Record<string, unknown>) =>
+      parseActorConfig({ ...cfg, capabilities: { ...cfg.capabilities, ...extra } });
+    for (const field of ["wireFormats", "deliveryModes", "subscriptionFilters"]) {
+      expect(() => configured({ [field]: [] })).toThrow(
+        new RegExp(`capabilities\\.${field} is advertised from the build, not configured`),
+      );
+    }
+    expect(() => configured({ maxEventRate: 10 })).toThrow(
+      /capabilities\.maxEventRate is gone: a peer's rate is the budget of the tier/,
+    );
+    expect(() => configured({ mtlsRequired: true })).toThrow(
+      /capabilities\.mtlsRequired is gone: .*per-peer setting/,
+    );
   });
 });

@@ -65,10 +65,6 @@ describe("the registry settings", () => {
       trustTier: 1,
       capabilities: {
         protocolVersion: "0.1",
-        wireFormats: [],
-        deliveryModes: [],
-        subscriptionFilters: [],
-        maxEventRate: 10,
         convergenceBound: 300,
       },
     }),

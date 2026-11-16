@@ -5,6 +5,7 @@ import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   type ActorConfig,
+  actorCapabilities,
   buildActorDocument,
   chainedActorKeys,
   endorsementMessage,
@@ -36,14 +37,10 @@ const CONFIG: ActorConfig = {
   trustTier: 1,
   capabilities: {
     protocolVersion: "0.1",
-    wireFormats: ["application/activity+json"],
-    deliveryModes: ["pull"],
-    subscriptionFilters: [],
-    maxEventRate: 10,
     convergenceBound: 300,
   },
 };
-const local = { ...CONFIG.capabilities, schemaVersions: versions };
+const local = actorCapabilities(CONFIG.capabilities, versions);
 
 let key: InstanceKey;
 const peer = (): PeerRecord => ({
@@ -71,6 +68,7 @@ describe("a peer's capabilities", () => {
     expect(await peerVersionsFromActor(actor, peer(), local)).toEqual({
       ok: true,
       schemaVersions: versions,
+      deliveryModes: ["pull", "webhook", "sse"],
       keys: new Map([[key.keyId, key.keyId]]),
     });
   });
@@ -88,6 +86,18 @@ describe("a peer's capabilities", () => {
     expect(await peerVersionsFromActor(otherKernel, peer(), local)).toEqual({
       ok: false,
       reason: "no shared kernel major: every record class differs",
+    });
+  });
+
+  it("are refused from a document that shares no wire format", async () => {
+    const actor = buildActorDocument(CONFIG, [key], versions);
+    const cbor = {
+      ...actor,
+      capabilities: { ...actor.capabilities, wireFormats: ["application/cbor"] },
+    };
+    expect(await peerVersionsFromActor(cbor, peer(), local)).toMatchObject({
+      ok: false,
+      reason: expect.stringMatching(/^no common wire format/),
     });
   });
 

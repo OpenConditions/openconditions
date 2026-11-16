@@ -8,8 +8,16 @@
  * so peers keep verifying through a rotation overlap and learn the new key
  * from the old.
  * Private key material never appears here by construction.
+ *
+ * What the instance can do is advertised from the running build, never
+ * configured, so a peer acting on it is never misled: the schema versions of
+ * its registry, the wire format it serves, the delivery modes and filter keys
+ * its subscriptions accept. The operator configures only the protocol
+ * versions it offers and the convergence bound it promises.
  */
 import type { InstanceKey, KeyEndorsement } from "./keys.js";
+import { RECORD_FILTER_KEYS } from "./record-filter.js";
+import { DELIVERY_MODES } from "./subscriptions.js";
 
 export interface ActorCoverage {
   iso3166?: string[];
@@ -28,13 +36,20 @@ export interface ActorCapabilities {
    * never configured, so a peer always sees what the running build accepts.
    */
   schemaVersions: string[];
+  /** The media types its documents are served in: {@link FEDERATION_JSON}. */
   wireFormats: string[];
+  /** The delivery modes its subscriptions accept. */
   deliveryModes: string[];
+  /** The filter keys its subscriptions and journal reads accept. */
   subscriptionFilters: string[];
-  maxEventRate: number;
   convergenceBound: number;
-  mtlsRequired?: boolean;
 }
+
+/** The capabilities an operator configures; the rest come from the build. */
+export type ConfiguredCapabilities = Omit<
+  ActorCapabilities,
+  "schemaVersions" | "wireFormats" | "deliveryModes" | "subscriptionFilters"
+>;
 
 export interface ActorConfig {
   instanceId: string;
@@ -46,7 +61,7 @@ export interface ActorConfig {
   license: string;
   policyDocument?: string;
   trustTier: 0 | 1 | 2;
-  capabilities: Omit<ActorCapabilities, "schemaVersions">;
+  capabilities: ConfiguredCapabilities;
   /** publicKeyMultibase values of Tier-2 governance anchor keys. */
   trustAnchors?: string[];
 }
@@ -91,6 +106,23 @@ export const FEDERATION_JSON = "application/json";
 export const ACTOR_WELL_KNOWN_PATH = "/.well-known/openconditions/actor.json";
 export const PEERS_WELL_KNOWN_PATH = "/.well-known/openconditions/peers.json";
 
+/**
+ * The capabilities an instance advertises: the configured ones, and what the
+ * running build does, with the schema versions its registry runs.
+ */
+export function actorCapabilities(
+  configured: ConfiguredCapabilities,
+  schemaVersions: readonly string[],
+): ActorCapabilities {
+  return {
+    ...configured,
+    schemaVersions: [...schemaVersions],
+    wireFormats: [FEDERATION_JSON],
+    deliveryModes: [...DELIVERY_MODES],
+    subscriptionFilters: [...RECORD_FILTER_KEYS],
+  };
+}
+
 function normalizeBaseUrl(baseUrl: string): string {
   return baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
 }
@@ -129,7 +161,7 @@ export function buildActorDocument(
     backfill: `${base}/peer/backfill`,
     stream: `${base}/peer/stream`,
     coverage: cfg.coverage,
-    capabilities: { ...cfg.capabilities, schemaVersions: [...schemaVersions] },
+    capabilities: actorCapabilities(cfg.capabilities, schemaVersions),
     license: cfg.license,
     trustTier: cfg.trustTier,
     trustAnchor: cfg.trustAnchors ?? [],
@@ -224,19 +256,28 @@ export function parseActorConfig(source: string | unknown): ActorConfig {
   if (caps["protocolVersions"] !== undefined && !isStringArray(caps["protocolVersions"])) {
     fail("capabilities.protocolVersions", "must be a string array");
   }
-  for (const field of ["wireFormats", "deliveryModes", "subscriptionFilters"] as const) {
-    if (!isStringArray(caps[field])) fail(`capabilities.${field}`, "must be a string array");
-  }
   if (caps["schemaVersions"] !== undefined) {
     fail("capabilities.schemaVersions", "is advertised from the registry, not configured");
   }
-  for (const field of ["maxEventRate", "convergenceBound"] as const) {
-    if (typeof caps[field] !== "number" || !Number.isFinite(caps[field])) {
-      fail(`capabilities.${field}`, "must be a finite number");
+  for (const field of ["wireFormats", "deliveryModes", "subscriptionFilters"] as const) {
+    if (caps[field] !== undefined) {
+      fail(`capabilities.${field}`, "is advertised from the build, not configured");
     }
   }
-  if (caps["mtlsRequired"] !== undefined && typeof caps["mtlsRequired"] !== "boolean") {
-    fail("capabilities.mtlsRequired", "must be a boolean");
+  if (caps["maxEventRate"] !== undefined) {
+    fail(
+      "capabilities.maxEventRate",
+      "is gone: a peer's rate is the budget of the tier its receiver pinned it at",
+    );
+  }
+  if (caps["mtlsRequired"] !== undefined) {
+    fail(
+      "capabilities.mtlsRequired",
+      "is gone: whether a peer must use mutual TLS is the receiving operator's per-peer setting",
+    );
+  }
+  if (typeof caps["convergenceBound"] !== "number" || !Number.isFinite(caps["convergenceBound"])) {
+    fail("capabilities.convergenceBound", "must be a finite number");
   }
 
   for (const field of ["transparencyReportUrl", "policyDocument"] as const) {

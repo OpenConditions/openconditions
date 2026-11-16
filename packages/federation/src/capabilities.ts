@@ -8,8 +8,10 @@
  *  - schemaVersions — every registry schema both sides run at the same major,
  *    as `<key>@<major>` (a minor is compatible); two peers on different kernel
  *    majors share nothing and cannot federate.
- *  - wireFormats / deliveryModes — the plain set intersection (empty is legal:
- *    two peers may share a protocol but no wire format yet).
+ *  - wireFormats — the plain set intersection; two peers with no wire format
+ *    in common cannot read each other's documents, so they cannot federate.
+ *  - deliveryModes — the plain set intersection (empty is legal: a subscriber
+ *    asks a peer only for a mode the peer offers).
  *  - convergenceBound — the MAX of the two: the looser bound BOTH can meet (a
  *    peer promising ≤300s convergence and one promising ≤600s jointly meet 600s).
  *
@@ -56,7 +58,10 @@ export interface NegotiatedCapabilities {
   convergenceBound: number;
 }
 
-/** Thrown when two instances share no protocol version and cannot federate. */
+/**
+ * Thrown when two instances share no protocol version, kernel major or wire
+ * format, and cannot federate.
+ */
 export class CapabilityNegotiationError extends Error {}
 
 /** The set of protocol versions a side supports: its single `protocolVersion`
@@ -105,7 +110,8 @@ function intersect(local: string[], peer: string[]): string[] {
  * negotiated result is what a peer/subscription record stores as the agreed
  * contract for the pair (storage is the caller's; this function is the pure
  * negotiation). Throws {@link CapabilityNegotiationError} when the two share no
- * protocol version — an incompatible pair that must not federate.
+ * protocol version, kernel major or wire format — an incompatible pair that
+ * must not federate.
  */
 export function negotiateCapabilities(
   local: NegotiableCapabilities,
@@ -123,11 +129,18 @@ export function negotiateCapabilities(
   if (schemaVersions.length === 0) {
     throw new CapabilityNegotiationError("no shared kernel major: every record class differs");
   }
+  const wireFormats = intersect(local.wireFormats, peer.wireFormats ?? []);
+  if (wireFormats.length === 0) {
+    throw new CapabilityNegotiationError(
+      `no common wire format (local: ${local.wireFormats.join(", ")}; ` +
+        `peer: ${JSON.stringify(peer.wireFormats ?? [])})`,
+    );
+  }
   return {
     protocolVersion,
     schemaVersions,
-    wireFormats: intersect(local.wireFormats, peer.wireFormats),
-    deliveryModes: intersect(local.deliveryModes, peer.deliveryModes),
+    wireFormats,
+    deliveryModes: intersect(local.deliveryModes, peer.deliveryModes ?? []),
     convergenceBound: Math.max(local.convergenceBound, peer.convergenceBound),
   };
 }

@@ -70,10 +70,6 @@ const actor = (instanceId: string) => ({
   trustTier: 1,
   capabilities: {
     protocolVersion: "0.1",
-    wireFormats: ["application/activity+json"],
-    deliveryModes: ["pull", "webhook", "sse"],
-    subscriptionFilters: ["bbox", "classes", "domains"],
-    maxEventRate: 10,
     convergenceBound: 300,
   },
 });
@@ -572,5 +568,31 @@ describe("a peer that rotates its key", () => {
       SELECT count(*)::int AS n FROM conditions.situation
        WHERE id = ${`oc:situation:${SOURCE}:rotated-1`}`;
     expect(landed!.n).toBe(1);
+  }, 60_000);
+});
+
+describe("a peer that does not offer a delivery mode", () => {
+  it("is not asked for it", async () => {
+    const asked: string[] = [];
+    // A's actor document as an instance that offers only pull would serve it.
+    const pullOnly = (async (input: string | URL | Request, init?: RequestInit) => {
+      const url = new URL(input instanceof Request ? input.url : String(input));
+      asked.push(`${init?.method ?? "GET"} ${url.pathname}`);
+      const res = await fetchImpl(input, init);
+      if (!url.pathname.endsWith("/actor.json")) return res;
+      const doc = (await res.json()) as { capabilities: { deliveryModes: string[] } };
+      doc.capabilities.deliveryModes = ["pull"];
+      return new Response(JSON.stringify(doc), { status: 200, headers: res.headers });
+    }) as typeof fetch;
+
+    const [upkeep] = await refreshPeers(sqlB, settingsB, peersB, {
+      fetchImpl: pullOnly,
+      now: new Date().toISOString(),
+    });
+    expect(upkeep).toMatchObject({
+      capabilities: { ok: true, deliveryModes: ["pull"] },
+      subscription: { ok: false, reason: "the peer does not offer webhook delivery" },
+    });
+    expect(asked).toEqual(["GET /.well-known/openconditions/actor.json"]);
   }, 60_000);
 });

@@ -305,6 +305,25 @@ describe("validateSubscriptionShape: filter values (all delivery modes)", () => 
     ).not.toThrow();
   });
 
+  it("rejects a minEvidenceTier that is not an evidence tier", () => {
+    expect(reject({ minEvidenceTier: "certain" })).toMatch(/minEvidenceTier must be one of/);
+    reject({ minEvidenceTier: 1 } as unknown as RecordFilter);
+    for (const tier of ["self_reported", "corroborated", "externally_resolved"]) {
+      expect(() =>
+        validateSubscriptionShape(shape({ filter: { minEvidenceTier: tier } })),
+      ).not.toThrow();
+    }
+  });
+
+  it("rejects a key the filter does not have, naming it", () => {
+    expect(reject({ kind: ["closure"] } as unknown as RecordFilter)).toMatch(
+      /^filter\.kind is not/,
+    );
+    expect(
+      reject({ bbox: [4, 50, 6, 54], publicOnly: false } as unknown as RecordFilter, "webhook"),
+    ).toMatch(/filter\.publicOnly/);
+  });
+
   it("rejects a non-object filter (a string, array or null)", () => {
     reject("abc" as unknown as RecordFilter);
     reject([1, 2] as unknown as RecordFilter);
