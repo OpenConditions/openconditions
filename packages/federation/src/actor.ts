@@ -1,10 +1,12 @@
 /**
  * The federation Actor document — the public, self-describing identity an
- * instance serves at `/.well-known/openconditions/actor.json` (as
- * `application/activity+json`). Pure builder: route wiring lives in the
- * federation service. The document carries every instance key valid "now" as
- * a Multikey entry with the previous key's endorsement of it, so peers keep
- * verifying through a rotation overlap and learn the new key from the old.
+ * instance serves at `/.well-known/openconditions/actor.json` as plain
+ * `application/json` (some field names are borrowed from ActivityStreams, but
+ * the document is not an ActivityStreams object). Pure builder: route wiring
+ * lives in the federation service. The document carries every instance key
+ * valid "now" as a Multikey entry with the previous key's endorsement of it,
+ * so peers keep verifying through a rotation overlap and learn the new key
+ * from the old.
  * Private key material never appears here by construction.
  */
 import type { InstanceKey, KeyEndorsement } from "./keys.js";
@@ -79,8 +81,12 @@ export interface ActorDocument {
   trustAnchor: string[];
 }
 
-/** Media type the actor (and peers) documents are served as. */
-export const ACTIVITY_JSON = "application/activity+json";
+/**
+ * Media type of every federation document: the actor and peers documents and
+ * the outbox, backfill and pushed pages. They are plain JSON, not
+ * ActivityStreams, although some field names are borrowed from it.
+ */
+export const FEDERATION_JSON = "application/json";
 
 export const ACTOR_WELL_KNOWN_PATH = "/.well-known/openconditions/actor.json";
 export const PEERS_WELL_KNOWN_PATH = "/.well-known/openconditions/peers.json";

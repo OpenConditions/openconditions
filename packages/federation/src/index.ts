@@ -6,9 +6,9 @@ export type {
   ActorPublicKey,
 } from "./actor.js";
 export {
-  ACTIVITY_JSON,
   ACTOR_WELL_KNOWN_PATH,
   buildActorDocument,
+  FEDERATION_JSON,
   PEERS_WELL_KNOWN_PATH,
   parseActorConfig,
 } from "./actor.js";
@@ -25,6 +25,7 @@ export { detectAnomaly, peerWindowStats } from "./anomaly.js";
 export type { NegotiableCapabilities, NegotiatedCapabilities } from "./capabilities.js";
 export { CapabilityNegotiationError, negotiateCapabilities } from "./capabilities.js";
 export type {
+  AnsweredRequest,
   FederationFailureReason,
   NonceStore,
   SignParams,
@@ -121,6 +122,7 @@ export {
 } from "./peer-keys.js";
 export type {
   EnsureSubscriptionOutcome,
+  PeerExchange,
   PeerPull,
   PeerSubscribe,
   WantedSubscription,

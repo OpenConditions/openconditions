@@ -548,7 +548,13 @@ describe("federation signMessage/verifyMessage on the RFC test messages", () => 
     ).toString("base64");
 
   const verifyAt = async (
-    message: { method: string; url: string; status?: number; isResponse?: true },
+    message: {
+      method: string;
+      url: string;
+      status?: number;
+      isResponse?: true;
+      request?: { method: string; url: string; headers: Record<string, string> };
+    },
     headers: Record<string, string>,
     receivedBody: Uint8Array | undefined,
   ) => {
@@ -594,13 +600,14 @@ describe("federation signMessage/verifyMessage on the RFC test messages", () => 
     );
   });
 
-  it("signs a bodyless response over @status and a covered etag", async () => {
+  it("signs a bodyless response over @status, its request and a covered etag", async () => {
+    const request = { method: "GET", url: "https://example.com/foo", headers: {} };
     const { headers } = await signMessage({
-      method: "GET",
-      url: "https://example.com/foo",
+      ...request,
       headers: { ETag: '"v1"' },
       isResponse: true,
       status: 304,
+      request,
       coverHeaders: ["ETag"],
       keyId: B26_KEYID,
       privateKey: await importTestPrivateKey(),
@@ -608,20 +615,17 @@ describe("federation signMessage/verifyMessage on the RFC test messages", () => 
       expires,
       nonce,
     });
-    const components = '("@status" "etag")';
+    const components = '("@status" "@method";req "@target-uri";req "etag")';
     const base = [
       '"@status": 304',
+      '"@method";req: GET',
+      '"@target-uri";req: https://example.com/foo',
       '"etag": "v1"',
       `"@signature-params": ${components}${params}`,
     ].join("\n");
     expect(headers["Content-Digest"]).toBeUndefined();
     expect(headers["Signature"]).toBe(`oc=:${independentSignature(base)}:`);
-    const response = {
-      method: "GET",
-      url: "https://example.com/foo",
-      status: 304,
-      isResponse: true,
-    } as const;
+    const response = { ...request, status: 304, isResponse: true, request } as const;
     expect((await verifyAt(response, headers, undefined)).ok).toBe(true);
   });
 

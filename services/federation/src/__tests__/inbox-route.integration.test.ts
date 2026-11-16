@@ -59,7 +59,7 @@ async function signed(
   const s = await signMessage({
     method,
     url: `${BASE_URL}${path}`,
-    headers: body ? { "content-type": "application/activity+json" } : {},
+    headers: body ? { "content-type": "application/json" } : {},
     ...(body ? { body } : {}),
     keyId: key.keyId,
     privateKey: key.privateKey,
@@ -130,7 +130,7 @@ describe("POST /peer/inbox — the trust boundary", () => {
       const res = await app.inject({
         method: "POST",
         url: "/peer/inbox",
-        headers: { "content-type": "application/activity+json" },
+        headers: { "content-type": "application/json" },
         payload: JSON.stringify(pageOf([])),
       });
       expect(res.statusCode).toBe(401);

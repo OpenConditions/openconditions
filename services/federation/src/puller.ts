@@ -7,7 +7,8 @@
  *
  * Each page is a signed request under this instance's key, so the peer
  * serves its pinned tier's window; the response must carry the peer's
- * signature under a pinned key over the body as received. A page lands
+ * signature under a pinned key over the body as received, bound to the very
+ * request it answers (its target URI, cursor and filter included). A page lands
  * through the same inbox as a pushed one (`ingestFederatedPage`), which
  * lands a record no newer than the stored copy, or a retraction of a copy
  * already ended, as `stale`: a page that arrives by push and by pull lands
@@ -22,6 +23,7 @@
  */
 import { ingestFederatedPage } from "@openconditions/contributions-api/federation/inbox";
 import {
+  type AnsweredRequest,
   decodeOutboxCursor,
   type InstanceKey,
   isPeerBlocked,
@@ -250,9 +252,17 @@ export async function pullPeer(
     const url = `${peerRouteUrl(peer, catchingUp ? "/peer/backfill" : "/peer/outbox")}?${query}`;
     const signal = AbortSignal.timeout(ctx.pageTimeoutMs ?? PULL_PAGE_TIMEOUT_MS);
     let res: Response;
+    let sent: AnsweredRequest;
     let body: Uint8Array;
     try {
-      res = await signedPeerRequest(ctx.fetchImpl, ctx.signingKey, "GET", url, undefined, signal);
+      ({ response: res, request: sent } = await signedPeerRequest(
+        ctx.fetchImpl,
+        ctx.signingKey,
+        "GET",
+        url,
+        undefined,
+        signal,
+      ));
       body = await readCapped(res, PULL_MAX_PAGE_BYTES);
     } catch (err) {
       if (err instanceof PageTooLarge) return refuse("schema", err.message);
@@ -266,8 +276,8 @@ export async function pullPeer(
       await recordAvailability(sql, peer.instanceId, false, ctx.now());
       return { ...result, error: `the peer answered ${res.status}` };
     }
-    const signed = { status: 200, headers: res.headers, url, body };
-    if (!(await verifyPeerResponse(peer, signed, ctx.nonceStore))) {
+    const signed = { status: 200, headers: res.headers, body };
+    if (!(await verifyPeerResponse(peer, signed, sent, ctx.nonceStore))) {
       return refuse("signature", "the page does not carry the peer's signature");
     }
     let page: {
