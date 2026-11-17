@@ -356,12 +356,9 @@ for the rest. The service keeps a `pull` subscription with that filter at the
 peer, since a peer journals only what some subscription wants. Each page is
 a signed request, served the peer's window for this instance's tier, and must
 carry the peer's signature under a pinned key. A cursor still catching up
-reads `/peer/backfill`, the live tail `/peer/outbox`. A pulled page costs no
-more than a pushed one may: nothing is asked of a blocked peer, a page holds at
-most 100 entries and 1 MiB, arrives within 60 seconds, and counts against the
-peer's per-minute budget for its tier, shared with its pushes; its entries
+reads `/peer/backfill`, the live tail `/peer/outbox`. A pulled page is checked as a pushed one is: nothing is asked of a blocked peer, a page holds at most the entries asked for (500, or fewer for the rest of a pull that met a page over 1 MiB) and 1 MiB, and arrives within 60 seconds; its entries
 must lie after the cursor asked for and up to its own high-water mark, and a
-page that moves the cursor nowhere ends the pull. A page lands through
+page that moves the cursor nowhere ends the pull. The pull is not metered here and draws nothing on the budget the inbox meters the peer's pushes with: the peer meters it against the journal-read budget of this instance's tier, and a peer that answers `429`, or `503` with a `Retry-After`, is not asked again before that time has passed. Each round reads pages from each peer for up to 20 seconds while it has more; while any peer has more left, the next round starts at once instead of 30 seconds later. A page lands through
 the same inbox as a pushed one, and advances the cursor only once it landed;
 what both the push and the pull deliver lands once (the second delivery is
 `stale`), and a retraction carries the revision the record ended at, so one

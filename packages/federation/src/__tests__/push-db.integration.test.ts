@@ -11,6 +11,7 @@ import {
 } from "../outbox.js";
 import { blockPeer, unblockPeer } from "../peer-blocklist.js";
 import { deliverWebhook, PUSH_FAILURE_THRESHOLD, runWebhookDeliveryCycle } from "../push.js";
+import { createInMemoryRateLimiter } from "../rate.js";
 import type { OutboxEntry, RecordOutboxEntry } from "../record-filter.js";
 import {
   createSubscription,
@@ -736,6 +737,56 @@ describe("runWebhookDeliveryCycle — who is pushed what", () => {
     // Each cycle moved the cursor to the page it delivered, and no further.
     expect(cursors.slice(0, inbox.captured.length)).toEqual(inbox.captured.map((p) => p.cursor));
   }, 60_000);
+
+  it("is never downgraded by an inbox it waits for, however long its backlog lasts", async () => {
+    await sql`DELETE FROM conditions.federation_subscription`;
+    await webhookSubFromNow({ priorityOnly: false, bbox: [4, 50, 6, 54] });
+    const names = Array.from({ length: 24 }, (_, i) => `backlog-${i}`);
+    for (const name of names) await insertEvent(name);
+
+    // The inbox meters as the receiving service does: three entries a minute,
+    // a fresh window admitting one page whatever its size.
+    const limiter = createInMemoryRateLimiter({
+      policyForTier: () => ({ inboxPerMin: 3, backfillPerMin: 3 }),
+    });
+    let clock = Date.parse(NOW);
+    const received: string[] = [];
+    let downgraded = false;
+    const fetchImpl = (async (_url: string | URL | Request, init?: RequestInit) => {
+      const page = JSON.parse(Buffer.from(init!.body as Buffer).toString("utf8")) as {
+        orderedItems: RecordOutboxEntry[];
+      };
+      const rate = limiter.check(PEER_ID, "inbox", 1, page.orderedItems.length, clock);
+      downgraded ||= rate.downgraded;
+      if (!rate.ok) {
+        return new Response(null, {
+          status: 429,
+          headers: { "retry-after": String(rate.retryAfterSec) },
+        });
+      }
+      received.push(...page.orderedItems.map(localOf));
+      return new Response(null, { status: 200 });
+    }) as unknown as typeof fetch;
+
+    const backoff = new Map<string, number>();
+    let deferred = 0;
+    // A cycle every five seconds, as the service runs them, for half an hour.
+    for (let tick = 0; tick < 360 && received.length < names.length; tick++) {
+      const result = await runWebhookDeliveryCycle(sql, {
+        signingKey,
+        fetchImpl,
+        partOf: PARTOF,
+        now: new Date(clock).toISOString(),
+        limit: 2,
+        backoff,
+      });
+      deferred += result.deferred;
+      clock += 5_000;
+    }
+    expect(received).toEqual(names);
+    expect(deferred).toBeGreaterThan(0);
+    expect(downgraded).toBe(false);
+  }, 120_000);
 
   it("pushes nothing to a subscription whose lease ran out", async () => {
     await sql`DELETE FROM conditions.federation_subscription`;

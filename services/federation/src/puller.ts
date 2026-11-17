@@ -21,6 +21,14 @@
  * or one that was away longer than its window, starts from the archive's
  * night and the pages carry the rest.
  *
+ * This instance meters nothing of its own pull: it asks for one page, lands
+ * it, then asks for the next, and the peer meters those reads against the
+ * journal-read budget it gives this instance. A pull of one peer reads pages
+ * while the peer has more, for a time slice ({@link PULL_SLICE_MS}), and then
+ * yields, saying whether more is left so the caller can come back at once. A
+ * peer that answers 429, or 503 with a Retry-After, ends the pull, and the
+ * result says how long the peer asked to be left alone.
+ *
  * A page larger than this instance accepts ({@link PULL_MAX_PAGE_BYTES}) is
  * asked for again at a quarter of the limit, and the pull keeps the smaller
  * limit; only an entry too large on its own, at a limit of 1, is refused. A
@@ -43,10 +51,9 @@ import {
   loadPeerVersions,
   type NonceStore,
   OUTBOX_CURSOR_START,
-  OUTBOX_DEFAULT_LIMIT,
+  OUTBOX_MAX_LIMIT,
   type PeerRecord,
   peerRouteUrl,
-  type RateLimiter,
   type RecordFilter,
   recordAvailability,
   recordPeerFailure,
@@ -58,8 +65,11 @@ import type postgres from "postgres";
 import { readArchiveManifest } from "./archive.js";
 import { importArchive } from "./archive-import.js";
 
-/** The most pages one pull of a peer reads before it yields. */
-export const PULL_MAX_PAGES = 20;
+/** How long one pull of a peer reads pages before it yields to the next peer. */
+export const PULL_SLICE_MS = 20_000;
+
+/** How long a peer is left alone after it asked to retry later without saying how long. */
+export const PULL_RETRY_AFTER_DEFAULT_SEC = 60;
 
 export interface PullContext {
   registry: Registry;
@@ -68,11 +78,10 @@ export interface PullContext {
   fetchImpl: typeof fetch;
   /** Replay cache of the peers' response signatures. */
   nonceStore: NonceStore;
-  /** The per-peer limiter the inbox meters pushed pages with. */
-  rateLimiter: RateLimiter;
+  /** The clock (ISO 8601), which also measures the pull's time slice. */
   now: () => string;
-  /** Pages read at most; default {@link PULL_MAX_PAGES}. */
-  maxPages?: number;
+  /** How long the pull reads pages; default {@link PULL_SLICE_MS}. */
+  sliceMs?: number;
   /** How long a page may take; default {@link PULL_PAGE_TIMEOUT_MS}. */
   pageTimeoutMs?: number;
   /** Fetches the peer's archive files; default `fetchImpl`. Its size cap must allow them. */
@@ -97,6 +106,13 @@ export interface PullResult {
    * over: a new epoch, or a cursor ahead of the peer's journal.
    */
   reset?: "epoch" | "ahead";
+  /**
+   * Whether entries are still to be read: the pull stopped at its time slice,
+   * or at a retry-later answer. False once the last page read had no `next`.
+   */
+  more: boolean;
+  /** How long the peer asked not to be asked again, in seconds, when it did. */
+  retryAfterSec?: number;
   /** Why the pull stopped short, when it did. */
   error?: string;
 }
@@ -250,8 +266,8 @@ function after(a: string, b: string): boolean {
 /** A page larger than this many bytes is refused, as the inbox refuses a pushed one. */
 export const PULL_MAX_PAGE_BYTES = 1_048_576;
 
-/** The most entries a pull asks for in one page: what a push sends in one. */
-export const PULL_PAGE_LIMIT = OUTBOX_DEFAULT_LIMIT;
+/** The most entries a pull asks for in one page: the most a peer serves in one. */
+export const PULL_PAGE_LIMIT = OUTBOX_MAX_LIMIT;
 
 /** How long a page may take to arrive, its body included. */
 export const PULL_PAGE_TIMEOUT_MS = 60_000;
@@ -287,12 +303,11 @@ function entryCursor(item: unknown): string | null {
 }
 
 /**
- * Reads and lands what is new in `peer`'s journal; never throws for the
- * peer's answers. A page passes what a pushed page passes: the peer is not
- * blocked here, the page carries the peer's signature under a pinned key,
- * its size and entry count stay within a push's, its rate within the peer's
- * tier (the limiter the inbox shares), and each record is admitted by the
- * same inbox. Its entries must lie after the cursor asked for and up to the
+ * Reads and lands what is new in `peer`'s journal for a time slice; never
+ * throws for the peer's answers. A page passes what a pushed page passes: the
+ * peer is not blocked here, the page carries the peer's signature under a
+ * pinned key, its size stays within a push's and its entry count within the
+ * limit asked for, and each record is admitted by the same inbox. Its entries must lie after the cursor asked for and up to the
  * page's own high-water mark, so a replayed or forged page cannot move the
  * cursor anywhere else; a page that moves it nowhere ends the pull.
  */
@@ -310,6 +325,7 @@ export async function pullPeer(
     liveness: 0,
     skipped: 0,
     cursor: stored.cursor,
+    more: false,
   };
   if (await isPeerBlocked(sql, peer.instanceId)) {
     return { ...result, error: "the peer is blocked here" };
@@ -326,7 +342,12 @@ export async function pullPeer(
   // Lowered for the rest of the pull when a page arrives too large.
   let limit = PULL_PAGE_LIMIT;
   let catchingUp = result.cursor === "0.0";
-  for (let i = 0; i < (ctx.maxPages ?? PULL_MAX_PAGES); i++) {
+  const started = Date.parse(ctx.now());
+  for (;;) {
+    if (Date.parse(ctx.now()) - started >= (ctx.sliceMs ?? PULL_SLICE_MS)) {
+      result.more = true;
+      break;
+    }
     query.set("limit", String(limit));
     query.set("after", result.cursor);
     const url = `${peerRouteUrl(peer, catchingUp ? "/peer/backfill" : "/peer/outbox")}?${query}`;
@@ -356,7 +377,22 @@ export async function pullPeer(
       return { ...result, error: `the peer could not be reached: ${String(err)}` };
     }
     if (res.status === 429 || res.status === 503) {
-      return { ...result, error: `the peer asked to retry later (${res.status})` };
+      const header = res.headers.get("retry-after");
+      const asked = Number(header);
+      const waits = res.status === 429 || header !== null;
+      return {
+        ...result,
+        more: true,
+        ...(waits
+          ? {
+              retryAfterSec:
+                header !== null && Number.isFinite(asked) && asked > 0
+                  ? asked
+                  : PULL_RETRY_AFTER_DEFAULT_SEC,
+            }
+          : {}),
+        error: `the peer asked to retry later (${res.status})`,
+      };
     }
     if (res.status !== 200) {
       await recordAvailability(sql, peer.instanceId, false, ctx.now());
@@ -430,16 +466,6 @@ export async function pullPeer(
     };
     if (after(frontier, result.cursor) || !items.every(inWindow)) {
       return refuse("schema", "the page's entries lie outside the cursor it was asked for");
-    }
-    const rate = ctx.rateLimiter.check(
-      peer.instanceId,
-      "inbox",
-      peer.trustTier,
-      items.length,
-      Date.parse(ctx.now()),
-    );
-    if (!rate.ok) {
-      return { ...result, error: "the peer's pages exceed the rate its tier is admitted" };
     }
     if (page.beyondWindow === true) result.beyondWindow = true;
     // What the window no longer holds lands from the archive first; the

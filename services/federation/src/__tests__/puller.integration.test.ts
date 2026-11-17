@@ -1,14 +1,13 @@
 /**
  * The pull of a peer against a peer that misbehaves: every page must pass
  * what a pushed page passes (the peer's pin and signature, its block, the
- * admission of each record) and stay within what a push may cost (entries,
- * bytes, rate, time). The peer is a fake that serves pages signed with a key
- * the peer record pins.
+ * admission of each record) and stay within what was asked for (entries,
+ * bytes, time). The pull itself is bounded by a time slice, not by a rate.
+ * The peer is a fake that serves pages signed with a key the peer record pins.
  */
 import { runMigrations } from "@openconditions/core/server";
 import {
   blockPeer,
-  createInMemoryRateLimiter,
   generateInstanceKey,
   InMemoryNonceStore,
   type InstanceKey,
@@ -156,7 +155,6 @@ function ctx(fetchImpl: typeof fetch, over: Partial<PullContext> = {}): PullCont
     signingKey: localKey,
     fetchImpl,
     nonceStore: new InMemoryNonceStore(),
-    rateLimiter: createInMemoryRateLimiter(),
     now: () => new Date().toISOString(),
     ...over,
   };
@@ -179,6 +177,13 @@ const storedCursor = async () =>
       SELECT cursor, journal_epoch, cursor_reset_at
         FROM conditions.federation_peer_cursor WHERE peer_instance_id = ${PEER}`
   )[0];
+
+const availability = async () =>
+  (
+    await sql<{ availability_ok: number; availability_fail: number }[]>`
+      SELECT availability_ok, availability_fail
+        FROM conditions.federation_peer_health WHERE peer_id = ${PEER}`
+  )[0] ?? { availability_ok: 0, availability_fail: 0 };
 
 const schemaFailures = async () =>
   (
@@ -314,7 +319,8 @@ describe("pulling a peer", () => {
     expect(result.error).toBeUndefined();
     expect(await landed()).toEqual(["smaller-1", "smaller-2"]);
     const limits = asked.map((url) => new URL(url).searchParams.get("limit"));
-    expect(limits).toEqual([String(PULL_PAGE_LIMIT), "25", "25"]);
+    const quarter = String(Math.floor(PULL_PAGE_LIMIT / 4));
+    expect(limits).toEqual([String(PULL_PAGE_LIMIT), quarter, quarter]);
     expect(new URL(asked[1]!).searchParams.get("after")).toBe("0.0");
     expect(await schemaFailures()).toBe(0);
 
@@ -324,18 +330,15 @@ describe("pulling a peer", () => {
   });
 
   it("refuses a page still too large at a limit of 1, unread past the cap", async () => {
+    const limits = [PULL_PAGE_LIMIT];
+    while (limits.at(-1)! > 1) limits.push(Math.max(1, Math.floor(limits.at(-1)! / 4)));
     const huge = signed(Buffer.alloc(2 * 1024 * 1024, 0x20));
-    const { fetchImpl, asked } = fakePeer([huge, huge, huge, huge]);
+    const { fetchImpl, asked } = fakePeer(limits.map(() => huge));
     expect(await pullPeer(sql, peer(), ctx(fetchImpl))).toMatchObject({
       pages: 0,
       error: "a single entry is larger than 1048576 bytes",
     });
-    expect(asked.map((url) => new URL(url).searchParams.get("limit"))).toEqual([
-      String(PULL_PAGE_LIMIT),
-      "25",
-      "6",
-      "1",
-    ]);
+    expect(asked.map((url) => new URL(url).searchParams.get("limit"))).toEqual(limits.map(String));
     expect(await schemaFailures()).toBe(1);
   });
 
@@ -377,18 +380,79 @@ describe("pulling a peer", () => {
     expect(asked).toHaveLength(1);
   });
 
-  it("takes no more of a peer than its tier's rate admits a push", async () => {
-    const items = [entry(peerSituation(PEER, "rated"), 10, 1)];
-    const { fetchImpl } = fakePeer([signed(json(pageOf(items, "10.1")))]);
-    const rateLimiter = createInMemoryRateLimiter({
-      policyForTier: () => ({ inboxPerMin: 0, backfillPerMin: 0 }),
-      maxPageSize: 0,
+  it("lands several thousand entries in one pull, metering none of them", async () => {
+    const total = 2_000;
+    const pages = total / PULL_PAGE_LIMIT;
+    const answers = Array.from({ length: pages }, (_, p) => {
+      const items = Array.from({ length: PULL_PAGE_LIMIT }, (_, i) => {
+        const seq = p * PULL_PAGE_LIMIT + i + 1;
+        return entry(peerSituation(PEER, `bulk-${seq}`), 10, seq);
+      });
+      const last = `10.${(p + 1) * PULL_PAGE_LIMIT}`;
+      const more = p < pages - 1 ? { next: `https://${PEER}/peer/backfill?after=${last}` } : {};
+      return signed(json(pageOf(items, last, more)));
     });
-    expect(await pullPeer(sql, peer(), ctx(fetchImpl, { rateLimiter }))).toMatchObject({
-      pages: 0,
-      error: "the peer's pages exceed the rate its tier is admitted",
-    });
-    expect(await landed()).toEqual([]);
+    const { fetchImpl, asked } = fakePeer(answers);
+    const fixed = new Date().toISOString();
+    const result = await pullPeer(sql, peer(), ctx(fetchImpl, { now: () => fixed }));
+    expect(result).toMatchObject({ pages, accepted: total, more: false, cursor: `10.${total}` });
+    expect(result.error).toBeUndefined();
+    expect(asked).toHaveLength(pages);
+    const [{ n }] = await sql<{ n: number }[]>`SELECT count(*)::int AS n FROM conditions.situation`;
+    expect(n).toBe(total);
+  }, 120_000);
+
+  it("yields at its time slice with more to read, and the next pull goes on from its cursor", async () => {
+    let clock = Date.now();
+    const page = (seq: number) =>
+      pageOf([entry(peerSituation(PEER, `slice-${seq}`), 10, seq)], `10.${seq}`, {
+        next: `https://${PEER}/peer/backfill?after=10.${seq}`,
+      });
+    const ticking =
+      (answer: Answer): Answer =>
+      async (asked) => {
+        clock += 10_000;
+        return answer(asked);
+      };
+    const first = fakePeer([ticking(signed(json(page(1)))), ticking(signed(json(page(2))))]);
+    const now = () => new Date(clock).toISOString();
+    const result = await pullPeer(sql, peer(), ctx(first.fetchImpl, { now, sliceMs: 15_000 }));
+    expect(result).toMatchObject({ pages: 2, accepted: 2, more: true, cursor: "10.2" });
+    expect(result.error).toBeUndefined();
+    expect(await cursor()).toBe("10.2");
+
+    const second = fakePeer([
+      signed(json(pageOf([entry(peerSituation(PEER, "slice-3"), 10, 3)], "10.3"))),
+    ]);
+    const rest = await pullPeer(sql, peer(), ctx(second.fetchImpl, { now, sliceMs: 15_000 }));
+    expect(rest).toMatchObject({ pages: 1, accepted: 1, more: false, cursor: "10.3" });
+    expect(new URL(second.asked[0]!).searchParams.get("after")).toBe("10.2");
+    expect(await landed()).toEqual(["slice-1", "slice-2", "slice-3"]);
+  });
+
+  it("passes on how long a peer asked to be left alone, counting no failure", async () => {
+    const wait =
+      (status: number, retryAfter?: string): Answer =>
+      async () =>
+        new Response(JSON.stringify({ error: "later" }), {
+          status,
+          headers: retryAfter === undefined ? {} : { "retry-after": retryAfter },
+        });
+    for (const [answer, expected] of [
+      [wait(429, "7"), 7],
+      [wait(503, "12"), 12],
+      [wait(429), 60],
+      [wait(429, "soon"), 60],
+    ] as const) {
+      const { fetchImpl } = fakePeer([answer]);
+      const result = await pullPeer(sql, peer(), ctx(fetchImpl));
+      expect(result).toMatchObject({ pages: 0, more: true, retryAfterSec: expected });
+      expect(result.error).toMatch(/asked to retry later/);
+    }
+    const unsure = fakePeer([wait(503)]);
+    expect((await pullPeer(sql, peer(), ctx(unsure.fetchImpl))).retryAfterSec).toBeUndefined();
+    expect(await availability()).toMatchObject({ availability_fail: 0 });
+    expect(await schemaFailures()).toBe(0);
   });
 
   it("gives up on a page that does not arrive in time", async () => {

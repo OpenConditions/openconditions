@@ -156,8 +156,8 @@ async function boot() {
       seedRunning = false;
     }
   };
-  // One per-peer limiter for what a peer may send: its pushes to the inbox
-  // and the pages this instance pulls from it.
+  // One per-peer limiter for what peers ask of this instance: their pushes to
+  // the inbox and their journal reads. This instance's own pull is not metered.
   const rateLimiter = createInMemoryRateLimiter();
   const peers = await PeerBook.load(sql, settings.peers);
   const app = await build({ sql, rateLimiter, peers, onSubscribed: () => void seed() });
@@ -403,7 +403,10 @@ async function boot() {
   }
 
   // Pull: each peer this instance pulls is read from its own cursor, so what
-  // arrives is complete whatever the push carries. Single-flight.
+  // arrives is complete whatever the push carries. Single-flight. Each peer
+  // gets a time slice per cycle; while one has more to read, the next cycle
+  // runs at once instead of on the timer, so a backlog drains with every peer
+  // taking its turn. A peer that asked to retry later is left alone that long.
   let pullTimer: NodeJS.Timeout | undefined;
   if (settings.enabled && settings.peers.some((peer) => peer.pull !== undefined)) {
     const egress = guardedFetch();
@@ -415,15 +418,18 @@ async function boot() {
     });
     const nonceStore = new InMemoryNonceStore();
     const registry = productionRegistry();
+    const retryAt = new Map<string, number>();
     let pullRunning = false;
     const pullAll = async () => {
       if (pullRunning) return;
       pullRunning = true;
+      let again = false;
       try {
         const signingKey = await loadSigningKey(sql, new Date().toISOString());
         if (!signingKey) return;
         for (const peer of peers.all()) {
           if (peer.pull === undefined) continue;
+          if ((retryAt.get(peer.instanceId) ?? 0) > Date.now()) continue;
           const result = await pullPeer(
             sql,
             { ...peer, pull: peer.pull! },
@@ -434,10 +440,15 @@ async function boot() {
               fetchImpl: egress,
               archiveFetch: archiveEgress,
               nonceStore,
-              rateLimiter,
               now: () => new Date().toISOString(),
             },
           ).catch((err: unknown) => ({ error: String(err) }) as const);
+          if ("retryAfterSec" in result && result.retryAfterSec !== undefined) {
+            retryAt.set(peer.instanceId, Date.now() + result.retryAfterSec * 1000);
+          } else {
+            retryAt.delete(peer.instanceId);
+          }
+          if ("more" in result && result.more && result.error === undefined) again = true;
           if ("reset" in result && result.reset !== undefined) {
             console.warn(
               `[federation-api] pull of ${peer.instanceId}: the peer's journal started over ` +
@@ -459,6 +470,7 @@ async function boot() {
       } finally {
         pullRunning = false;
       }
+      if (again) setImmediate(() => void pullAll());
     };
     pullTimer = setInterval(() => void pullAll(), PULL_CYCLE_MS);
   }

@@ -11,13 +11,15 @@ import {
 const MIN = 60_000;
 
 /** Drives one genuine sustained-RATE overrun in the window at `now`: fills the
- *  window to its cap with admitted pages, then one more page tips over it. */
+ *  window to its cap with admitted pages, then `refusals` more pages are
+ *  refused. Two or more is a peer that did not wait after the first refusal. */
 function burstOverCap(
   limiter: ReturnType<typeof createInMemoryRateLimiter>,
   peerId: string,
   tier: 0 | 1 | 2,
   cap: number,
   now: number,
+  refusals = 2,
 ): void {
   const page = Math.min(200, cap);
   let admitted = 0;
@@ -25,8 +27,10 @@ function burstOverCap(
     limiter.check(peerId, "inbox", tier, page, now);
     admitted += page;
   }
-  const over = limiter.check(peerId, "inbox", tier, page, now);
-  if (over.ok) throw new Error("expected the overrun page to be refused");
+  for (let i = 0; i < refusals; i++) {
+    const over = limiter.check(peerId, "inbox", tier, page, now + i);
+    if (over.ok) throw new Error("expected the overrun page to be refused");
+  }
 }
 
 describe("ratePolicyForTier", () => {
@@ -98,6 +102,90 @@ describe("createInMemoryRateLimiter", () => {
     const after = limiter.check("noisy", "backfill", 1, 1, now);
     expect(after.effectiveTier).toBe(1);
     expect(after.downgraded).toBe(false);
+  });
+
+  it("never downgrades a peer refused once a window that waits as it is told", () => {
+    const limiter = createInMemoryRateLimiter();
+    const cap = ratePolicyForTier(1).inboxPerMin;
+    let now = 0;
+    for (let w = 0; w < 20; w++) {
+      burstOverCap(limiter, "patient", 1, cap, now, 1);
+      now += MIN;
+    }
+    const res = limiter.check("patient", "inbox", 1, 1, now);
+    expect(res).toMatchObject({ ok: true, downgraded: false, effectiveTier: 1 });
+  });
+
+  it("never downgrades a peer that waits the Retry-After it is given, whenever it is refused", () => {
+    const limiter = createInMemoryRateLimiter({
+      policyForTier: () => ({ inboxPerMin: 10, backfillPerMin: 10 }),
+    });
+    // Admitted at the start of each window, refused late in it and early in
+    // the next, each time waiting exactly as long as it was told.
+    let now = 30_000;
+    for (let i = 0; i < 20; i++) {
+      expect(limiter.check("prompt", "inbox", 1, 10, now).ok).toBe(true);
+      now += i % 2 === 0 ? 59_500 : 500;
+      const refused = limiter.check("prompt", "inbox", 1, 1, now);
+      expect(refused).toMatchObject({ ok: false, downgraded: false });
+      now += refused.retryAfterSec! * 1000;
+    }
+    expect(limiter.check("prompt", "inbox", 1, 1, now).downgraded).toBe(false);
+  });
+
+  it("downgrades after windows that each saw a repeated refusal, three in a row", () => {
+    const limiter = createInMemoryRateLimiter();
+    const cap = ratePolicyForTier(1).inboxPerMin;
+    let now = 0;
+    for (let w = 0; w < RATE_DOWNGRADE_WINDOWS - 1; w++) {
+      burstOverCap(limiter, "pushy", 1, cap, now, 3);
+      now += MIN;
+    }
+    expect(limiter.check("pushy", "backfill", 1, 1, now).downgraded).toBe(false);
+    burstOverCap(limiter, "pushy", 1, cap, now, 2);
+    expect(limiter.check("pushy", "backfill", 1, 1, now + 10).downgraded).toBe(true);
+  });
+
+  it("restarts the streak after a clean window or a window with a single refusal", () => {
+    for (const between of ["clean", "single"] as const) {
+      const limiter = createInMemoryRateLimiter();
+      const cap = ratePolicyForTier(1).inboxPerMin;
+      let now = 0;
+      for (let w = 0; w < RATE_DOWNGRADE_WINDOWS - 1; w++) {
+        burstOverCap(limiter, "uneven", 1, cap, now);
+        now += MIN;
+      }
+      if (between === "single") burstOverCap(limiter, "uneven", 1, cap, now, 1);
+      else limiter.check("uneven", "inbox", 1, 10, now);
+      now += MIN;
+      for (let w = 0; w < RATE_DOWNGRADE_WINDOWS - 1; w++) {
+        burstOverCap(limiter, "uneven", 1, cap, now);
+        now += MIN;
+      }
+      expect(limiter.check("uneven", "backfill", 1, 1, now).downgraded).toBe(false);
+      burstOverCap(limiter, "uneven", 1, cap, now);
+      expect(limiter.check("uneven", "backfill", 1, 1, now + 10).downgraded).toBe(true);
+    }
+  });
+
+  it("lets a downgrade lapse after the cooldown while the peer waits as it is told", () => {
+    const limiter = createInMemoryRateLimiter();
+    const cap = ratePolicyForTier(1).inboxPerMin;
+    const downgradedCap = ratePolicyForTier(0).inboxPerMin;
+    let now = 0;
+    for (let w = 0; w < RATE_DOWNGRADE_WINDOWS; w++) {
+      burstOverCap(limiter, "reformed", 1, cap, now);
+      now += MIN;
+    }
+    expect(limiter.check("reformed", "backfill", 1, 1, now).downgraded).toBe(true);
+    // Still over the lower budget every window, but asking once and then waiting.
+    const until = (RATE_DOWNGRADE_WINDOWS - 1) * MIN + RATE_DOWNGRADE_COOLDOWN_SEC * 1000;
+    while (now <= until) {
+      burstOverCap(limiter, "reformed", 1, downgradedCap, now, 1);
+      now += MIN;
+    }
+    const restored = limiter.check("reformed", "inbox", 1, 1, now);
+    expect(restored).toMatchObject({ ok: true, downgraded: false, effectiveTier: 1 });
   });
 
   it("does not downgrade a peer that stays within its budget", () => {
@@ -208,7 +296,25 @@ describe("forgetting quiet keys", () => {
     // A sweep in the next window keeps the streak, so a second overrun downgrades.
     limiter.check("quiet", "inbox", 1, 1, MIN);
     burstOverCap(limiter, "noisy", 1, cap, MIN + 1);
-    expect(limiter.check("noisy", "backfill", 1, 1, MIN + 2).downgraded).toBe(true);
+    expect(limiter.check("noisy", "backfill", 1, 1, MIN + 10).downgraded).toBe(true);
+  });
+
+  it("keeps counting the refusals of a window across a sweep in it", () => {
+    const limiter = createInMemoryRateLimiter({ downgradeWindows: 1 });
+    const cap = ratePolicyForTier(1).inboxPerMin;
+    burstOverCap(limiter, "noisy", 1, cap, 2 * MIN, 1);
+    // Another key sweeps in the same window; the next refusal is still the second.
+    limiter.check("quiet", "inbox", 1, 1, 2 * MIN + 1);
+    limiter.check("noisy", "inbox", 1, 200, 2 * MIN + 2);
+    expect(limiter.check("noisy", "backfill", 1, 1, 2 * MIN + 3).downgraded).toBe(true);
+  });
+
+  it("forgets a first refusal once its window ended, keeping no streak alive", () => {
+    const limiter = createInMemoryRateLimiter();
+    const cap = ratePolicyForTier(1).inboxPerMin;
+    burstOverCap(limiter, "once", 1, cap, 0, 1);
+    limiter.check("quiet", "inbox", 1, 1, 2 * MIN);
+    expect(limiter.trackedEntries()).toBe(1);
   });
 });
 
