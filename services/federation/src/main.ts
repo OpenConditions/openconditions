@@ -25,11 +25,7 @@ import {
   readJournalLag,
   runWebhookDeliveryCycle,
 } from "@openconditions/federation";
-import {
-  guardedFetch,
-  guardOptionsFromEnv,
-  requireCredential,
-} from "@openconditions/ingest-framework";
+import { guardOptionsFromEnv, requireCredential } from "@openconditions/ingest-framework";
 import { productionRegistry } from "@openconditions/model-registry";
 import { seedFederation } from "@openconditions/storage";
 import postgres from "postgres";
@@ -37,6 +33,7 @@ import { ARCHIVE_FILE_MAX_BYTES, ARCHIVE_FILE_TIMEOUT_MS } from "./archive-impor
 import { backfillFloorIso } from "./backfill.js";
 import { resolveFederationSettings } from "./config.js";
 import { PeerBook } from "./peer-book.js";
+import { peerFetch } from "./peer-egress.js";
 import { refreshPeers } from "./peering.js";
 import { holdProcessLock } from "./process-lock.js";
 import { pullPeer } from "./puller.js";
@@ -193,12 +190,12 @@ async function boot() {
   }
 
   // Webhook push cron: a latency optimization over pull. Egress is SSRF-guarded
-  // (guardedFetch), and a run only advances a subscription's cursor on a 2xx —
+  // (peerFetch), and a run only advances a subscription's cursor on a 2xx —
   // so a dropped push leaves the peer's pull catch-up gap-free.
   let webhookTimer: NodeJS.Timeout | undefined;
   if (settings.enabled) {
     const partOf = `${settings.actor!.baseUrl}/peer/outbox`;
-    const egress = guardedFetch();
+    const egress = peerFetch(settings);
     // A subscriber is pushed its pinned tier's window, as it is served
     // everywhere else, and nothing once it is no longer pinned.
     const floorFor = (peerId: string) => {
@@ -333,7 +330,7 @@ async function boot() {
   let capabilitiesTimer: NodeJS.Timeout | undefined;
   let registryTimer: NodeJS.Timeout | undefined;
   if (settings.enabled) {
-    const egress = guardedFetch();
+    const egress = peerFetch(settings);
     let upkeepRunning = false;
     const refreshAll = async () => {
       if (upkeepRunning) return;
@@ -416,9 +413,9 @@ async function boot() {
   // as well, resuming where it stopped.
   let pullTimer: NodeJS.Timeout | undefined;
   if (settings.enabled && settings.peers.some((peer) => peer.pull !== undefined)) {
-    const egress = guardedFetch();
+    const egress = peerFetch(settings);
     // A peer's archive files are far larger and slower than its pages.
-    const archiveEgress = guardedFetch(undefined, {
+    const archiveEgress = peerFetch(settings, {
       ...guardOptionsFromEnv(),
       maxBytes: ARCHIVE_FILE_MAX_BYTES,
       timeoutMs: ARCHIVE_FILE_TIMEOUT_MS,

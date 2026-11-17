@@ -5,6 +5,7 @@
  * When enabled, an invalid or missing actor/peers config fails the boot
  * closed rather than serving a half-formed identity.
  */
+import { createPrivateKey, type KeyObject, X509Certificate } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { BlockList, isIP } from "node:net";
 import { resolveInstanceId } from "@openconditions/core/server";
@@ -39,6 +40,18 @@ export interface FederationSettings {
    * reads are metered by (the connection's own address when absent).
    */
   trustedProxies?: BlockList;
+  /**
+   * The client certificate this instance presents on every request to a
+   * peer, for peers that require mutual TLS of it; absent when none is
+   * configured.
+   */
+  clientCertificate?: ClientCertificate;
+}
+
+/** A client certificate and its private key, both PEM, read once at boot. */
+export interface ClientCertificate {
+  cert: string;
+  key: string;
 }
 
 export interface RegistrySettings {
@@ -120,6 +133,7 @@ export function resolveFederationSettings(
     );
   }
   const trustedProxies = resolveProxies(env["OPENCONDITIONS_FEDERATION_TRUSTED_PROXIES"]);
+  const clientCertificate = resolveClientCertificate(env);
   return {
     enabled: true,
     actor,
@@ -128,7 +142,59 @@ export function resolveFederationSettings(
     ...(registry ? { registry } : {}),
     ...(clientCertHeader ? { clientCertHeader } : {}),
     ...(trustedProxies ? { trustedProxies } : {}),
+    ...(clientCertificate ? { clientCertificate } : {}),
   };
+}
+
+/**
+ * The client certificate and key files, read and checked once; undefined
+ * when neither is named, a throw when one is missing, unreadable, not PEM, or
+ * the key is not the certificate's. No message names what the files hold.
+ */
+function resolveClientCertificate(
+  env: Record<string, string | undefined>,
+): ClientCertificate | undefined {
+  const certFile = env["OPENCONDITIONS_FEDERATION_CLIENT_CERT_FILE"]?.trim() ?? "";
+  const keyFile = env["OPENCONDITIONS_FEDERATION_CLIENT_KEY_FILE"]?.trim() ?? "";
+  if (certFile === "" && keyFile === "") return undefined;
+  if (certFile === "" || keyFile === "") {
+    throw new Error(
+      "a client certificate needs both OPENCONDITIONS_FEDERATION_CLIENT_CERT_FILE and " +
+        "OPENCONDITIONS_FEDERATION_CLIENT_KEY_FILE (PEM files)",
+    );
+  }
+  const read = (file: string, variable: string): string => {
+    try {
+      return readFileSync(file, "utf8");
+    } catch (err) {
+      const code = (err as NodeJS.ErrnoException).code ?? "unreadable";
+      throw new Error(`${variable}: cannot read ${file} (${code})`);
+    }
+  };
+  const cert = read(certFile, "OPENCONDITIONS_FEDERATION_CLIENT_CERT_FILE");
+  const key = read(keyFile, "OPENCONDITIONS_FEDERATION_CLIENT_KEY_FILE");
+  let certificate: X509Certificate;
+  try {
+    certificate = new X509Certificate(cert);
+  } catch {
+    throw new Error(
+      `OPENCONDITIONS_FEDERATION_CLIENT_CERT_FILE: ${certFile} is not a PEM certificate`,
+    );
+  }
+  let privateKey: KeyObject;
+  try {
+    privateKey = createPrivateKey(key);
+  } catch {
+    throw new Error(
+      `OPENCONDITIONS_FEDERATION_CLIENT_KEY_FILE: ${keyFile} is not a PEM private key`,
+    );
+  }
+  if (!certificate.checkPrivateKey(privateKey)) {
+    throw new Error(
+      `OPENCONDITIONS_FEDERATION_CLIENT_KEY_FILE: ${keyFile} is not the key of the certificate in ${certFile}`,
+    );
+  }
+  return { cert, key };
 }
 
 /** The proxies' addresses (`10.0.0.2`, `172.18.0.0/16`, `fd00::/8`); undefined when none are named. */
