@@ -48,10 +48,6 @@ const ACTOR_CONFIG = {
   trustTier: 1,
   capabilities: {
     protocolVersion: "0.1",
-    wireFormats: ["application/activity+json"],
-    deliveryModes: ["pull"],
-    subscriptionFilters: ["bbox"],
-    maxEventRate: 10,
     convergenceBound: 300,
   },
 };
@@ -263,8 +259,16 @@ describe("GET /peer/backfill", () => {
 
     const app = await build({ sql, env: enabledEnv, logger: false, now: () => NOW });
     try {
-      // A bogus tier=2 query param must be ignored — the tier is the pin's.
-      const path = "/peer/backfill?limit=500&tier=2";
+      // A tier asked for in the query is refused, not honoured: the tier is the pin's.
+      const asked = "/peer/backfill?limit=500&tier=2";
+      const refused = await app.inject({
+        method: "GET",
+        url: asked,
+        headers: await signedGet(tier0Peer, asked),
+      });
+      expect(refused.statusCode).toBe(400);
+
+      const path = "/peer/backfill?limit=500";
       const headers = await signedGet(tier0Peer, path);
       const res = await app.inject({ method: "GET", url: path, headers });
       expect(res.statusCode).toBe(200);
@@ -283,10 +287,11 @@ describe("GET /peer/backfill", () => {
   it("rejects malformed query parameters with 400 (after authenticating)", async () => {
     const app = await build({ sql, env: enabledEnv, logger: false, now: () => NOW });
     try {
-      const path = "/peer/backfill?after=abc";
-      const headers = await signedGet(tier1Peer, path);
-      const res = await app.inject({ method: "GET", url: path, headers });
-      expect(res.statusCode).toBe(400);
+      for (const path of ["/peer/backfill?after=abc", "/peer/backfill?after=1.1&kind=incident"]) {
+        const headers = await signedGet(tier1Peer, path);
+        const res = await app.inject({ method: "GET", url: path, headers });
+        expect(res.statusCode, path).toBe(400);
+      }
     } finally {
       await app.close();
     }

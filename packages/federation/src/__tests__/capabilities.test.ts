@@ -9,7 +9,7 @@ function caps(overrides: Partial<NegotiableCapabilities> = {}): NegotiableCapabi
   return {
     protocolVersion: "1.0",
     schemaVersions: ["kernel@1.0", "situation/incident@1.0"],
-    wireFormats: ["application/activity+json"],
+    wireFormats: ["application/json"],
     deliveryModes: ["pull", "webhook"],
     convergenceBound: 300,
     ...overrides,
@@ -40,7 +40,7 @@ describe("negotiateCapabilities", () => {
         "observation/fuel.price@1.0",
         "situation/closure@1.0",
       ],
-      wireFormats: ["application/activity+json", "application/cbor"],
+      wireFormats: ["application/json", "application/cbor"],
       deliveryModes: ["pull", "webhook", "sse"],
     });
     const peer = caps({
@@ -71,6 +71,21 @@ describe("negotiateCapabilities", () => {
     const local = caps({ protocolVersion: "1.0", protocolVersions: ["1.0"] });
     const peer = caps({ protocolVersion: "2.0", protocolVersions: ["2.0"] });
     expect(() => negotiateCapabilities(local, peer)).toThrow(CapabilityNegotiationError);
+  });
+
+  it("throws when there is no common wire format: neither could read the other's documents", () => {
+    const local = caps({ wireFormats: ["application/json"] });
+    const peer = caps({ wireFormats: ["application/cbor"] });
+    expect(() => negotiateCapabilities(local, peer)).toThrow(CapabilityNegotiationError);
+    expect(() => negotiateCapabilities(local, peer)).toThrow(/no common wire format/);
+  });
+
+  it("agrees with no delivery mode in common: the subscriber asks for none the peer lacks", () => {
+    const negotiated = negotiateCapabilities(
+      caps({ deliveryModes: ["webhook"] }),
+      caps({ deliveryModes: ["pull"] }),
+    );
+    expect(negotiated.deliveryModes).toEqual([]);
   });
 
   it("compares versions numerically, not lexically (10 > 9)", () => {

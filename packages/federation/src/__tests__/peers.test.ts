@@ -22,10 +22,6 @@ const ACTOR_CONFIG: ActorConfig = {
   trustTier: 1,
   capabilities: {
     protocolVersion: "0.1",
-    wireFormats: ["application/activity+json"],
-    deliveryModes: ["pull"],
-    subscriptionFilters: [],
-    maxEventRate: 10,
     convergenceBound: 300,
   },
 };

@@ -67,10 +67,6 @@ const actor = (instanceId: string) => ({
   trustTier: 1,
   capabilities: {
     protocolVersion: "0.1",
-    wireFormats: ["application/activity+json"],
-    deliveryModes: ["pull", "webhook", "sse"],
-    subscriptionFilters: ["bbox", "classes", "domains"],
-    maxEventRate: 10,
     convergenceBound: 300,
   },
 });

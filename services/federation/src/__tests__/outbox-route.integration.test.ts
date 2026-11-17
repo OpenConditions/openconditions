@@ -59,10 +59,6 @@ const ACTOR_CONFIG = {
   trustTier: 1,
   capabilities: {
     protocolVersion: "0.1",
-    wireFormats: ["application/activity+json"],
-    deliveryModes: ["pull"],
-    subscriptionFilters: ["bbox"],
-    maxEventRate: 10,
     convergenceBound: 300,
   },
 };
@@ -263,12 +259,13 @@ describe("GET /peer/outbox", () => {
     try {
       const publicPage = await app.inject({ method: "GET", url: "/peer/outbox?limit=500" });
       expect(ids(publicPage.json() as OutboxPage)).not.toContain(situationId("route-odbl"));
-      // No query parameter widens the scope: an unknown one is ignored.
+      // No query parameter widens the scope: an unknown one is refused.
       const asked = await app.inject({
         method: "GET",
         url: "/peer/outbox?limit=500&publicOnly=false",
       });
-      expect(ids(asked.json() as OutboxPage)).not.toContain(situationId("route-odbl"));
+      expect(asked.statusCode).toBe(400);
+      expect(asked.json().error).toMatch(/publicOnly/);
     } finally {
       await app.close();
     }
@@ -405,6 +402,7 @@ describe("GET /peer/outbox", () => {
         "/peer/outbox?maxAgeSec=-5",
         "/peer/outbox?sourceLiveness=yes",
         "/peer/outbox?limit=0",
+        "/peer/outbox?kind=incident",
       ]) {
         const res = await app.inject({ method: "GET", url });
         expect(res.statusCode, url).toBe(400);

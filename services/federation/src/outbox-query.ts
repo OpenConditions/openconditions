@@ -1,9 +1,9 @@
 /**
- * Query-string parsing for GET /peer/outbox. Fail-closed: any malformed
- * parameter is a {@link OutboxQueryError} (the route answers 400) rather than
- * a silently-widened filter. Also rebuilds the validated filter parameters as
- * an encoded query-string so the page's `next` link preserves the
- * subscriber's filter across pagination.
+ * Query-string parsing for GET /peer/outbox and /peer/backfill. Fail-closed:
+ * any malformed or unknown parameter is a {@link OutboxQueryError} (the route
+ * answers 400) rather than a silently-widened filter. Also rebuilds the
+ * validated filter parameters as an encoded query-string so the page's `next`
+ * link preserves the subscriber's filter across pagination.
  */
 import {
   decodeOutboxCursor,
@@ -11,6 +11,7 @@ import {
   OUTBOX_CURSOR_START,
   OUTBOX_MAX_LIMIT,
   type OutboxCursor,
+  RECORD_FILTER_KEYS,
   type RecordFilter,
 } from "@openconditions/federation";
 import { RECORD_CLASSES, type RecordClass } from "@openconditions/model";
@@ -50,7 +51,17 @@ function list(query: Record<string, unknown>, name: string): string[] | undefine
   return values;
 }
 
+/** The parameters a query may carry: the filter's, the cursor and the page size. */
+const KNOWN_PARAMETERS: ReadonlySet<string> = new Set([...RECORD_FILTER_KEYS, "after", "limit"]);
+
 export function parseOutboxQuery(query: Record<string, unknown>): ParsedOutboxQuery {
+  // An unknown parameter is refused: ignoring a misspelt or newer filter would
+  // serve more than the subscriber asked for.
+  const unknown = Object.keys(query).find((name) => !KNOWN_PARAMETERS.has(name));
+  if (unknown !== undefined) {
+    throw new OutboxQueryError(`${unknown} is not a parameter this instance knows`);
+  }
+
   const filter: RecordFilter = {};
   const next = new URLSearchParams();
 

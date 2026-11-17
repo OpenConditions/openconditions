@@ -114,6 +114,30 @@ export interface RecordFilter {
   sourceLiveness?: boolean;
 }
 
+/** Every key of {@link RecordFilter}, so a key added there must be added here too. */
+const RECORD_FILTER_KEY_SET: Record<keyof RecordFilter, true> = {
+  bbox: true,
+  classes: true,
+  kinds: true,
+  domains: true,
+  properties: true,
+  privacyClasses: true,
+  minEvidenceTier: true,
+  maxAgeSec: true,
+  sourceLiveness: true,
+};
+
+/**
+ * The filter keys this build knows: the keys a subscription's filter may
+ * hold, the filter parameters of an outbox or backfill query, and what the
+ * actor document advertises as `subscriptionFilters`. Anything else is
+ * refused rather than ignored, since ignoring it would send a subscriber more
+ * than it asked for.
+ */
+export const RECORD_FILTER_KEYS = Object.freeze(
+  Object.keys(RECORD_FILTER_KEY_SET) as (keyof RecordFilter)[],
+);
+
 /**
  * Crowd states that withdraw a report. They have no tier rank, yet must pass
  * the tier gate: the filter cannot know whether the subscriber holds the

@@ -17,7 +17,8 @@
  * push loses nothing: the push cursor is not advanced (priority entries
  * re-push, idempotently) and the peer's pull covers everything regardless.
  *
- * The filter is a {@link RecordFilter}. Validation is fail-closed: a push mode
+ * The filter is a {@link RecordFilter}. Validation is fail-closed: a key the
+ * filter does not have is refused, not ignored; a push mode
  * (webhook/sse) demands a NARROW filter (a bbox, a kind, domain, property or
  * privacy-class allow-list, or a maxAge bound) so a subscriber cannot ask the
  * publisher to firehose its whole journal over a push channel; a subscription
@@ -36,7 +37,7 @@
 import { assertPublicUrl } from "@openconditions/ingest-framework";
 import { RECORD_CLASSES } from "@openconditions/model";
 import type postgres from "postgres";
-import type { RecordFilter } from "./record-filter.js";
+import { EVIDENCE_TIERS, RECORD_FILTER_KEYS, type RecordFilter } from "./record-filter.js";
 
 export type DeliveryMode = "pull" | "webhook" | "sse";
 export type SubscriptionStatus = "active" | "push_disabled";
@@ -151,6 +152,18 @@ function validateFilterValues(filter: RecordFilter): void {
     throw new SubscriptionValidationError("invalid-filter", "filter must be a JSON object");
   }
 
+  // A key this build does not know would be ignored, and the subscriber sent
+  // more than it asked for.
+  const unknownKeys = Object.keys(filter).filter(
+    (key) => !(RECORD_FILTER_KEYS as readonly string[]).includes(key),
+  );
+  if (unknownKeys.length > 0) {
+    throw new SubscriptionValidationError(
+      "invalid-filter",
+      `filter.${unknownKeys[0]} is not a filter this instance knows (${RECORD_FILTER_KEYS.join(", ")})`,
+    );
+  }
+
   const bbox: unknown = filter.bbox;
   if (bbox !== undefined) {
     if (
@@ -204,6 +217,17 @@ function validateFilterValues(filter: RecordFilter): void {
         "a subscription that wants observations must name their properties (filter.properties)",
       );
     }
+  }
+
+  const minEvidenceTier: unknown = filter.minEvidenceTier;
+  if (
+    minEvidenceTier !== undefined &&
+    !(EVIDENCE_TIERS as readonly unknown[]).includes(minEvidenceTier)
+  ) {
+    throw new SubscriptionValidationError(
+      "invalid-filter",
+      `filter.minEvidenceTier must be one of ${EVIDENCE_TIERS.join(", ")}`,
+    );
   }
 
   const maxAgeSec: unknown = filter.maxAgeSec;
