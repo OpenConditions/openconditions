@@ -169,7 +169,7 @@ Mutual TLS is optional and never replaces the signature. When the receiving oper
 
 ## 5. The journal
 
-Each instance keeps a journal of changes to its own records. Each entry has a cursor `(txid, seq)`: `txid` is the 64-bit id of the Postgres transaction that wrote it, `seq` a per-entry sequence number. Entries are ordered by `txid`, then `seq`, both as numbers. On the wire a cursor is `"<txid>.<seq>"`, both non-negative decimal integers, `seq` at most 2^53 − 1; `"0.0"` is the start. A transaction that took a higher `seq` can have the lower `txid`, so `"1000.14"` comes before `"1001.11"`. See [`cursors.json`](../packages/federation/src/__tests__/vectors/cursors.json).
+Each instance keeps a journal of changes to its own records. Each entry has a cursor `(txid, seq)`: `txid` is the 64-bit id of the Postgres transaction that wrote it, `seq` a per-entry sequence number. Entries are ordered by `txid`, then `seq`, both as numbers. On the wire a cursor is `"<txid>.<seq>"`, both non-negative decimal integers without leading zeros (`0` itself is written `0`), `txid` at most 2^64 − 1 and `seq` at most 2^53 − 1; `"0.0"` is the start. Each position has exactly this one spelling: any other, such as `"01.2"` or `"1.02"`, is refused as malformed. A transaction that took a higher `seq` can have the lower `txid`, so `"1000.14"` comes before `"1001.11"`. See [`cursors.json`](../packages/federation/src/__tests__/vectors/cursors.json).
 
 A page serves only settled entries: an entry is served only once no transaction that could still add an entry ordered before it is open, so a page never contains an entry that an entry published later could precede, and a cursor never has to move back. While a write transaction stays open anywhere on the publisher's database server, entries committed after it began wait. The publisher logs a warning while that lasts longer than its `convergenceBound`, and `GET /status/journal` answers `{ "epoch", "heldSince", "lagSec" }`: when the oldest entry still held back was journalled (null when none is) and how many seconds ago.
 
@@ -331,14 +331,14 @@ Entries refused inside an authenticated page are listed in `skipped`; they do no
 
 `GET /peer/stream?subscriptionId=<id>[&after=<cursor>]` (signed; `after` is part of the signed target URI) streams a subscription's entries as server-sent events (`text/event-stream`): `400` without `subscriptionId` or with a malformed cursor, `404` or `403` as for the subscription routes.
 
-The subscriber holds the stream's cursor: server-sent events have no acknowledgement, so the publisher cannot know what arrived and stores nothing of how far a stream got. The stream starts after `after`; without it, after the cursor in a `Last-Event-ID` request header (what an EventSource client sends when it reconnects; every entry event's `id` is its cursor); without either, at the subscription's stored cursor. The first event of every stream is
+The subscriber holds the stream's cursor: server-sent events have no acknowledgement, so the publisher cannot know what arrived and stores nothing of how far a stream got. The stream starts after `after`; without it, after the cursor in a `Last-Event-ID` request header (what an EventSource client sends when it reconnects; every entry event's `id` is its cursor); without either, at the subscription's stored cursor. The `Last-Event-ID` header is not covered by the request signature: like the stream's events, it rests on the transport (TLS), so a client that can set `after` should prefer it. The first event of every stream is
 
 ```text
 event: journal
 data: {"epoch":"<epoch>","cursor":"<cursor>"}
 ```
 
-with the journal's epoch and the cursor the stream starts after. When the cursor asked for is ahead of the journal (§5), the event adds `"cursorAhead":true`, `cursor` is `"0.0"` and the stream starts from the beginning. Each entry is then one event:
+with the journal's epoch and the cursor the stream starts after. A client compares that cursor with the one it sent; they differ only with `cursorAhead`. When the cursor asked for is ahead of the journal (§5), the event adds `"cursorAhead":true`, `cursor` is `"0.0"` and the stream starts from the beginning. Each entry is then one event:
 
 ```text
 event: record

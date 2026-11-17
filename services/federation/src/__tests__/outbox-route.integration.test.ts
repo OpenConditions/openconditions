@@ -412,6 +412,18 @@ describe("GET /peer/outbox", () => {
     }
   }, 30_000);
 
+  it("refuses a cursor past the largest xid8 or with leading zeros with 400", async () => {
+    const app = await build({ sql, env: ENABLED_ENV, logger: false, now: () => NOW });
+    try {
+      for (const url of ["/peer/outbox?after=18446744073709551616.0", "/peer/outbox?after=01.2"]) {
+        const res = await app.inject({ method: "GET", url });
+        expect(res.statusCode, url).toBe(400);
+      }
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+
   it("serves a tombstone as a signed delete entry with its reason; a tampered page fails verification", async () => {
     await seed("route-tomb");
     await tombstoneSituation(sql, situationId("route-tomb"), "withdrawn");
