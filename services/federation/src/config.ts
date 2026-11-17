@@ -147,52 +147,56 @@ export function resolveFederationSettings(
 }
 
 /**
- * The client certificate and key files, read and checked once; undefined
- * when neither is named, a throw when one is missing, unreadable, not PEM, or
- * the key is not the certificate's. No message names what the files hold.
+ * The client certificate and its key, read and checked once: each as PEM in
+ * its variable, or in the file its `_FILE` variant names. Undefined when
+ * neither is set, a throw when one is missing, set both ways, unreadable, not
+ * PEM, or the key is not the certificate's. No message names what they hold.
  */
 function resolveClientCertificate(
   env: Record<string, string | undefined>,
 ): ClientCertificate | undefined {
-  const certFile = env["OPENCONDITIONS_FEDERATION_CLIENT_CERT_FILE"]?.trim() ?? "";
-  const keyFile = env["OPENCONDITIONS_FEDERATION_CLIENT_KEY_FILE"]?.trim() ?? "";
-  if (certFile === "" && keyFile === "") return undefined;
-  if (certFile === "" || keyFile === "") {
-    throw new Error(
-      "a client certificate needs both OPENCONDITIONS_FEDERATION_CLIENT_CERT_FILE and " +
-        "OPENCONDITIONS_FEDERATION_CLIENT_KEY_FILE (PEM files)",
-    );
-  }
-  const read = (file: string, variable: string): string => {
+  const CERT = "OPENCONDITIONS_FEDERATION_CLIENT_CERT";
+  const KEY = "OPENCONDITIONS_FEDERATION_CLIENT_KEY";
+  /** The PEM of `name` and where it came from, for messages; undefined when it is not set. */
+  const pem = (name: string): { text: string; from: string } | undefined => {
+    const inline = env[name]?.trim() ?? "";
+    const file = env[`${name}_FILE`]?.trim() ?? "";
+    if (inline !== "" && file !== "") {
+      throw new Error(`${name} and ${name}_FILE are both set: set one`);
+    }
+    if (inline !== "") return { text: inline, from: name };
+    if (file === "") return undefined;
     try {
-      return readFileSync(file, "utf8");
+      return { text: readFileSync(file, "utf8"), from: `${name}_FILE: ${file}` };
     } catch (err) {
       const code = (err as NodeJS.ErrnoException).code ?? "unreadable";
-      throw new Error(`${variable}: cannot read ${file} (${code})`);
+      throw new Error(`${name}_FILE: cannot read ${file} (${code})`);
     }
   };
-  const cert = read(certFile, "OPENCONDITIONS_FEDERATION_CLIENT_CERT_FILE");
-  const key = read(keyFile, "OPENCONDITIONS_FEDERATION_CLIENT_KEY_FILE");
+  const certPem = pem(CERT);
+  const keyPem = pem(KEY);
+  if (certPem === undefined && keyPem === undefined) return undefined;
+  if (certPem === undefined || keyPem === undefined) {
+    throw new Error(
+      `a client certificate needs both ${CERT} and ${KEY}, each as PEM or as a file named by its _FILE variant`,
+    );
+  }
+  const cert = certPem.text;
+  const key = keyPem.text;
   let certificate: X509Certificate;
   try {
     certificate = new X509Certificate(cert);
   } catch {
-    throw new Error(
-      `OPENCONDITIONS_FEDERATION_CLIENT_CERT_FILE: ${certFile} is not a PEM certificate`,
-    );
+    throw new Error(`${certPem.from} is not a PEM certificate`);
   }
   let privateKey: KeyObject;
   try {
     privateKey = createPrivateKey(key);
   } catch {
-    throw new Error(
-      `OPENCONDITIONS_FEDERATION_CLIENT_KEY_FILE: ${keyFile} is not a PEM private key`,
-    );
+    throw new Error(`${keyPem.from} is not a PEM private key`);
   }
   if (!certificate.checkPrivateKey(privateKey)) {
-    throw new Error(
-      `OPENCONDITIONS_FEDERATION_CLIENT_KEY_FILE: ${keyFile} is not the key of the certificate in ${certFile}`,
-    );
+    throw new Error(`${keyPem.from} is not the key of the certificate (${certPem.from})`);
   }
   return { cert, key };
 }

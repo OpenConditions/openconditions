@@ -103,6 +103,24 @@ describe("the client certificate settings", () => {
     });
   });
 
+  it("are read from the variables themselves as well, but not both ways", () => {
+    const cert = readFileSync(file("client.pem"), "utf8");
+    const key = readFileSync(file("client.key"), "utf8");
+    expect(
+      resolveFederationSettings({
+        ...enabled,
+        OPENCONDITIONS_FEDERATION_CLIENT_CERT: cert,
+        OPENCONDITIONS_FEDERATION_CLIENT_KEY: key,
+      }).clientCertificate,
+    ).toEqual({ cert: cert.trim(), key: key.trim() });
+    expect(() =>
+      resolveFederationSettings({
+        ...withFiles(file("client.pem"), file("client.key")),
+        OPENCONDITIONS_FEDERATION_CLIENT_CERT: cert,
+      }),
+    ).toThrow(/are both set/);
+  });
+
   it("fail the boot when one file is missing, unreadable, not PEM, or the key is another's", () => {
     expect(() => resolveFederationSettings(withFiles(file("client.pem")))).toThrow(/needs both/);
     expect(() => resolveFederationSettings(withFiles(undefined, file("client.key")))).toThrow(

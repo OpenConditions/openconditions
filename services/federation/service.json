@@ -115,6 +115,19 @@
         "default": "",
         "x-openmapx-secret": false
       },
+      "OPENCONDITIONS_FEDERATION_CLIENT_CERT": {
+        "type": "string",
+        "title": "Client certificate",
+        "description": "For peers that require mutual TLS of this instance: the PEM client certificate it presents on every request to a peer. Needs the client certificate key. The other operator pins its SHA-256 fingerprint. Empty: no client certificate.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "OPENCONDITIONS_FEDERATION_CLIENT_KEY": {
+        "type": "string",
+        "title": "Client certificate key",
+        "description": "The PEM private key of the client certificate. The service refuses to start with one of the two missing or a key that is not the certificate's. Empty: no client certificate.",
+        "x-openmapx-secret": true
+      },
       "OPENCONDITIONS_FEDERATION_TRUSTED_PROXIES": {
         "type": "string",
         "title": "Trusted proxies",

@@ -134,7 +134,7 @@ async function main(): Promise<void> {
       sql,
       registry: productionRegistry(),
       instanceId: resolveInstanceId(process.env),
-      operator: process.env["USER"] || "federation-admin",
+      operator: "federation-admin",
       now: () => new Date().toISOString(),
       out: (line) => process.stdout.write(`${line}\n`),
     });
