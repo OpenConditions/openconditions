@@ -308,7 +308,12 @@ describe("a peer beyond the publisher's window", () => {
     const tampered = await pull(archiveServer((bytes) => Buffer.concat([bytes, Buffer.from("x")])));
     expect(tampered.error).toMatch(/is larger than the page states|is not the one the page states/);
     expect(await atD()).toEqual({});
-    expect(await sqlD`SELECT 1 FROM conditions.federation_peer_cursor`).toHaveLength(0);
+    // The page's epoch is noted, but the cursor has not moved.
+    expect(
+      (await sqlD<{ cursor: string }[]>`SELECT cursor FROM conditions.federation_peer_cursor`).map(
+        (r) => r.cursor,
+      ),
+    ).toEqual(["0.0"]);
   }, 60_000);
 
   it("lands the archive, then what changed since its night", async () => {

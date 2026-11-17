@@ -84,10 +84,15 @@ const entry = (record: Rec, txid: number, seq: number) => ({
   record,
 });
 
+/** The epoch of the peer's journal, and one it starts over with. */
+const EPOCH = "6c1f0a52-3a8e-4e55-9a51-0d6f3c1b7e01";
+const NEXT_EPOCH = "0b9d7e3c-5f21-4c7a-8e44-2a6b9f8d1c02";
+
 const pageOf = (items: unknown[], highWaterMark: string, more: Rec = {}) => ({
   type: "OrderedCollectionPage",
   partOf: `https://${PEER}/peer/outbox`,
   highWaterMark,
+  epoch: EPOCH,
   orderedItems: items,
   ...more,
 });
@@ -167,6 +172,27 @@ const cursor = async () =>
     await sql<{ cursor: string }[]>`
       SELECT cursor FROM conditions.federation_peer_cursor WHERE peer_instance_id = ${PEER}`
   )[0]?.cursor;
+
+const storedCursor = async () =>
+  (
+    await sql<{ cursor: string; journal_epoch: string | null; cursor_reset_at: Date | null }[]>`
+      SELECT cursor, journal_epoch, cursor_reset_at
+        FROM conditions.federation_peer_cursor WHERE peer_instance_id = ${PEER}`
+  )[0];
+
+const schemaFailures = async () =>
+  (
+    await sql<{ schema_failures: number }[]>`
+      SELECT schema_failures FROM conditions.federation_peer_health WHERE peer_id = ${PEER}`
+  )[0]?.schema_failures ?? 0;
+
+/** A cursor this instance holds of the peer's journal. */
+async function holdCursor(at: string, epoch: string, resetAt: Date | null = null) {
+  await sql`
+    INSERT INTO conditions.federation_peer_cursor
+      (peer_instance_id, cursor, updated_at, journal_epoch, cursor_reset_at)
+    VALUES (${PEER}, ${at}, now(), ${epoch}, ${resetAt})`;
+}
 
 beforeAll(async () => {
   const profile = postgisProfile();
@@ -346,5 +372,141 @@ describe("pulling a peer", () => {
     const result = await pullPeer(sql, peer(), ctx(slow, { pageTimeoutMs: 200 }));
     expect(result.error).toMatch(/could not be reached/);
     expect(Date.now() - started).toBeLessThan(5_000);
+  });
+});
+
+describe("following the epoch of the peer's journal", () => {
+  it("keeps the epoch with the cursor from the first page on", async () => {
+    const { fetchImpl } = fakePeer([
+      signed(json(pageOf([entry(peerSituation(PEER, "first"), 10, 1)], "10.1"))),
+    ]);
+    expect(await pullPeer(sql, peer(), ctx(fetchImpl))).toMatchObject({ pages: 1, accepted: 1 });
+    expect(await storedCursor()).toMatchObject({ cursor: "10.1", journal_epoch: EPOCH });
+  });
+
+  it("notes the epoch even when the page moves the cursor nowhere", async () => {
+    const { fetchImpl } = fakePeer([signed(json(pageOf([], "0.0")))]);
+    expect(await pullPeer(sql, peer(), ctx(fetchImpl))).toMatchObject({ pages: 1 });
+    expect(await storedCursor()).toMatchObject({ cursor: "0.0", journal_epoch: EPOCH });
+  });
+
+  it("reads the journal again from the start when the peer's epoch changed", async () => {
+    await holdCursor("20.5", EPOCH);
+    const { fetchImpl, asked } = fakePeer([
+      signed(
+        json(pageOf([entry(peerSituation(PEER, "voided"), 30, 1)], "30.1", { epoch: NEXT_EPOCH })),
+      ),
+      signed(
+        json(pageOf([entry(peerSituation(PEER, "again"), 5, 1)], "5.1", { epoch: NEXT_EPOCH })),
+      ),
+    ]);
+    const result = await pullPeer(sql, peer(), ctx(fetchImpl));
+    expect(result).toMatchObject({ reset: "epoch", pages: 1, accepted: 1, cursor: "5.1" });
+    expect(result.error).toBeUndefined();
+    expect(await landed()).toEqual(["again"]);
+    expect(asked[0]).toContain("/peer/outbox?");
+    expect(asked[0]).toContain("after=20.5");
+    expect(asked[1]).toContain("/peer/backfill?");
+    expect(asked[1]).toContain("after=0.0");
+    const held = await storedCursor();
+    expect(held).toMatchObject({ cursor: "5.1", journal_epoch: NEXT_EPOCH });
+    expect(held?.cursor_reset_at).not.toBeNull();
+  });
+
+  it("reads the journal again from the start when the peer says the cursor is ahead of it", async () => {
+    await holdCursor("20.5", EPOCH);
+    const { fetchImpl, asked } = fakePeer([
+      signed(json(pageOf([], "20.5", { cursorAhead: true }))),
+      signed(json(pageOf([entry(peerSituation(PEER, "behind"), 7, 2)], "7.2"))),
+    ]);
+    const result = await pullPeer(sql, peer(), ctx(fetchImpl));
+    expect(result).toMatchObject({ reset: "ahead", pages: 1, accepted: 1, cursor: "7.2" });
+    expect(asked[1]).toContain("after=0.0");
+    expect(await storedCursor()).toMatchObject({ cursor: "7.2", journal_epoch: EPOCH });
+  });
+
+  it("refuses a second restart within the hour as the peer's fault, leaving the cursor", async () => {
+    await holdCursor("20.5", EPOCH, new Date(Date.now() - 10 * 60_000));
+    const { fetchImpl } = fakePeer([signed(json(pageOf([], "20.5", { epoch: NEXT_EPOCH })))]);
+    const result = await pullPeer(sql, peer(), ctx(fetchImpl));
+    expect(result).toMatchObject({
+      pages: 0,
+      error: "the peer's journal restarted again within the hour",
+    });
+    expect(result.reset).toBeUndefined();
+    expect(await schemaFailures()).toBe(1);
+    expect(await storedCursor()).toMatchObject({ cursor: "20.5", journal_epoch: EPOCH });
+  });
+
+  it("follows a restart again once the hour has passed", async () => {
+    await holdCursor("20.5", EPOCH, new Date(Date.now() - 61 * 60_000));
+    const { fetchImpl } = fakePeer([
+      signed(json(pageOf([], "20.5", { epoch: NEXT_EPOCH }))),
+      signed(json(pageOf([], "0.0", { epoch: NEXT_EPOCH }))),
+    ]);
+    expect(await pullPeer(sql, peer(), ctx(fetchImpl))).toMatchObject({ reset: "epoch" });
+  });
+
+  it("refuses a second restart within one pull", async () => {
+    await holdCursor("20.5", EPOCH);
+    const { fetchImpl } = fakePeer([
+      signed(json(pageOf([], "20.5", { cursorAhead: true }))),
+      signed(
+        json(
+          pageOf([entry(peerSituation(PEER, "landed-once"), 3, 1)], "3.1", {
+            next: `https://${PEER}/peer/backfill?after=3.1`,
+          }),
+        ),
+      ),
+      signed(json(pageOf([], "3.1", { cursorAhead: true }))),
+    ]);
+    const result = await pullPeer(sql, peer(), ctx(fetchImpl));
+    expect(result).toMatchObject({
+      reset: "ahead",
+      pages: 1,
+      cursor: "3.1",
+      error: "the peer's journal restarted again within this pull",
+    });
+    expect(await schemaFailures()).toBe(1);
+    expect(await cursor()).toBe("3.1");
+  });
+
+  it("refuses a page that says the start of the journal is ahead of it", async () => {
+    const { fetchImpl } = fakePeer([signed(json(pageOf([], "0.0", { cursorAhead: true })))]);
+    expect(await pullPeer(sql, peer(), ctx(fetchImpl))).toMatchObject({
+      pages: 0,
+      error: "the page says the start of the journal is ahead of it",
+    });
+    expect(await schemaFailures()).toBe(1);
+  });
+
+  it("adopts another epoch at the start cursor without a reset", async () => {
+    await holdCursor("0.0", EPOCH);
+    const { fetchImpl } = fakePeer([
+      signed(
+        json(pageOf([entry(peerSituation(PEER, "adopted"), 4, 1)], "4.1", { epoch: NEXT_EPOCH })),
+      ),
+    ]);
+    const result = await pullPeer(sql, peer(), ctx(fetchImpl));
+    expect(result).toMatchObject({ pages: 1, accepted: 1, cursor: "4.1" });
+    expect(result.reset).toBeUndefined();
+    expect(await storedCursor()).toMatchObject({
+      cursor: "4.1",
+      journal_epoch: NEXT_EPOCH,
+      cursor_reset_at: null,
+    });
+  });
+
+  it("refuses a page that names no epoch", async () => {
+    for (const epoch of [undefined, "", "x".repeat(65), 42]) {
+      const { fetchImpl } = fakePeer([
+        signed(json(pageOf([entry(peerSituation(PEER, "no-epoch"), 10, 1)], "10.1", { epoch }))),
+      ]);
+      expect(await pullPeer(sql, peer(), ctx(fetchImpl))).toMatchObject({
+        pages: 0,
+        error: "the page names no journal epoch",
+      });
+    }
+    expect(await landed()).toEqual([]);
   });
 });

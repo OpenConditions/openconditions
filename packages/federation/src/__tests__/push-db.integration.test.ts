@@ -328,6 +328,55 @@ describe("deliverWebhook — priorityRestricted self-describing marker", () => {
   }, 30_000);
 });
 
+describe("deliverWebhook — the journal's epoch", () => {
+  it("states the journal's epoch on the pushed page", async () => {
+    const bbox: [number, number, number, number] = [46.0, 51.0, 47.0, 53.0];
+    const sub = await webhookSubFromNow({ priorityOnly: false, bbox });
+    await insertEvent("epoch-pushed", { kind: "incident", lon: 46.5 });
+
+    const { fetchImpl, captured } = mockInbox([200]);
+    await deliverWebhook(sql, sub, { signingKey, fetchImpl, partOf: PARTOF, now: NOW });
+
+    const [{ epoch }] = await sql<{ epoch: string }[]>`
+      SELECT epoch::text AS epoch FROM conditions.federation_journal`;
+    const page = JSON.parse(captured[0]!.body.toString("utf8")) as { epoch?: string };
+    expect(page.epoch).toBe(epoch);
+  }, 30_000);
+
+  it("sets a push cursor ahead of the journal back to the start without pushing", async () => {
+    const bbox: [number, number, number, number] = [48.0, 51.0, 49.0, 53.0];
+    const sub = await webhookSubFromNow({ priorityOnly: false, bbox });
+    await insertEvent("epoch-ahead", { kind: "incident", lon: 48.5 });
+    await sql`
+      UPDATE conditions.federation_subscription SET cursor = '900000000000.1' WHERE id = ${sub.id}`;
+    const ahead = (await getSubscription(sql, sub.id))!;
+
+    const { fetchImpl, captured } = mockInbox([200]);
+    const outcome = await deliverWebhook(sql, ahead, {
+      signingKey,
+      fetchImpl,
+      partOf: PARTOF,
+      now: NOW,
+    });
+    expect(outcome).toEqual({ status: "reset" });
+    expect(captured).toHaveLength(0);
+    const reset = (await getSubscription(sql, sub.id))!;
+    expect(reset.cursor).toBe("0.0");
+    expect(reset.revision).toBe(ahead.revision + 1);
+
+    // The next delivery pushes from the start.
+    const again = await deliverWebhook(sql, reset, {
+      signingKey,
+      fetchImpl,
+      partOf: PARTOF,
+      now: NOW,
+      limit: 500,
+    });
+    expect(again.status).toBe("delivered");
+    expect(captured[0]!.items.map(localOf)).toContain("epoch-ahead");
+  }, 30_000);
+});
+
 describe("deliverWebhook — failure disables push after the threshold", () => {
   it("increments push_failures on 5xx and flips to push_disabled at the threshold", async () => {
     const bbox: [number, number, number, number] = [14.0, 51.0, 15.0, 53.0];

@@ -28,6 +28,11 @@
  * can sort below the cursor's txid, so a later-committing row is always beyond
  * the composite cursor and is delivered on the next poll — never skipped.
  * Delivery order is `(txid, seq)`; only WITHIN one transaction is it seq order.
+ *
+ * A cursor belongs to one database history, which the journal's epoch names
+ * (journal.ts); every page states it, and a page for a cursor this history has
+ * not reached says so (`cursorAhead`) instead of answering an empty page that
+ * looks like a quiet journal.
  */
 import { createHash } from "node:crypto";
 import type { RecordClass } from "@openconditions/model";
@@ -141,6 +146,19 @@ export interface OutboxPage {
    * The pull response is complete and NEVER sets this.
    */
   priorityRestricted?: boolean;
+  /**
+   * The journal's epoch: which database history the cursors belong to. A
+   * subscriber whose stored epoch differs reads the journal again from the
+   * start.
+   */
+  epoch: string;
+  /**
+   * Set (true) only when the request's cursor names a transaction this
+   * journal has not reached: the cursor belongs to a history the database no
+   * longer has (it went back). The page then has no entries and its
+   * `highWaterMark` echoes the cursor; the subscriber reads from the start.
+   */
+  cursorAhead?: true;
   /** Surviving entries in `(txid, seq)` order; filtered-out entries leave gaps. */
   orderedItems: OutboxEntry[];
 }
@@ -237,12 +255,23 @@ function rowToEntry(row: JournalRow): OutboxEntry | undefined {
  * all-filtered page still advances the subscriber), wire-encoded, and equals
  * the request `after` when nothing stable is new. Re-reading the same cursor is
  * idempotent — the journal is append-only.
+ *
+ * Every page carries the journal's epoch. A cursor whose txid is at or past
+ * the snapshot's xmin is one this journal never handed out (a page's
+ * high-water mark always lies below the xmin of its time, and xmin never goes
+ * back within one history), so the page says `cursorAhead`.
  */
 export async function readOutbox(sql: postgres.Sql, q: OutboxQuery): Promise<OutboxPage> {
   const after = normalizeCursor(q.after);
   const limit = Math.min(Math.max(q.limit ?? OUTBOX_DEFAULT_LIMIT, 1), OUTBOX_MAX_LIMIT);
   const partOf = q.partOf ?? "/peer/outbox";
   const now = q.now ?? new Date().toISOString();
+
+  const [journal] = await sql<{ epoch: string; ahead: boolean }[]>`
+    SELECT epoch::text AS epoch,
+           ${after.txid}::xid8 >= pg_snapshot_xmin(pg_current_snapshot()) AS ahead
+      FROM conditions.federation_journal`;
+  if (journal === undefined) throw new Error("conditions.federation_journal has no row");
 
   // The push-channel restriction, applied AT SQL so the frontier is over the
   // priority subsequence (a delete always stays in the channel).
@@ -274,8 +303,15 @@ export async function readOutbox(sql: postgres.Sql, q: OutboxQuery): Promise<Out
   const entries = rows.map(rowToEntry).filter((e): e is OutboxEntry => e !== undefined);
   const orderedItems = applyRecordFilter(entries, q.filter, now);
 
-  const page: OutboxPage = { type: "OrderedCollectionPage", partOf, highWaterMark, orderedItems };
+  const page: OutboxPage = {
+    type: "OrderedCollectionPage",
+    partOf,
+    highWaterMark,
+    epoch: journal.epoch,
+    orderedItems,
+  };
   if (q.priorityOnly) page.priorityRestricted = true;
+  if (journal.ahead) page.cursorAhead = true;
   if (rows.length === limit) {
     const params = q.nextParams ? `&${q.nextParams}` : "";
     page.next = `${partOf}?after=${highWaterMark}${params}`;
@@ -308,10 +344,13 @@ function sortedCanonical(value: unknown): unknown {
  * requester's tier is folded in too: an anonymous (Tier-0) and an authenticated
  * (Tier-1/2) request see a different time-floored window at the same cursor and
  * must never collide on one ETag. So is the night of the archive a page names,
- * which moves the floor and the archive the page states.
+ * which moves the floor and the archive the page states, and the journal's
+ * epoch: an empty page of a new epoch at the same cursor is a different
+ * representation, and a conditional request must not get a 304 for it.
  */
 export function outboxEtag(
   height: string,
+  epoch: string,
   after: OutboxCursor,
   limit: number,
   filter: RecordFilter | undefined,
@@ -320,6 +359,7 @@ export function outboxEtag(
 ): string {
   const canon = JSON.stringify(
     sortedCanonical({
+      epoch,
       after: encodeOutboxCursor(after),
       limit,
       filter: filter ?? null,

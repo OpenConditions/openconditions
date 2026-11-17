@@ -6,14 +6,20 @@
 
 import { assertStoredCodesRegistered, runMigrations } from "@openconditions/core/server";
 import {
+  advanceJournalSeenXid,
   createInMemoryRateLimiter,
+  ensureJournalEpoch,
   InMemoryNonceStore,
+  type JournalLagWatch,
+  journalLagNotice,
   KEY_PUBLICATION_LEAD_DAYS,
   loadSigningKey,
   maintainInstanceKey,
   OUTBOX_PRUNE_INTERVAL_HOURS,
   pruneOutbox,
   REGISTRY_SYNC_INTERVAL_HOURS,
+  readFenceHolder,
+  readJournalLag,
   runWebhookDeliveryCycle,
 } from "@openconditions/federation";
 import {
@@ -55,6 +61,9 @@ const KEY_CYCLE_MS = 6 * 60 * 60 * 1000;
 /** How often the peers this instance pulls are read. */
 const PULL_CYCLE_MS = 30_000;
 
+/** How often the journal's fence lag is checked against the convergence bound. */
+const LAG_CYCLE_MS = 60_000;
+
 async function boot() {
   const url = requireCredential(process.env, "DATABASE_URL");
   console.info("[federation-api] applying database migrations…");
@@ -89,6 +98,16 @@ async function boot() {
   });
   await assertStoredCodesRegistered(sql, productionRegistry(), { sourceFormats: false });
   const settings = resolveFederationSettings(process.env);
+
+  // The journal must belong to the database's current history before anything
+  // reads or seeds it: after a restore, a timeline change or the operator's
+  // request a new epoch starts, emptying the journal for the seed below to
+  // fill again. Whether or not federation is enabled, as the capture writes
+  // the journal regardless.
+  await ensureJournalEpoch(sql, {
+    now: new Date().toISOString(),
+    log: (line) => console.warn(`[federation-api] ${line}`),
+  });
 
   // Journal seed: what a subscription wants of the records stored before it
   // (the capture journals only while one wants them), at boot and whenever a
@@ -209,6 +228,8 @@ async function boot() {
           `[federation-api] outbox prune: deleted ${deleted} rows older than ${floorIso}`,
         );
       }
+      // How far the transaction ids got, so the next boot can tell they went back.
+      await advanceJournalSeenXid(sql);
     } catch (err) {
       console.error("[federation-api] outbox prune failed:", err);
     } finally {
@@ -216,6 +237,50 @@ async function boot() {
     }
   };
   const pruneTimer = setInterval(() => void runPrune(), PRUNE_CYCLE_MS);
+
+  // Lag check: the journal's fence holds back every committed entry while an
+  // older write transaction is open anywhere on the server. Warns while that
+  // lasts longer than the convergence bound this instance advertises, naming
+  // the session that holds it where this role may see it. Single-flight.
+  let lagTimer: NodeJS.Timeout | undefined;
+  if (settings.enabled) {
+    const boundSec = settings.actor!.capabilities.convergenceBound;
+    let watch: JournalLagWatch = { warnedAt: null };
+    let lagRunning = false;
+    const checkLag = async () => {
+      if (lagRunning) return;
+      lagRunning = true;
+      try {
+        const nowIso = new Date().toISOString();
+        const lag = await readJournalLag(sql, nowIso);
+        const decided = journalLagNotice(watch, lag.lagSec, boundSec, Date.parse(nowIso));
+        watch = decided.watch;
+        if (decided.notice === "warn") {
+          const holder = await readFenceHolder(sql);
+          const held =
+            holder === null
+              ? ""
+              : `; held by ${holder.applicationName ?? "a session this role cannot see"}` +
+                (holder.xactStart === null
+                  ? ""
+                  : `, its transaction open ${Math.round(
+                      (Date.parse(nowIso) - Date.parse(holder.xactStart)) / 1000,
+                    )} s`);
+          console.warn(
+            `[federation-api] journal entries held back ${lag.lagSec} s, past the ` +
+              `convergence bound of ${boundSec} s${held}`,
+          );
+        } else if (decided.notice === "recovered") {
+          console.info("[federation-api] journal lag back within the convergence bound");
+        }
+      } catch (err) {
+        console.error("[federation-api] journal lag check failed:", err);
+      } finally {
+        lagRunning = false;
+      }
+    };
+    lagTimer = setInterval(() => void checkLag(), LAG_CYCLE_MS);
+  }
 
   // Peer upkeep: what each pinned peer's actor document advertises, verified
   // against its pin and negotiated, at boot and hourly after. Its records are
@@ -332,6 +397,13 @@ async function boot() {
               now: () => new Date().toISOString(),
             },
           ).catch((err: unknown) => ({ error: String(err) }) as const);
+          if ("reset" in result && result.reset !== undefined) {
+            console.warn(
+              `[federation-api] pull of ${peer.instanceId}: the peer's journal started over ` +
+                `(${result.reset === "epoch" ? "a new epoch" : "the cursor is ahead of it"}); ` +
+                "reading it again from the start",
+            );
+          }
           if (result.error !== undefined) {
             console.warn(`[federation-api] pull of ${peer.instanceId}: ${result.error}`);
           }
@@ -356,6 +428,7 @@ async function boot() {
     if (capabilitiesTimer) clearInterval(capabilitiesTimer);
     if (registryTimer) clearTimeout(registryTimer);
     if (pullTimer) clearInterval(pullTimer);
+    if (lagTimer) clearInterval(lagTimer);
     clearInterval(pruneTimer);
     await app.close();
     await sql.end();

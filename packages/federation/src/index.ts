@@ -45,6 +45,22 @@ export {
   verifyContentDigest,
   verifyMessage,
 } from "./http-signature.js";
+export type {
+  FenceHolder,
+  JournalEpochResult,
+  JournalLag,
+  JournalLagWatch,
+  JournalRestartReason,
+} from "./journal.js";
+export {
+  advanceJournalSeenXid,
+  ensureJournalEpoch,
+  JOURNAL_EPOCH_ATTEMPTS,
+  JOURNAL_LAG_REWARN_MS,
+  journalLagNotice,
+  readFenceHolder,
+  readJournalLag,
+} from "./journal.js";
 export type { Endorser, InstanceKey, KeyEndorsement, KeyMaintenance } from "./keys.js";
 export {
   endorsementMessage,

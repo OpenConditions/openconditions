@@ -23,6 +23,7 @@ import {
   timestamp,
   unique,
   uniqueIndex,
+  uuid,
 } from "drizzle-orm/pg-core";
 import { bytea, conditionsSchema, geometry, geometryPoint, xid8 } from "./columns.js";
 
@@ -489,6 +490,30 @@ export const federationOutbox = conditionsSchema.table(
 );
 
 /**
+ * Which history the journal's entries belong to: at most one row. `txid` is a
+ * raw transaction id, so a cursor only means something within one database
+ * history. `epoch` names the current one; the federation service starts a new
+ * epoch at boot (emptying the journal and resetting the push cursors) when
+ * the row is missing (the operator's request after rolling the database
+ * back), when transaction ids went back (a logical restore) or when the
+ * Postgres timeline changed (point-in-time recovery, promotion). `seen_xid`
+ * is the highest transaction id the service has seen the database at;
+ * `timeline_id` the timeline it last ran on, null while it could not be read.
+ * Every page states the epoch, so a subscriber knows its cursor is void.
+ */
+export const federationJournal = conditionsSchema.table(
+  "federation_journal",
+  {
+    singleton: boolean("singleton").primaryKey().default(true),
+    epoch: uuid("epoch").notNull(),
+    startedAt: timestamp("started_at", { withTimezone: true }).notNull(),
+    seenXid: xid8("seen_xid").notNull(),
+    timelineId: integer("timeline_id"),
+  },
+  (t) => [check("federation_journal_single_row", sql`${t.singleton}`)],
+);
+
+/**
  * The erasure fact, keyed by `canonical_id` and the instance that erased it.
  * When a record is erased (tombstoned `rights_revoked`, here or by the peer
  * that owns it) its canonical id is recorded so no later delivery of the same
@@ -747,6 +772,14 @@ export const federationPeerCursor = conditionsSchema.table("federation_peer_curs
    */
   archiveBuiltAt: timestamp("archive_built_at", { withTimezone: true }),
   archiveLandedAt: timestamp("archive_landed_at", { withTimezone: true }),
+  /**
+   * The epoch of the peer's journal the cursor belongs to (opaque: whatever
+   * string the peer's pages name), and when the cursor was last reset because
+   * the peer's journal started over (a new epoch, or a cursor ahead of it). A
+   * second reset within the hour is refused rather than followed.
+   */
+  journalEpoch: text("journal_epoch"),
+  cursorResetAt: timestamp("cursor_reset_at", { withTimezone: true }),
 });
 
 /**
