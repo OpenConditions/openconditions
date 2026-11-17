@@ -48,7 +48,12 @@
  * due (`reconcile_due_since`), starting a running one over, and so does a page
  * that says the cursor is beyond the window, unless one is due already or the
  * last one finished within a day; it runs once the pull reached the live tail
- * (reconcile.ts).
+ * (reconcile.ts). A peer prunes its journal, so after an absence longer than
+ * it keeps entries no page says anything: nothing is left before the window
+ * to tell the cursor is beyond it. This instance therefore keeps when a peer
+ * last answered a pull (`updated_at` of its cursor), and the first page after
+ * {@link PULL_ABSENCE_RECONCILE_MS} without one makes a comparison due the
+ * same way.
  */
 import { ingestFederatedPage } from "@openconditions/contributions-api/federation/inbox";
 import {
@@ -107,6 +112,8 @@ export interface PullResult {
   cursor: string;
   /** The peer's history before this instance's window lives only in its archive. */
   beyondWindow?: true;
+  /** The peer had not answered a pull for longer than {@link PULL_ABSENCE_RECONCILE_MS}. */
+  longAbsence?: true;
   /** What the peer's archive landed, when the pull read it. */
   archive?: { accepted: number; stale: number; skipped: number };
   /**
@@ -141,6 +148,17 @@ export function filterQuery(filter: RecordFilter): URLSearchParams {
   return params;
 }
 
+/**
+ * How long a peer may go without answering a pull before the next page makes
+ * a comparison of this instance's copies due: the widest window a peer serves
+ * its journal for (30 days), which is shorter than any peer keeps entries
+ * (37 days at least), so no absence falls between the two.
+ */
+export const PULL_ABSENCE_RECONCILE_MS = 30 * 24 * 60 * 60 * 1000;
+
+/** How often the time a peer last answered a pull is written. */
+const PULL_ANSWERED_NOTE_MS = 60 * 60 * 1000;
+
 /** The least time between two resets of one peer's cursor that are followed. */
 export const CURSOR_RESET_MIN_INTERVAL_MS = 60 * 60 * 1000;
 
@@ -153,19 +171,38 @@ interface StoredCursor {
   journalEpoch: string | null;
   /** When the cursor was last reset because the peer's journal started over. */
   cursorResetAt: Date | null;
+  /** When the peer last answered a pull, to within the hour; null before the first. */
+  answeredAt: Date | null;
 }
 
 async function readCursor(sql: postgres.Sql, peerId: string): Promise<StoredCursor> {
   const [row] = await sql<
-    { cursor: string; journal_epoch: string | null; cursor_reset_at: Date | null }[]
+    {
+      cursor: string;
+      journal_epoch: string | null;
+      cursor_reset_at: Date | null;
+      updated_at: Date;
+    }[]
   >`
-    SELECT cursor, journal_epoch, cursor_reset_at
+    SELECT cursor, journal_epoch, cursor_reset_at, updated_at
       FROM conditions.federation_peer_cursor WHERE peer_instance_id = ${peerId}`;
   return {
     cursor: row?.cursor ?? "0.0",
     journalEpoch: row?.journal_epoch ?? null,
     cursorResetAt: row?.cursor_reset_at ?? null,
+    answeredAt: row?.updated_at ?? null,
   };
+}
+
+/**
+ * Notes that the peer answered a pull now, once the last note is older than
+ * {@link PULL_ANSWERED_NOTE_MS}: a pull every 30 seconds writes it once an hour.
+ */
+async function noteAnswered(sql: postgres.Sql, peerId: string, now: string): Promise<void> {
+  const stale = new Date(Date.parse(now) - PULL_ANSWERED_NOTE_MS).toISOString();
+  await sql`
+    UPDATE conditions.federation_peer_cursor SET updated_at = ${now}
+     WHERE peer_instance_id = ${peerId} AND updated_at <= ${stale}`;
 }
 
 /**
@@ -393,6 +430,7 @@ export async function pullPeer(
   // Lowered for the rest of the pull when a page arrives too large.
   let limit = PULL_PAGE_LIMIT;
   let catchingUp = result.cursor === "0.0";
+  let answered = false;
   const started = Date.parse(ctx.now());
   for (;;) {
     if (Date.parse(ctx.now()) - started >= (ctx.sliceMs ?? PULL_SLICE_MS)) {
@@ -513,6 +551,19 @@ export async function pullPeer(
     if (page.beyondWindow === true && result.beyondWindow === undefined) {
       result.beyondWindow = true;
       await markReconcileDue(sql, peer.instanceId, ctx.now());
+    }
+    if (!answered) {
+      // The first page of this pull the peer signed for this cursor.
+      answered = true;
+      if (
+        stored.answeredAt !== null &&
+        Date.parse(ctx.now()) - stored.answeredAt.getTime() >= PULL_ABSENCE_RECONCILE_MS
+      ) {
+        // Away longer than the peer keeps its journal: what it ended meanwhile is in no page.
+        result.longAbsence = true;
+        await markReconcileDue(sql, peer.instanceId, ctx.now());
+      }
+      await noteAnswered(sql, peer.instanceId, ctx.now());
     }
     // What the window no longer holds lands from the archive first; the
     // pages after it carry what changed since.
