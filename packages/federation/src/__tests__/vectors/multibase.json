@@ -1,0 +1,10 @@
+{
+  "description": "publicKeyMultibase: 'z' (base58btc) over the multicodec ed25519-pub prefix 0xed 0x01 and the 32-byte raw public key.",
+  "cases": [
+    {
+      "source": "RFC 9421 Appendix B.1.4 test-key-ed25519",
+      "publicKeyRawHex": "26b40b8f93fff3d897112f7ebc582b232dbd72517d082fe83cfb30ddce43d1bb",
+      "publicKeyMultibase": "z6Mkh4LmfP1ev9MNPGr7JbEbtD6BD4fsu1duEj83PMCs3xHG"
+    }
+  ]
+}

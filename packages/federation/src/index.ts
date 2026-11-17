@@ -23,7 +23,11 @@ export type {
 } from "./anomaly.js";
 export { detectAnomaly, peerWindowStats } from "./anomaly.js";
 export type { NegotiableCapabilities, NegotiatedCapabilities } from "./capabilities.js";
-export { CapabilityNegotiationError, negotiateCapabilities } from "./capabilities.js";
+export {
+  CapabilityNegotiationError,
+  FEDERATION_PROTOCOL_VERSION,
+  negotiateCapabilities,
+} from "./capabilities.js";
 export type {
   AnsweredRequest,
   FederationFailureReason,

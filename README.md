@@ -112,6 +112,8 @@ services/            deployable services (AGPL-3.0)
 
 The ingest service owns and migrates the `conditions` schema itself, idempotently, on boot.
 
+Instances federate their records with each other: the [federation onboarding guide](docs/federation-onboarding.md) covers running and peering an instance, and the [federation wire protocol](docs/federation-protocol.md) specifies what instances exchange.
+
 ## Quick start
 
 Requires Node 24+ and pnpm 11+ (and a reachable PostGIS).
