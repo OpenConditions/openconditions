@@ -495,11 +495,14 @@ export const federationOutbox = conditionsSchema.table(
  * history. `epoch` names the current one; the federation service starts a new
  * epoch at boot (emptying the journal and resetting the push cursors) when
  * the row is missing (the operator's request after rolling the database
- * back), when transaction ids went back (a logical restore) or when the
+ * back), when the database is another one than it was (a dump restored into
+ * a new database, a database re-created from a template, a move to another
+ * cluster), when transaction ids went back (a logical restore) or when the
  * Postgres timeline changed (point-in-time recovery, promotion). `seen_xid`
  * is the highest transaction id the service has seen the database at;
- * `timeline_id` the timeline it last ran on, null while it could not be read.
- * Every page states the epoch, so a subscriber knows its cursor is void.
+ * `timeline_id` the timeline it last ran on, `database_oid` the database's
+ * OID and `system_identifier` the cluster's, each null while it could not be
+ * read. Every page states the epoch, so a subscriber knows its cursor is void.
  */
 export const federationJournal = conditionsSchema.table(
   "federation_journal",
@@ -509,6 +512,8 @@ export const federationJournal = conditionsSchema.table(
     startedAt: timestamp("started_at", { withTimezone: true }).notNull(),
     seenXid: xid8("seen_xid").notNull(),
     timelineId: integer("timeline_id"),
+    databaseOid: bigint("database_oid", { mode: "number" }),
+    systemIdentifier: bigint("system_identifier", { mode: "bigint" }),
   },
   (t) => [check("federation_journal_single_row", sql`${t.singleton}`)],
 );

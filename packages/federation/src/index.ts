@@ -56,6 +56,7 @@ export {
 export type {
   FenceHolder,
   JournalEpochResult,
+  JournalIdentity,
   JournalLag,
   JournalLagWatch,
   JournalRestartReason,
