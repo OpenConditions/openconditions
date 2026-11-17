@@ -12,15 +12,7 @@
  * docs/federation-onboarding.md), not a code path here.
  */
 import { createHash } from "node:crypto";
-import {
-  copyFileSync,
-  existsSync,
-  mkdirSync,
-  readdirSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs";
+import { copyFileSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { canonicalize } from "@tufjs/canonical-json";
 import {
@@ -205,8 +197,13 @@ export async function signRegistry(options: SignRegistryOptions): Promise<Signed
   for (const signer of options.roles.root.signers) rootMetadata.sign(signer.sign);
   const rootPath = join(metadataDir, `${rootVersion}.root.json`);
   let rootBytes = metadataBytes(rootMetadata);
-  if (existsSync(rootPath)) {
-    const published = readFileSync(rootPath);
+  let published: Buffer | undefined;
+  try {
+    published = readFileSync(rootPath);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+  }
+  if (published !== undefined) {
     const signed = (JSON.parse(published.toString("utf8")) as { signed?: Record<string, unknown> })
       .signed;
     const wanted = rootMetadata.toJSON()["signed"] as Record<string, unknown>;
@@ -255,7 +252,9 @@ export async function signRegistry(options: SignRegistryOptions): Promise<Signed
   const timestampMetadata = new Metadata(timestamp);
   for (const signer of options.roles.timestamp.signers) timestampMetadata.sign(signer.sign);
 
-  writeFileSync(rootPath, rootBytes);
+  // Written only when this version was not published, and never over a file
+  // that appeared meanwhile.
+  if (published === undefined) writeFileSync(rootPath, rootBytes, { flag: "wx" });
   writeFileSync(join(metadataDir, "targets.json"), targetsBytes);
   writeFileSync(join(metadataDir, "snapshot.json"), snapshotBytes);
   writeFileSync(join(metadataDir, "timestamp.json"), metadataBytes(timestampMetadata));
