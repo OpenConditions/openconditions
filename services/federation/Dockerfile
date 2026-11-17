@@ -172,12 +172,15 @@ COPY --from=prod-deps /app/services/federation/node_modules ./services/federatio
 COPY --from=builder /app/services/federation/dist ./services/federation/dist
 COPY services/federation/package.json ./services/federation/
 
-# Run as a dedicated non-root user. The service only reads its own bundle and
-# talks to PostGIS and its peers over the network — it writes nothing to the
-# filesystem (its signing keys live in the database).
+# Run as a dedicated non-root user. Its signing keys live in the database; the
+# one place it writes is /data: the registry's verified metadata, and a peer's
+# archive files while they land (the documented compose file points
+# OPENCONDITIONS_FEDERATION_REGISTRY_CACHE and TMPDIR there). The directory is
+# the user's own, so a fresh named volume mounted over it takes that ownership.
 RUN addgroup --system --gid 1001 federation \
     && adduser --system --uid 1001 --ingroup federation federation \
-    && chown -R federation:federation /app
+    && mkdir -p /data \
+    && chown -R federation:federation /app /data
 USER federation:federation
 
 WORKDIR /app/services/federation
