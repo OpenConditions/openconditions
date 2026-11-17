@@ -159,15 +159,11 @@ async function boot() {
       seedRunning = false;
     }
   };
-  // One per-peer limiter for what peers ask of this instance: their pushes to
-  // the inbox and their journal reads. This instance's own pull is not metered.
-  const rateLimiter = createInMemoryRateLimiter();
-  const peers = await PeerBook.load(sql, settings.peers);
-  const app = await build({ sql, rateLimiter, peers, onSubscribed: () => void seed() });
-  if (settings.enabled) void seed();
 
   // Key upkeep: the instance key is rotated well before it expires, the new
-  // one endorsed by the old so peers follow it.
+  // one endorsed by the old so peers follow it. Once at boot, before the app
+  // is built (which makes sure a key exists and so finds it current), so a
+  // key created or rotated at boot is logged as on the timer.
   let keyTimer: NodeJS.Timeout | undefined;
   if (settings.enabled) {
     const maintainKey = async () => {
@@ -190,8 +186,16 @@ async function boot() {
         console.error("[federation-api] instance key upkeep failed:", err);
       }
     };
+    await maintainKey();
     keyTimer = setInterval(() => void maintainKey(), KEY_CYCLE_MS);
   }
+
+  // One per-peer limiter for what peers ask of this instance: their pushes to
+  // the inbox and their journal reads. This instance's own pull is not metered.
+  const rateLimiter = createInMemoryRateLimiter();
+  const peers = await PeerBook.load(sql, settings.peers);
+  const app = await build({ sql, rateLimiter, peers, onSubscribed: () => void seed() });
+  if (settings.enabled) void seed();
 
   // Webhook push cron: a latency optimization over pull. Egress is SSRF-guarded
   // (peerFetch), and a run only advances a subscription's cursor on a 2xx —
@@ -243,7 +247,8 @@ async function boot() {
   }
 
   // Retention cron: trims the append-only outbox journal on the tier-bounded time
-  // floor (never a subscriber cursor). Single-flight, and it runs regardless of
+  // floor (never a subscriber cursor), at boot and daily, so a service that
+  // restarts more often than that still prunes. Single-flight, and it runs regardless of
   // push settings — the journal grows on every observation mutation. The default
   // retention keeps the widest serve window plus a safety margin; an operator
   // running the static archive can later thread its high-water mark here.
@@ -266,6 +271,7 @@ async function boot() {
       pruneRunning = false;
     }
   };
+  void runPrune();
   const pruneTimer = setInterval(() => void runPrune(), PRUNE_CYCLE_MS);
 
   // Lease expiry: a subscription its peer stopped renewing is deleted, at boot

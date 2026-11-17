@@ -194,7 +194,7 @@ The reference puller follows at most one such restart per pull and none within a
 
 ### Retention
 
-Entries older than 37 days (the widest live window, 30 days, plus 7 days) are deleted daily. History before a peer's window is served by the static archive (§6).
+Entries older than 37 days (the widest live window, 30 days, plus 7 days) are deleted daily, and at every start of the reference service. History before a peer's window is served by the static archive (§6).
 
 ## 6. Reading the journal
 
