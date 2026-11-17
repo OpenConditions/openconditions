@@ -9,7 +9,6 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { runMigrations } from "@openconditions/core/server";
 import {
-  createInMemoryRateLimiter,
   InMemoryNonceStore,
   type InstanceKey,
   loadActiveKeys,
@@ -286,7 +285,6 @@ const pull = (archiveFetch: typeof fetch) =>
       fetchImpl,
       archiveFetch,
       nonceStore: new InMemoryNonceStore(),
-      rateLimiter: createInMemoryRateLimiter(),
       now: () => new Date().toISOString(),
     },
   );

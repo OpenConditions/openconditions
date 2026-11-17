@@ -1,13 +1,19 @@
 /**
- * Per-peer, per-kind federation rate limiting — a TRANSPORT control.
+ * Per-peer, per-kind federation rate limiting — a TRANSPORT control over what
+ * peers ask of this instance.
  *
- * A pinned peer gets a tier-aware budget for how many events it may push to the
- * inbox and how many journal reads (backfill and outbox, under the "backfill"
- * kind) it may make per minute. Overrun is refused
- * with a 429 + Retry-After; SUSTAINED overrun (an over-limit rejection in
- * {@link RATE_DOWNGRADE_WINDOWS} consecutive windows) triggers a TEMPORARY tier
- * downgrade: the peer's effective tier for rate/window purposes drops by one for
- * a cooldown, then restores.
+ * A pinned peer gets a tier-aware budget for how many entries it may push to
+ * this instance's inbox and how many journal reads (backfill and outbox, under
+ * the "backfill" kind) it may make here per minute. This instance's own pull
+ * of a peer is never metered here: it fetches one page, lands it, then asks
+ * for the next, and the peer meters those reads on its side. Overrun is
+ * refused with a 429 + Retry-After, which tells the peer to wait until the
+ * window ends. A peer that keeps asking in that window did not wait: a window
+ * with a second refusal counts toward the downgrade, and such windows in
+ * {@link RATE_DOWNGRADE_WINDOWS} consecutive windows trigger a TEMPORARY tier
+ * downgrade: the peer's effective tier for rate/window purposes drops by one
+ * for a cooldown, renewed only by another such window, then restores. A peer
+ * that always waits is refused at most once a window and never downgraded.
  *
  * BINDING (ADR §8): PEER HEALTH IS SEPARATE FROM EVENT TRUTH. This limiter and
  * the downgrade it applies affect TRANSPORT ONLY — the rate at which a peer may
@@ -97,12 +103,14 @@ export interface RateLimiter {
 interface WindowState {
   windowStart: number;
   count: number;
+  /** Over-limit rejections in this window. */
+  refusals: number;
 }
 
 interface DowngradeState {
-  /** The window index of the most recent over-limit rejection. */
-  lastOverWindow: number;
-  /** Consecutive over-limit windows counted so far. */
+  /** When the most recent window with a repeated rejection started (epoch ms). */
+  lastOverStart: number;
+  /** Consecutive windows with a repeated rejection counted so far. */
   streak: number;
   /** Epoch-ms until which the peer's tier is downgraded (0 = none active). */
   effectiveTierUntil: number;
@@ -138,8 +146,9 @@ export function createInMemoryRateLimiter(options: RateLimiterOptions = {}): InM
   let lastSweep: number | undefined;
 
   // Forgets the windows that ended and the downgrades that lapsed, at most
-  // once per window. A downgrade entry is kept while it holds and while its
-  // streak can still go on (an overrun in this window or the one before), so
+  // once per window. A window keeps its own refusal count until it ends. A
+  // downgrade entry is kept while it holds and while its streak can still go
+  // on (a window starting now would follow the last counted one), so
   // forgetting it never shortens a downgrade or restarts a streak.
   function sweep(now: number): void {
     if (lastSweep !== undefined && now - lastSweep < RATE_WINDOW_MS) return;
@@ -147,9 +156,8 @@ export function createInMemoryRateLimiter(options: RateLimiterOptions = {}): InM
     for (const [key, state] of windows) {
       if (now - state.windowStart >= RATE_WINDOW_MS) windows.delete(key);
     }
-    const windowIndex = Math.floor(now / RATE_WINDOW_MS);
     for (const [peerId, state] of downgrades) {
-      if (now >= state.effectiveTierUntil && state.lastOverWindow < windowIndex - 1) {
+      if (now >= state.effectiveTierUntil && now - state.lastOverStart >= 2 * RATE_WINDOW_MS) {
         downgrades.delete(peerId);
       }
     }
@@ -164,25 +172,31 @@ export function createInMemoryRateLimiter(options: RateLimiterOptions = {}): InM
   }
 
   // Records a genuine sustained-RATE overrun (a refusal in a window that ALREADY
-  // had activity). Consecutive over-limit windows accumulate a streak; a clean
-  // window between overruns restarts it (the window-index gap). Only a
-  // sustained-rate overrun ever reaches here — an oversized single page never
-  // does — so a downgrade is never armed or re-armed by page size alone.
-  function noteOverLimit(peerId: string, now: number): void {
-    const windowIndex = Math.floor(now / RATE_WINDOW_MS);
+  // had activity). The first refusal of a window only tells the peer to wait
+  // for the window's end (its Retry-After); a window counts from its second
+  // refusal on, as the peer did not wait. A counted window that starts within
+  // one window's length of the last one's end continues the streak; a window
+  // between them, clean or with a single refusal, or a quiet minute, restarts
+  // it. Only a sustained-rate overrun ever reaches here — an oversized single
+  // page never does — so a downgrade is never armed or re-armed by page size
+  // alone.
+  function noteOverLimit(peerId: string, window: WindowState, now: number): void {
+    window.refusals += 1;
+    if (window.refusals < 2) return;
     const state = downgrades.get(peerId) ?? {
-      lastOverWindow: -Infinity,
+      lastOverStart: -Infinity,
       streak: 0,
       effectiveTierUntil: 0,
     };
-    if (windowIndex === state.lastOverWindow) {
-      // Another rejection in a window already counted — no new window.
-    } else if (windowIndex === state.lastOverWindow + 1) {
-      state.streak += 1;
-    } else {
-      state.streak = 1;
+    if (window.refusals === 2) {
+      // The peer asked again in the window it was told to wait out. A window
+      // of the other kind that overlaps the last counted one adds nothing.
+      const gap = window.windowStart - state.lastOverStart;
+      if (gap > 0) {
+        state.streak = gap < 2 * RATE_WINDOW_MS ? state.streak + 1 : 1;
+        state.lastOverStart = window.windowStart;
+      }
     }
-    state.lastOverWindow = windowIndex;
     if (state.streak >= downgradeWindows) {
       state.effectiveTierUntil = now + cooldownMs;
     }
@@ -213,7 +227,7 @@ export function createInMemoryRateLimiter(options: RateLimiterOptions = {}): InM
       const refusedForSize = priorCount === 0 && count > maxPageSize;
 
       if (refusedForRate || refusedForSize) {
-        if (refusedForRate) noteOverLimit(peerId, now);
+        if (refusedForRate) noteOverLimit(peerId, current!, now);
         const retryAfterSec = Math.max(1, Math.ceil((windowStart + RATE_WINDOW_MS - now) / 1000));
         const tierAfter = effectiveTier(peerId, registeredTier, now);
         return {
@@ -224,7 +238,11 @@ export function createInMemoryRateLimiter(options: RateLimiterOptions = {}): InM
         };
       }
 
-      windows.set(key, { windowStart, count: priorCount + count });
+      windows.set(key, {
+        windowStart,
+        count: priorCount + count,
+        refusals: fresh ? 0 : current!.refusals,
+      });
       const tierAfter = effectiveTier(peerId, registeredTier, now);
       return { ok: true, effectiveTier: tierAfter, downgraded: tierAfter < registeredTier };
     },

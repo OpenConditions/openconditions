@@ -56,6 +56,7 @@ let appC: FastifyInstance;
 let settingsA: FederationSettings;
 let settingsB: FederationSettings;
 let settingsC: FederationSettings;
+let envC: Record<string, string>;
 let peersA: PeerBook;
 let peersB: PeerBook;
 let peersC: PeerBook;
@@ -126,7 +127,10 @@ function network(apps: Record<string, () => FastifyInstance>): typeof fetch {
   }) as typeof fetch;
 }
 
-const fetchImpl = network({ [A]: () => appA, [B]: () => appB, [C]: () => appC });
+/** C's app as its inbox answers a push, when a test gives it a limiter of its own. */
+let inboxC: FastifyInstance | undefined;
+
+const fetchImpl = network({ [A]: () => appA, [B]: () => appB, [C]: () => inboxC ?? appC });
 
 /** One of A's own feed situations, as its poll drafts it: an incident is a priority entry. */
 function situationDraft(local: string, kind: "incident" | "roadworks" = "incident") {
@@ -204,7 +208,7 @@ beforeAll(async () => {
     OPENCONDITIONS_FEDERATION_ACTOR: JSON.stringify(actor(A)),
     OPENCONDITIONS_FEDERATION_PEERS: JSON.stringify([peer(B, keyB), peer(C, keyC)]),
   };
-  const envC = {
+  envC = {
     OPENCONDITIONS_FEDERATION_ENABLED: "true",
     OPENCONDITIONS_INSTANCE_ID: C,
     OPENCONDITIONS_FEDERATION_ACTOR: JSON.stringify(actor(C)),
@@ -367,7 +371,6 @@ describe("a peer that pulls", () => {
     signingKey: keyC,
     fetchImpl,
     nonceStore: new InMemoryNonceStore(),
-    rateLimiter: createInMemoryRateLimiter(),
     now: () => new Date().toISOString(),
   });
   const pullA = () =>
@@ -528,6 +531,65 @@ describe("a peer that pulls", () => {
     expect(replayed).toMatchObject({ tombstoned: 0, skipped: 0 });
     expect(replayed.stale).toBeGreaterThanOrEqual(2);
     expect(await atC()).toEqual({ revision: 3, tombstone_reason: null });
+  }, 60_000);
+});
+
+describe("a peer that pulls a backlog while it is pushed to", () => {
+  it("accepts the push: its own pull draws nothing on the budget its inbox meters", async () => {
+    // One page a window and no more: what a pull would use up, were it metered there.
+    inboxC = await build({
+      sql: sqlC,
+      env: envC,
+      logger: false,
+      peers: peersC,
+      rateLimiter: createInMemoryRateLimiter({
+        policyForTier: () => ({ inboxPerMin: 1, backfillPerMin: 1 }),
+      }),
+    });
+    try {
+      await writeSnapshot(
+        sqlA,
+        SOURCE,
+        {
+          situations: Array.from({ length: 6 }, (_, i) => situationDraft(`backlog-${i}`)),
+        },
+        { registry, instanceId: A, now: new Date().toISOString(), complete: false },
+      );
+      const pulled = await pullPeer(
+        sqlC,
+        { ...settingsC.peers[0]!, pull: { filter: PULL_FILTER } },
+        {
+          registry,
+          localInstanceId: C,
+          signingKey: keyC,
+          fetchImpl,
+          nonceStore: new InMemoryNonceStore(),
+          now: () => new Date().toISOString(),
+        },
+      );
+      expect(pulled.error).toBeUndefined();
+      expect(pulled.accepted).toBe(6);
+
+      await writeSnapshot(
+        sqlA,
+        SOURCE,
+        { situations: [situationDraft("pushed-meanwhile")] },
+        { registry, instanceId: A, now: new Date().toISOString(), complete: false },
+      );
+      const pushed = await runWebhookDeliveryCycle(sqlA, {
+        signingKey: keyA,
+        fetchImpl,
+        partOf: `https://${A}/peer/outbox`,
+      });
+      expect(pushed).toMatchObject({ deferred: 0, failed: 0 });
+      expect(pushed.delivered).toBeGreaterThanOrEqual(1);
+      const [held] = await sqlC<{ id: string }[]>`
+        SELECT id FROM conditions.situation WHERE id = ${`oc:situation:${SOURCE}:pushed-meanwhile`}`;
+      expect(held).toBeDefined();
+    } finally {
+      await inboxC.close();
+      inboxC = undefined;
+    }
   }, 60_000);
 });
 
