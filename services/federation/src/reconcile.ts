@@ -190,6 +190,24 @@ async function storeProgress(
   return updated.count > 0;
 }
 
+/**
+ * Makes a comparison of the copies of `peerId`'s records due from the start,
+ * as the operator asks for one after repairing data by hand; a running one
+ * starts over. False when this instance never pulled the peer, so there is
+ * no cursor to note it on.
+ */
+export async function requestReconcile(
+  sql: postgres.Sql,
+  peerId: string,
+  now: string,
+): Promise<boolean> {
+  const updated = await sql`
+    UPDATE conditions.federation_peer_cursor
+       SET reconcile_due_since = ${now}, reconcile_class = NULL, reconcile_after = NULL
+     WHERE peer_instance_id = ${peerId}`;
+  return updated.count > 0;
+}
+
 /** Notes the comparison due since `dueSince` finished, unless another became due meanwhile. */
 async function storeFinished(
   sql: postgres.Sql,

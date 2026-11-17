@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "dev": "tsx watch src/main.ts",
-    "start": "node dist/main.js"
+    "start": "node dist/main.js",
+    "federation-admin": "tsx src/ops/admin.ts"
   },
   "dependencies": {
     "@openconditions/contributions-api": "workspace:*",

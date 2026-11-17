@@ -10,6 +10,10 @@
       "types": "./dist/federation/inbox.d.ts",
       "import": "./dist/federation/inbox.js"
     },
+    "./federation/tombstone": {
+      "types": "./dist/federation/tombstone.d.ts",
+      "import": "./dist/federation/tombstone.js"
+    },
     "./contrib": {
       "types": "./dist/contrib.d.ts",
       "import": "./dist/contrib.js"
