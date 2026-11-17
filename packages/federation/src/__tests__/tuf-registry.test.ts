@@ -1,4 +1,4 @@
-import { copyFileSync, readFileSync, writeFileSync } from "node:fs";
+import { copyFileSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { Metadata, MetadataKind } from "@tufjs/models";
 import { describe, expect, it } from "vitest";
@@ -65,6 +65,54 @@ describe("signRegistry", () => {
         readFileSync(join(b.metadataDir, file), "utf8"),
       );
     }
+  });
+
+  it("keeps a published root byte for byte across releases, and refuses to rewrite it", async () => {
+    const registryDir = writeRegistryDir([sampleEntry("openmapx-de")]);
+    const keys = await makeRepoKeys();
+    const first = await buildRepo({ registryDir, keys, now: "2026-07-01T00:00:00.000Z" });
+    const root = readFileSync(join(first.metadataDir, "1.root.json"));
+    // A later release signs new targets, snapshot and timestamp, not the root.
+    const second = await buildRepo({
+      registryDir,
+      repoDir: first.repoDir,
+      keys,
+      version: 2,
+      now: "2026-09-01T00:00:00.000Z",
+    });
+    expect(readFileSync(join(first.metadataDir, "1.root.json")).equals(root)).toBe(true);
+    expect(second.rootBytes.equals(root)).toBe(true);
+    // Other keys, or another expiry, under the same root version reach no client that holds it.
+    await expect(
+      buildRepo({ registryDir, repoDir: first.repoDir, keys: await makeRepoKeys(), version: 3 }),
+    ).rejects.toThrow(/root version 1 is already published/);
+    await expect(
+      buildRepo({
+        registryDir,
+        repoDir: first.repoDir,
+        keys,
+        version: 3,
+        expires: { root: "2030-01-01T00:00:00.000Z" },
+      }),
+    ).rejects.toThrow(/root version 1 is already published/);
+    expect(readFileSync(join(first.metadataDir, "1.root.json")).equals(root)).toBe(true);
+  });
+
+  it("removes the entry file of an instance that is no longer listed", async () => {
+    const keys = await makeRepoKeys();
+    const first = await buildRepo({
+      registryDir: writeRegistryDir([sampleEntry("openmapx-de"), sampleEntry("openmapx-nl")]),
+      keys,
+    });
+    expect(first.targetFiles).toHaveLength(2);
+    const second = await buildRepo({
+      registryDir: writeRegistryDir([sampleEntry("openmapx-de")]),
+      repoDir: first.repoDir,
+      keys,
+      version: 2,
+    });
+    expect(readdirSync(second.targetsDir).sort()).toEqual(second.targetFiles);
+    expect(second.targetFiles).toHaveLength(1);
   });
 
   it("refuses to produce anything but a marked TEST root", async () => {

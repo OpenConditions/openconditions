@@ -48,6 +48,8 @@ export interface RegistrySyncResult {
    * 8601), as tuf-js verified it in this sync.
    */
   targetsExpires: string;
+  /** When the registry's trusted root expires (ISO 8601), when the verified metadata states it. */
+  rootExpires?: string;
 }
 
 function peersEqual(a: PeerRecord, b: PeerRecord): boolean {
@@ -70,7 +72,11 @@ export async function syncRegistry(
   trustedRoot: Buffer | Uint8Array | string,
   options: RegistrySyncOptions,
 ): Promise<RegistrySyncResult> {
-  const { entries, targetsExpires } = await verifyRegistry(source, trustedRoot, options);
+  const { entries, targetsExpires, rootExpires } = await verifyRegistry(
+    source,
+    trustedRoot,
+    options,
+  );
   const peers = registryToPeerRecords(entries);
   const previous = new Map(
     (options.previousPeers ?? []).map((peer) => [peer.instanceId, peer] as const),
@@ -97,6 +103,7 @@ export async function syncRegistry(
     changed,
     unchanged,
     targetsExpires,
+    ...(rootExpires !== undefined ? { rootExpires } : {}),
   };
 }
 

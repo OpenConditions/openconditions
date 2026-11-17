@@ -180,11 +180,16 @@ export interface VerifiedRegistry {
    * expires (ISO 8601): past it TUF no longer trusts the list.
    */
   targetsExpires: string;
+  /** When the trusted root expires (ISO 8601): past it no sync verifies until a newer root is published. */
+  rootExpires?: string;
 }
 
 /** The part of tuf-js' updater that holds the metadata `refresh` verified; it has no accessor. */
 interface TrustedSetHolder {
-  trustedSet?: { targets?: { signed?: { expires?: unknown } } };
+  trustedSet?: {
+    targets?: { signed?: { expires?: unknown } };
+    root?: { signed?: { expires?: unknown } };
+  };
 }
 
 /**
@@ -259,6 +264,7 @@ export async function verifyRegistry(
   await updater.refresh();
   const targetsExpires = (updater as unknown as TrustedSetHolder).trustedSet?.targets?.signed
     ?.expires;
+  const rootExpires = (updater as unknown as TrustedSetHolder).trustedSet?.root?.signed?.expires;
   if (typeof targetsExpires !== "string" || Number.isNaN(Date.parse(targetsExpires))) {
     throw new Error("the verified targets metadata states no expiry");
   }
@@ -291,5 +297,8 @@ export async function verifyRegistry(
   return {
     entries: entries.sort((a, b) => a.id.localeCompare(b.id)),
     targetsExpires: new Date(targetsExpires).toISOString(),
+    ...(typeof rootExpires === "string" && !Number.isNaN(Date.parse(rootExpires))
+      ? { rootExpires: new Date(rootExpires).toISOString() }
+      : {}),
   };
 }

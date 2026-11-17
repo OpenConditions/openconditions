@@ -17,6 +17,13 @@
  * trusted beyond what TUF would allow, and a replaced root drops what the old
  * one vouched for. Once a sync succeeded in this process the file is only
  * written, never read.
+ *
+ * The same bound holds while the process runs: when syncs keep failing past
+ * the expiry of the targets metadata the known peers came from, those peers
+ * are dropped ({@link RegistryDiscovery.expire}), so whether a blocked or
+ * frozen registry's last list is still trusted does not depend on whether
+ * the service happened to restart. Peers the operator configured are not the
+ * registry's and stay.
  */
 import { createHash } from "node:crypto";
 import { readFile, rename, writeFile } from "node:fs/promises";
@@ -39,6 +46,8 @@ export interface RegistrySyncChanges {
   changed: string[];
   /** Why the peers could not be stored for the next boot; absent when they were. */
   storeError?: string;
+  /** When the registry's trusted root expires, when its metadata states it. */
+  rootExpires?: string;
 }
 
 /** What reading back the stored peers came to. */
@@ -79,6 +88,8 @@ export class RegistryDiscovery {
   readonly #rootSha256: string;
   /** The registry's peers as the last verified sync listed them, or as stored after one. */
   #last: PeerRecord[] = [];
+  /** When the targets metadata `#last` came from expires; null while no peers are held. */
+  #validUntil: string | null = null;
   #synced = false;
   #restoreTried = false;
 
@@ -119,12 +130,14 @@ export class RegistryDiscovery {
     const peers = result.peers.filter((peer) => notSelf(peer.instanceId));
     this.#peers.discover(peers, this.#self);
     this.#last = peers;
+    this.#validUntil = result.targetsExpires;
     this.#synced = true;
     const changes: RegistrySyncChanges = {
       syncedAt: result.syncedAt,
       added: result.added.filter(notSelf),
       removed: result.removed.filter(notSelf),
       changed: result.changed.filter(notSelf),
+      ...(result.rootExpires !== undefined ? { rootExpires: result.rootExpires } : {}),
     };
     try {
       await this.#store({
@@ -169,7 +182,26 @@ export class RegistryDiscovery {
     const peers = stored.peers.filter((peer) => peer.instanceId !== this.#self);
     this.#peers.discover(peers, this.#self);
     this.#last = peers;
+    this.#validUntil = stored.targetsExpires;
     return { status: "restored", peers: peers.length, syncedAt: stored.syncedAt, file };
+  }
+
+  /**
+   * Drops the registry's peers once `now` is at or past the expiry of the
+   * targets metadata they came from: called when a sync failed, so peers a
+   * registry can no longer vouch for do not stay trusted for as long as it
+   * cannot be reached. Returns how many were dropped and the expiry, or
+   * undefined when they are still within it or none is held.
+   */
+  expire(now: string): { peers: number; expires: string } | undefined {
+    if (this.#validUntil === null || Date.parse(now) < Date.parse(this.#validUntil)) {
+      return undefined;
+    }
+    const dropped = { peers: this.#last.length, expires: this.#validUntil };
+    this.#peers.discover([], this.#self);
+    this.#last = [];
+    this.#validUntil = null;
+    return dropped.peers > 0 ? dropped : undefined;
   }
 
   /** Writes `stored` to a temporary file and renames it over the last, so a reader never sees half. */

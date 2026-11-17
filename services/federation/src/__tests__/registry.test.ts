@@ -176,6 +176,34 @@ describe("the registry discovery", () => {
     expect(await restoreAt(NOW)).toMatchObject({ outcome: { status: "restored" } });
   });
 
+  it("drops the registry's peers in a running process once their targets metadata expired", async () => {
+    const { settings } = await registryOf(["a.example.org", SELF]);
+    const book = new PeerBook([]);
+    const discovery = new RegistryDiscovery(book, settings, SELF, noFetch);
+    await discovery.sync(NOW);
+    const { targetsExpires } = JSON.parse(
+      readFileSync(join(settings.cacheDir, VERIFIED_PEERS_FILE), "utf8"),
+    ) as StoredFile;
+    const before = new Date(Date.parse(targetsExpires) - 1000).toISOString();
+    // Within the expiry a failed sync leaves them.
+    expect(discovery.expire(before)).toBeUndefined();
+    expect(book.all().map((peer) => peer.instanceId)).toEqual(["a.example.org"]);
+    // At it they go, once.
+    expect(discovery.expire(targetsExpires)).toEqual({ peers: 1, expires: targetsExpires });
+    expect(book.all()).toEqual([]);
+    expect(discovery.expire(targetsExpires)).toBeUndefined();
+    // A sync that verifies again brings them back.
+    expect(await discovery.sync(NOW)).toMatchObject({ added: ["a.example.org"] });
+    expect(book.all().map((peer) => peer.instanceId)).toEqual(["a.example.org"]);
+  });
+
+  it("reports when the registry's trusted root expires", async () => {
+    const { settings } = await registryOf(["a.example.org"]);
+    const synced = await new RegistryDiscovery(new PeerBook([]), settings, SELF, noFetch).sync(NOW);
+    const root = JSON.parse(settings.root) as { signed: { expires: string } };
+    expect(synced.rootExpires).toBe(new Date(root.signed.expires).toISOString());
+  });
+
   it("starts without registry peers when nothing is stored, or what is stored does not parse", async () => {
     const { settings } = await registryOf(["a.example.org"]);
     const book = new PeerBook([]);
