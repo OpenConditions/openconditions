@@ -222,20 +222,22 @@ A malformed parameter, or one not in this table, is answered `400` with `{ "erro
 
 ### The page
 
-| Field                | Meaning                                                                                                                              |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `type`               | `"OrderedCollectionPage"`                                                                                                            |
-| `partOf`             | `<baseUrl>/peer/outbox` or `<baseUrl>/peer/backfill`                                                                                 |
-| `highWaterMark`      | a cursor (§5)                                                                                                                        |
-| `epoch`              | the journal's epoch (§5)                                                                                                             |
-| `orderedItems`       | the entries the filter kept, in cursor order                                                                                         |
-| `next`               | present when the page read `limit` entries: `<partOf>?after=<highWaterMark>` followed by the request's filter and `limit` parameters |
-| `cursorAhead`        | `true` when the requested cursor is ahead of the journal (§5)                                                                        |
-| `beyondWindow`       | `true` when entries after the cursor lie before the requester's window                                                               |
-| `archive`            | with `beyondWindow`, when the publisher has one: the static archive (below)                                                          |
-| `priorityRestricted` | only on pushed pages (§8)                                                                                                            |
+| Field                | Meaning                                                                                                                                                          |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `type`               | `"OrderedCollectionPage"`                                                                                                                                        |
+| `partOf`             | `<baseUrl>/peer/outbox` or `<baseUrl>/peer/backfill`                                                                                                             |
+| `highWaterMark`      | a cursor (§5)                                                                                                                                                    |
+| `epoch`              | the journal's epoch (§5)                                                                                                                                         |
+| `orderedItems`       | the entries the filter kept, in cursor order                                                                                                                     |
+| `next`               | present when the page read `limit` entries or ended early for its size: `<partOf>?after=<highWaterMark>` followed by the request's filter and `limit` parameters |
+| `cursorAhead`        | `true` when the requested cursor is ahead of the journal (§5)                                                                                                    |
+| `beyondWindow`       | `true` when entries after the cursor lie before the requester's window                                                                                           |
+| `archive`            | with `beyondWindow`, when the publisher has one: the static archive (below)                                                                                      |
+| `priorityRestricted` | only on pushed pages (§8)                                                                                                                                        |
 
 `archive` is `{ "builtAt": <ISO 8601>, "files": { "feature", "situation", "offer", "observation": { "url", "sha256", "bytes" } } }`: the latest nightly GeoParquet file of each class, its SHA-256 (64 lowercase hex digits) and size. The files may be served from anywhere; a receiver MUST check each against the hash and size the signed page states before landing it, and lands them in that class order before the page. When an archive exists, the window reaches back to when its night's build began, but at most 36 hours before the tier's floor, so nothing falls between the archive and the live journal. See [archive.md](./archive.md).
+
+A page stays within what a receiver accepts. Its entries take at most 900,000 bytes together, each entry counted as the UTF-8 length of its JSON, which leaves room for the rest of the page under the 1 MiB (1,048,576 bytes) a receiver accepts. When the next entry the filter keeps would take the page past that, the page ends before it: its `highWaterMark` is the cursor of the last entry before it and it carries `next`, so the following request continues with that entry. An entry larger than 900,000 bytes on its own is not federated: it is left out of every page, the `highWaterMark` moves past it as past an entry the filter leaves out, and the reference publisher logs a warning naming the record.
 
 The ETag of an outbox page is `"<highWaterMark>-<hash>"`, the hash covering the epoch, the requested cursor, the limit, the filter, the requester's tier and the archive's `builtAt`. A request whose `If-None-Match` equals it is answered `304` without a body, signed and covering `etag`.
 
@@ -268,7 +270,7 @@ A record is admitted only if its `provenance.instanceId` is the peer it came fro
 
 Landing: a change no newer than the copy held lands as `stale` and changes nothing, so a page that arrives by push and by pull lands once. A record held under the same id from another instance is not overwritten. A delete applies only to a copy the peer owns, and is `stale` when the copy changed to a later revision since. An erasure (`rights_revoked`) ends every revision, and the receiver refuses further deliveries of that record (by `canonicalId`) from that peer for 30 days. A local failure rejects the whole page, so the publisher or puller retries it.
 
-The reference puller also requires of each page that it carries at most 100 entries and 1 MiB, arrives within 60 seconds, carries a valid `highWaterMark` not before the cursor asked for, and that every entry lies after that cursor and at or before the `highWaterMark`; it advances its cursor to the `highWaterMark` only once the page landed, reads at most 20 pages per pull, and pulls every 30 seconds.
+The reference puller also requires of each page that it carries at most the `limit` it asked for (100) and 1 MiB, arrives within 60 seconds, carries a valid `highWaterMark` not before the cursor asked for, and that every entry lies after that cursor and at or before the `highWaterMark`; it advances its cursor to the `highWaterMark` only once the page landed, reads at most 20 pages per pull, and pulls every 30 seconds. When a page is larger than 1 MiB it stops reading it and asks for the same cursor again with a quarter of the `limit` (at least 1), keeping the smaller `limit` for the rest of that pull; a page still too large at a `limit` of 1 is refused, as an entry larger than the receiver accepts, and counted against the peer's health. The next pull starts at the full `limit` again.
 
 ## 7. Subscriptions
 
@@ -304,7 +306,7 @@ Leases: a subscription lasts 30 days (`expiresAt`) and every accepted `PATCH` re
 
 ### Webhooks
 
-For each active `webhook` subscription the publisher reads a page after the subscription's cursor (at most 100 entries in the reference implementation, every 5 seconds), within the subscriber's tier window, and `POST`s it, signed, to the `inboxUrl` as `application/json`. The page is the outbox page (§6) with `type`, `partOf` (the publisher's `<baseUrl>/peer/outbox`), `highWaterMark`, `epoch` and `orderedItems`, plus `priorityRestricted: true` when the subscription is `priorityOnly`. A `priorityOnly` subscription is pushed only priority entries (a situation that closes a road or all its lanes, or an incident) and every delete; its cursor moves over that subsequence only, so the push is not complete, and a subscriber that wants every entry pulls as well. A page with no entries is not sent; the cursor still moves over what the filter left out.
+For each active `webhook` subscription the publisher reads a page after the subscription's cursor (at most 100 entries in the reference implementation, every 5 seconds), within the subscriber's tier window, and `POST`s it, signed, to the `inboxUrl` as `application/json`. The page is the outbox page (§6) with `type`, `partOf` (the publisher's `<baseUrl>/peer/outbox`), `highWaterMark`, `epoch` and `orderedItems`, plus `priorityRestricted: true` when the subscription is `priorityOnly`. It keeps to the outbox page's size, so a long run of large entries goes out over several pushes, the cursor moving page by page. A `priorityOnly` subscription is pushed only priority entries (a situation that closes a road or all its lanes, or an incident) and every delete; its cursor moves over that subsequence only, so the push is not complete, and a subscriber that wants every entry pulls as well. A page with no entries is not sent; the cursor still moves over what the filter left out.
 
 | Inbox answer                       | Publisher                                                                                                                                                          |
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -353,8 +355,9 @@ with `event: liveness` for a liveness entry. The stream applies the subscription
 | Limit                                  | Value                                                |
 | -------------------------------------- | ---------------------------------------------------- |
 | Page size (`limit`)                    | default 100, at most 500                             |
+| Entries of one page                    | 900,000 bytes together; a larger entry is not served |
 | Request body (inbox, subscriptions)    | 1 MiB (the server answers `413` above)               |
-| Page a puller accepts                  | 100 entries, 1 MiB, 60 seconds                       |
+| Page a puller accepts                  | the `limit` asked for, 1 MiB, 60 seconds             |
 | Signature lifetime, skew, nonce memory | 60 s, ±30 s, 90 s                                    |
 | Epoch length                           | 1 to 64 characters                                   |
 | Subscription lease, renewal            | 30 days, renewed by the subscriber with 15 days left |

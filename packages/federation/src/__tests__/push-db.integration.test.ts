@@ -3,7 +3,12 @@ import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { InMemoryNonceStore, verifyMessage } from "../http-signature.js";
 import { type InstanceKey, loadActiveKeys, maintainInstanceKey } from "../keys.js";
-import { encodeOutboxCursor, type OutboxCursor, readOutbox } from "../outbox.js";
+import {
+  encodeOutboxCursor,
+  OUTBOX_PAGE_MAX_ENTRY_BYTES,
+  type OutboxCursor,
+  readOutbox,
+} from "../outbox.js";
 import { blockPeer, unblockPeer } from "../peer-blocklist.js";
 import { deliverWebhook, PUSH_FAILURE_THRESHOLD, runWebhookDeliveryCycle } from "../push.js";
 import type { OutboxEntry, RecordOutboxEntry } from "../record-filter.js";
@@ -687,6 +692,50 @@ describe("runWebhookDeliveryCycle — who is pushed what", () => {
     expect(await cycle(62)).toMatchObject({ attempted: 1, delivered: 1 });
     expect(answers).toEqual([]);
   });
+
+  it("pushes a run larger than one page over several cycles, moving the cursor page by page", async () => {
+    await sql`DELETE FROM conditions.federation_subscription`;
+    const sub = await webhookSubFromNow({ priorityOnly: false, bbox: [4, 50, 6, 54] });
+    const names = Array.from({ length: 9 }, (_, i) => `bulky-${i}`);
+    const headline = [{ lang: "nl", text: "x".repeat(250_000) }];
+    for (const name of names) await writeOwn(sql, incidentDraft(name, { lon: 5.1, headline }));
+    await writeOwn(
+      sql,
+      incidentDraft("oversized", {
+        lon: 5.1,
+        headline: [{ lang: "nl", text: "x".repeat(OUTBOX_PAGE_MAX_ENTRY_BYTES) }],
+      }),
+    );
+    await insertEvent("after-oversized");
+
+    const inbox = mockInbox([200]);
+    const cursors: string[] = [];
+    const withheld: string[] = [];
+    for (let cycle = 0; cycle < 10; cycle++) {
+      const result = await runWebhookDeliveryCycle(sql, {
+        signingKey,
+        fetchImpl: inbox.fetchImpl,
+        partOf: PARTOF,
+        now: NOW,
+      });
+      withheld.push(...result.withheld.map((w) => w.recordId));
+      cursors.push((await getSubscription(sql, sub.id, NOW))!.cursor);
+      if (result.delivered === 0) break;
+    }
+
+    expect(inbox.captured.length).toBeGreaterThan(2);
+    for (const push of inbox.captured) {
+      expect(push.signatureOk).toBe(true);
+      expect(push.body.byteLength).toBeLessThanOrEqual(1_048_576);
+    }
+    expect(inbox.captured.flatMap((push) => push.items.map(localOf))).toEqual([
+      ...names,
+      "after-oversized",
+    ]);
+    expect(withheld).toEqual([situationId("oversized")]);
+    // Each cycle moved the cursor to the page it delivered, and no further.
+    expect(cursors.slice(0, inbox.captured.length)).toEqual(inbox.captured.map((p) => p.cursor));
+  }, 60_000);
 
   it("pushes nothing to a subscription whose lease ran out", async () => {
     await sql`DELETE FROM conditions.federation_subscription`;

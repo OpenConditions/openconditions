@@ -296,13 +296,47 @@ describe("pulling a peer", () => {
     expect(await landed()).toEqual([]);
   });
 
-  it("refuses a page larger than a pushed page may be, unread past the cap", async () => {
-    const huge = Buffer.alloc(2 * 1024 * 1024, 0x20);
-    const { fetchImpl } = fakePeer([signed(huge)]);
+  it("asks again with a smaller limit for a page that is too large, and keeps it for the pull", async () => {
+    const huge = signed(Buffer.alloc(2 * 1024 * 1024, 0x20));
+    const { fetchImpl, asked } = fakePeer([
+      huge,
+      signed(
+        json(
+          pageOf([entry(peerSituation(PEER, "smaller-1"), 10, 1)], "10.1", {
+            next: `https://${PEER}/peer/backfill?after=10.1`,
+          }),
+        ),
+      ),
+      signed(json(pageOf([entry(peerSituation(PEER, "smaller-2"), 10, 2)], "10.2"))),
+    ]);
+    const result = await pullPeer(sql, peer(), ctx(fetchImpl));
+    expect(result).toMatchObject({ pages: 2, accepted: 2, cursor: "10.2" });
+    expect(result.error).toBeUndefined();
+    expect(await landed()).toEqual(["smaller-1", "smaller-2"]);
+    const limits = asked.map((url) => new URL(url).searchParams.get("limit"));
+    expect(limits).toEqual([String(PULL_PAGE_LIMIT), "25", "25"]);
+    expect(new URL(asked[1]!).searchParams.get("after")).toBe("0.0");
+    expect(await schemaFailures()).toBe(0);
+
+    const next = fakePeer([signed(json(pageOf([], "10.2")))]);
+    await pullPeer(sql, peer(), ctx(next.fetchImpl));
+    expect(new URL(next.asked[0]!).searchParams.get("limit")).toBe(String(PULL_PAGE_LIMIT));
+  });
+
+  it("refuses a page still too large at a limit of 1, unread past the cap", async () => {
+    const huge = signed(Buffer.alloc(2 * 1024 * 1024, 0x20));
+    const { fetchImpl, asked } = fakePeer([huge, huge, huge, huge]);
     expect(await pullPeer(sql, peer(), ctx(fetchImpl))).toMatchObject({
       pages: 0,
-      error: "the page is larger than 1048576 bytes",
+      error: "a single entry is larger than 1048576 bytes",
     });
+    expect(asked.map((url) => new URL(url).searchParams.get("limit"))).toEqual([
+      String(PULL_PAGE_LIMIT),
+      "25",
+      "6",
+      "1",
+    ]);
+    expect(await schemaFailures()).toBe(1);
   });
 
   it("refuses a page with more entries than asked for", async () => {
