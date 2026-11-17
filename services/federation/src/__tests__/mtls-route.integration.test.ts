@@ -582,6 +582,16 @@ describe("POST /peer/inbox — mTLS a TLS-terminating proxy verified", () => {
     expect(
       (await post("p4", { "x-client-cert-sha256": "aabbccdd, eeff" })).headers["federation-reason"],
     ).toBe("mtls-required");
+    // Caddy's fingerprint of a connection without a certificate is the
+    // SHA-256 of empty input, which names none either, however it is written.
+    expect(
+      (
+        await post("p7", {
+          "x-client-cert-sha256":
+            "E3:B0:C4:42:98:FC:1C:14:9A:FB:F4:C8:99:6F:B9:24:27:AE:41:E4:64:9B:93:4C:A4:95:99:1B:78:52:B8:55",
+        })
+      ).headers["federation-reason"],
+    ).toBe("mtls-required");
   }, 30_000);
 
   it("takes the header only from the proxies named, when they are", async () => {

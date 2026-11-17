@@ -65,3 +65,16 @@ export function checkMtls(
 export function normalizeFingerprint(fingerprint: string): string {
   return fingerprint.replace(/[^0-9a-f]/gi, "").toLowerCase();
 }
+
+/**
+ * The SHA-256 of empty input. Caddy's `{http.request.tls.client.fingerprint}`
+ * is this value on a connection without a client certificate, so a proxy
+ * header carrying it names no certificate.
+ */
+export const EMPTY_INPUT_SHA256 =
+  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+
+/** Whether `fingerprint`, however it is written, is the SHA-256 of empty input. */
+export function isEmptyInputFingerprint(fingerprint: string): boolean {
+  return normalizeFingerprint(fingerprint) === EMPTY_INPUT_SHA256;
+}

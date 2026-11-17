@@ -85,7 +85,12 @@ export {
   verifyEndorsement,
 } from "./keys.js";
 export type { MtlsContext, MtlsResult } from "./mtls.js";
-export { checkMtls } from "./mtls.js";
+export {
+  checkMtls,
+  EMPTY_INPUT_SHA256,
+  isEmptyInputFingerprint,
+  normalizeFingerprint,
+} from "./mtls.js";
 export {
   base58btcDecode,
   base58btcEncode,

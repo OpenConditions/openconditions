@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkMtls, type MtlsContext } from "../index.js";
+import { checkMtls, isEmptyInputFingerprint, type MtlsContext } from "../index.js";
 
 const AUTHORIZED: MtlsContext = { authorized: true, fingerprint: "AA:BB:CC" };
 
@@ -55,5 +55,15 @@ describe("checkMtls", () => {
         { authorized: true, fingerprint: "aabbcc" },
       ),
     ).toEqual({ ok: true });
+  });
+});
+
+describe("isEmptyInputFingerprint", () => {
+  it("recognises the SHA-256 of empty input however it is written", () => {
+    const hex = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+    expect(isEmptyInputFingerprint(hex)).toBe(true);
+    expect(isEmptyInputFingerprint(hex.toUpperCase())).toBe(true);
+    expect(isEmptyInputFingerprint(hex.toUpperCase().match(/../g)!.join(":"))).toBe(true);
+    expect(isEmptyInputFingerprint("aabbccdd")).toBe(false);
   });
 });

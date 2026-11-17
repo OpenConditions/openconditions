@@ -442,7 +442,6 @@ maps.example.org {
 	}
 	handle /peer/* {
 		reverse_proxy openconditions-federation:4300 {
-			header_up -X-Client-Cert-Sha256
 			header_up X-Client-Cert-Sha256 {http.request.tls.client.fingerprint}
 			flush_interval -1
 		}
@@ -451,8 +450,10 @@ maps.example.org {
 ```
 
 and `OPENCONDITIONS_FEDERATION_CLIENT_CERT_HEADER=X-Client-Cert-Sha256`.
+The `header_up` line replaces whatever the client sent in that header with Caddy's own value, so a client cannot name a certificate itself; do not add a `header_up -X-Client-Cert-Sha256` line to delete it first, as Caddy applies the delete after the set and the service then never sees the header.
 Behind a proxy, every peer with `mtlsRequired` must pin `mtlsFingerprints`
 (the boot fails otherwise), and a header sent twice names no certificate.
+For a connection without a client certificate Caddy's fingerprint is the SHA-256 of empty input (`e3b0c442…b855`), which the service reads as no certificate too, so such a request is refused with `mtls-required`.
 `OPENCONDITIONS_FEDERATION_TRUSTED_PROXIES` (comma-separated addresses or subnets, `172.18.0.0/16`) takes the header only from those, so another container on the network cannot set it. It is not tied to mutual TLS: an unsigned `/peer/outbox` read is rate limited at tier 0's budget per client address (an IPv6 address by its /64 prefix), and the service takes that address from `X-Forwarded-For`, which Caddy's `reverse_proxy` sets, only on a connection from one of these proxies. Without the setting, every anonymous reader behind a proxy is metered as the proxy's one address.
 Fingerprints match however they are written (`AB:CD:…` or `abcd…`). A peer
 without `mtlsRequired` is unaffected; mTLS never replaces the signature.
