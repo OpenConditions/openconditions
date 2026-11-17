@@ -305,7 +305,7 @@ Optional:
 | `OPENCONDITIONS_FEDERATION_CLIENT_CERT_FILE`   | A PEM client certificate this instance presents on every request to a peer, for peers that require mutual TLS of it (see _Mutual TLS_ below). Needs `…_CLIENT_KEY_FILE`.                                                     |
 | `OPENCONDITIONS_FEDERATION_CLIENT_KEY_FILE`    | The PEM private key of that certificate. Both files are read once at boot; one without the other, an unreadable file or a key that is not the certificate's fails the boot.                                                  |
 | `OPENCONDITIONS_FEDERATION_TRUSTED_PROXIES`    | Comma-separated addresses or subnets (`10.0.0.2`, `172.18.0.0/16`) of the reverse proxies in front of the service. Only from them are `X-Forwarded-For` and the client certificate header believed (see _Mutual TLS_ below). |
-| `OPENCONDITIONS_EGRESS_ALLOWED_HOSTS`          | Comma-separated host names the service may reach although they resolve to private addresses: a peer, archive or inbox on the same private network. Every other private, loopback or link-local address is refused.           |
+| `OPENCONDITIONS_EGRESS_ALLOWED_HOSTS`          | Comma-separated host names the service may reach although they resolve to private addresses: a peer, archive, inbox or registry on the same private network. Every other private, loopback or link-local address is refused. |
 | `OPENCONDITIONS_FETCH_TIMEOUT_MS`              | How long a request to a peer may take (default 60000). A peer's archive files have an hour each.                                                                                                                             |
 | `OPENCONDITIONS_MAX_REDIRECTS`                 | How many redirects a request to a peer follows (default 5); each hop is checked as the first.                                                                                                                                |
 
@@ -413,7 +413,7 @@ A page serves only entries that no older transaction can still precede, so a wri
 
 ### Peers on a private network
 
-Requests to peers, their archives and their inboxes go through the egress
+Requests to peers, their archives and their inboxes, and to the registry, go through the egress
 guard: a host that resolves to a private, loopback or link-local address is
 refused, also after a redirect. A peer on the same private network (a second
 instance of one operator, or a test pair) is reached by naming its host in

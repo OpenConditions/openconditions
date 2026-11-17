@@ -25,7 +25,11 @@ import {
   readJournalLag,
   runWebhookDeliveryCycle,
 } from "@openconditions/federation";
-import { guardOptionsFromEnv, requireCredential } from "@openconditions/ingest-framework";
+import {
+  guardedFetch,
+  guardOptionsFromEnv,
+  requireCredential,
+} from "@openconditions/ingest-framework";
 import { productionRegistry } from "@openconditions/model-registry";
 import { seedFederation } from "@openconditions/storage";
 import postgres from "postgres";
@@ -375,9 +379,11 @@ async function boot() {
 
     // Registry discovery: daily, and an hour after a sync that failed. The
     // peers a verified sync found are verified and kept up like the
-    // configured ones from then on.
+    // configured ones from then on. The registry is fetched through the
+    // egress guard, without the client certificate peers are shown.
     const registry = settings.registry;
     if (registry !== undefined) {
+      const registryEgress = guardedFetch();
       const syncRegistryNow = async () => {
         let next = REGISTRY_SYNC_INTERVAL_HOURS * 60 * 60 * 1000;
         try {
@@ -386,6 +392,7 @@ async function boot() {
             registry,
             settings.actor!.instanceId,
             new Date().toISOString(),
+            registryEgress,
           );
           const { added, removed, changed } = synced;
           if (added.length + removed.length + changed.length > 0) {

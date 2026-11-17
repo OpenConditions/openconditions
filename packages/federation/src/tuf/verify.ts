@@ -11,6 +11,8 @@
  *    metadata is fetched;
  *  - a local-directory fetcher so a registry checkout / CI fixture can be
  *    verified exactly like a remote registry;
+ *  - a fetcher over a caller's fetch (the service's egress guard), so the
+ *    registry URL and every redirect are checked as any other request is;
  *  - parsing each verified target back into a {@link RegistryEntry}, with the
  *    target file name required to match the entry id.
  *
@@ -83,6 +85,13 @@ export interface VerifyRegistryOptions {
    * NODE_ENV fails closed.
    */
   allowTestRoot?: boolean;
+  /**
+   * Fetches the registry's `http(s):` URLs, in place of tuf-js' own fetch: the
+   * service passes its egress guard here, so the registry and its redirects
+   * are held to the same address rules as a peer. `file:` URLs are read from
+   * disk either way.
+   */
+  fetchImpl?: typeof fetch;
 }
 
 /** Serves `file:` URLs for local registry checkouts and CI fixtures. */
@@ -95,6 +104,35 @@ class FileFetcher extends BaseFetcher {
     return Promise.resolve(
       Readable.toWeb(createReadStream(path)) as ReadableStream<Uint8Array<ArrayBuffer>>,
     );
+  }
+}
+
+/**
+ * Fetches through `fetchImpl` what tuf-js asks for. tuf-js' own fetcher is
+ * the model: a non-2xx answer, or one without a body, is a
+ * `DownloadHTTPError` with its status (a 404 or 403 for the next
+ * `N.root.json` means the trusted root is the newest), and the stream is
+ * returned as it arrives. `BaseFetcher` enforces each file's length limit
+ * while reading it; the timeout and the response size cap are the passed
+ * fetch's. Like tuf-js' default, nothing is retried.
+ */
+class GuardedFetcher extends BaseFetcher {
+  readonly #fetchImpl: typeof fetch;
+  readonly #files = new FileFetcher();
+
+  constructor(fetchImpl: typeof fetch) {
+    super();
+    this.#fetchImpl = fetchImpl;
+  }
+
+  async fetch(url: string): Promise<ReadableStream<Uint8Array<ArrayBuffer>>> {
+    if (url.startsWith("file:")) return this.#files.fetch(url);
+    const res = await this.#fetchImpl(url);
+    if (!res.ok || res.body === null) {
+      await res.body?.cancel().catch(() => {});
+      throw new DownloadHTTPError("Failed to download", res.status);
+    }
+    return res.body as ReadableStream<Uint8Array<ArrayBuffer>>;
   }
 }
 
@@ -181,7 +219,12 @@ export async function verifyRegistryMetadata(
     metadataBaseUrl: metadataUrl,
     targetDir: downloadDir,
     targetBaseUrl: targetsUrl,
-    fetcher: metadataUrl.startsWith("file:") ? new FileFetcher() : undefined,
+    fetcher:
+      options.fetchImpl !== undefined
+        ? new GuardedFetcher(options.fetchImpl)
+        : metadataUrl.startsWith("file:")
+          ? new FileFetcher()
+          : undefined,
   });
   await updater.refresh();
 
