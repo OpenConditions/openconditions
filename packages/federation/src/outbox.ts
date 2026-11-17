@@ -66,17 +66,26 @@ export function encodeOutboxCursor(cursor: OutboxCursor): string {
   return `${cursor.txid}.${cursor.seq}`;
 }
 
+/** The largest `xid8`, 2^64 − 1: a larger `txid` would fail Postgres's cast. */
+const MAX_TXID = 18446744073709551615n;
+
 /**
  * Parses a `"<txid>.<seq>"` wire cursor. Returns null (never throws) on any
- * malformed input so callers fail closed (the route answers 400). Both parts
- * must be non-negative decimal integers; `seq` must be a safe JS integer.
+ * malformed input so callers fail closed (the route answers 400). Only the
+ * canonical spelling is accepted, so one position has one wire form and
+ * cursors can be compared as strings: each part is `0` or a decimal integer
+ * without leading zeros, `txid` at most 2^64 − 1 and `seq` a safe JS integer.
+ * The pattern bounds the digits before anything is converted, so a huge
+ * string never becomes a BigInt.
  */
 export function decodeOutboxCursor(value: string): OutboxCursor | null {
-  const match = /^(\d+)\.(\d+)$/.exec(value);
+  const match = /^(0|[1-9]\d{0,19})\.(0|[1-9]\d{0,15})$/.exec(value);
   if (match === null) return null;
+  const txid = match[1]!;
+  if (BigInt(txid) > MAX_TXID) return null;
   const seq = Number(match[2]);
   if (!Number.isSafeInteger(seq)) return null;
-  return { txid: match[1]!, seq };
+  return { txid, seq };
 }
 
 /** Coerces the `after` union to a cursor; a wire string round-trips through

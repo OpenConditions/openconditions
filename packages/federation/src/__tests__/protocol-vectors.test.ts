@@ -215,6 +215,27 @@ describe("cursors.json", () => {
     };
     expect([...v.ascending].reverse().sort(order)).toEqual(v.ascending);
   });
+
+  it("accepts one spelling per position, up to the largest xid8", () => {
+    expect(decodeOutboxCursor("18446744073709551615.0")).toEqual({
+      txid: "18446744073709551615",
+      seq: 0,
+    });
+    expect(decodeOutboxCursor("18446744073709551616.0")).toBeNull();
+    expect(decodeOutboxCursor("99999999999999999999.0")).toBeNull();
+    expect(decodeOutboxCursor(`${"9".repeat(1000)}.0`)).toBeNull();
+    expect(decodeOutboxCursor(`1.${"9".repeat(1000)}`)).toBeNull();
+    for (const wire of ["01.2", "1.02", "001.2", "00.0", "0.00"]) {
+      expect(decodeOutboxCursor(wire), wire).toBeNull();
+    }
+    for (const cursor of [
+      { txid: "0", seq: 0 },
+      { txid: "10", seq: 100 },
+      { txid: "18446744073709551615", seq: Number.MAX_SAFE_INTEGER },
+    ]) {
+      expect(decodeOutboxCursor(encodeOutboxCursor(cursor))).toEqual(cursor);
+    }
+  });
 });
 
 describe("page.json", () => {

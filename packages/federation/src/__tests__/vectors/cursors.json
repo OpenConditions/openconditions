@@ -1,5 +1,5 @@
 {
-  "description": "Journal cursors on the wire, \"<txid>.<seq>\", both non-negative decimal integers. Entries are ordered by txid, then seq, as numbers.",
+  "description": "Journal cursors on the wire, \"<txid>.<seq>\", both non-negative decimal integers without leading zeros, txid at most 2^64 - 1 and seq at most 2^53 - 1; any other spelling is malformed. Entries are ordered by txid, then seq, as numbers.",
   "valid": [
     {
       "wire": "0.0",
@@ -38,7 +38,15 @@
     "1.2.3",
     "1.5e3",
     " 1.2",
-    "1.9007199254740992"
+    "1.9007199254740992",
+    "01.2",
+    "1.02",
+    "00.0",
+    "0.00",
+    "18446744073709551616.0",
+    "100000000000000000000.0",
+    "123456789012345678901234567890.0",
+    "1.10000000000000000"
   ],
   "ascending": ["0.0", "99.900", "1000.12", "1000.14", "1001.11", "1001.13"],
   "notes": {
