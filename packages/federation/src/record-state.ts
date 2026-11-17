@@ -237,10 +237,13 @@ interface RecordsRow extends StateRow {
  * order: a live record the outbox may carry is a `create` entry carrying it
  * as the journal would carry it now; one that ended is a `delete` entry with
  * its reason at the row's revision, but only when a peer may hold the record
- * (`federation_was_shared`, the rule the journal's own deletes follow); an id
- * with no record of the class, one another instance owns, one ended that no
- * peer can hold, or one live but not to be carried (its source turned
- * restricted, its licence is not public) is unknown, so the answer says
+ * (`federation_was_shared`, the rule the journal's own deletes follow), except
+ * that an erasure (`rights_revoked`) is answered always, since that rule
+ * forgets a record once its journal entries are pruned and no subscription
+ * wants its class; an id with no record of the class, one another instance
+ * owns, one ended otherwise that no peer can hold, or one live but not to be
+ * carried (its source turned restricted, its licence is not public) is
+ * unknown, so the answer says
  * nothing of a record the outbox does not carry. A subscriber ends its copy
  * of an unknown record as withdrawn, which is all a delete would have told
  * it. The requester's filter is not applied: it asks about records it holds. Entries are added while their total stays within
@@ -322,7 +325,12 @@ function stateEntry(
     revision: row.revision,
   });
   if (row.ended) {
-    // A record no peer can have held is not named, not even by a delete.
+    // An erasure is always answered: whether a peer may hold the record is
+    // judged from journal entries and subscriptions that may be gone, and a
+    // former subscriber must not end its copy as a mere withdrawal, keeping
+    // the content. What remains of an erased row holds none.
+    if (row.tombstone_reason === "rights_revoked") return retraction("rights_revoked");
+    // Any other record no peer can have held is not named, not even by a delete.
     return row.shared ? retraction(row.tombstone_reason ?? "withdrawn") : undefined;
   }
   // A live record the outbox does not carry is not named either.
