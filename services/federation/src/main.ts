@@ -42,7 +42,7 @@ import { refreshPeers } from "./peering.js";
 import { holdProcessLock } from "./process-lock.js";
 import { pullPeer } from "./puller.js";
 import { type ReconcileCounts, reconcileAfter, reconcilePeer } from "./reconcile.js";
-import { REGISTRY_RETRY_MS, syncRegistryPeers } from "./registry.js";
+import { REGISTRY_RETRY_MS, RegistryDiscovery } from "./registry.js";
 import { build } from "./server.js";
 import { warnWithheld } from "./withheld.js";
 
@@ -379,22 +379,24 @@ async function boot() {
 
     // Registry discovery: daily, and an hour after a sync that failed. The
     // peers a verified sync found are verified and kept up like the
-    // configured ones from then on. The registry is fetched through the
-    // egress guard, without the client certificate peers are shown.
+    // configured ones from then on, and stored beside the registry cache:
+    // when the first sync after boot fails, the stored ones are taken back.
+    // The registry is fetched through the egress guard, without the client
+    // certificate peers are shown.
     const registry = settings.registry;
     if (registry !== undefined) {
-      const registryEgress = guardedFetch();
+      const discovery = new RegistryDiscovery(
+        peers,
+        registry,
+        settings.actor!.instanceId,
+        guardedFetch(),
+      );
       const syncRegistryNow = async () => {
         let next = REGISTRY_SYNC_INTERVAL_HOURS * 60 * 60 * 1000;
         try {
-          const synced = await syncRegistryPeers(
-            peers,
-            registry,
-            settings.actor!.instanceId,
+          const { added, removed, changed, storeError } = await discovery.sync(
             new Date().toISOString(),
-            registryEgress,
           );
-          const { added, removed, changed } = synced;
           if (added.length + removed.length + changed.length > 0) {
             console.info(
               `[federation-api] registry: added ${added.join(", ") || "none"}, ` +
@@ -402,12 +404,46 @@ async function boot() {
             );
             void refreshAll();
           }
+          if (storeError !== undefined) {
+            console.warn(
+              `[federation-api] registry: the verified peers could not be stored in ` +
+                `${discovery.file}, so a restart while the registry fails starts without them: ` +
+                storeError,
+            );
+          }
         } catch (err) {
           next = REGISTRY_RETRY_MS;
-          console.error(
-            "[federation-api] registry sync failed; the peers of the last verified sync stay:",
-            err,
-          );
+          const restored = await discovery.restore();
+          if (restored.status === "restored") {
+            console.warn(
+              `[federation-api] registry sync failed; the ${restored.peers} peers of the ` +
+                `verified sync of ${restored.syncedAt}, stored in ${restored.file}, stay:`,
+              err,
+            );
+            if (restored.peers > 0) void refreshAll();
+          } else if (restored.status === "absent") {
+            console.error(
+              "[federation-api] registry sync failed, and no verified sync is stored: " +
+                "no peer of the registry is known until one succeeds:",
+              err,
+            );
+          } else if (restored.status === "unreadable") {
+            console.warn(
+              `[federation-api] the stored peers of the last verified sync in ${restored.file} ` +
+                `are ignored: ${restored.error}`,
+            );
+            console.error(
+              "[federation-api] registry sync failed: no peer of the registry is known " +
+                "until one succeeds:",
+              err,
+            );
+          } else {
+            console.error(
+              `[federation-api] registry sync failed; the ${peers.discovered().length} peers ` +
+                "of the last verified sync stay:",
+              err,
+            );
+          }
         }
         registryTimer = setTimeout(() => void syncRegistryNow(), next);
       };
