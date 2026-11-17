@@ -372,6 +372,8 @@ the service lands those first, checked against the page, then the page (see
 starts so; an archive is landed once per night it was built, and not within a
 day of the last.
 
+A peer's readings land in the observation history, whose partitions the ingest service creates ahead and drops past retention. A service with any peer it pulls from or subscribes to keeps them as well, at boot before its first pull and hourly, with the same function and horizon as the ingest service. Both take one database lock for it, so they never create the same partition twice, and either can run without the other: an instance that runs the federation service without the ingest service works as a mirror of its peers. A failed run is logged and tried again an hour later.
+
 ### Keys and rotation
 
 The service creates its Ed25519 instance key on first boot and keeps it in

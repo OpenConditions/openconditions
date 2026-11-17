@@ -223,6 +223,42 @@ export async function dropExpiredObservationPartitions(
   return dropped;
 }
 
+/** The session advisory lock a partition run holds, so two services never create or drop one at once. */
+const PARTITION_LOCK = "conditions.observation partitions";
+
+/**
+ * Creates the history partitions the registry's retention classes need
+ * around `now` ({@link ensureObservationPartitions}) and drops those past
+ * retention ({@link dropExpiredObservationPartitions}). The ingest service
+ * runs it, and so does a federation service that lands peers' readings, so
+ * it holds a session advisory lock on a connection of its own: a second run
+ * waits for the first and then finds its partitions there, where both would
+ * otherwise try to create the same table. The wait is bounded by the pool's
+ * `lock_timeout`, as the DDL's own lock waits are.
+ */
+export async function maintainObservationPartitions(
+  sql: postgres.Sql,
+  registry: Registry,
+  now: Date,
+): Promise<{ created: string[]; dropped: string[] }> {
+  const reserved = await sql.reserve();
+  try {
+    await reserved`SELECT pg_advisory_lock(hashtext(${PARTITION_LOCK}))`;
+    try {
+      const created = await ensureObservationPartitions(reserved, {
+        classes: retentionClasses(registry),
+        now,
+      });
+      const dropped = await dropExpiredObservationPartitions(reserved, { now, registry });
+      return { created, dropped };
+    } finally {
+      await reserved`SELECT pg_advisory_unlock(hashtext(${PARTITION_LOCK}))`;
+    }
+  } finally {
+    reserved.release();
+  }
+}
+
 /**
  * The end of the range a day or month partition holds, or undefined for a
  * list partition.

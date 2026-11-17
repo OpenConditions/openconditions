@@ -31,7 +31,7 @@ import {
   requireCredential,
 } from "@openconditions/ingest-framework";
 import { productionRegistry } from "@openconditions/model-registry";
-import { seedFederation } from "@openconditions/storage";
+import { maintainObservationPartitions, seedFederation } from "@openconditions/storage";
 import postgres from "postgres";
 import { ARCHIVE_FILE_MAX_BYTES, ARCHIVE_FILE_TIMEOUT_MS } from "./archive-import.js";
 import { backfillFloorIso } from "./backfill.js";
@@ -69,6 +69,9 @@ const PULL_CYCLE_MS = 30_000;
 
 /** How often the journal's fence lag is checked against the convergence bound. */
 const LAG_CYCLE_MS = 60_000;
+
+/** How often the observation partitions are kept, as the ingest service keeps them. */
+const PARTITION_CYCLE_MS = 60 * 60 * 1000;
 
 /** How often subscriptions whose lease ran out are deleted. */
 const EXPIRY_CYCLE_MS = 60 * 60 * 1000;
@@ -457,6 +460,40 @@ async function boot() {
     }
   }
 
+  // Observation partitions: a peer's readings land in the observation
+  // history, whose partitions the ingest service keeps. An instance that
+  // pulls from or subscribes to a peer keeps them too, so a mirror without
+  // the ingest service lands them: at boot, before the first pull, and
+  // hourly, with the ingest's own function and horizon, under the lock it
+  // takes. A failure is logged and left to the next run.
+  let partitionTimer: NodeJS.Timeout | undefined;
+  if (
+    settings.enabled &&
+    settings.peers.some((peer) => peer.pull !== undefined || peer.subscribe !== undefined)
+  ) {
+    const registry = productionRegistry();
+    let partitionsRunning = false;
+    const keepPartitions = async () => {
+      if (partitionsRunning) return;
+      partitionsRunning = true;
+      try {
+        const { created, dropped } = await maintainObservationPartitions(sql, registry, new Date());
+        if (created.length + dropped.length > 0) {
+          console.info(
+            `[federation-api] observation partitions: ${created.length} created, ` +
+              `${dropped.length} dropped`,
+          );
+        }
+      } catch (err) {
+        console.error("[federation-api] observation partition upkeep failed:", err);
+      } finally {
+        partitionsRunning = false;
+      }
+    };
+    await keepPartitions();
+    partitionTimer = setInterval(() => void keepPartitions(), PARTITION_CYCLE_MS);
+  }
+
   // Pull: each peer this instance pulls is read from its own cursor, so what
   // arrives is complete whatever the push carries. Single-flight. Each peer
   // gets a time slice per cycle; while one has more to read and its cursor
@@ -606,6 +643,7 @@ async function boot() {
     if (capabilitiesTimer) clearInterval(capabilitiesTimer);
     if (registryTimer) clearTimeout(registryTimer);
     if (pullTimer) clearInterval(pullTimer);
+    if (partitionTimer) clearInterval(partitionTimer);
     if (lagTimer) clearInterval(lagTimer);
     clearInterval(pruneTimer);
     clearInterval(expiryTimer);

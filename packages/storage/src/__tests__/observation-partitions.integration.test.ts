@@ -13,6 +13,7 @@ import {
   analyzeClosedObservationPartitions,
   dropExpiredObservationPartitions,
   ensureObservationPartitions,
+  maintainObservationPartitions,
   partitionCoverage,
   partitionCovers,
   retentionClasses,
@@ -358,4 +359,28 @@ describe("analysis of closed partitions", () => {
     expect(analyzed).not.toContain(closing);
     expect(analyzed).not.toContain(open);
   });
+});
+
+describe("partition maintenance by two services at once", () => {
+  it("creates each partition once, the second run waiting for the first", async () => {
+    const own = await createTestDatabase();
+    try {
+      const registry = productionRegistry();
+      const [a, b] = await Promise.all([
+        maintainObservationPartitions(own.sql, registry, NOW),
+        maintainObservationPartitions(own.sql, registry, NOW),
+      ]);
+      const created = [...a!.created, ...b!.created];
+      expect(created.length).toBeGreaterThan(0);
+      expect(new Set(created).size).toBe(created.length);
+      // One of the two found everything there.
+      expect(Math.min(a!.created.length, b!.created.length)).toBe(0);
+      expect(await maintainObservationPartitions(own.sql, registry, NOW)).toEqual({
+        created: [],
+        dropped: [],
+      });
+    } finally {
+      await own.close();
+    }
+  }, 120_000);
 });
