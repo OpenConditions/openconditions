@@ -2,13 +2,11 @@ import type { CatalogFeed } from "@openconditions/ingest-framework";
 import type { Registry } from "@openconditions/model";
 import {
   analyzeClosedObservationPartitions,
-  dropExpiredObservationPartitions,
-  ensureObservationPartitions,
   isLockTimeout,
+  maintainObservationPartitions,
   pruneRevisions,
   pruneRollups,
   refreshFlippedFusions,
-  retentionClasses,
   rollupObservations,
   rollupRetentionDaysFromEnv,
   sweepRecords,
@@ -100,20 +98,17 @@ function singleFlight(name: string, run: () => Promise<void>): () => Promise<voi
 
 /**
  * Creates the observation history partitions the registry's retention
- * classes need around `now`, and drops those past retention. Boot awaits it,
- * so no write meets a missing partition.
+ * classes need around `now`, and drops those past retention, under the lock
+ * a federation service keeping them too also takes
+ * ({@link maintainObservationPartitions}). Boot awaits it, so no write meets
+ * a missing partition.
  */
 export async function maintainPartitions(
   sql: postgres.Sql,
   registry: Registry,
   now: Date,
 ): Promise<{ created: string[]; dropped: string[] }> {
-  const created = await ensureObservationPartitions(sql, {
-    classes: retentionClasses(registry),
-    now,
-  });
-  const dropped = await dropExpiredObservationPartitions(sql, { now, registry });
-  return { created, dropped };
+  return maintainObservationPartitions(sql, registry, now);
 }
 
 /** How often boot tries the partitions while a lock they need is held. */

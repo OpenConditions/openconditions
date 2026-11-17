@@ -39,6 +39,16 @@ async function journal(): Promise<JournalState | undefined> {
   return row;
 }
 
+async function identity(): Promise<{
+  database_oid: string | null;
+  system_identifier: string | null;
+}> {
+  const [row] = await sql<{ database_oid: string | null; system_identifier: string | null }[]>`
+    SELECT database_oid::text AS database_oid, system_identifier::text AS system_identifier
+      FROM conditions.federation_journal`;
+  return row!;
+}
+
 async function journalSize(): Promise<number> {
   const [{ count }] = await sql<{ count: number }[]>`
     SELECT count(*)::int AS count FROM conditions.federation_outbox`;
@@ -195,6 +205,70 @@ describe("ensureJournalEpoch", () => {
     expect(started).toMatchObject({ started: true, reason: "timeline-changed" });
     expect((await journal())!.timeline_id).toBe(timeline);
     expect(await journalSize()).toBe(0);
+  });
+
+  it("stores the database's OID and the cluster's system identifier", async () => {
+    const [current] = await sql<{ oid: string; system_identifier: string }[]>`
+      SELECT (SELECT oid::bigint::text FROM pg_database WHERE datname = current_database()) AS oid,
+             (SELECT system_identifier::text FROM pg_control_system()) AS system_identifier`;
+    expect(await identity()).toEqual({
+      database_oid: current!.oid,
+      system_identifier: current!.system_identifier,
+    });
+  });
+
+  it("starts a new epoch when the database's OID differs from the stored one", async () => {
+    await journalSomething("oid");
+    const before = await journal();
+    const stored = await identity();
+    const lines: string[] = [];
+    const started = await ensureJournalEpoch(sql, {
+      now: NOW,
+      log: (line) => lines.push(line),
+      identity: {
+        databaseOid: String(Number(stored.database_oid) + 1),
+        systemIdentifier: stored.system_identifier,
+      },
+    });
+    expect(started).toMatchObject({ started: true, reason: "database-replaced" });
+    expect(started.epoch).not.toBe(before!.epoch);
+    expect(lines).toEqual([`journal epoch ${started.epoch} started: database-replaced`]);
+    expect(await journalSize()).toBe(0);
+    expect((await subscriptions())[0]!.cursor).toBe("0.0");
+    expect((await identity()).database_oid).toBe(String(Number(stored.database_oid) + 1));
+  });
+
+  it("starts a new epoch when the cluster's system identifier differs from the stored one", async () => {
+    await journalSomething("cluster");
+    const stored = await identity();
+    const started = await ensureJournalEpoch(sql, {
+      now: NOW,
+      identity: { databaseOid: stored.database_oid, systemIdentifier: "7000000000000000001" },
+    });
+    expect(started).toMatchObject({ started: true, reason: "database-replaced" });
+    expect((await identity()).system_identifier).toBe("7000000000000000001");
+    expect(await journalSize()).toBe(0);
+  });
+
+  it("fills in an identity not stored yet without a new epoch, and keeps the epoch when it is unchanged", async () => {
+    await journalSomething("identity-filled");
+    const stored = await identity();
+    const before = await journal();
+    await sql`UPDATE conditions.federation_journal SET database_oid = NULL, system_identifier = NULL`;
+    const filled = await ensureJournalEpoch(sql, { now: NOW });
+    expect(filled).toEqual({ epoch: before!.epoch, started: false });
+    expect(await identity()).toEqual(stored);
+
+    const kept = await ensureJournalEpoch(sql, { now: NOW });
+    expect(kept).toEqual({ epoch: before!.epoch, started: false });
+    // A value that cannot be read now is compared with nothing.
+    const unread = await ensureJournalEpoch(sql, {
+      now: NOW,
+      identity: { databaseOid: stored.database_oid, systemIdentifier: null },
+    });
+    expect(unread).toEqual({ epoch: before!.epoch, started: false });
+    expect(await identity()).toEqual(stored);
+    expect(await journalSize()).toBe(1);
   });
 
   it("goes on without the timeline under a role that may not read it", async () => {

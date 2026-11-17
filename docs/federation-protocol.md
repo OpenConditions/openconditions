@@ -177,7 +177,7 @@ Every page has a `highWaterMark`: the cursor of the last entry the publisher rea
 
 ### Epochs
 
-Transaction ids only order entries within one history of the database. The publisher names the current history with its journal's `epoch` (a UUID in the reference implementation; to a subscriber an opaque string of 1 to 64 characters), and every page states it. The publisher starts a new epoch when its database went back (transaction ids lower than before, the Postgres timeline changed, or its operator asked for it after restoring an older copy). It then empties its journal of everything but the delete entries, sets every subscription's push cursor back to `"0.0"` and journals its current records again for the subscriptions that exist. The delete entries are carried into the new epoch with new cursors, in their old order and with the `createdAt` they had, so a retraction or an erasure a subscriber had not read yet still reaches it, within its tier's window, ahead of the records journalled again.
+Transaction ids only order entries within one history of the database. The publisher names the current history with its journal's `epoch` (a UUID in the reference implementation; to a subscriber an opaque string of 1 to 64 characters), and every page states it. The publisher starts a new epoch when its database went back or was replaced (another database or cluster than before, transaction ids lower than before, the Postgres timeline changed, or its operator asked for it after restoring an older copy). It then empties its journal of everything but the delete entries, sets every subscription's push cursor back to `"0.0"` and journals its current records again for the subscriptions that exist. The delete entries are carried into the new epoch with new cursors, in their old order and with the `createdAt` they had, so a retraction or an erasure a subscriber had not read yet still reaches it, within its tier's window, ahead of the records journalled again.
 
 A page whose request named a cursor the journal has not reached carries `cursorAhead: true`, no entries, and the requested cursor as its `highWaterMark`. A cursor a publisher handed out always lies below the oldest transaction still running at the time, and that never goes back within one history, so such a cursor belongs to a history the database no longer has.
 
@@ -194,7 +194,7 @@ The reference puller follows at most one such restart per pull and none within a
 
 ### Retention
 
-Entries older than 37 days (the widest live window, 30 days, plus 7 days) are deleted daily. History before a peer's window is served by the static archive (§6).
+Entries older than 37 days (the widest live window, 30 days, plus 7 days) are deleted daily, and at every start of the reference service. History before a peer's window is served by the static archive (§6).
 
 ## 6. Reading the journal
 
@@ -309,8 +309,8 @@ Ids are ordered by their UTF-8 bytes (Postgres `COLLATE "C"`), and `after` is co
 `POST /peer/records` answers for named records. The body is `application/json`, `{ "class": "situation", "ids": ["…"] }`, with nothing else: `class` as above and 1 to 100 distinct ids, each a non-empty string of at most 512 bytes; anything else is answered `400`, a body larger than 1 MiB `413`. For each id, in request order, the answer holds one of:
 
 - a live record the outbox may carry: a `create` entry carrying the record as the journal would carry it now, in the entry shape of §6 with `txid` `"0"`, `seq` `0` and `createdAt` the time of the answer;
-- a record that ended, when a peer may hold it: a `delete` entry with `reason` the reason it ended for and `revision` the revision it ended at; a crowd report the crowd withdrew is a `delete` as the journal serves it;
-- no record of the class with that id, one the outbox never carries (another instance's record, an on-demand answer, a fused row), one ended that no peer can hold, or a live one the outbox does not carry (its source turned restricted, its licence is not public): the id is listed in `unknown`, so the answer says nothing of a record the outbox does not carry. A subscriber that holds such a record ends its copy as withdrawn.
+- a record that ended, when a peer may hold it, and an erased one (`rights_revoked`) always: a `delete` entry with `reason` the reason it ended for and `revision` the revision it ended at; a crowd report the crowd withdrew is a `delete` as the journal serves it. An erasure does not depend on whether a peer may hold the record, as that is judged from journal entries and subscriptions that may be gone by then, and a subscriber must not end an erased copy as a mere withdrawal; the delete names only the class, kind, domain and ids, as what remains of an erased record holds no content;
+- no record of the class with that id, one the outbox never carries (another instance's record, an on-demand answer, a fused row), one ended otherwise that no peer can hold, or a live one the outbox does not carry (its source turned restricted, its licence is not public): the id is listed in `unknown`, so the answer says nothing of a record the outbox does not carry. A subscriber that holds such a record ends its copy as withdrawn.
 
 A peer may hold a record when the journal has entries of it, or when a subscription wants its class and its source is public or the record was stored by the time its source last turned restricted; this is the rule the publisher's own journal follows when it decides whether a record's delete is journalled at all.
 

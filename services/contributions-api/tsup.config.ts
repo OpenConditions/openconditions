@@ -14,12 +14,21 @@ const bundledDrizzle = fileURLToPath(new URL("./dist/drizzle", import.meta.url))
 export default defineConfig({
   // federation/inbox is a public subpath entry: the federation service's
   // POST /peer/inbox route lands peer records through the SAME crowd paths
-  // (one trust boundary); dts is emitted only for the subpaths.
-  entry: ["src/index.ts", "src/main.ts", "src/federation/inbox.ts", "src/contrib.ts"],
+  // (one trust boundary); federation/tombstone gives the federation
+  // service's admin command the operator's erasure. dts is emitted only for
+  // the subpaths.
+  entry: [
+    "src/index.ts",
+    "src/main.ts",
+    "src/federation/inbox.ts",
+    "src/federation/tombstone.ts",
+    "src/contrib.ts",
+  ],
   format: ["esm"],
   dts: {
     entry: {
       "federation/inbox": "src/federation/inbox.ts",
+      "federation/tombstone": "src/federation/tombstone.ts",
       contrib: "src/contrib.ts",
     },
   },

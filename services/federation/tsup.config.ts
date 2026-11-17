@@ -10,7 +10,8 @@ const coreDrizzle = fileURLToPath(new URL("../../packages/core/drizzle", import.
 const bundledDrizzle = fileURLToPath(new URL("./dist/drizzle", import.meta.url));
 
 export default defineConfig({
-  entry: ["src/index.ts", "src/main.ts"],
+  // ops/admin.ts is the operator's command (`node dist/admin.js` in the image).
+  entry: { index: "src/index.ts", main: "src/main.ts", admin: "src/ops/admin.ts" },
   format: ["esm"],
   dts: false,
   sourcemap: true,

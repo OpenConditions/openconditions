@@ -1,4 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { createReadStream, existsSync, readFileSync, statSync } from "node:fs";
+import { createServer, type Server } from "node:http";
+import type { AddressInfo } from "node:net";
+import { join } from "node:path";
+import { guardedFetch } from "@openconditions/ingest-framework";
+import { afterEach, describe, expect, it } from "vitest";
 import type { PeerRecord } from "../peers.js";
 import { mergePeerRecords, REGISTRY_SYNC_INTERVAL_HOURS, syncRegistry } from "../registry-sync.js";
 import { TestRootInProductionError } from "../tuf/verify.js";
@@ -26,6 +31,11 @@ describe("syncRegistry", () => {
     expect(result.removed).toEqual([]);
     expect(result.changed).toEqual([]);
     expect(result.unchanged).toEqual([]);
+    // The expiry of the targets metadata the sync verified.
+    const targets = JSON.parse(
+      readFileSync(join(repo.repoDir, "metadata", "targets.json"), "utf8"),
+    ) as { signed: { expires: string } };
+    expect(result.targetsExpires).toBe(new Date(targets.signed.expires).toISOString());
   });
 
   it("reconciles the peer list across syncs: added, removed, changed, unchanged", async () => {
@@ -83,6 +93,95 @@ describe("syncRegistry", () => {
 
   it("documents the daily cadence, distinct from live-outbox polling", () => {
     expect(REGISTRY_SYNC_INTERVAL_HOURS).toBe(24);
+  });
+});
+
+describe("syncRegistry over http, through a passed fetch", () => {
+  const servers: Server[] = [];
+  afterEach(async () => {
+    await Promise.all(
+      servers.splice(0).map((server) => new Promise<void>((done) => server.close(() => done()))),
+    );
+  });
+
+  /** Serves `repoDir` on localhost; a missing file is a 404, and `fail` paths answer 500. */
+  async function serve(repoDir: string, fail: RegExp | null = null): Promise<string> {
+    const server = createServer((req, res) => {
+      const file = join(repoDir, decodeURIComponent(new URL(req.url!, "http://x").pathname));
+      if (fail?.test(req.url!)) {
+        res.statusCode = 500;
+        res.end();
+      } else if (!existsSync(file) || !statSync(file).isFile()) {
+        res.statusCode = 404;
+        res.end();
+      } else {
+        createReadStream(file).pipe(res);
+      }
+    });
+    servers.push(server);
+    await new Promise<void>((done) => server.listen(0, "127.0.0.1", done));
+    return `http://localhost:${(server.address() as AddressInfo).port}`;
+  }
+
+  const source = (base: string) => ({
+    metadataUrl: `${base}/metadata`,
+    targetsUrl: `${base}/targets`,
+  });
+  const guard = (allowedHosts?: string[]) =>
+    guardedFetch(undefined, {
+      maxBytes: 10 * 1024 * 1024,
+      timeoutMs: 10_000,
+      maxRedirects: 2,
+      ...(allowedHosts ? { allowedHosts: new Set(allowedHosts) } : {}),
+    });
+
+  it("verifies and reconciles across syncs as from a directory, a missing next root meaning none", async () => {
+    const de = sampleEntry("openmapx-de");
+    const nl = sampleEntry("openmapx-nl");
+    const repo = await buildRepo({ registryDir: writeRegistryDir([de, nl]) });
+    const base = await serve(repo.repoDir);
+    const cacheDir = tempDir("oc-sync-cache-");
+    const fetchImpl = guard(["localhost"]);
+    const first = await syncRegistry(source(base), repo.rootBytes, { cacheDir, fetchImpl });
+    expect(first.added).toEqual(["openmapx-de", "openmapx-nl"]);
+
+    const fr = sampleEntry("openmapx-fr");
+    await buildRepo({
+      registryDir: writeRegistryDir([de, { ...nl, keys: [randomMultibase()] }, fr]),
+      repoDir: repo.repoDir,
+      keys: repo.keys,
+      version: 2,
+    });
+    const second = await syncRegistry(source(base), repo.rootBytes, {
+      cacheDir,
+      previousPeers: first.peers,
+      fetchImpl,
+    });
+    expect(second.added).toEqual(["openmapx-fr"]);
+    expect(second.changed).toEqual(["openmapx-nl"]);
+    expect(second.unchanged).toEqual(["openmapx-de"]);
+  });
+
+  it("is refused on a private address unless its host is allowed", async () => {
+    const repo = await buildRepo({ registryDir: writeRegistryDir([sampleEntry("openmapx-de")]) });
+    const base = await serve(repo.repoDir);
+    await expect(
+      syncRegistry(source(base), repo.rootBytes, {
+        cacheDir: tempDir("oc-sync-cache-"),
+        fetchImpl: guard(),
+      }),
+    ).rejects.toThrow(/private/);
+  });
+
+  it("fails on an answer other than 2xx or a missing root", async () => {
+    const repo = await buildRepo({ registryDir: writeRegistryDir([sampleEntry("openmapx-de")]) });
+    const base = await serve(repo.repoDir, /timestamp\.json$/);
+    await expect(
+      syncRegistry(source(base), repo.rootBytes, {
+        cacheDir: tempDir("oc-sync-cache-"),
+        fetchImpl: guard(["localhost"]),
+      }),
+    ).rejects.toMatchObject({ statusCode: 500 });
   });
 });
 

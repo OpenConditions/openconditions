@@ -56,6 +56,7 @@ export {
 export type {
   FenceHolder,
   JournalEpochResult,
+  JournalIdentity,
   JournalLag,
   JournalLagWatch,
   JournalRestartReason,
@@ -85,7 +86,12 @@ export {
   verifyEndorsement,
 } from "./keys.js";
 export type { MtlsContext, MtlsResult } from "./mtls.js";
-export { checkMtls } from "./mtls.js";
+export {
+  checkMtls,
+  EMPTY_INPUT_SHA256,
+  isEmptyInputFingerprint,
+  normalizeFingerprint,
+} from "./mtls.js";
 export {
   base58btcDecode,
   base58btcEncode,
@@ -171,6 +177,7 @@ export { loadPeers, verifyActorAgainstPin } from "./peers.js";
 export type {
   DeliverWebhookOptions,
   DeliverWebhookOutcome,
+  DisabledPush,
   WebhookCycleOptions,
   WebhookCycleResult,
 } from "./push.js";
@@ -268,11 +275,16 @@ export {
   tufKeyIdFromPublicKeyHex,
   tufSignerFromKeyPair,
 } from "./tuf/signing.js";
-export type { RegistryRepoSource, VerifyRegistryOptions } from "./tuf/verify.js";
+export type {
+  RegistryRepoSource,
+  VerifiedRegistry,
+  VerifyRegistryOptions,
+} from "./tuf/verify.js";
 export {
   repoSourceFromDir,
   TEST_ROOT_ALLOWED_ENVS,
   TEST_ROOT_MARKER,
   TestRootInProductionError,
+  verifyRegistry,
   verifyRegistryMetadata,
 } from "./tuf/verify.js";

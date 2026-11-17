@@ -12,8 +12,7 @@ import { REPO_CATALOG } from "./helpers/catalog.js";
 
 vi.mock("@openconditions/storage", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@openconditions/storage")>()),
-  ensureObservationPartitions: vi.fn(async () => []),
-  dropExpiredObservationPartitions: vi.fn(async () => []),
+  maintainObservationPartitions: vi.fn(async () => ({ created: [], dropped: [] })),
   rollupObservations: vi.fn(async () => ({ rows: 0 })),
   pruneRollups: vi.fn(async () => ({ hourly: 0, daily: 0, retired: 0 })),
   pruneRevisions: vi.fn(async () => 0),
@@ -60,7 +59,7 @@ describe("the record jobs", () => {
 
   it("all run on the primary, raw eviction of its own archive included", async () => {
     await anHourOf(() => startRecordJobs(sql, maintenanceSql, { ...options, primary: true }));
-    expect(storage.ensureObservationPartitions).toHaveBeenCalled();
+    expect(storage.maintainObservationPartitions).toHaveBeenCalled();
     expect(storage.rollupObservations).toHaveBeenCalled();
     expect(storage.sweepRecords).toHaveBeenCalled();
     expect(storage.refreshFlippedFusions).toHaveBeenCalled();
@@ -72,8 +71,7 @@ describe("the record jobs", () => {
 
   it("leave a feeds process only the eviction of its own archive", async () => {
     await anHourOf(() => startRecordJobs(sql, maintenanceSql, { ...options, primary: false }));
-    expect(storage.ensureObservationPartitions).not.toHaveBeenCalled();
-    expect(storage.dropExpiredObservationPartitions).not.toHaveBeenCalled();
+    expect(storage.maintainObservationPartitions).not.toHaveBeenCalled();
     expect(storage.rollupObservations).not.toHaveBeenCalled();
     expect(storage.sweepRecords).not.toHaveBeenCalled();
     expect(storage.refreshFlippedFusions).not.toHaveBeenCalled();

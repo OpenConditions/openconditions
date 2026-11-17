@@ -729,6 +729,13 @@
       "when": 1794931727225,
       "tag": "0103_federation_reconcile",
       "breakpoints": true
+    },
+    {
+      "idx": 104,
+      "version": "7",
+      "when": 1794938607378,
+      "tag": "0104_federation_journal_identity",
+      "breakpoints": true
     }
   ]
 }

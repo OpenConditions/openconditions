@@ -10,11 +10,17 @@
  *   `seen_xid` and the journal's own entries are ahead of the counter, and
  *   every cursor a subscriber holds names a transaction that has not happened
  *   yet in this history.
+ * - A young database restored from a dump may already be past the stored
+ *   ids, since the restore itself uses transaction ids. Restored into any
+ *   database, its OID differs from the stored one; a database re-created
+ *   from a template does too, and a move to another cluster changes the
+ *   cluster's system identifier. Either names another database.
  * - After point-in-time recovery or a promotion the Postgres timeline
  *   changes, and transactions the subscribers saw may be gone.
- * - After rolling the database back from a filesystem snapshot or an older
- *   base backup nothing in the database says so; the operator deletes the row
- *   before starting the service.
+ * - After rolling the database back in place from a filesystem snapshot or an
+ *   older base backup nothing in the database says so (its OID and the
+ *   cluster's identifier stay); the operator deletes the row before starting
+ *   the service.
  *
  * In each case {@link ensureJournalEpoch} starts a new epoch at boot: the
  * journal is emptied of everything but its delete entries (entries of two
@@ -34,7 +40,20 @@
 import type postgres from "postgres";
 
 /** Why a new epoch started. */
-export type JournalRestartReason = "requested" | "transaction-ids-went-back" | "timeline-changed";
+export type JournalRestartReason =
+  | "requested"
+  | "database-replaced"
+  | "transaction-ids-went-back"
+  | "timeline-changed";
+
+/**
+ * Which database the journal is in: its OID, and the cluster's system
+ * identifier, both as decimal text, each null when it cannot be read.
+ */
+export interface JournalIdentity {
+  databaseOid: string | null;
+  systemIdentifier: string | null;
+}
 
 export type JournalEpochResult =
   | { epoch: string; started: false }
@@ -62,14 +81,44 @@ async function readTimeline(sql: postgres.Sql): Promise<number | null> {
   }
 }
 
+/**
+ * The database's OID and the cluster's system identifier. The identifier is
+ * read best effort, as the timeline is: `pg_control_system()` may need a
+ * privilege the role does not have, so it is read in its own statement,
+ * outside any transaction, and is null when refused.
+ */
+async function readIdentity(sql: postgres.Sql): Promise<JournalIdentity> {
+  let databaseOid: string | null = null;
+  try {
+    const [row] = await sql<{ oid: string }[]>`
+      SELECT oid::bigint::text AS oid FROM pg_database WHERE datname = current_database()`;
+    databaseOid = row?.oid ?? null;
+  } catch {
+    databaseOid = null;
+  }
+  let systemIdentifier: string | null = null;
+  try {
+    const [row] = await sql<{ system_identifier: string | null }[]>`
+      SELECT system_identifier::text AS system_identifier FROM pg_control_system()`;
+    systemIdentifier = row?.system_identifier ?? null;
+  } catch {
+    systemIdentifier = null;
+  }
+  return { databaseOid, systemIdentifier };
+}
+
 class EpochLockTimeout extends Error {}
 
 /**
  * Makes sure the journal belongs to the database's current history, starting
- * a new epoch when the row is missing (`requested`), when transaction ids went
- * back (`transaction-ids-went-back`) or when the Postgres timeline changed
- * (`timeline-changed`). Otherwise it notes how far the transaction ids got and
- * the timeline when it was not yet known. Starting an epoch empties the
+ * a new epoch when the row is missing (`requested`), when the database's OID
+ * or the cluster's system identifier differs from the stored one
+ * (`database-replaced`), when transaction ids went back
+ * (`transaction-ids-went-back`) or when the Postgres timeline changed
+ * (`timeline-changed`). Otherwise it notes how far the transaction ids got,
+ * and the timeline, OID and identifier where they were not yet known. A value
+ * that cannot be read now is compared with nothing. `identity` replaces what
+ * is read of the database; tests use it to stand for another database. Starting an epoch empties the
  * journal of all but its delete entries and sets every subscription's push
  * cursor back to the start, in one transaction serialized by an advisory
  * lock, so two callers never both start one. Emptying the journal waits for its lock; a wait past the pool's
@@ -78,14 +127,15 @@ class EpochLockTimeout extends Error {}
  */
 export async function ensureJournalEpoch(
   sql: postgres.Sql,
-  opts: { now: string; log?: (line: string) => void },
+  opts: { now: string; log?: (line: string) => void; identity?: JournalIdentity },
 ): Promise<JournalEpochResult> {
   const timeline = await readTimeline(sql);
+  const identity = opts.identity ?? (await readIdentity(sql));
   for (let attempt = 1; ; attempt++) {
     try {
       const result = await sql.begin(async (tx) => {
         try {
-          return await epochTransaction(tx, timeline, opts.now);
+          return await epochTransaction(tx, timeline, identity, opts.now);
         } catch (err) {
           if ((err as { code?: unknown }).code === LOCK_NOT_AVAILABLE) {
             throw new EpochLockTimeout(String(err));
@@ -113,6 +163,7 @@ export async function ensureJournalEpoch(
 async function epochTransaction(
   tx: postgres.TransactionSql,
   timeline: number | null,
+  identity: JournalIdentity,
   now: string,
 ): Promise<JournalEpochResult> {
   await tx`SELECT pg_advisory_xact_lock(hashtext('conditions.federation_journal'))`;
@@ -121,25 +172,41 @@ async function epochTransaction(
   // in a healthy database; `seen_xid` takes a strict `>` because an idle
   // database can still be exactly where it was.
   const [row] = await tx<
-    { epoch: string; timeline_id: number | null; ids_back: boolean; journal_ahead: boolean }[]
+    {
+      epoch: string;
+      timeline_id: number | null;
+      database_oid: string | null;
+      system_identifier: string | null;
+      ids_back: boolean;
+      journal_ahead: boolean;
+    }[]
   >`
     WITH s AS (SELECT pg_snapshot_xmax(pg_current_snapshot()) AS xmax)
     SELECT j.epoch::text AS epoch, j.timeline_id,
+           j.database_oid::text AS database_oid, j.system_identifier::text AS system_identifier,
            j.seen_xid > s.xmax AS ids_back,
            coalesce((SELECT o.txid FROM conditions.federation_outbox o
                       ORDER BY o.txid DESC, o.seq DESC LIMIT 1) >= s.xmax, false) AS journal_ahead
       FROM conditions.federation_journal j, s`;
 
+  const differs = (stored: string | number | null, current: string | number | null) =>
+    stored !== null && current !== null && stored !== current;
   let reason: JournalRestartReason = "requested";
   if (row !== undefined) {
-    if (row.ids_back || row.journal_ahead) reason = "transaction-ids-went-back";
-    else if (row.timeline_id !== null && timeline !== null && row.timeline_id !== timeline) {
-      reason = "timeline-changed";
-    } else {
+    if (
+      differs(row.database_oid, identity.databaseOid) ||
+      differs(row.system_identifier, identity.systemIdentifier)
+    ) {
+      reason = "database-replaced";
+    } else if (row.ids_back || row.journal_ahead) reason = "transaction-ids-went-back";
+    else if (differs(row.timeline_id, timeline)) reason = "timeline-changed";
+    else {
       await tx`
         UPDATE conditions.federation_journal
            SET seen_xid = pg_snapshot_xmax(pg_current_snapshot()),
-               timeline_id = coalesce(timeline_id, ${timeline}::integer)`;
+               timeline_id = coalesce(timeline_id, ${timeline}::integer),
+               database_oid = coalesce(database_oid, ${identity.databaseOid}::bigint),
+               system_identifier = coalesce(system_identifier, ${identity.systemIdentifier}::bigint)`;
       return { epoch: row.epoch, started: false };
     }
   }
@@ -160,9 +227,11 @@ async function epochTransaction(
        SET cursor = '0.0', revision = revision + 1, updated_at = ${now}`;
   await tx`DELETE FROM conditions.federation_journal`;
   const [started] = await tx<{ epoch: string }[]>`
-    INSERT INTO conditions.federation_journal (epoch, started_at, seen_xid, timeline_id)
+    INSERT INTO conditions.federation_journal
+      (epoch, started_at, seen_xid, timeline_id, database_oid, system_identifier)
     VALUES (gen_random_uuid(), ${now}, pg_snapshot_xmax(pg_current_snapshot()),
-            ${timeline}::integer)
+            ${timeline}::integer, ${identity.databaseOid}::bigint,
+            ${identity.systemIdentifier}::bigint)
     RETURNING epoch::text AS epoch`;
   if (started === undefined) throw new Error("the new journal epoch was not written");
   return { epoch: started.epoch, started: true, reason };

@@ -5,6 +5,7 @@
  * When enabled, an invalid or missing actor/peers config fails the boot
  * closed rather than serving a half-formed identity.
  */
+import { createPrivateKey, type KeyObject, X509Certificate } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { BlockList, isIP } from "node:net";
 import { resolveInstanceId } from "@openconditions/core/server";
@@ -39,6 +40,18 @@ export interface FederationSettings {
    * reads are metered by (the connection's own address when absent).
    */
   trustedProxies?: BlockList;
+  /**
+   * The client certificate this instance presents on every request to a
+   * peer, for peers that require mutual TLS of it; absent when none is
+   * configured.
+   */
+  clientCertificate?: ClientCertificate;
+}
+
+/** A client certificate and its private key, both PEM, read once at boot. */
+export interface ClientCertificate {
+  cert: string;
+  key: string;
 }
 
 export interface RegistrySettings {
@@ -120,6 +133,7 @@ export function resolveFederationSettings(
     );
   }
   const trustedProxies = resolveProxies(env["OPENCONDITIONS_FEDERATION_TRUSTED_PROXIES"]);
+  const clientCertificate = resolveClientCertificate(env);
   return {
     enabled: true,
     actor,
@@ -128,7 +142,63 @@ export function resolveFederationSettings(
     ...(registry ? { registry } : {}),
     ...(clientCertHeader ? { clientCertHeader } : {}),
     ...(trustedProxies ? { trustedProxies } : {}),
+    ...(clientCertificate ? { clientCertificate } : {}),
   };
+}
+
+/**
+ * The client certificate and its key, read and checked once: each as PEM in
+ * its variable, or in the file its `_FILE` variant names. Undefined when
+ * neither is set, a throw when one is missing, set both ways, unreadable, not
+ * PEM, or the key is not the certificate's. No message names what they hold.
+ */
+function resolveClientCertificate(
+  env: Record<string, string | undefined>,
+): ClientCertificate | undefined {
+  const CERT = "OPENCONDITIONS_FEDERATION_CLIENT_CERT";
+  const KEY = "OPENCONDITIONS_FEDERATION_CLIENT_KEY";
+  /** The PEM of `name` and where it came from, for messages; undefined when it is not set. */
+  const pem = (name: string): { text: string; from: string } | undefined => {
+    const inline = env[name]?.trim() ?? "";
+    const file = env[`${name}_FILE`]?.trim() ?? "";
+    if (inline !== "" && file !== "") {
+      throw new Error(`${name} and ${name}_FILE are both set: set one`);
+    }
+    if (inline !== "") return { text: inline, from: name };
+    if (file === "") return undefined;
+    try {
+      return { text: readFileSync(file, "utf8"), from: `${name}_FILE: ${file}` };
+    } catch (err) {
+      const code = (err as NodeJS.ErrnoException).code ?? "unreadable";
+      throw new Error(`${name}_FILE: cannot read ${file} (${code})`);
+    }
+  };
+  const certPem = pem(CERT);
+  const keyPem = pem(KEY);
+  if (certPem === undefined && keyPem === undefined) return undefined;
+  if (certPem === undefined || keyPem === undefined) {
+    throw new Error(
+      `a client certificate needs both ${CERT} and ${KEY}, each as PEM or as a file named by its _FILE variant`,
+    );
+  }
+  const cert = certPem.text;
+  const key = keyPem.text;
+  let certificate: X509Certificate;
+  try {
+    certificate = new X509Certificate(cert);
+  } catch {
+    throw new Error(`${certPem.from} is not a PEM certificate`);
+  }
+  let privateKey: KeyObject;
+  try {
+    privateKey = createPrivateKey(key);
+  } catch {
+    throw new Error(`${keyPem.from} is not a PEM private key`);
+  }
+  if (!certificate.checkPrivateKey(privateKey)) {
+    throw new Error(`${keyPem.from} is not the key of the certificate (${certPem.from})`);
+  }
+  return { cert, key };
 }
 
 /** The proxies' addresses (`10.0.0.2`, `172.18.0.0/16`, `fd00::/8`); undefined when none are named. */

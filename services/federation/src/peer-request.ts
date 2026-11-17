@@ -13,6 +13,7 @@ import {
   FEDERATION_REASON_HEADER,
   type FederationFailureReason,
   federationFailureHeaders,
+  isEmptyInputFingerprint,
   isPeerBlocked,
   type MtlsContext,
   type NonceStore,
@@ -74,7 +75,9 @@ export function isTrustedProxy(proxies: BlockList, address: string | undefined):
 /**
  * Reads the client-certificate verdict a TLS-terminating proxy passes on: a
  * fingerprint in `header` is a certificate the proxy verified, its absence
- * none, and a header sent twice none either. Sound only where the proxy
+ * none, and a header sent twice none either. So is the SHA-256 of empty
+ * input, which Caddy puts in the header for a connection without a client
+ * certificate. Sound only where the proxy
  * verifies the certificate, sets the header itself whatever the client sent,
  * and is the only way to reach the service; the peer's signature is required
  * all the same. With `proxies`, the header counts only on a connection from
@@ -88,7 +91,8 @@ export function proxyMtlsContext(header: string, proxies?: BlockList) {
     const value = req.headers[header];
     if (typeof value !== "string" || value.includes(",")) return undefined;
     const fingerprint = value.trim();
-    return fingerprint ? { authorized: true, fingerprint } : undefined;
+    if (fingerprint === "" || isEmptyInputFingerprint(fingerprint)) return undefined;
+    return { authorized: true, fingerprint };
   };
 }
 

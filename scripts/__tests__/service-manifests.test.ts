@@ -335,7 +335,7 @@ describe("service manifests on OpenMapX's config model", () => {
     expect(defaults(m, Object.keys(expected))).toEqual(expected);
   });
 
-  test("federation: off by default, its database URL the only secret", () => {
+  test("federation: off by default, its database URL and client certificate key the only secrets", () => {
     const m = manifest("federation");
     // Its registry cache and a peer's archive files while they land live on its volume.
     expect(m.container.environment).toEqual({
@@ -344,7 +344,7 @@ describe("service manifests on OpenMapX's config model", () => {
       OPENCONDITIONS_FEDERATION_REGISTRY_CACHE: "/data/registry",
       TMPDIR: "/data",
     });
-    expect(secrets(m)).toEqual(["DATABASE_URL"]);
+    expect(secrets(m)).toEqual(["DATABASE_URL", "OPENCONDITIONS_FEDERATION_CLIENT_KEY"]);
     expect(properties(m)["OPENCONDITIONS_FEDERATION_ENABLED"]?.default).toBe("");
   });
 

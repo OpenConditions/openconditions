@@ -372,6 +372,40 @@ describe("POST /peer/records", () => {
     expect(page).toMatchObject({ orderedItems: [], unknown: ids });
   });
 
+  it("answers an erasure once nothing says a peer may hold the record, holding no content", async () => {
+    await storeSituation(sql, ownSituation("gone-erased", { headline: "personal" }));
+    await storeSituation(sql, ownSituation("gone-withdrawn"));
+    await tombstoneSituation(sql, situationId("gone-erased"), "rights_revoked");
+    await tombstoneSituation(sql, situationId("gone-withdrawn"), "withdrawn");
+    // Its journal entries pruned, and no subscription wanting the class any more.
+    const ids = [situationId("gone-erased"), situationId("gone-withdrawn")];
+    await sql`DELETE FROM conditions.federation_outbox WHERE record_id = ANY(${ids})`;
+    await sql`DELETE FROM conditions.federation_subscription`;
+    try {
+      const page = (await post({ class: "situation", ids })).json();
+      expect(page).toMatchObject({ unknown: [situationId("gone-withdrawn")] });
+      expect(page.orderedItems).toEqual([
+        {
+          seq: 0,
+          txid: "0",
+          operation: "delete",
+          recordClass: "situation",
+          recordId: situationId("gone-erased"),
+          canonicalId: expect.any(String),
+          kind: expect.any(String),
+          domain: "roads",
+          createdAt: NOW,
+          tombstone: true,
+          reason: "rights_revoked",
+          revision: 2,
+        },
+      ]);
+      expect(readInboundEntry(page.orderedItems[0]).ok).toBe(true);
+    } finally {
+      await subscribeAll(sql, "sub-state-route");
+    }
+  });
+
   it("keeps to the page budget, leaving the rest unanswered and withholding what never fits", async () => {
     const big = "x".repeat(400_000);
     for (const local of ["big-1", "big-2", "big-3"]) {
