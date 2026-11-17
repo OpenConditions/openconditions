@@ -343,6 +343,8 @@ instance it pinned, and this instance's inbox accepts a push only from one.
 Removing `subscribe` leaves the subscription at the peer; the peer's operator,
 or a signed `DELETE /peer/subscriptions/<id>`, ends it.
 
+A subscription is a lease of 30 days (`expiresAt` in every subscription answer), and every accepted `PATCH` renews it, one that changes nothing included. The hourly upkeep patches a matching subscription once 15 days or less of its lease remain, so an instance that runs keeps its subscriptions without anyone noticing. A subscription that is not renewed stops being pushed, is no longer shown to its peer and is deleted within the hour, so an instance that went away stops having the peer journal for it. An instance that was away longer than the lease finds no subscription at the peer on its return: its upkeep subscribes again, the peer's journal seed journals what the new subscription wants, and a pull that was away longer than its window starts from the peer's archive.
+
 A peer record with `pull` (`"pull": { "filter": { … } }`) has the service read
 the peer's journal itself, every 30 seconds, with its own cursor
 (`conditions.federation_peer_cursor`): complete whatever the push carries, so

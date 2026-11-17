@@ -147,7 +147,7 @@ export function registerSubscriptionRoutes(
     const peerId = await requirePeer(ctx, req, reply);
     if (peerId === null) return reply;
     if (await respondIfBlocked(ctx.sql, peerId, reply)) return reply;
-    const subscriptions = await listSubscriptions(ctx.sql, peerId);
+    const subscriptions = await listSubscriptions(ctx.sql, peerId, ctx.now());
     return reply.send({ subscriptions });
   });
 
@@ -281,15 +281,16 @@ export function registerSubscriptionRoutes(
   });
 }
 
-/** Loads a subscription and enforces ownership: 404 if missing, 403 if it
- *  belongs to another peer. Returns null (after sending) on either. */
+/** Loads a subscription and enforces ownership: 404 if missing or its lease
+ *  ran out, 403 if it belongs to another peer. Returns null (after sending)
+ *  on either. */
 async function loadOwned(
   ctx: SubscriptionRouteContext,
   id: string,
   peerId: string,
   reply: FastifyReply,
 ): Promise<FederationSubscription | null> {
-  const subscription = await getSubscription(ctx.sql, id);
+  const subscription = await getSubscription(ctx.sql, id, ctx.now());
   if (subscription === null) {
     await reply.status(404).send({ error: "subscription not found" });
     return null;

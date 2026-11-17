@@ -9,6 +9,7 @@ import {
   advanceJournalSeenXid,
   createInMemoryRateLimiter,
   ensureJournalEpoch,
+  expireSubscriptions,
   InMemoryNonceStore,
   type JournalLagWatch,
   journalLagNotice,
@@ -63,6 +64,9 @@ const PULL_CYCLE_MS = 30_000;
 
 /** How often the journal's fence lag is checked against the convergence bound. */
 const LAG_CYCLE_MS = 60_000;
+
+/** How often subscriptions whose lease ran out are deleted. */
+const EXPIRY_CYCLE_MS = 60 * 60 * 1000;
 
 async function boot() {
   const url = requireCredential(process.env, "DATABASE_URL");
@@ -237,6 +241,27 @@ async function boot() {
     }
   };
   const pruneTimer = setInterval(() => void runPrune(), PRUNE_CYCLE_MS);
+
+  // Lease expiry: a subscription its peer stopped renewing is deleted, at boot
+  // and hourly, so this instance stops journalling for a peer that went away.
+  // Single-flight.
+  let expiryRunning = false;
+  const runExpiry = async () => {
+    if (expiryRunning) return;
+    expiryRunning = true;
+    try {
+      const expired = await expireSubscriptions(sql, new Date().toISOString());
+      for (const { id, peerId } of expired) {
+        console.info(`[federation-api] subscription ${id} of ${peerId} expired: not renewed`);
+      }
+    } catch (err) {
+      console.error("[federation-api] subscription expiry failed:", err);
+    } finally {
+      expiryRunning = false;
+    }
+  };
+  void runExpiry();
+  const expiryTimer = setInterval(() => void runExpiry(), EXPIRY_CYCLE_MS);
 
   // Lag check: the journal's fence holds back every committed entry while an
   // older write transaction is open anywhere on the server. Warns while that
@@ -430,6 +455,7 @@ async function boot() {
     if (pullTimer) clearInterval(pullTimer);
     if (lagTimer) clearInterval(lagTimer);
     clearInterval(pruneTimer);
+    clearInterval(expiryTimer);
     await app.close();
     await sql.end();
     await lock.release();

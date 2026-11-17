@@ -25,6 +25,12 @@
  * by the tens of thousands every minute; and a webhook demands a public https
  * `inboxUrl` (an SSRF-guarded target — the same egress guard the POST later
  * dials through).
+ *
+ * A subscription is a lease ({@link SUBSCRIPTION_LEASE_SEC}): created with
+ * one, renewed by every accepted PATCH. One that ran out stops acting (it is
+ * not pushed and its peer no longer sees it) and is deleted by
+ * {@link expireSubscriptions}, so a peer that disappeared stops having this
+ * instance journal for it.
  */
 
 import { assertPublicUrl } from "@openconditions/ingest-framework";
@@ -37,6 +43,19 @@ export type SubscriptionStatus = "active" | "push_disabled";
 
 /** The delivery modes a subscription may request. */
 export const DELIVERY_MODES: readonly DeliveryMode[] = ["pull", "webhook", "sse"];
+
+/**
+ * How long a subscription lasts unless renewed, in seconds: 30 days, the
+ * Tier-1 live window. A subscriber away longer than that has to start over
+ * from the archive anyway, so a subscription it no longer renews is not worth
+ * journalling for.
+ */
+export const SUBSCRIPTION_LEASE_SEC = 30 * 86_400;
+
+/** When a subscription created or renewed at `now` runs out. */
+function leaseEnd(now: string): Date {
+  return new Date(Date.parse(now) + SUBSCRIPTION_LEASE_SEC * 1000);
+}
 
 export interface FederationSubscription {
   id: string;
@@ -52,6 +71,8 @@ export interface FederationSubscription {
   status: SubscriptionStatus;
   createdAt: string;
   updatedAt: string;
+  /** When the lease runs out unless a PATCH renews it (ISO 8601). */
+  expiresAt: string;
 }
 
 export interface CreateSubscriptionInput {
@@ -340,6 +361,7 @@ interface SubscriptionRow {
   status: SubscriptionStatus;
   created_at: Date;
   updated_at: Date;
+  expires_at: Date;
 }
 
 function rowToSubscription(row: SubscriptionRow): FederationSubscription {
@@ -356,15 +378,19 @@ function rowToSubscription(row: SubscriptionRow): FederationSubscription {
     status: row.status,
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
+    expiresAt: row.expires_at.toISOString(),
   };
 }
 
 /**
  * Creates a subscription for `peerId`. Validates the shape first (throws
  * {@link SubscriptionValidationError} on an over-broad/invalid request), then
- * inserts a fresh row at the journal-start cursor `"0.0"`. A pull
- * subscription, or a webhook to an inbox, the peer already holds is refused
- * with {@link SubscriptionConflictError}: the peer patches that one.
+ * inserts a fresh row at the journal-start cursor `"0.0"`, leased for
+ * {@link SUBSCRIPTION_LEASE_SEC}. A pull subscription, or a webhook to an
+ * inbox, the peer already holds is refused with
+ * {@link SubscriptionConflictError}: the peer patches that one. The peer's
+ * expired subscriptions are deleted first, in the same transaction, so one not
+ * yet deleted never answers 409 for a subscription the peer cannot see.
  */
 export async function createSubscription(
   sql: postgres.Sql,
@@ -382,41 +408,67 @@ export async function createSubscription(
 
   const id = globalThis.crypto.randomUUID();
   const at = new Date(now);
-  const [row] = await sql<SubscriptionRow[]>`
-    INSERT INTO conditions.federation_subscription
-      (id, peer_id, filter, delivery_mode, inbox_url, cursor, priority_only, status,
-       created_at, updated_at)
-    VALUES (${id}, ${peerId}, ${sql.json(filter as never)}, ${deliveryMode}, ${inboxUrl},
-            '0.0', ${priorityOnly}, 'active', ${at}, ${at})
-    ON CONFLICT DO NOTHING
-    RETURNING *`;
-  if (row === undefined) {
-    const held = await heldTarget(sql, peerId, deliveryMode, inboxUrl);
-    throw new SubscriptionConflictError(held ?? "");
-  }
-  return rowToSubscription(row);
+  return sql.begin(async (tx) => {
+    await tx`
+      DELETE FROM conditions.federation_subscription
+      WHERE peer_id = ${peerId} AND expires_at <= ${at}`;
+    const [row] = await tx<SubscriptionRow[]>`
+      INSERT INTO conditions.federation_subscription
+        (id, peer_id, filter, delivery_mode, inbox_url, cursor, priority_only, status,
+         created_at, updated_at, expires_at)
+      VALUES (${id}, ${peerId}, ${tx.json(filter as never)}, ${deliveryMode}, ${inboxUrl},
+              '0.0', ${priorityOnly}, 'active', ${at}, ${at}, ${leaseEnd(now)})
+      ON CONFLICT DO NOTHING
+      RETURNING *`;
+    if (row === undefined) {
+      const held = await heldTarget(tx, peerId, deliveryMode, inboxUrl);
+      throw new SubscriptionConflictError(held ?? "");
+    }
+    return rowToSubscription(row);
+  });
 }
 
-/** Lists a peer's own subscriptions, newest first. */
+/** Lists a peer's own subscriptions whose lease has not run out at `now`, newest first. */
 export async function listSubscriptions(
   sql: postgres.Sql,
   peerId: string,
+  now: string,
 ): Promise<FederationSubscription[]> {
   const rows = await sql<SubscriptionRow[]>`
     SELECT * FROM conditions.federation_subscription
-    WHERE peer_id = ${peerId}
+    WHERE peer_id = ${peerId} AND expires_at > ${new Date(now)}
     ORDER BY created_at DESC, id DESC`;
   return rows.map(rowToSubscription);
 }
 
-/** Loads one subscription by id, or null if it does not exist. */
+/**
+ * Loads one subscription by id, or null if it does not exist or its lease
+ * ran out at `now`.
+ */
 export async function getSubscription(
   sql: postgres.Sql,
   id: string,
+  now: string,
 ): Promise<FederationSubscription | null> {
   const [row] = await sql<SubscriptionRow[]>`
-    SELECT * FROM conditions.federation_subscription WHERE id = ${id}`;
+    SELECT * FROM conditions.federation_subscription
+    WHERE id = ${id} AND expires_at > ${new Date(now)}`;
   return row ? rowToSubscription(row) : null;
+}
+
+/**
+ * Deletes the subscriptions whose lease ran out at `now`, returning which:
+ * their peers stopped renewing them.
+ */
+export async function expireSubscriptions(
+  sql: postgres.Sql,
+  now: string,
+): Promise<{ id: string; peerId: string }[]> {
+  const rows = await sql<{ id: string; peer_id: string }[]>`
+    DELETE FROM conditions.federation_subscription
+    WHERE expires_at <= ${new Date(now)}
+    RETURNING id, peer_id`;
+  return rows.map((row) => ({ id: row.id, peerId: row.peer_id }));
 }
 
 /**
@@ -431,6 +483,10 @@ export async function getSubscription(
  * it and PATCHes — e.g. a new `inboxUrl` — to resume push without having to
  * DELETE and recreate (and re-push history). The push cursor is left untouched,
  * so resumption is exactly where delivery stalled.
+ *
+ * Every accepted PATCH, one that changes nothing included, renews the lease
+ * for {@link SUBSCRIPTION_LEASE_SEC} from `now`. A subscription whose lease
+ * already ran out is not patched (null): the peer creates it again.
  */
 export async function updateSubscription(
   sql: postgres.Sql,
@@ -442,13 +498,18 @@ export async function updateSubscription(
   return sql.begin(async (tx) => {
     const [current] = await tx<SubscriptionRow[]>`
       SELECT * FROM conditions.federation_subscription
-      WHERE id = ${existing.id} AND peer_id = ${existing.peerId} FOR UPDATE`;
+      WHERE id = ${existing.id} AND peer_id = ${existing.peerId}
+        AND expires_at > ${new Date(now)} FOR UPDATE`;
     if (!current) return null;
     const filter = patch.filter ?? current.filter;
     const deliveryMode = patch.deliveryMode ?? current.delivery_mode;
     const inboxUrl = patch.inboxUrl !== undefined ? patch.inboxUrl : current.inbox_url;
     const priorityOnly = patch.priorityOnly ?? current.priority_only;
     validateSubscriptionShape({ filter, deliveryMode, inboxUrl, priorityOnly }, inboxHosts);
+    // An expired subscription of the peer's must not stand in the way either.
+    await tx`
+      DELETE FROM conditions.federation_subscription
+      WHERE peer_id = ${current.peer_id} AND expires_at <= ${new Date(now)}`;
     const held = await heldTarget(tx, current.peer_id, deliveryMode, inboxUrl, current.id);
     if (held !== undefined) throw new SubscriptionConflictError(held);
     const [row] = await tx<SubscriptionRow[]>`
@@ -456,7 +517,7 @@ export async function updateSubscription(
       SET filter = ${tx.json(filter as never)}, delivery_mode = ${deliveryMode},
           inbox_url = ${inboxUrl}, priority_only = ${priorityOnly},
           status = 'active', push_failures = 0, revision = revision + 1,
-          updated_at = ${new Date(now)}
+          updated_at = ${new Date(now)}, expires_at = ${leaseEnd(now)}
       WHERE id = ${current.id} RETURNING *`;
     return rowToSubscription(row!);
   });

@@ -12,6 +12,10 @@
  *   journals what this instance reads of its outbox (a peer journals only
  *   what some subscription wants).
  *
+ * A subscription at a peer is a lease the peer ends unless it is renewed;
+ * the upkeep renews a matching one well before it runs out, and creates one
+ * again when the peer let it lapse.
+ *
  * Every request is RFC-9421-signed with this instance's key, which the peer
  * verifies against its pin of this instance; the peer sees and changes only
  * this instance's own subscriptions. A response the peer signs is verified
@@ -45,6 +49,13 @@ export interface PeerPull {
   filter: RecordFilter;
 }
 
+/**
+ * How long before its stated lease runs out a matching subscription at a peer
+ * is renewed, in seconds: 15 days, half the lease, so an hourly upkeep that
+ * fails for days still renews it in time.
+ */
+export const SUBSCRIPTION_RENEW_BEFORE_SEC = 15 * 86_400;
+
 /** The subscription this instance wants at a peer. */
 export interface WantedSubscription {
   deliveryMode: Exclude<DeliveryMode, "sse">;
@@ -55,7 +66,7 @@ export interface WantedSubscription {
 }
 
 export type EnsureSubscriptionOutcome =
-  | { ok: true; status: "created" | "updated" | "unchanged"; id: string }
+  | { ok: true; status: "created" | "updated" | "renewed" | "unchanged"; id: string }
   | { ok: false; reason: string };
 
 /**
@@ -170,17 +181,25 @@ const sameTarget = (held: FederationSubscription, want: WantedSubscription) =>
   held.deliveryMode === want.deliveryMode &&
   (want.deliveryMode === "pull" || held.inboxUrl === want.inboxUrl);
 
+/** Whether a held subscription's lease, as the peer states it, still has long to run at `now`. */
+function leaseLasts(held: FederationSubscription, now: string): boolean {
+  const end = typeof held.expiresAt === "string" ? Date.parse(held.expiresAt) : Number.NaN;
+  return Number.isFinite(end) && end - Date.parse(now) > SUBSCRIPTION_RENEW_BEFORE_SEC * 1000;
+}
+
 /**
  * Makes sure `peer` holds the subscription this instance wants: creates it
  * when the peer holds none of its mode (and, for a webhook, to this inbox),
  * patches one whose filter or priority differs or whose push the peer
- * disabled, and leaves a matching one alone. Never throws for the peer's
- * answer: a failure is returned with its reason.
+ * disabled, renews a matching one whose lease has
+ * {@link SUBSCRIPTION_RENEW_BEFORE_SEC} or less to run (or states none), and
+ * leaves a matching one alone otherwise. Never throws for the peer's answer:
+ * a failure is returned with its reason.
  */
 export async function ensurePeerSubscription(
   peer: PeerRecord,
   want: WantedSubscription,
-  opts: { signingKey: InstanceKey; fetchImpl: typeof fetch },
+  opts: { signingKey: InstanceKey; fetchImpl: typeof fetch; now: string },
 ): Promise<EnsureSubscriptionOutcome> {
   const url = peerRouteUrl(peer, "/peer/subscriptions");
   const desired = {
@@ -215,7 +234,7 @@ export async function ensurePeerSubscription(
       held.status === "active" &&
       held.priorityOnly === want.priorityOnly &&
       JSON.stringify(canonical(held.filter)) === JSON.stringify(canonical(want.filter));
-    if (same) return { ok: true, status: "unchanged", id: held.id };
+    if (same && leaseLasts(held, opts.now)) return { ok: true, status: "unchanged", id: held.id };
     const { response: patched } = await signedPeerRequest(
       opts.fetchImpl,
       opts.signingKey,
@@ -223,8 +242,9 @@ export async function ensurePeerSubscription(
       `${url}/${encodeURIComponent(held.id)}`,
       desired,
     );
-    if (!patched.ok) return failure(patched, "updating the subscription");
-    return { ok: true, status: "updated", id: held.id };
+    if (!patched.ok)
+      return failure(patched, same ? "renewing the subscription" : "updating the subscription");
+    return { ok: true, status: same ? "renewed" : "updated", id: held.id };
   } catch (err) {
     return { ok: false, reason: `the peer could not be reached: ${String(err)}` };
   }

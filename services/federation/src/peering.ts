@@ -58,7 +58,11 @@ export async function refreshPeers(
               ok: false as const,
               reason: "this instance has no active signing key",
             })
-          : ensurePeerSubscription(peer, want, { signingKey, fetchImpl: opts.fetchImpl });
+          : ensurePeerSubscription(peer, want, {
+              signingKey,
+              fetchImpl: opts.fetchImpl,
+              now: opts.now,
+            });
       if (peer.subscribe !== undefined) {
         result.subscription = await keep({
           deliveryMode: "webhook",
