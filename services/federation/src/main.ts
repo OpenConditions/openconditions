@@ -46,6 +46,9 @@ import { REGISTRY_RETRY_MS, RegistryDiscovery } from "./registry.js";
 import { build } from "./server.js";
 import { warnWithheld } from "./withheld.js";
 
+/** How many days before the registry's trusted root expires each sync warns about it. */
+const REGISTRY_ROOT_WARN_DAYS = 30;
+
 const PORT = parseInt(process.env["PORT"] || "4300", 10);
 const HOST = process.env["HOST"] || "0.0.0.0";
 
@@ -403,9 +406,18 @@ async function boot() {
       const syncRegistryNow = async () => {
         let next = REGISTRY_SYNC_INTERVAL_HOURS * 60 * 60 * 1000;
         try {
-          const { added, removed, changed, storeError } = await discovery.sync(
+          const { added, removed, changed, storeError, rootExpires } = await discovery.sync(
             new Date().toISOString(),
           );
+          if (
+            rootExpires !== undefined &&
+            Date.parse(rootExpires) - Date.now() < REGISTRY_ROOT_WARN_DAYS * 86_400_000
+          ) {
+            console.warn(
+              `[federation-api] registry: its trusted root expires ${rootExpires}; once it has, ` +
+                "no sync verifies until the registry publishes a newer root",
+            );
+          }
           if (added.length + removed.length + changed.length > 0) {
             console.info(
               `[federation-api] registry: added ${added.join(", ") || "none"}, ` +
@@ -463,11 +475,22 @@ async function boot() {
               err,
             );
           } else {
-            console.error(
-              `[federation-api] registry sync failed; the ${peers.discovered().length} peers ` +
-                "of the last verified sync stay:",
-              err,
-            );
+            const expired = discovery.expire(new Date().toISOString());
+            if (expired !== undefined) {
+              console.error(
+                `[federation-api] registry sync failed, and the targets metadata its ` +
+                  `${expired.peers} peers came from expired ${expired.expires}: they are no ` +
+                  "longer trusted until a sync succeeds:",
+                err,
+              );
+              void refreshAll();
+            } else {
+              console.error(
+                `[federation-api] registry sync failed; the ${peers.discovered().length} peers ` +
+                  "of the last verified sync stay:",
+                err,
+              );
+            }
           }
         }
         registryTimer = setTimeout(() => void syncRegistryNow(), next);

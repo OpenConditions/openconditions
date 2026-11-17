@@ -12,7 +12,15 @@
  * docs/federation-onboarding.md), not a code path here.
  */
 import { createHash } from "node:crypto";
-import { copyFileSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { join, resolve } from "node:path";
 import { canonicalize } from "@tufjs/canonical-json";
 import {
@@ -105,8 +113,21 @@ function hashesFor(bytes: Buffer): Record<string, string> {
   };
 }
 
+/** What a root says about who may sign what: its keys and each role's key ids and threshold. */
+function rootAuthority(signed: { keys?: unknown; roles?: unknown }): string {
+  return canonicalize({ keys: signed.keys ?? null, roles: signed.roles ?? null });
+}
+
 /**
- * Signs the registry directory into a TUF repository. Deterministic by
+ * Signs the registry directory into a TUF repository. A release signs new
+ * targets, snapshot and timestamp metadata; the root of its version is
+ * written once and kept byte for byte from then on, because a client never
+ * fetches a root version it already holds: a root signed again under the
+ * same version, with other keys or a later expiry, would reach no client
+ * that has it. Changing the root, its expiry included, takes the next root
+ * version, signed by the previous root's keys as well. Entry files of
+ * instances that are no longer listed are removed from the repository's
+ * targets. Deterministic by
  * design: the same registry contents, keys, versions, and `now` produce
  * byte-identical metadata (canonical JSON output + deterministic Ed25519),
  * so a release can be reproduced and audited.
@@ -157,6 +178,13 @@ export async function signRegistry(options: SignRegistryOptions): Promise<Signed
     );
   }
 
+  if (resolve(options.registryDir) !== resolve(targetsDir)) {
+    const listed = new Set(targetFiles);
+    for (const file of readdirSync(targetsDir)) {
+      if (file.endsWith(".yaml") && !listed.has(file)) rmSync(join(targetsDir, file));
+    }
+  }
+
   const root = new Root({
     version: rootVersion,
     specVersion: TUF_SPEC_VERSION,
@@ -175,7 +203,24 @@ export async function signRegistry(options: SignRegistryOptions): Promise<Signed
   }
   const rootMetadata = new Metadata(root);
   for (const signer of options.roles.root.signers) rootMetadata.sign(signer.sign);
-  const rootBytes = metadataBytes(rootMetadata);
+  const rootPath = join(metadataDir, `${rootVersion}.root.json`);
+  let rootBytes = metadataBytes(rootMetadata);
+  if (existsSync(rootPath)) {
+    const published = readFileSync(rootPath);
+    const signed = (JSON.parse(published.toString("utf8")) as { signed?: Record<string, unknown> })
+      .signed;
+    const wanted = rootMetadata.toJSON()["signed"] as Record<string, unknown>;
+    const sameAuthority = signed !== undefined && rootAuthority(signed) === rootAuthority(wanted);
+    const sameExpiry =
+      options.expires?.root === undefined || signed?.["expires"] === wanted["expires"];
+    if (!sameAuthority || !sameExpiry) {
+      throw new Error(
+        `root version ${rootVersion} is already published in ${metadataDir} and is never rewritten: ` +
+          `publish its change as root version ${rootVersion + 1}, signed by this root's keys as well`,
+      );
+    }
+    rootBytes = published;
+  }
 
   const targetsMetadata = new Metadata(targets);
   for (const signer of options.roles.targets.signers) targetsMetadata.sign(signer.sign);
@@ -210,7 +255,7 @@ export async function signRegistry(options: SignRegistryOptions): Promise<Signed
   const timestampMetadata = new Metadata(timestamp);
   for (const signer of options.roles.timestamp.signers) timestampMetadata.sign(signer.sign);
 
-  writeFileSync(join(metadataDir, `${rootVersion}.root.json`), rootBytes);
+  writeFileSync(rootPath, rootBytes);
   writeFileSync(join(metadataDir, "targets.json"), targetsBytes);
   writeFileSync(join(metadataDir, "snapshot.json"), snapshotBytes);
   writeFileSync(join(metadataDir, "timestamp.json"), metadataBytes(timestampMetadata));
