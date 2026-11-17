@@ -33,6 +33,11 @@
  * (journal.ts); every page states it, and a page for a cursor this history has
  * not reached says so (`cursorAhead`) instead of answering an empty page that
  * looks like a quiet journal.
+ *
+ * A page also stays within a byte budget ({@link OUTBOX_PAGE_MAX_ENTRY_BYTES})
+ * a receiver accepts: it ends early, with `next`, before the entry that would
+ * take it over, and an entry too large for any page is withheld (left out, the
+ * cursor moving past it) and reported to the caller, never sent.
  */
 import { createHash } from "node:crypto";
 import type { RecordClass } from "@openconditions/model";
@@ -142,10 +147,11 @@ export interface OutboxPage {
   partOf: string;
   next?: string;
   /**
-   * The `(txid, seq)` composite cursor of the last entry this query SCANNED,
-   * wire-encoded — an all-filtered page still advances it. Equal to the request
-   * `after` (encoded) when nothing stable is new. This is the exact string a
-   * subscriber stores and replays as `after` on its next poll.
+   * The `(txid, seq)` composite cursor of the last entry this page covers,
+   * wire-encoded — an all-filtered page still advances it; a page that ended
+   * early for its size stops before the entry that did not fit. Equal to the
+   * request `after` (encoded) when nothing stable is new. This is the exact
+   * string a subscriber stores and replays as `after` on its next poll.
    */
   highWaterMark: string;
   /**
@@ -174,6 +180,40 @@ export interface OutboxPage {
 
 export const OUTBOX_DEFAULT_LIMIT = 100;
 export const OUTBOX_MAX_LIMIT = 500;
+
+/**
+ * The most bytes the entries of one page may take together, each measured as
+ * the UTF-8 length of its JSON. It leaves room under the 1 MiB a receiver
+ * accepts for the page around them (an archive manifest included).
+ */
+export const OUTBOX_PAGE_MAX_ENTRY_BYTES = 900_000;
+
+/** An entry larger than a whole page may be, which is therefore never federated. */
+export interface WithheldEntry {
+  recordClass: string;
+  recordId: string;
+  bytes: number;
+}
+
+/**
+ * A page as read, with the entries withheld from it for their size. The
+ * withheld list is for the caller to report; it is not part of the page and
+ * is never sent ({@link wirePage}).
+ */
+export interface OutboxRead extends OutboxPage {
+  withheld: WithheldEntry[];
+}
+
+/** The page of a read as it goes on the wire, without what was withheld. */
+export function wirePage<P extends OutboxRead>(read: P): Omit<P, "withheld"> {
+  const { withheld: _withheld, ...page } = read;
+  return page;
+}
+
+/** The UTF-8 length of an entry's JSON: what it adds to a page. */
+export function entryBytes(entry: unknown): number {
+  return Buffer.byteLength(JSON.stringify(entry), "utf8");
+}
 
 interface JournalRow {
   seq: string;
@@ -290,10 +330,16 @@ export async function readCursorStanding(
  * the request `after` when nothing stable is new. Re-reading the same cursor is
  * idempotent — the journal is append-only.
  *
+ * The page's entries stay within {@link OUTBOX_PAGE_MAX_ENTRY_BYTES}: the
+ * scanned rows are walked in order, and the first kept entry that would take
+ * the page over ends it before that row, with `next` set and the frontier at
+ * the row before. An entry over the budget on its own is withheld: left out
+ * and stepped over like one the filter drops, and listed in `withheld`.
+ *
  * Every page carries the journal's epoch, and says `cursorAhead` for a cursor
  * this journal never handed out ({@link readCursorStanding}).
  */
-export async function readOutbox(sql: postgres.Sql, q: OutboxQuery): Promise<OutboxPage> {
+export async function readOutbox(sql: postgres.Sql, q: OutboxQuery): Promise<OutboxRead> {
   const after = normalizeCursor(q.after);
   const limit = Math.min(Math.max(q.limit ?? OUTBOX_DEFAULT_LIMIT, 1), OUTBOX_MAX_LIMIT);
   const partOf = q.partOf ?? "/peer/outbox";
@@ -325,22 +371,51 @@ export async function readOutbox(sql: postgres.Sql, q: OutboxQuery): Promise<Out
     ORDER BY o.txid ASC, o.seq ASC
     LIMIT ${limit}`;
 
-  const last = rows.length > 0 ? rows[rows.length - 1]! : undefined;
-  const frontier: OutboxCursor = last ? { txid: last.txid, seq: Number(last.seq) } : after;
-  const highWaterMark = encodeOutboxCursor(frontier);
+  // What the filter keeps, by the cursor of the row each entry came from (the
+  // filter may turn an entry into another, a withdrawn report into a delete).
   const entries = rows.map(rowToEntry).filter((e): e is OutboxEntry => e !== undefined);
-  const orderedItems = applyRecordFilter(entries, q.filter, now);
+  const kept = new Map<string, OutboxEntry>(
+    applyRecordFilter(entries, q.filter, now).map((e) => [`${e.txid}.${e.seq}`, e]),
+  );
 
-  const page: OutboxPage = {
+  let frontier: OutboxCursor = after;
+  let bytes = 0;
+  let cut = false;
+  const orderedItems: OutboxEntry[] = [];
+  const withheld: WithheldEntry[] = [];
+  for (const row of rows) {
+    const entry = kept.get(`${row.txid}.${row.seq}`);
+    if (entry !== undefined) {
+      const size = entryBytes(entry);
+      if (size > OUTBOX_PAGE_MAX_ENTRY_BYTES) {
+        withheld.push({
+          recordClass: entry.operation === "liveness" ? "source" : entry.recordClass,
+          recordId: entry.operation === "liveness" ? entry.sourceId : entry.recordId,
+          bytes: size,
+        });
+      } else if (bytes + size > OUTBOX_PAGE_MAX_ENTRY_BYTES) {
+        cut = true;
+        break;
+      } else {
+        orderedItems.push(entry);
+        bytes += size;
+      }
+    }
+    frontier = { txid: row.txid, seq: Number(row.seq) };
+  }
+  const highWaterMark = encodeOutboxCursor(frontier);
+
+  const page: OutboxRead = {
     type: "OrderedCollectionPage",
     partOf,
     highWaterMark,
     epoch: journal.epoch,
     orderedItems,
+    withheld,
   };
   if (q.priorityOnly) page.priorityRestricted = true;
   if (journal.cursorAhead) page.cursorAhead = true;
-  if (rows.length === limit) {
+  if (cut || rows.length === limit) {
     const params = q.nextParams ? `&${q.nextParams}` : "";
     page.next = `${partOf}?after=${highWaterMark}${params}`;
   }

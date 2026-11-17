@@ -21,6 +21,12 @@
  * or one that was away longer than its window, starts from the archive's
  * night and the pages carry the rest.
  *
+ * A page larger than this instance accepts ({@link PULL_MAX_PAGE_BYTES}) is
+ * asked for again at a quarter of the limit, and the pull keeps the smaller
+ * limit; only an entry too large on its own, at a limit of 1, is refused. A
+ * conforming peer ends its pages before that size, so this only meets a peer
+ * that does not.
+ *
  * Every page names the epoch of the peer's journal, which the cursor is kept
  * with. A page of another epoch, or one that says the cursor is ahead of the
  * peer's journal (its database went back), voids the cursor: it goes back to
@@ -317,9 +323,11 @@ export async function pullPeer(
     return { ...result, error };
   };
   const query = filterQuery(peer.pull.filter);
-  query.set("limit", String(PULL_PAGE_LIMIT));
+  // Lowered for the rest of the pull when a page arrives too large.
+  let limit = PULL_PAGE_LIMIT;
   let catchingUp = result.cursor === "0.0";
   for (let i = 0; i < (ctx.maxPages ?? PULL_MAX_PAGES); i++) {
+    query.set("limit", String(limit));
     query.set("after", result.cursor);
     const url = `${peerRouteUrl(peer, catchingUp ? "/peer/backfill" : "/peer/outbox")}?${query}`;
     const signal = AbortSignal.timeout(ctx.pageTimeoutMs ?? PULL_PAGE_TIMEOUT_MS);
@@ -337,7 +345,13 @@ export async function pullPeer(
       ));
       body = await readCapped(res, PULL_MAX_PAGE_BYTES);
     } catch (err) {
-      if (err instanceof PageTooLarge) return refuse("schema", err.message);
+      if (err instanceof PageTooLarge) {
+        if (limit === 1) {
+          return refuse("schema", `a single entry is larger than ${PULL_MAX_PAGE_BYTES} bytes`);
+        }
+        limit = Math.max(1, Math.floor(limit / 4));
+        continue;
+      }
       await recordAvailability(sql, peer.instanceId, false, ctx.now());
       return { ...result, error: `the peer could not be reached: ${String(err)}` };
     }
@@ -371,8 +385,8 @@ export async function pullPeer(
       return refuse("schema", "the page carries no cursor or no entries");
     }
     const items = page.orderedItems as unknown[];
-    if (items.length > PULL_PAGE_LIMIT) {
-      return refuse("schema", `the page holds more than ${PULL_PAGE_LIMIT} entries`);
+    if (items.length > limit) {
+      return refuse("schema", `the page holds more than ${limit} entries`);
     }
     const epoch = page.epoch;
     if (typeof epoch !== "string" || epoch.length === 0 || epoch.length > MAX_EPOCH_LENGTH) {

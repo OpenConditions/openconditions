@@ -46,6 +46,7 @@ import { backfillFloorIso } from "./backfill.js";
 import type { PeerBook } from "./peer-book.js";
 import { requirePeer, respondIfBlocked } from "./peer-request.js";
 import { SseStreamPump } from "./stream-pump.js";
+import { warnWithheld } from "./withheld.js";
 
 const SUBSCRIPTIONS_PATH = "/peer/subscriptions";
 const STREAM_PATH = "/peer/stream";
@@ -274,8 +275,8 @@ export function registerSubscriptionRoutes(
     // time, so no entry is skipped and the (txid,seq) semantics are unchanged.
     const pump = new SseStreamPump(
       {
-        readPage: (after) =>
-          readOutbox(ctx.sql, {
+        readPage: async (after) => {
+          const read = await readOutbox(ctx.sql, {
             after,
             filter,
             ...(priorityOnly ? { priorityOnly } : {}),
@@ -283,7 +284,10 @@ export function registerSubscriptionRoutes(
             partOf: `${ctx.baseUrl}${STREAM_PATH}`,
             limit: STREAM_TICK_LIMIT,
             now: ctx.now(),
-          }),
+          });
+          warnWithheld(read.withheld);
+          return read;
+        },
         writer: {
           write: (frame) => reply.raw.write(frame),
           onceDrain: (listener) => reply.raw.once("drain", listener),

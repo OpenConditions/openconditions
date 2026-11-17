@@ -97,16 +97,21 @@ export type {
   OutboxOperation,
   OutboxPage,
   OutboxQuery,
+  OutboxRead,
+  WithheldEntry,
 } from "./outbox.js";
 export {
   decodeOutboxCursor,
   encodeOutboxCursor,
+  entryBytes,
   OUTBOX_CURSOR_START,
   OUTBOX_DEFAULT_LIMIT,
   OUTBOX_MAX_LIMIT,
+  OUTBOX_PAGE_MAX_ENTRY_BYTES,
   outboxEtag,
   readCursorStanding,
   readOutbox,
+  wirePage,
 } from "./outbox.js";
 export type { PruneOutboxOptions, PruneOutboxResult } from "./outbox-retention.js";
 export {

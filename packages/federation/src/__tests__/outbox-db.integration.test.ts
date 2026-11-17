@@ -16,12 +16,16 @@ import { ensureJournalEpoch } from "../journal.js";
 import {
   decodeOutboxCursor,
   encodeOutboxCursor,
+  entryBytes,
   OUTBOX_CURSOR_START,
   OUTBOX_DEFAULT_LIMIT,
+  OUTBOX_PAGE_MAX_ENTRY_BYTES,
   type OutboxCursor,
   type OutboxPage,
+  type OutboxRead,
   outboxEtag,
   readOutbox,
+  wirePage,
 } from "../outbox.js";
 import type { OutboxEntry, RecordOutboxEntry } from "../record-filter.js";
 import {
@@ -739,6 +743,101 @@ describe("readOutbox: the composite (txid, seq) cursor page", () => {
       [situationId("pri-works"), "delete"],
     ]);
     expect(page.priorityRestricted).toBe(true);
+  });
+});
+
+describe("readOutbox: the page's byte budget", () => {
+  /** An incident whose headline makes its entry about `bytes` long. */
+  const sized = (local: string, bytes: number, over: Record<string, unknown> = {}) =>
+    incidentDraft(local, { headline: [{ lang: "nl", text: "x".repeat(bytes) }], ...over });
+
+  /** Every page from `after` to the tail, each read at the largest limit. */
+  async function pagesFrom(
+    after: OutboxCursor,
+    filter?: { bbox: [number, number, number, number] },
+  ) {
+    const pages: OutboxRead[] = [];
+    let cursor = encodeOutboxCursor(after);
+    for (;;) {
+      const page = await readOutbox(sql, {
+        after: cursor,
+        limit: 500,
+        now: NOW,
+        ...(filter ? { filter } : {}),
+      });
+      pages.push(page);
+      if (page.next === undefined) return pages;
+      expect(page.highWaterMark).not.toBe(cursor);
+      cursor = page.highWaterMark;
+    }
+  }
+
+  const pageBytes = (page: OutboxPage) =>
+    page.orderedItems.reduce((sum, e) => sum + entryBytes(e), 0);
+
+  it("splits a run past the budget into pages within it, without a gap or a repeat", async () => {
+    const base = await frontier();
+    const names = Array.from({ length: 7 }, (_, i) => `sized-${i}`);
+    for (const name of names) await writeOwn(sql, sized(name, 200_000));
+
+    const pages = await pagesFrom(base);
+    expect(pages.length).toBeGreaterThan(1);
+    for (const page of pages) {
+      expect(pageBytes(page)).toBeLessThanOrEqual(OUTBOX_PAGE_MAX_ENTRY_BYTES);
+      expect(page.withheld).toEqual([]);
+    }
+    expect(pages.flatMap((p) => ids(p.orderedItems))).toEqual(names.map((n) => situationId(n)));
+    expect(pages.slice(0, -1).every((p) => p.next !== undefined)).toBe(true);
+    expect(pages.at(-1)!.next).toBeUndefined();
+    // Each page ends on its own last entry: the next one starts right after it.
+    for (const page of pages) {
+      expect(page.highWaterMark).toBe(cursorOf(page.orderedItems.at(-1)!));
+    }
+  });
+
+  it("withholds an entry larger than a page and serves the entries after it", async () => {
+    const base = await frontier();
+    await writeOwn(sql, incidentDraft("around-a"));
+    await writeOwn(sql, sized("too-large", OUTBOX_PAGE_MAX_ENTRY_BYTES));
+    await writeOwn(sql, incidentDraft("around-b"));
+
+    const page = await readOutbox(sql, { after: base, limit: 500, now: NOW });
+    expect(ids(page.orderedItems)).toEqual([situationId("around-a"), situationId("around-b")]);
+    expect(page.withheld).toEqual([
+      {
+        recordClass: "situation",
+        recordId: situationId("too-large"),
+        bytes: expect.any(Number) as number,
+      },
+    ]);
+    expect(page.withheld[0]!.bytes).toBeGreaterThan(OUTBOX_PAGE_MAX_ENTRY_BYTES);
+    expect(page.next).toBeUndefined();
+    expect(page.highWaterMark).toBe(encodeOutboxCursor(await frontier()));
+    expect(JSON.stringify(wirePage(page))).not.toContain("withheld");
+  });
+
+  it("moves the frontier over a filtered row before the cut, never over one after it", async () => {
+    const base = await frontier();
+    const inside = { lon: 5.1 };
+    const outside = { lon: 100.5 };
+    await writeOwn(sql, sized("cut-a", 300_000, inside));
+    await writeOwn(sql, sized("cut-b", 300_000, inside));
+    await writeOwn(sql, incidentDraft("cut-dropped-before", outside));
+    await writeOwn(sql, sized("cut-c", 400_000, inside));
+    await writeOwn(sql, incidentDraft("cut-dropped-after", outside));
+    const filter = { bbox: [5.0, 52.0, 5.5, 52.5] as [number, number, number, number] };
+
+    const [first, second, ...rest] = await pagesFrom(base, filter);
+    expect(rest).toEqual([]);
+    expect(ids(first!.orderedItems)).toEqual([situationId("cut-a"), situationId("cut-b")]);
+    expect(first!.highWaterMark).toBe(
+      encodeOutboxCursor(await entryCursor(sql, "cut-dropped-before")),
+    );
+    expect(first!.next).toBeDefined();
+    expect(ids(second!.orderedItems)).toEqual([situationId("cut-c")]);
+    expect(second!.highWaterMark).toBe(
+      encodeOutboxCursor(await entryCursor(sql, "cut-dropped-after")),
+    );
   });
 });
 

@@ -41,6 +41,7 @@ import { holdProcessLock } from "./process-lock.js";
 import { pullPeer } from "./puller.js";
 import { REGISTRY_RETRY_MS, syncRegistryPeers } from "./registry.js";
 import { build } from "./server.js";
+import { warnWithheld } from "./withheld.js";
 
 const PORT = parseInt(process.env["PORT"] || "4300", 10);
 const HOST = process.env["HOST"] || "0.0.0.0";
@@ -214,13 +215,14 @@ async function boot() {
       try {
         const signingKey = await loadSigningKey(sql, new Date().toISOString());
         if (!signingKey) return;
-        await runWebhookDeliveryCycle(sql, {
+        const pushed = await runWebhookDeliveryCycle(sql, {
           signingKey,
           fetchImpl: egress,
           partOf,
           floorFor,
           backoff,
         });
+        warnWithheld(pushed.withheld);
       } catch (err) {
         console.error("[federation-api] webhook cycle failed:", err);
       } finally {

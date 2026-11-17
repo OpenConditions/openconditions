@@ -32,6 +32,7 @@ import {
   type OutboxPage,
   type RecordFilter,
   readOutbox,
+  type WithheldEntry,
 } from "@openconditions/federation";
 import type postgres from "postgres";
 import type { ArchiveManifest } from "./archive.js";
@@ -131,6 +132,11 @@ export interface BackfillPage extends OutboxPage {
   archive?: ArchiveManifest;
 }
 
+/** A backfill page as read, with the entries withheld from it for their size (never sent). */
+export interface BackfillRead extends BackfillPage {
+  withheld: WithheldEntry[];
+}
+
 function normalizeCursor(after: OutboxCursor | string | undefined): OutboxCursor {
   if (after === undefined) return OUTBOX_CURSOR_START;
   if (typeof after !== "string") return after;
@@ -166,9 +172,10 @@ async function hasPreFloorEntries(
  * When the request's range reaches before the floor, the page carries
  * `beyondWindow: true` + the `archive` (the peer fetches the static archive
  * for the deep past); the live page still serves the in-window entries after
- * the cursor, gap-free.
+ * the cursor, gap-free. What was withheld for its size is listed beside the
+ * page, for the caller to report.
  */
-export async function readBackfill(sql: postgres.Sql, q: BackfillQuery): Promise<BackfillPage> {
+export async function readBackfill(sql: postgres.Sql, q: BackfillQuery): Promise<BackfillRead> {
   const nowIso = q.now ?? new Date().toISOString();
   const floorIso = servedFloorIso(
     backfillFloorIso(q.tier, nowIso, q.governanceWindowSec),
@@ -186,7 +193,7 @@ export async function readBackfill(sql: postgres.Sql, q: BackfillQuery): Promise
     now: nowIso,
   });
 
-  const result: BackfillPage = { ...page };
+  const result: BackfillRead = { ...page };
   if (await hasPreFloorEntries(sql, after, floorIso)) {
     result.beyondWindow = true;
     if (q.archive !== undefined) result.archive = q.archive;

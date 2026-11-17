@@ -237,6 +237,18 @@ function storedZip(entries: readonly { name: string; data: Buffer }[]): Buffer {
   return Buffer.concat([...locals, directory, end]);
 }
 
+/** Every entry of the outbox: a page ends early for its size, so one page is not all of it. */
+async function readWholeOutbox(sql: postgres.Sql, now: string) {
+  const orderedItems: Awaited<ReturnType<typeof readOutbox>>["orderedItems"] = [];
+  let after: string | undefined;
+  for (;;) {
+    const page = await readOutbox(sql, { limit: 500, now, ...(after ? { after } : {}) });
+    orderedItems.push(...page.orderedItems);
+    if (page.next === undefined) return { orderedItems, withheld: page.withheld };
+    after = page.highWaterMark;
+  }
+}
+
 describe("hazards alerts through the pipeline", () => {
   it("us-nws-alerts: zones are fetched once, and a zone-only watch is read by its state's box", async () => {
     const zones: Record<string, string> = {
@@ -1300,9 +1312,9 @@ describe("JMA durable worker publication", () => {
         expect(response.body).not.toContain("Copyright Partner");
         expect(response.body).toContain(feed.attribution);
       }
-      expect(
-        JSON.stringify((await readOutbox(sql, { limit: 500, now: clock })).orderedItems),
-      ).not.toContain("Copyright Partner");
+      expect(JSON.stringify((await readWholeOutbox(sql, clock)).orderedItems)).not.toContain(
+        "Copyright Partner",
+      );
       const [status] =
         await sql`SELECT last_outcome FROM conditions.source_status WHERE source=${feed.id}`;
       expect(status!.last_outcome).toBe("partial");
@@ -1331,9 +1343,7 @@ describe("JMA durable worker publication", () => {
       ).rejects.toThrow("forced publication rollback");
       const controller = new AbortController();
       const publicBefore = await records();
-      const outboxBefore = JSON.stringify(
-        (await readOutbox(sql, { limit: 500, now: clock })).orderedItems,
-      );
+      const outboxBefore = JSON.stringify((await readWholeOutbox(sql, clock)).orderedItems);
       const statusBefore =
         await sql`SELECT * FROM conditions.source_status WHERE source=${feed.id}`;
       await expect(
@@ -1353,9 +1363,9 @@ describe("JMA durable worker publication", () => {
         ),
       ).rejects.toThrow("controlled transaction cancellation");
       expect(await records()).toEqual(publicBefore);
-      expect(
-        JSON.stringify((await readOutbox(sql, { limit: 500, now: clock })).orderedItems),
-      ).toEqual(outboxBefore);
+      expect(JSON.stringify((await readWholeOutbox(sql, clock)).orderedItems)).toEqual(
+        outboxBefore,
+      );
       expect(await sql`SELECT * FROM conditions.source_status WHERE source=${feed.id}`).toEqual(
         statusBefore,
       );
@@ -1423,7 +1433,7 @@ describe("JMA durable worker publication", () => {
     ];
     const before = await Promise.all(urls.map(async (url) => (await api.inject({ url })).json()));
     const [state] = await sql`SELECT value FROM conditions.jma_state WHERE source=${feed.id}`;
-    const exported = await readOutbox(sql, { limit: 500, now: clock });
+    const exported = await readWholeOutbox(sql, clock);
     expect(JSON.stringify(exported.orderedItems)).toContain(feed.id);
     const mutations = [
       clean.replace("<OriginTime>", '<OriginTime xmlnsghost:nil="true">'),
@@ -1489,7 +1499,7 @@ describe("JMA durable worker publication", () => {
           previous["records"] ?? previous["features"] ?? previous,
         );
       }
-      expect(await readOutbox(sql, { limit: 500, now: clock })).toEqual(exported);
+      expect(await readWholeOutbox(sql, clock)).toEqual(exported);
       const [attempt] =
         await sql`SELECT outcome FROM conditions.source_poll_attempt WHERE source=${feed.id} ORDER BY id DESC LIMIT 1`;
       expect(attempt!.outcome).toBe("failed");

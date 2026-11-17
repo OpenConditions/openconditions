@@ -20,6 +20,7 @@ import {
   type RateLimiter,
   recordPeerFailure,
   signMessage,
+  wirePage,
 } from "@openconditions/federation";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type postgres from "postgres";
@@ -28,6 +29,7 @@ import { readBackfill } from "./backfill.js";
 import { OutboxQueryError, parseOutboxQuery } from "./outbox-query.js";
 import type { PeerBook } from "./peer-book.js";
 import { headerStrings, requirePeer, respondIfBlocked } from "./peer-request.js";
+import { warnWithheld } from "./withheld.js";
 
 const BACKFILL_PATH = "/peer/backfill";
 
@@ -94,7 +96,7 @@ export function registerBackfillRoutes(app: FastifyInstance, ctx: BackfillRouteC
     }
 
     const partOf = `${ctx.baseUrl}${BACKFILL_PATH}`;
-    const page = await readBackfill(ctx.sql, {
+    const read = await readBackfill(ctx.sql, {
       after: parsed.after,
       tier: peer.trustTier,
       partOf,
@@ -107,6 +109,8 @@ export function registerBackfillRoutes(app: FastifyInstance, ctx: BackfillRouteC
         ? { governanceWindowSec: ctx.governanceWindowSec }
         : {}),
     });
+    warnWithheld(read.withheld);
+    const page = wirePage(read);
 
     // The whole body — beyondWindow/archive and highWaterMark included — is
     // covered by the signed Content-Digest, so the redirect, the archive's

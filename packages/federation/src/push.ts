@@ -21,6 +21,11 @@
  *    events re-push, idempotently — the peer dedups on the composite cursor), and
  *    the peer's next pull covers everything regardless.
  *
+ * A pushed page is the outbox page, so it stays within the byte budget a
+ * receiver accepts: a large run goes out over several cycles, the cursor
+ * moving page by page, and an entry too large for any page is withheld and
+ * reported in the cycle's result.
+ *
  * Consecutive failures accrue on the row; once they reach the threshold the row
  * flips to `push_disabled` and the publisher stops pushing (the peer stays whole
  * on pull). A recovered peer re-enables push with a PATCH (resets the counter).
@@ -29,7 +34,7 @@ import type postgres from "postgres";
 import { FEDERATION_JSON } from "./actor.js";
 import { signMessage } from "./http-signature.js";
 import type { InstanceKey } from "./keys.js";
-import { type OutboxPage, readOutbox } from "./outbox.js";
+import { type OutboxPage, readOutbox, type WithheldEntry } from "./outbox.js";
 import { isPeerBlocked } from "./peer-blocklist.js";
 import type { RecordFilter } from "./record-filter.js";
 import type { FederationSubscription } from "./subscriptions.js";
@@ -76,8 +81,14 @@ export interface WebhookCycleOptions extends Omit<DeliverWebhookOptions, "minCre
 
 export type DeliverWebhookOutcome =
   | { status: "obsolete" }
-  | { status: "delivered"; delivered: number; advancedTo: string; httpStatus: number }
-  | { status: "empty"; delivered: 0; advancedTo: string }
+  | {
+      status: "delivered";
+      delivered: number;
+      advancedTo: string;
+      httpStatus: number;
+      withheld: WithheldEntry[];
+    }
+  | { status: "empty"; delivered: 0; advancedTo: string; withheld: WithheldEntry[] }
   | { status: "reset" }
   | { status: "deferred"; retryAfterSec: number; httpStatus: number }
   | { status: "failed"; pushFailures: number; httpStatus?: number }
@@ -148,7 +159,12 @@ export async function deliverWebhook(
         WHERE id = ${subscription.id} AND revision = ${subscription.revision}`;
       if (updated.count === 0) return { status: "obsolete" };
     }
-    return { status: "empty", delivered: 0, advancedTo: page.highWaterMark };
+    return {
+      status: "empty",
+      delivered: 0,
+      advancedTo: page.highWaterMark,
+      withheld: page.withheld,
+    };
   }
 
   const payload: OutboxPage = {
@@ -209,6 +225,7 @@ export async function deliverWebhook(
       delivered: items.length,
       advancedTo: page.highWaterMark,
       httpStatus,
+      withheld: page.withheld,
     };
   }
 
@@ -234,6 +251,8 @@ export interface WebhookCycleResult {
   disabled: number;
   /** Subscriptions whose inbox asked to retry later. */
   deferred: number;
+  /** Entries stepped over because they are too large for any page. */
+  withheld: WithheldEntry[];
 }
 
 /**
@@ -265,6 +284,7 @@ export async function runWebhookDeliveryCycle(
     failed: 0,
     disabled: 0,
     deferred: 0,
+    withheld: [],
   };
   for (const { id } of rows) {
     const [row] = await sql<
@@ -314,6 +334,9 @@ export async function runWebhookDeliveryCycle(
       continue;
     }
     backoff?.delete(row.id);
+    if (outcome.status === "delivered" || outcome.status === "empty") {
+      result.withheld.push(...outcome.withheld);
+    }
     if (outcome.status === "delivered") result.delivered += 1;
     else if (outcome.status === "failed") result.failed += 1;
     else if (outcome.status === "disabled") result.disabled += 1;

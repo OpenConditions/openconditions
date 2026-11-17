@@ -30,6 +30,7 @@ import {
   recordPeerFailure,
   signingKeyOf,
   signMessage,
+  wirePage,
 } from "@openconditions/federation";
 import { parseAllowedHosts } from "@openconditions/ingest-framework";
 import { schemaVersions } from "@openconditions/model";
@@ -55,6 +56,7 @@ import {
   respondIfBlocked,
 } from "./peer-request.js";
 import { registerSubscriptionRoutes } from "./subscription-routes.js";
+import { warnWithheld } from "./withheld.js";
 
 /** The pull-side peer exchange path the Actor document advertises as `outbox`. */
 const OUTBOX_PATH = "/peer/outbox";
@@ -290,7 +292,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     // the SAME composite-cursor primitive as /peer/backfill (shared tier floor);
     // an after-cursor before the floor redirects to the static archive.
     const archive = await loadArchive(sql, settings.archiveUrl!);
-    const page = await readBackfill(sql, {
+    const read = await readBackfill(sql, {
       after: parsed.after,
       tier,
       limit,
@@ -300,6 +302,8 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
       ...(archive !== undefined ? { archive } : {}),
       now: now(),
     });
+    warnWithheld(read.withheld);
+    const page = wirePage(read);
     const etag = outboxEtag(
       page.highWaterMark,
       page.epoch,
