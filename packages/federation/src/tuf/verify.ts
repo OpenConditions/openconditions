@@ -171,6 +171,22 @@ function parseJsonBytes(bytes: Buffer | Uint8Array | string): unknown {
   return JSON.parse(text) as unknown;
 }
 
+/** What a verified registry sync found. */
+export interface VerifiedRegistry {
+  /** The registry entries, sorted by id. */
+  entries: RegistryEntry[];
+  /**
+   * When the verified `targets` metadata, the role that lists the instances,
+   * expires (ISO 8601): past it TUF no longer trusts the list.
+   */
+  targetsExpires: string;
+}
+
+/** The part of tuf-js' updater that holds the metadata `refresh` verified; it has no accessor. */
+interface TrustedSetHolder {
+  trustedSet?: { targets?: { signed?: { expires?: unknown } } };
+}
+
 /**
  * Verifies the registry's TUF metadata and returns the registry entries,
  * sorted by id. `source` is a local repository directory or an explicit
@@ -190,6 +206,20 @@ export async function verifyRegistryMetadata(
   trustedRoot: Buffer | Uint8Array | string,
   options: VerifyRegistryOptions,
 ): Promise<RegistryEntry[]> {
+  return (await verifyRegistry(source, trustedRoot, options)).entries;
+}
+
+/**
+ * {@link verifyRegistryMetadata}, with the expiry of the verified `targets`
+ * metadata beside the entries. The expiry is taken from the metadata tuf-js
+ * holds in memory after `refresh` checked it, not read back from the cache
+ * directory, where a file may have been replaced since.
+ */
+export async function verifyRegistry(
+  source: string | RegistryRepoSource,
+  trustedRoot: Buffer | Uint8Array | string,
+  options: VerifyRegistryOptions,
+): Promise<VerifiedRegistry> {
   const { metadataUrl, targetsUrl } =
     typeof source === "string" ? repoSourceFromDir(source) : source;
   const env = options.env ?? process.env.NODE_ENV;
@@ -227,6 +257,11 @@ export async function verifyRegistryMetadata(
           : undefined,
   });
   await updater.refresh();
+  const targetsExpires = (updater as unknown as TrustedSetHolder).trustedSet?.targets?.signed
+    ?.expires;
+  if (typeof targetsExpires !== "string" || Number.isNaN(Date.parse(targetsExpires))) {
+    throw new Error("the verified targets metadata states no expiry");
+  }
 
   assertRootAllowedInEnv(parseJsonBytes(readFileSync(cachedRootPath)), env, allowTestRoot);
 
@@ -253,5 +288,8 @@ export async function verifyRegistryMetadata(
     }
     entries.push(entry);
   }
-  return entries.sort((a, b) => a.id.localeCompare(b.id));
+  return {
+    entries: entries.sort((a, b) => a.id.localeCompare(b.id)),
+    targetsExpires: new Date(targetsExpires).toISOString(),
+  };
 }

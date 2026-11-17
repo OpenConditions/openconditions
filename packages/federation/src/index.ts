@@ -275,11 +275,16 @@ export {
   tufKeyIdFromPublicKeyHex,
   tufSignerFromKeyPair,
 } from "./tuf/signing.js";
-export type { RegistryRepoSource, VerifyRegistryOptions } from "./tuf/verify.js";
+export type {
+  RegistryRepoSource,
+  VerifiedRegistry,
+  VerifyRegistryOptions,
+} from "./tuf/verify.js";
 export {
   repoSourceFromDir,
   TEST_ROOT_ALLOWED_ENVS,
   TEST_ROOT_MARKER,
   TestRootInProductionError,
+  verifyRegistry,
   verifyRegistryMetadata,
 } from "./tuf/verify.js";

@@ -9,9 +9,16 @@
  *
  * Each verified sync's peers are also written to a file beside the TUF cache,
  * so they stay across a restart: when the first sync after boot fails, they
- * are read back from there, as trusted as the verified metadata beside them.
- * Once a sync succeeded in this process the file is only written, never read.
+ * are read back from there, as trusted as the verified metadata they came
+ * from, and no longer. The file states when that sync's verified `targets`
+ * metadata expires and a SHA-256 of the trusted root it was verified under:
+ * past that expiry, or under another configured root, the stored peers are
+ * not taken back, so a registry blocked or frozen cannot keep its last list
+ * trusted beyond what TUF would allow, and a replaced root drops what the old
+ * one vouched for. Once a sync succeeded in this process the file is only
+ * written, never read.
  */
+import { createHash } from "node:crypto";
 import { readFile, rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { loadPeers, type PeerRecord, syncRegistry } from "@openconditions/federation";
@@ -39,10 +46,26 @@ export type RegistryRestore =
   | { status: "restored"; peers: number; syncedAt: string; file: string }
   | { status: "absent"; file: string }
   | { status: "unreadable"; file: string; error: string }
+  /** Past the expiry of the targets metadata they came from, or stored without one. */
+  | { status: "expired"; file: string; expires: string | null }
+  /** Stored under another trusted root than the one configured now. */
+  | { status: "other-root"; file: string }
   | { status: "not-needed" };
 
 interface StoredPeers {
   syncedAt: string;
+  /** When the verified `targets` metadata of that sync expires. */
+  targetsExpires: string;
+  /** SHA-256 (hex) of the trusted root configured when the sync was verified. */
+  rootSha256: string;
+  peers: PeerRecord[];
+}
+
+/** What a stored file says, its bounds unchecked yet. */
+interface ParsedPeers {
+  syncedAt: string;
+  targetsExpires: string | null;
+  rootSha256: string | null;
   peers: PeerRecord[];
 }
 
@@ -52,6 +75,8 @@ export class RegistryDiscovery {
   readonly #registry: RegistrySettings;
   readonly #self: string;
   readonly #fetchImpl: typeof fetch;
+  /** SHA-256 (hex) of the trusted root configured now. */
+  readonly #rootSha256: string;
   /** The registry's peers as the last verified sync listed them, or as stored after one. */
   #last: PeerRecord[] = [];
   #synced = false;
@@ -62,6 +87,7 @@ export class RegistryDiscovery {
     this.#registry = registry;
     this.#self = self;
     this.#fetchImpl = fetchImpl;
+    this.#rootSha256 = createHash("sha256").update(registry.root).digest("hex");
   }
 
   get file(): string {
@@ -101,7 +127,12 @@ export class RegistryDiscovery {
       changed: result.changed.filter(notSelf),
     };
     try {
-      await this.#store({ syncedAt: result.syncedAt, peers });
+      await this.#store({
+        syncedAt: result.syncedAt,
+        targetsExpires: result.targetsExpires,
+        rootSha256: this.#rootSha256,
+        peers,
+      });
     } catch (err) {
       changes.storeError = err instanceof Error ? err.message : String(err);
     }
@@ -110,9 +141,11 @@ export class RegistryDiscovery {
 
   /**
    * Reads back the peers the last verified sync stored and has the peer book
-   * take them, once, and only while no sync has succeeded in this process.
+   * take them, once, and only while no sync has succeeded in this process,
+   * `now` is before the expiry of the targets metadata they came from, and
+   * the trusted root configured now is the one they were verified under.
    */
-  async restore(): Promise<RegistryRestore> {
+  async restore(now: string): Promise<RegistryRestore> {
     if (this.#synced || this.#restoreTried) return { status: "not-needed" };
     this.#restoreTried = true;
     const file = this.file;
@@ -123,12 +156,16 @@ export class RegistryDiscovery {
       if ((err as NodeJS.ErrnoException).code === "ENOENT") return { status: "absent", file };
       return { status: "unreadable", file, error: (err as Error).message };
     }
-    let stored: StoredPeers;
+    let stored: ParsedPeers;
     try {
       stored = parseStoredPeers(text);
     } catch (err) {
       return { status: "unreadable", file, error: (err as Error).message };
     }
+    if (stored.targetsExpires === null || Date.parse(now) >= Date.parse(stored.targetsExpires)) {
+      return { status: "expired", file, expires: stored.targetsExpires };
+    }
+    if (stored.rootSha256 !== this.#rootSha256) return { status: "other-root", file };
     const peers = stored.peers.filter((peer) => peer.instanceId !== this.#self);
     this.#peers.discover(peers, this.#self);
     this.#last = peers;
@@ -144,14 +181,22 @@ export class RegistryDiscovery {
   }
 }
 
-function parseStoredPeers(text: string): StoredPeers {
+function parseStoredPeers(text: string): ParsedPeers {
   const value = JSON.parse(text) as unknown;
   if (value === null || typeof value !== "object" || Array.isArray(value)) {
     throw new TypeError("not an object");
   }
-  const { syncedAt, peers } = value as Record<string, unknown>;
+  const { syncedAt, targetsExpires, rootSha256, peers } = value as Record<string, unknown>;
   if (typeof syncedAt !== "string" || Number.isNaN(Date.parse(syncedAt))) {
     throw new TypeError("syncedAt is not a timestamp");
   }
-  return { syncedAt, peers: loadPeers(peers) };
+  return {
+    syncedAt,
+    targetsExpires:
+      typeof targetsExpires === "string" && !Number.isNaN(Date.parse(targetsExpires))
+        ? targetsExpires
+        : null,
+    rootSha256: typeof rootSha256 === "string" ? rootSha256 : null,
+    peers: loadPeers(peers),
+  };
 }

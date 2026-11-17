@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -15,6 +16,13 @@ import { PeerBook } from "../peer-book.js";
 import { RegistryDiscovery, VERIFIED_PEERS_FILE } from "../registry.js";
 
 const NOW = "2026-11-17T12:00:00.000Z";
+
+interface StoredFile {
+  syncedAt: string;
+  targetsExpires: string;
+  rootSha256: string;
+  peers: { instanceId: string }[];
+}
 const SELF = "me.example.org";
 
 const dirs: string[] = [];
@@ -105,18 +113,21 @@ describe("the registry discovery", () => {
     const { settings } = await registryOf(["a.example.org", SELF]);
     await new RegistryDiscovery(new PeerBook([]), settings, SELF, noFetch).sync(NOW);
     const file = join(settings.cacheDir, VERIFIED_PEERS_FILE);
-    const stored = JSON.parse(readFileSync(file, "utf8")) as {
-      syncedAt: string;
-      peers: { instanceId: string }[];
-    };
+    const stored = JSON.parse(readFileSync(file, "utf8")) as StoredFile;
     expect(stored.syncedAt).toBe(NOW);
     expect(stored.peers.map((peer) => peer.instanceId)).toEqual(["a.example.org"]);
+    // Bounded by the verified targets metadata, under the root configured.
+    const targets = JSON.parse(readFileSync(join(settings.cacheDir, "targets.json"), "utf8")) as {
+      signed: { expires: string };
+    };
+    expect(stored.targetsExpires).toBe(new Date(targets.signed.expires).toISOString());
+    expect(stored.rootSha256).toBe(createHash("sha256").update(settings.root).digest("hex"));
 
     // The next process starts while the registry cannot be reached.
     const book = new PeerBook([]);
     const discovery = new RegistryDiscovery(book, unreachable(settings), SELF, noFetch);
     await expect(discovery.sync(NOW)).rejects.toThrow();
-    expect(await discovery.restore()).toEqual({
+    expect(await discovery.restore(NOW)).toEqual({
       status: "restored",
       peers: 1,
       syncedAt: NOW,
@@ -124,7 +135,45 @@ describe("the registry discovery", () => {
     });
     expect(book.all().map((peer) => peer.instanceId)).toEqual(["a.example.org"]);
     // Only once.
-    expect(await discovery.restore()).toEqual({ status: "not-needed" });
+    expect(await discovery.restore(NOW)).toEqual({ status: "not-needed" });
+  });
+
+  it("does not take the stored peers back past the targets expiry, without one, or under another root", async () => {
+    const { settings } = await registryOf(["a.example.org"]);
+    await new RegistryDiscovery(new PeerBook([]), settings, SELF, noFetch).sync(NOW);
+    const file = join(settings.cacheDir, VERIFIED_PEERS_FILE);
+    const stored = JSON.parse(readFileSync(file, "utf8")) as StoredFile;
+    const gone = unreachable(settings);
+    const restoreAt = async (now: string, over: RegistrySettings = gone) => {
+      const book = new PeerBook([]);
+      const outcome = await new RegistryDiscovery(book, over, SELF, noFetch).restore(now);
+      return { outcome, peers: book.all().map((peer) => peer.instanceId) };
+    };
+
+    const justBefore = new Date(Date.parse(stored.targetsExpires) - 1000).toISOString();
+    expect(await restoreAt(justBefore)).toMatchObject({
+      outcome: { status: "restored" },
+      peers: ["a.example.org"],
+    });
+    expect(await restoreAt(stored.targetsExpires)).toEqual({
+      outcome: { status: "expired", file, expires: stored.targetsExpires },
+      peers: [],
+    });
+
+    const { targetsExpires: _dropped, ...undated } = stored;
+    writeFileSync(file, JSON.stringify(undated));
+    expect(await restoreAt(NOW)).toEqual({
+      outcome: { status: "expired", file, expires: null },
+      peers: [],
+    });
+
+    writeFileSync(file, JSON.stringify(stored));
+    const other = await registryOf(["b.example.org"]);
+    expect(await restoreAt(NOW, { ...gone, root: other.settings.root })).toEqual({
+      outcome: { status: "other-root", file },
+      peers: [],
+    });
+    expect(await restoreAt(NOW)).toMatchObject({ outcome: { status: "restored" } });
   });
 
   it("starts without registry peers when nothing is stored, or what is stored does not parse", async () => {
@@ -133,18 +182,18 @@ describe("the registry discovery", () => {
     const gone = unreachable(settings);
     const discovery = new RegistryDiscovery(book, gone, SELF, noFetch);
     await expect(discovery.sync(NOW)).rejects.toThrow();
-    expect(await discovery.restore()).toMatchObject({ status: "absent" });
+    expect(await discovery.restore(NOW)).toMatchObject({ status: "absent" });
     expect(book.all()).toEqual([]);
 
     writeFileSync(join(settings.cacheDir, VERIFIED_PEERS_FILE), '{"syncedAt": "x", "peers": [');
     const again = new RegistryDiscovery(book, gone, SELF, noFetch);
-    expect(await again.restore()).toMatchObject({ status: "unreadable" });
+    expect(await again.restore(NOW)).toMatchObject({ status: "unreadable" });
     writeFileSync(
       join(settings.cacheDir, VERIFIED_PEERS_FILE),
       JSON.stringify({ syncedAt: NOW, peers: [{ instanceId: "a.example.org" }] }),
     );
     const third = new RegistryDiscovery(book, gone, SELF, noFetch);
-    expect(await third.restore()).toMatchObject({ status: "unreadable" });
+    expect(await third.restore(NOW)).toMatchObject({ status: "unreadable" });
     expect(book.all()).toEqual([]);
   });
 
@@ -153,7 +202,7 @@ describe("the registry discovery", () => {
     const book = new PeerBook([]);
     const discovery = new RegistryDiscovery(book, first.settings, SELF, noFetch);
     await discovery.sync(NOW);
-    expect(await discovery.restore()).toEqual({ status: "not-needed" });
+    expect(await discovery.restore(NOW)).toEqual({ status: "not-needed" });
 
     await sign(first.repoDir, first.roles, ["b.example.org"], 2);
     const later = new RegistryDiscovery(book, first.settings, SELF, noFetch);

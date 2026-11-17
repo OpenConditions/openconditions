@@ -1,4 +1,4 @@
-import { createReadStream, existsSync, statSync } from "node:fs";
+import { createReadStream, existsSync, readFileSync, statSync } from "node:fs";
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { join } from "node:path";
@@ -31,6 +31,11 @@ describe("syncRegistry", () => {
     expect(result.removed).toEqual([]);
     expect(result.changed).toEqual([]);
     expect(result.unchanged).toEqual([]);
+    // The expiry of the targets metadata the sync verified.
+    const targets = JSON.parse(
+      readFileSync(join(repo.repoDir, "metadata", "targets.json"), "utf8"),
+    ) as { signed: { expires: string } };
+    expect(result.targetsExpires).toBe(new Date(targets.signed.expires).toISOString());
   });
 
   it("reconciles the peer list across syncs: added, removed, changed, unchanged", async () => {

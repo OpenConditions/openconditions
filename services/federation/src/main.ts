@@ -422,7 +422,7 @@ async function boot() {
           }
         } catch (err) {
           next = REGISTRY_RETRY_MS;
-          const restored = await discovery.restore();
+          const restored = await discovery.restore(new Date().toISOString());
           if (restored.status === "restored") {
             console.warn(
               `[federation-api] registry sync failed; the ${restored.peers} peers of the ` +
@@ -434,6 +434,22 @@ async function boot() {
             console.error(
               "[federation-api] registry sync failed, and no verified sync is stored: " +
                 "no peer of the registry is known until one succeeds:",
+              err,
+            );
+          } else if (restored.status === "expired" || restored.status === "other-root") {
+            console.warn(
+              restored.status === "expired"
+                ? `[federation-api] the stored peers of the last verified sync in ${restored.file} ` +
+                    `are older than the registry metadata allows (its targets metadata ` +
+                    `${restored.expires === null ? "states no expiry" : `expired ${restored.expires}`}): ` +
+                    "they are not taken back"
+                : `[federation-api] the stored peers of the last verified sync in ${restored.file} ` +
+                    "were verified under another registry root than the one configured: " +
+                    "they are not taken back",
+            );
+            console.error(
+              "[federation-api] registry sync failed: no peer of the registry is known " +
+                "until one succeeds:",
               err,
             );
           } else if (restored.status === "unreadable") {
