@@ -144,7 +144,6 @@ describe("a request to a peer", () => {
         cert: readFileSync(file("server.pem")),
         ca: readFileSync(file("ca.pem")),
         requestCert: true,
-        rejectUnauthorized: false,
       },
       (req, res) => {
         const socket = req.socket as TLSSocket;
@@ -160,9 +159,8 @@ describe("a request to a peer", () => {
     );
     await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
     const { port } = server.address() as AddressInfo;
-    // The server's own certificate is self-signed; what is tested is the client's.
-    const rejectUnauthorized = process.env["NODE_TLS_REJECT_UNAUTHORIZED"];
-    process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = "0";
+    // The server's own certificate is self-signed, so the requests trust it by name.
+    const serverCa = readFileSync(file("server.pem"), "utf8");
     const opts = {
       maxBytes: 1024 * 1024,
       timeoutMs: 5_000,
@@ -175,19 +173,19 @@ describe("a request to a peer", () => {
         OPENCONDITIONS_FEDERATION_CLIENT_CERT_FILE: file("client.pem"),
         OPENCONDITIONS_FEDERATION_CLIENT_KEY_FILE: file("client.key"),
       });
-      const withCert = await (await peerFetch(settings, opts)(`https://localhost:${port}/`)).json();
+      const withCert = await (
+        await peerFetch(settings, opts, serverCa)(`https://localhost:${port}/`)
+      ).json();
       expect(withCert).toEqual({
         authorized: true,
         fingerprint: new X509Certificate(readFileSync(file("client.pem"))).fingerprint256,
       });
 
-      const without = await (
-        await peerFetch(resolveFederationSettings(enabled), opts)(`https://localhost:${port}/`)
-      ).json();
-      expect(without).toEqual({ authorized: false, fingerprint: null });
+      // Without one the server, which requires a certificate, ends the handshake.
+      await expect(
+        peerFetch(resolveFederationSettings(enabled), opts, serverCa)(`https://localhost:${port}/`),
+      ).rejects.toThrow();
     } finally {
-      if (rejectUnauthorized === undefined) delete process.env["NODE_TLS_REJECT_UNAUTHORIZED"];
-      else process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = rejectUnauthorized;
       await new Promise<void>((resolve) => server.close(() => resolve()));
     }
   });

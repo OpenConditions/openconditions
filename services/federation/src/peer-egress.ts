@@ -16,11 +16,12 @@ import type { FederationSettings } from "./config.js";
 export function peerFetch(
   settings: Pick<FederationSettings, "clientCertificate">,
   opts: FetchGuardOptions = guardOptionsFromEnv(),
+  /** A certificate authority (PEM) to trust besides the system's, for a test's own server. */
+  ca?: string,
 ): typeof fetch {
   const client = settings.clientCertificate;
-  return guardedFetch(
-    undefined,
-    opts,
-    client === undefined ? {} : { cert: client.cert, key: client.key },
-  );
+  return guardedFetch(undefined, opts, {
+    ...(client === undefined ? {} : { cert: client.cert, key: client.key }),
+    ...(ca === undefined ? {} : { ca }),
+  });
 }
