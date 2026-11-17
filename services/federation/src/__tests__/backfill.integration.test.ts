@@ -226,6 +226,52 @@ describe("readBackfill — the tier-bounded time floor", () => {
     expect(advanced.beyondWindow).toBeUndefined();
   }, 30_000);
 
+  it("moves a cursor followed only by entries older than the window past them, once", async () => {
+    const base = await frontier();
+    await seed("bf-hidden-1", 40 * DAY);
+    await seed("bf-hidden-2", 41 * DAY);
+    const hidden = await frontier();
+
+    const page = await readBackfill(sql, { after: base, tier: 1, now: NOW, archive: ARCHIVE });
+    expect(page.orderedItems).toEqual([]);
+    expect(page.beyondWindow).toBe(true);
+    expect(page.next).toBeUndefined();
+    expect(page.highWaterMark).toBe(encodeOutboxCursor(hidden));
+
+    const next = await readBackfill(sql, {
+      after: page.highWaterMark,
+      tier: 1,
+      now: NOW,
+      archive: ARCHIVE,
+    });
+    expect(next.beyondWindow).toBeUndefined();
+    expect(next.highWaterMark).toBe(page.highWaterMark);
+  }, 30_000);
+
+  it("still serves every in-window entry that follows older ones, then moves past the rest", async () => {
+    const base = await frontier();
+    await seed("bf-mixed-old-1", 40 * DAY);
+    await seed("bf-mixed-new-1");
+    await seed("bf-mixed-old-2", 40 * DAY);
+    await seed("bf-mixed-new-2");
+    await seed("bf-mixed-old-3", 40 * DAY);
+    const last = await frontier();
+
+    // Page by page at a limit of one, as a subscriber would read them.
+    const served: string[] = [];
+    let cursor = encodeOutboxCursor(base);
+    for (let i = 0; i < 10; i++) {
+      const page = await readBackfill(sql, { after: cursor, tier: 1, now: NOW, limit: 1 });
+      served.push(...ids(page));
+      cursor = page.highWaterMark;
+      if (page.next === undefined) break;
+    }
+    expect(served).toEqual([situationId("bf-mixed-new-1"), situationId("bf-mixed-new-2")]);
+    expect(cursor).toBe(encodeOutboxCursor(last));
+    const after = await readBackfill(sql, { after: cursor, tier: 1, now: NOW });
+    expect(after.beyondWindow).toBeUndefined();
+  }, 30_000);
+
   it("reaches back to the archive's night when that is before the tier's floor", async () => {
     const base = await frontier();
     await seed("bf-since-archive", 26 * HOUR);

@@ -753,6 +753,11 @@ export const federationPeerCapabilities = conditionsSchema.table("federation_pee
   peerInstanceId: text("peer_instance_id").primaryKey(),
   schemaVersions: text("schema_versions").array().notNull(),
   fetchedAt: timestamp("fetched_at", { withTimezone: true }).notNull(),
+  /**
+   * The protocol version the two negotiated from that document, which says
+   * which routes the peer serves; null when not recorded.
+   */
+  protocolVersion: text("protocol_version"),
 });
 
 /**
@@ -780,6 +785,19 @@ export const federationPeerCursor = conditionsSchema.table("federation_peer_curs
    */
   journalEpoch: text("journal_epoch"),
   cursorResetAt: timestamp("cursor_reset_at", { withTimezone: true }),
+  /**
+   * Since when this instance's copies of the peer's records are to be
+   * compared with the peer's present state (null: no comparison is due): set
+   * when the peer's journal started over and when a page said the cursor was
+   * beyond the peer's window, as neither the journal nor the archive then says
+   * what the peer ended meanwhile. How far the running comparison got (the
+   * class and the last record id compared; null: not begun), and when the
+   * last one finished.
+   */
+  reconcileDueSince: timestamp("reconcile_due_since", { withTimezone: true }),
+  reconcileClass: text("reconcile_class"),
+  reconcileAfter: text("reconcile_after"),
+  reconciledAt: timestamp("reconciled_at", { withTimezone: true }),
 });
 
 /**

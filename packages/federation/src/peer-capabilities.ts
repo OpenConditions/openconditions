@@ -2,8 +2,8 @@
  * What a pinned peer runs. Its actor document advertises the schema versions
  * of its registry; this instance fetches that document, verifies it against
  * the peer's pin, negotiates (a peer with no common protocol, wire format
- * or kernel major shares nothing), and keeps the advertised versions in
- * `conditions.federation_peer_capabilities`. Admitting the peer's records
+ * or kernel major shares nothing), and keeps the advertised versions and the
+ * protocol version negotiated in `conditions.federation_peer_capabilities`. Admitting the peer's records
  * reads them: a record of a schema the two do not share at one major is
  * skipped, and a newer minor's fields are dropped. The delivery modes the
  * peer offers are handed back with each refresh, so the subscriber asks it
@@ -22,6 +22,8 @@ export type PeerVersions =
   | {
       ok: true;
       schemaVersions: string[];
+      /** The protocol version the two negotiated, which says which routes the peer serves. */
+      protocolVersion: string;
       /**
        * The delivery modes the peer offers, so this instance asks it for no
        * other. Read from the document each time, not stored.
@@ -58,30 +60,51 @@ export async function peerVersionsFromActor(
   if (!Array.isArray(capabilities?.schemaVersions)) {
     return { ok: false, reason: "the actor document advertises no schema versions" };
   }
+  let protocolVersion: string;
   try {
-    negotiateCapabilities(local, capabilities);
+    ({ protocolVersion } = negotiateCapabilities(local, capabilities));
   } catch (err) {
     return { ok: false, reason: (err as Error).message };
   }
   const deliveryModes = Array.isArray(capabilities.deliveryModes)
     ? capabilities.deliveryModes.filter((mode): mode is string => typeof mode === "string")
     : [];
-  return { ok: true, schemaVersions: [...capabilities.schemaVersions], deliveryModes, keys };
+  return {
+    ok: true,
+    schemaVersions: [...capabilities.schemaVersions],
+    protocolVersion,
+    deliveryModes,
+    keys,
+  };
 }
 
-/** Keeps a peer's advertised schema versions. */
+/** Keeps a peer's advertised schema versions and the protocol version negotiated with it. */
 export async function storePeerVersions(
   sql: Sql,
   peerInstanceId: string,
   schemaVersions: readonly string[],
   now: string,
+  protocolVersion: string | null = null,
 ): Promise<void> {
   await sql`
-    INSERT INTO conditions.federation_peer_capabilities (peer_instance_id, schema_versions, fetched_at)
-    VALUES (${peerInstanceId}, ${schemaVersions as string[]}, ${now})
+    INSERT INTO conditions.federation_peer_capabilities
+      (peer_instance_id, schema_versions, fetched_at, protocol_version)
+    VALUES (${peerInstanceId}, ${schemaVersions as string[]}, ${now}, ${protocolVersion})
     ON CONFLICT (peer_instance_id) DO UPDATE SET
       schema_versions = EXCLUDED.schema_versions,
-      fetched_at = EXCLUDED.fetched_at`;
+      fetched_at = EXCLUDED.fetched_at,
+      protocol_version = EXCLUDED.protocol_version`;
+}
+
+/** The protocol version negotiated with a peer when last verified; undefined when none is recorded. */
+export async function loadPeerProtocolVersion(
+  sql: Sql,
+  peerInstanceId: string,
+): Promise<string | undefined> {
+  const [row] = await sql<{ protocol_version: string | null }[]>`
+    SELECT protocol_version FROM conditions.federation_peer_capabilities
+    WHERE peer_instance_id = ${peerInstanceId}`;
+  return row?.protocol_version ?? undefined;
 }
 
 /** The schema versions a peer advertised when last verified; undefined before that. */
@@ -125,7 +148,13 @@ export async function refreshPeerCapabilities(
   }
   const versions = await peerVersionsFromActor(actor, peer, opts.local, opts.learned);
   if (versions.ok) {
-    await storePeerVersions(sql, peer.instanceId, versions.schemaVersions, opts.now);
+    await storePeerVersions(
+      sql,
+      peer.instanceId,
+      versions.schemaVersions,
+      opts.now,
+      versions.protocolVersion,
+    );
     const learned = [...versions.keys].filter(([keyId]) => !peer.pinnedKeys.includes(keyId));
     await storeLearnedKeys(sql, peer.instanceId, new Map(learned), opts.now);
   }

@@ -28,9 +28,12 @@ type Rec = Record<string, unknown>;
  * One record to write on its own: a `draft` the write seam seals here (a
  * crowd report being landed), or a `stored` record its own instance already
  * sealed (a peer's record being admitted), kept with that instance's
- * revision.
+ * revision. A stored record `asStated` is its instance's present state,
+ * which replaces the copy held whatever their revisions (the copy came from
+ * a history that instance no longer has); the caller makes sure nothing
+ * newer landed since it compared the two.
  */
-export type RecordInput = { draft: Rec } | { stored: Rec };
+export type RecordInput = { draft: Rec } | { stored: Rec; asStated?: boolean };
 
 export type WriteRecordResult =
   | {
@@ -80,7 +83,12 @@ export async function writeRecord(
  * repeated delivery changes nothing but the expiry, and never over a record
  * another instance wrote, nor over a copy rejected or superseded here. A
  * copy that expired here kept the peer's revision, so a delivery at that
- * revision with a lifetime the peer moved, and not yet over, restores it. An
+ * revision with a lifetime the peer moved, and not yet over, restores it. A
+ * stored record `asStated` skips only the revision comparison: it is written
+ * over the copy even when its revision is not newer, still never over another
+ * instance's record nor over a copy rejected or superseded here, and the
+ * copy's history rows at or above its revision go first (they belong to the
+ * history it replaces, and the revision's own row is written again). An
  * observation goes to its series.
  */
 export async function writeRecordIn(
@@ -150,7 +158,8 @@ export async function writeRecordIn(
     if (existing?.tombstone_reason && DECIDED_TOMBSTONE_REASONS.has(existing.tombstone_reason)) {
       return { status: "stale", class: cls, id: id!, revision: existing.revision };
     }
-    if (existing && existing.revision >= (sealed["revision"] as number)) {
+    const asStated = "asStated" in input && input.asStated === true;
+    if (existing && !asStated && existing.revision >= (sealed["revision"] as number)) {
       const expiry = expiryOf(sealed);
       if (existing.revision === sealed["revision"] && expiry !== expiryOf(existing.record)) {
         if (!existing.tombstoned) {
@@ -182,6 +191,12 @@ export async function writeRecordIn(
         return { status: "restored", class: cls, id: id!, revision: existing.revision };
       }
       return { status: "stale", class: cls, id: id!, revision: existing.revision };
+    }
+    if (existing && asStated) {
+      await tx.unsafe(
+        `DELETE FROM conditions.${cls}_revision WHERE ${cls}_id = $1 AND revision >= $2`,
+        [id!, sealed["revision"] as number],
+      );
     }
   }
 

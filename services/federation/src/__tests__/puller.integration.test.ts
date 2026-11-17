@@ -608,3 +608,63 @@ describe("following the epoch of the peer's journal", () => {
     expect(await landed()).toEqual([]);
   });
 });
+
+describe("a page that says the cursor is beyond the window", () => {
+  const reconcileState = async () =>
+    (
+      await sql<
+        {
+          reconcile_due_since: Date | null;
+          reconcile_class: string | null;
+          reconciled_at: Date | null;
+        }[]
+      >`
+        SELECT reconcile_due_since, reconcile_class, reconciled_at
+          FROM conditions.federation_peer_cursor WHERE peer_instance_id = ${PEER}`
+    )[0];
+  const beyond = () => signed(json(pageOf([], "20.5", { beyondWindow: true })));
+
+  it("makes a comparison due when none is due and none finished within a day", async () => {
+    await holdCursor("20.5", EPOCH);
+    await sql`
+      UPDATE conditions.federation_peer_cursor SET reconciled_at = now() - interval '2 days'
+       WHERE peer_instance_id = ${PEER}`;
+    const { fetchImpl } = fakePeer([beyond()]);
+    expect(await pullPeer(sql, peer(), ctx(fetchImpl))).toMatchObject({ beyondWindow: true });
+    expect((await reconcileState())?.reconcile_due_since).not.toBeNull();
+  });
+
+  it("does not make one due again within a day of the last one finishing", async () => {
+    await holdCursor("20.5", EPOCH);
+    await sql`
+      UPDATE conditions.federation_peer_cursor SET reconciled_at = now() - interval '1 hour'
+       WHERE peer_instance_id = ${PEER}`;
+    const { fetchImpl } = fakePeer([beyond()]);
+    expect(await pullPeer(sql, peer(), ctx(fetchImpl))).toMatchObject({ beyondWindow: true });
+    expect((await reconcileState())?.reconcile_due_since).toBeNull();
+  });
+
+  it("never restarts a comparison already running", async () => {
+    await holdCursor("20.5", EPOCH);
+    await sql`
+      UPDATE conditions.federation_peer_cursor
+         SET reconcile_due_since = '2026-01-01T00:00:00Z', reconcile_class = 'situation'
+       WHERE peer_instance_id = ${PEER}`;
+    const { fetchImpl } = fakePeer([beyond()]);
+    await pullPeer(sql, peer(), ctx(fetchImpl));
+    expect(await reconcileState()).toMatchObject({
+      reconcile_due_since: new Date("2026-01-01T00:00:00Z"),
+      reconcile_class: "situation",
+    });
+  });
+
+  it("says whether the pull moved the cursor", async () => {
+    await holdCursor("20.5", EPOCH);
+    const still = fakePeer([signed(json(pageOf([], "20.5")))]);
+    expect(await pullPeer(sql, peer(), ctx(still.fetchImpl))).toMatchObject({ advanced: false });
+    const moved = fakePeer([
+      signed(json(pageOf([entry(peerSituation(PEER, "moved"), 21, 1)], "21.1"))),
+    ]);
+    expect(await pullPeer(sql, peer(), ctx(moved.fetchImpl))).toMatchObject({ advanced: true });
+  });
+});

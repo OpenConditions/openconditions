@@ -3,7 +3,8 @@
  * at, checked against this one so the two cannot drift apart: the signed
  * request and the response bound to it (Ed25519 is deterministic, so the
  * signatures are recomputed and compared byte for byte), Content-Digest,
- * publicKeyMultibase, cursors, an example page and how entries are read.
+ * publicKeyMultibase, cursors, an example page, how entries are read, and
+ * the two record state answers a subscriber compares its copies with.
  */
 import { createPrivateKey, sign as edSign } from "node:crypto";
 import { readFile } from "node:fs/promises";
@@ -21,6 +22,12 @@ import {
 } from "../http-signature.js";
 import { multibaseFromRawEd25519, rawEd25519FromMultibase } from "../multibase.js";
 import { decodeOutboxCursor, encodeOutboxCursor } from "../outbox.js";
+import {
+  type RecordStateClass,
+  readRecordStatePage,
+  readRecordsPage,
+  readRecordsRequest,
+} from "../record-state.js";
 
 async function vector<T>(name: string): Promise<T> {
   return JSON.parse(await readFile(new URL(`./vectors/${name}`, import.meta.url), "utf8")) as T;
@@ -61,13 +68,12 @@ function independentSignature(key: SigningVector["key"], base: string): string {
 
 describe("the protocol version", () => {
   it("is the one the vectors and the specification describe", async () => {
-    expect(FEDERATION_PROTOCOL_VERSION).toBe("0.2");
-    expect((await vector<SigningVector>("signing.json")).protocolVersion).toBe(
-      FEDERATION_PROTOCOL_VERSION,
-    );
-    expect((await vector<{ protocolVersion: string }>("page.json")).protocolVersion).toBe(
-      FEDERATION_PROTOCOL_VERSION,
-    );
+    expect(FEDERATION_PROTOCOL_VERSION).toBe("0.3");
+    for (const name of ["signing.json", "page.json", "state.json", "records.json"]) {
+      expect((await vector<{ protocolVersion: string }>(name)).protocolVersion, name).toBe(
+        FEDERATION_PROTOCOL_VERSION,
+      );
+    }
   });
 });
 
@@ -290,5 +296,69 @@ describe("entries.json", () => {
     for (const { wire, result } of v.refused) {
       expect(readInboundEntry(wire)).toEqual(result);
     }
+  });
+});
+
+describe("state.json", () => {
+  it("is a listing a subscriber accepts as the answer to its request", async () => {
+    const v = await vector<{
+      request: { class: RecordStateClass; limit: number };
+      page: Record<string, unknown>;
+    }>("state.json");
+    const read = readRecordStatePage(v.page, { cls: v.request.class, limit: v.request.limit });
+    expect(read).toEqual({ ok: true, value: v.page });
+    // Not as the answer to a request after its own last id, nor for another class.
+    const items = v.page["items"] as { id: string }[];
+    expect(
+      readRecordStatePage(v.page, { cls: v.request.class, after: items[0]!.id, limit: 2 }).ok,
+    ).toBe(false);
+    expect(readRecordStatePage(v.page, { cls: "feature", limit: 2 }).ok).toBe(false);
+  });
+});
+
+describe("records.json", () => {
+  it("answers a request the publisher accepts, with entries a subscriber reads and admits", async () => {
+    const v = await vector<{
+      publisherInstanceId: string;
+      request: { class: RecordStateClass; ids: string[] };
+      page: { orderedItems: unknown[] } & Record<string, unknown>;
+    }>("records.json");
+    expect(readRecordsRequest(v.request)).toEqual({
+      ok: true,
+      value: { cls: v.request.class, ids: v.request.ids },
+    });
+    expect(readRecordsPage(v.page, { cls: v.request.class, ids: v.request.ids })).toEqual({
+      ok: true,
+      value: v.page,
+    });
+    const registry = productionRegistry();
+    const operations: string[] = [];
+    for (const item of v.page.orderedItems) {
+      const read = readInboundEntry(item);
+      expect(read.ok).toBe(true);
+      if (!read.ok || read.entry.operation === "liveness") continue;
+      operations.push(read.entry.operation);
+      if (read.entry.operation === "create") {
+        const admitted = admitFederatedRecord(
+          registry,
+          {
+            peerInstanceId: v.publisherInstanceId,
+            peerVersions: schemaVersions(registry),
+            receivedAt: "2026-01-02T00:30:00.000Z",
+          },
+          read.entry.record,
+        );
+        expect(admitted.admitted).toBe(true);
+      }
+    }
+    expect(operations).toEqual(["create", "delete"]);
+    // An answer naming a record that was not asked for is refused.
+    expect(readRecordsPage(v.page, { cls: v.request.class, ids: v.request.ids.slice(1) }).ok).toBe(
+      false,
+    );
+    // So is one that leaves out a record that was asked for.
+    expect(
+      readRecordsPage(v.page, { cls: v.request.class, ids: [...v.request.ids, "oc:another"] }).ok,
+    ).toBe(false);
   });
 });

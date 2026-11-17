@@ -1,5 +1,6 @@
 /**
- * Query-string parsing for GET /peer/outbox and /peer/backfill. Fail-closed:
+ * Query-string parsing for GET /peer/outbox, /peer/backfill and /peer/state
+ * (whose filter parameters are the same). Fail-closed:
  * any malformed or unknown parameter is a {@link OutboxQueryError} (the route
  * answers 400) rather than a silently-widened filter. Also rebuilds the
  * validated filter parameters as an encoded query-string so the page's `next`
@@ -8,11 +9,16 @@
 import {
   decodeOutboxCursor,
   EVIDENCE_TIERS,
+  isRecordStateClass,
   OUTBOX_CURSOR_START,
   OUTBOX_MAX_LIMIT,
   type OutboxCursor,
   RECORD_FILTER_KEYS,
+  RECORD_ID_MAX_BYTES,
+  RECORD_STATE_CLASSES,
+  RECORD_STATE_PAGE_LIMIT,
   type RecordFilter,
+  type RecordStateClass,
 } from "@openconditions/federation";
 import { RECORD_CLASSES, type RecordClass } from "@openconditions/model";
 
@@ -142,6 +148,54 @@ export function parseOutboxQuery(query: Record<string, unknown>): ParsedOutboxQu
     after,
     ...(limit !== undefined ? { limit } : {}),
     ...(Object.keys(filter).length > 0 ? { filter } : {}),
+    ...(nextParams !== undefined ? { nextParams } : {}),
+  };
+}
+
+export interface ParsedStateQuery {
+  cls: RecordStateClass;
+  /** The record id the listing continues after; absent from the start. */
+  after?: string;
+  limit?: number;
+  filter?: RecordFilter;
+  /** Encoded filter and limit params for the `next` link (no `class`, no `after`). */
+  nextParams?: string;
+}
+
+/**
+ * The query of GET /peer/state: the record `class` (a class the state routes
+ * answer for), the record id to continue `after`, a `limit` of rows to scan,
+ * and the filter parameters a journal read takes, parsed by the same rules.
+ */
+export function parseStateQuery(query: Record<string, unknown>): ParsedStateQuery {
+  const { class: cls, after, limit: limitRaw, ...filterQuery } = query;
+  if (!isRecordStateClass(cls)) {
+    throw new OutboxQueryError(`class must be one of ${RECORD_STATE_CLASSES.join(", ")}`);
+  }
+  if (
+    after !== undefined &&
+    (typeof after !== "string" ||
+      after.length === 0 ||
+      Buffer.byteLength(after, "utf8") > RECORD_ID_MAX_BYTES)
+  ) {
+    throw new OutboxQueryError(`after must be a record id of at most ${RECORD_ID_MAX_BYTES} bytes`);
+  }
+  const parsed = parseOutboxQuery(filterQuery);
+  const next = new URLSearchParams(parsed.nextParams);
+  let limit: number | undefined;
+  if (limitRaw !== undefined) {
+    if (typeof limitRaw !== "string") throw new OutboxQueryError("invalid limit");
+    const value = nonNegativeInt(limitRaw, "limit");
+    if (value < 1) throw new OutboxQueryError("limit must be at least 1");
+    limit = Math.min(value, RECORD_STATE_PAGE_LIMIT);
+    next.set("limit", String(limit));
+  }
+  const nextParams = next.size > 0 ? next.toString() : undefined;
+  return {
+    cls,
+    ...(after !== undefined ? { after: after as string } : {}),
+    ...(limit !== undefined ? { limit } : {}),
+    ...(parsed.filter !== undefined ? { filter: parsed.filter } : {}),
     ...(nextParams !== undefined ? { nextParams } : {}),
   };
 }

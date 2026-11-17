@@ -19,6 +19,7 @@ import {
   maintainInstanceKey,
   OUTBOX_PRUNE_INTERVAL_HOURS,
   pruneOutbox,
+  RECORD_STATE_PROTOCOL_VERSION,
   REGISTRY_SYNC_INTERVAL_HOURS,
   readFenceHolder,
   readJournalLag,
@@ -39,6 +40,7 @@ import { PeerBook } from "./peer-book.js";
 import { refreshPeers } from "./peering.js";
 import { holdProcessLock } from "./process-lock.js";
 import { pullPeer } from "./puller.js";
+import { type ReconcileCounts, reconcileAfter, reconcilePeer } from "./reconcile.js";
 import { REGISTRY_RETRY_MS, syncRegistryPeers } from "./registry.js";
 import { build } from "./server.js";
 import { warnWithheld } from "./withheld.js";
@@ -404,9 +406,14 @@ async function boot() {
 
   // Pull: each peer this instance pulls is read from its own cursor, so what
   // arrives is complete whatever the push carries. Single-flight. Each peer
-  // gets a time slice per cycle; while one has more to read, the next cycle
-  // runs at once instead of on the timer, so a backlog drains with every peer
-  // taking its turn. A peer that asked to retry later is left alone that long.
+  // gets a time slice per cycle; while one has more to read and its cursor
+  // moved in this cycle, the next cycle runs at once instead of on the timer,
+  // so a backlog drains with every peer taking its turn, and a cycle that got
+  // nowhere waits for the timer. A peer that asked to retry later is left alone that long.
+  // Once a peer's pull reached its live tail, a comparison of the copies held
+  // here with the peer's state runs while one is due (after the peer's journal
+  // started over, or a page said the cursor was beyond its window), in slices
+  // as well, resuming where it stopped.
   let pullTimer: NodeJS.Timeout | undefined;
   if (settings.enabled && settings.peers.some((peer) => peer.pull !== undefined)) {
     const egress = guardedFetch();
@@ -419,6 +426,10 @@ async function boot() {
     const nonceStore = new InMemoryNonceStore();
     const registry = productionRegistry();
     const retryAt = new Map<string, number>();
+    /** When each peer that cannot be compared with was last said to be so. */
+    const unsupportedSaidAt = new Map<string, number>();
+    /** What each peer's running comparison did in the rounds so far. */
+    const reconciled = new Map<string, ReconcileCounts>();
     let pullRunning = false;
     const pullAll = async () => {
       if (pullRunning) return;
@@ -448,7 +459,11 @@ async function boot() {
           } else {
             retryAt.delete(peer.instanceId);
           }
-          if ("more" in result && result.more && result.error === undefined) again = true;
+          // Straight on only while the pull got somewhere: a round that moved
+          // nothing waits for the timer rather than spin.
+          if ("more" in result && result.more && result.error === undefined && result.advanced) {
+            again = true;
+          }
           if ("reset" in result && result.reset !== undefined) {
             console.warn(
               `[federation-api] pull of ${peer.instanceId}: the peer's journal started over ` +
@@ -464,6 +479,63 @@ async function boot() {
             console.info(
               `[federation-api] archive of ${peer.instanceId}: ${accepted} landed, ` +
                 `${stale} stale, ${skipped} skipped`,
+            );
+          }
+          if (!reconcileAfter(result)) continue;
+          const compared = await reconcilePeer(
+            sql,
+            { ...peer, pull: peer.pull! },
+            {
+              registry,
+              localInstanceId: settings.actor!.instanceId,
+              signingKey,
+              fetchImpl: egress,
+              nonceStore,
+              now: () => new Date().toISOString(),
+            },
+          ).catch((err: unknown) => ({ status: "failed", error: String(err) }) as const);
+          if (compared.status === "unsupported") {
+            if ((unsupportedSaidAt.get(peer.instanceId) ?? 0) <= Date.now() - 86_400_000) {
+              unsupportedSaidAt.set(peer.instanceId, Date.now());
+              console.warn(
+                `[federation-api] reconcile of ${peer.instanceId} is due, but the peer speaks ` +
+                  `protocol ${compared.protocolVersion ?? "unknown"}, before ` +
+                  `${RECORD_STATE_PROTOCOL_VERSION}: its copies here stay as they are`,
+              );
+            }
+            continue;
+          }
+          if ("counts" in compared) {
+            const sum = reconciled.get(peer.instanceId);
+            if (sum !== undefined) {
+              for (const key of Object.keys(sum) as (keyof ReconcileCounts)[]) {
+                sum[key] += compared.counts[key];
+              }
+            } else {
+              reconciled.set(peer.instanceId, { ...compared.counts });
+            }
+          }
+          if (compared.status === "more" && compared.progressed) again = true;
+          if (compared.status === "stopped" || compared.status === "failed") {
+            console.warn(`[federation-api] reconcile of ${peer.instanceId}: ${compared.error}`);
+          }
+          if (compared.status === "stopped" && compared.retryAfterSec !== undefined) {
+            retryAt.set(peer.instanceId, Date.now() + compared.retryAfterSec * 1000);
+          }
+          if (compared.status === "finished") {
+            const {
+              compared: n,
+              updated,
+              restored,
+              ended,
+              retired,
+              refused,
+            } = reconciled.get(peer.instanceId) ?? compared.counts;
+            reconciled.delete(peer.instanceId);
+            console.info(
+              `[federation-api] reconcile of ${peer.instanceId}: ${n} compared, ` +
+                `${updated} updated, ${restored} restored, ${ended} ended, ${retired} retired, ` +
+                `${refused} refused`,
             );
           }
         }

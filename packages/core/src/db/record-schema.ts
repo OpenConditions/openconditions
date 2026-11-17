@@ -164,6 +164,8 @@ export const situation = conditionsSchema.table(
     index("idx_situation_rights_revoked")
       .on(t.id)
       .where(sql`${t.tombstoneReason} = 'rights_revoked'`),
+    // Records in byte order of their ids, as federation lists them to compare state.
+    index("idx_situation_id_bytes").on(sql`${t.id} COLLATE "C"`),
   ],
 );
 
@@ -232,6 +234,8 @@ export const feature = conditionsSchema.table(
     index("idx_feature_rights_revoked")
       .on(t.id)
       .where(sql`${t.tombstoneReason} = 'rights_revoked'`),
+    // Records in byte order of their ids, as federation lists them to compare state.
+    index("idx_feature_id_bytes").on(sql`${t.id} COLLATE "C"`),
   ],
 );
 
@@ -334,6 +338,8 @@ export const offer = conditionsSchema.table(
     index("idx_offer_source").on(t.sourceId, t.id),
     index("idx_offer_canonical").on(t.canonicalId),
     index("idx_offer_rights_revoked").on(t.id).where(sql`${t.tombstoneReason} = 'rights_revoked'`),
+    // Records in byte order of their ids, as federation lists them to compare state.
+    index("idx_offer_id_bytes").on(sql`${t.id} COLLATE "C"`),
   ],
 );
 

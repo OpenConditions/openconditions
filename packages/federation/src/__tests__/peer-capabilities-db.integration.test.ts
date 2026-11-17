@@ -12,6 +12,7 @@ import {
   generateInstanceKey,
   type InstanceKey,
   loadLearnedKeys,
+  loadPeerProtocolVersion,
   loadPeerVersions,
   type PeerRecord,
   peerVersionsFromActor,
@@ -68,6 +69,7 @@ describe("a peer's capabilities", () => {
     expect(await peerVersionsFromActor(actor, peer(), local)).toEqual({
       ok: true,
       schemaVersions: versions,
+      protocolVersion: "0.1",
       deliveryModes: ["pull", "webhook", "sse"],
       keys: new Map([[key.keyId, key.keyId]]),
     });
@@ -106,6 +108,8 @@ describe("a peer's capabilities", () => {
     const actor = buildActorDocument(CONFIG, [key], versions);
     await refreshPeerCapabilities(sql, peer(), { local, fetchImpl: serving(actor), now: NOW });
     expect(await loadPeerVersions(sql, "peer.example.net")).toEqual(versions);
+    // With the protocol version the two negotiated, which says what routes the peer serves.
+    expect(await loadPeerProtocolVersion(sql, "peer.example.net")).toBe("0.1");
 
     const down = (async () => new Response("", { status: 503 })) as typeof fetch;
     expect(

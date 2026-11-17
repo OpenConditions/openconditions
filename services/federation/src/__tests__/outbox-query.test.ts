@@ -1,6 +1,6 @@
 import { RECORD_FILTER_KEYS } from "@openconditions/federation";
 import { describe, expect, it } from "vitest";
-import { OutboxQueryError, parseOutboxQuery } from "../outbox-query.js";
+import { OutboxQueryError, parseOutboxQuery, parseStateQuery } from "../outbox-query.js";
 import { filterQuery } from "../puller.js";
 
 describe("parseOutboxQuery", () => {
@@ -49,5 +49,37 @@ describe("parseOutboxQuery", () => {
     query.set("limit", "100");
     query.set("after", "0.0");
     expect(() => parseOutboxQuery(Object.fromEntries(query))).not.toThrow();
+  });
+});
+
+describe("parseStateQuery", () => {
+  it("reads the class, a record id to continue after, a limit and the filter", () => {
+    const parsed = parseStateQuery({
+      class: "feature",
+      after: "oc:feature:nl-ndw-flow:s1",
+      limit: "5000",
+      kinds: "measurement_site",
+    });
+    expect(parsed).toEqual({
+      cls: "feature",
+      after: "oc:feature:nl-ndw-flow:s1",
+      limit: 1000,
+      filter: { kinds: ["measurement_site"] },
+      nextParams: "kinds=measurement_site&limit=1000",
+    });
+  });
+
+  it("refuses another class, an observation, a long id and an unknown parameter", () => {
+    for (const query of [
+      {},
+      { class: "observation" },
+      { class: "camera" },
+      { class: "situation", after: "x".repeat(513) },
+      { class: "situation", after: "" },
+      { class: "situation", limit: "0" },
+      { class: "situation", colour: "red" },
+    ]) {
+      expect(() => parseStateQuery(query), JSON.stringify(query)).toThrow(OutboxQueryError);
+    }
   });
 });

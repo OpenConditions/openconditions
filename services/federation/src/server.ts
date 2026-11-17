@@ -3,9 +3,10 @@
  * federated identity: the discovery surface (Actor document + declared peers
  * under /.well-known/openconditions/), the pull side of the peer exchange
  * (GET /peer/outbox — the RFC-9421-signed, monotonic-cursor read over the
- * append-only federation outbox journal), the subscription surface, and the
+ * append-only federation outbox journal), the subscription surface, the
  * INBOX (POST /peer/inbox — the signed webhook target where verified peer
- * events cross the federation trust boundary).
+ * events cross the federation trust boundary), and the record state a
+ * subscriber compares its copies with (GET /peer/state, POST /peer/records).
  * Exported as build() so tests can fastify.inject; only main.ts listens.
  */
 
@@ -55,6 +56,7 @@ import {
   proxyMtlsContext,
   respondIfBlocked,
 } from "./peer-request.js";
+import { RECORDS_PATH, registerStateRoutes, STATE_PATH } from "./state-routes.js";
 import { registerSubscriptionRoutes } from "./subscription-routes.js";
 import { warnWithheld } from "./withheld.js";
 
@@ -142,14 +144,17 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
       BACKFILL_PATH,
       SUBSCRIPTIONS_PATH,
       STREAM_PATH,
+      STATE_PATH,
     ]) {
       app.get(path, async (_req, reply) => {
         return reply.status(404).send({ error: "federation is disabled on this instance" });
       });
     }
-    app.post(INBOX_PATH, async (_req, reply) => {
-      return reply.status(404).send({ error: "federation is disabled on this instance" });
-    });
+    for (const path of [INBOX_PATH, RECORDS_PATH]) {
+      app.post(path, async (_req, reply) => {
+        return reply.status(404).send({ error: "federation is disabled on this instance" });
+      });
+    }
     return app;
   }
 
@@ -384,6 +389,17 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     nonceStore,
     rateLimiter,
     archiveUrl: settings.archiveUrl!,
+    signingKey,
+    ...(mtlsContextFor !== undefined ? { mtlsContextFor } : {}),
+    now,
+  });
+
+  registerStateRoutes(app, {
+    sql,
+    peers,
+    baseUrl: actorConfig.baseUrl,
+    nonceStore,
+    rateLimiter,
     signingKey,
     ...(mtlsContextFor !== undefined ? { mtlsContextFor } : {}),
     now,

@@ -1,6 +1,6 @@
 # Federation wire protocol
 
-This document specifies how two OpenConditions instances exchange records, at the level a second, independent implementation needs. It describes protocol version **0.2**, which `packages/federation` exports as `FEDERATION_PROTOCOL_VERSION`. The operator side (configuration, pinning, the registry, deployment) is in the [federation onboarding guide](./federation-onboarding.md).
+This document specifies how two OpenConditions instances exchange records, at the level a second, independent implementation needs. It describes protocol version **0.3**, which `packages/federation` exports as `FEDERATION_PROTOCOL_VERSION`. The operator side (configuration, pinning, the registry, deployment) is in the [federation onboarding guide](./federation-onboarding.md).
 
 The key words MUST and MUST NOT are used as in RFC 2119 and RFC 8174, and only where an implementation that does otherwise would not interoperate or would weaken the trust model. Everything else describes what the reference implementation (`services/federation`, `packages/federation` and `services/contributions-api/src/federation/inbox.ts`) does. The values in the [test vectors](#11-test-vectors) are checked against that implementation by `packages/federation/src/__tests__/protocol-vectors.test.ts`; where this document and a vector disagree, the vector is right and this document has a bug.
 
@@ -8,7 +8,7 @@ The key words MUST and MUST NOT are used as in RFC 2119 and RFC 8174, and only w
 
 The protocol replicates records (situations, features, offers and observations of the OpenConditions model) from the instance that wrote them, the publisher, to the instances that subscribe to it, operator to operator. Each instance publishes only its own records; a receiver refuses a record another instance wrote. It is not ActivityPub: some field names (`OrderedCollectionPage`, `orderedItems`, `partOf`, the actor's `type`, `outbox`, `inbox`) are borrowed from ActivityStreams, but the documents carry no `@context`, use their own types and are plain JSON, served and sent as `application/json`.
 
-Federation has no production deployment yet and no peers, so version 0.2 makes no promise of compatibility with earlier drafts.
+Federation has no production deployment yet and no peers, so version 0.3 makes no promise of compatibility with earlier drafts. Version 0.3 added the record state routes (§6).
 
 ## 2. Discovery
 
@@ -59,7 +59,7 @@ Key rotation: a key is valid for six months. When the newest key has less than 3
 
 | Field                 | Meaning                                                                                                                                                    |
 | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `protocolVersion`     | The protocol version the instance speaks, for this document `"0.2"`.                                                                                       |
+| `protocolVersion`     | The protocol version the instance speaks, for this document `"0.3"`.                                                                                       |
 | `protocolVersions`    | Optional: every version it still speaks.                                                                                                                   |
 | `schemaVersions`      | Every schema its model registry runs, as `<key>@<major>.<minor>` (`kernel@1.0`, `situation/incident@1.2`). Taken from the registry, never configured.      |
 | `wireFormats`         | The media types its documents are served in: `["application/json"]`. Taken from the running build, never configured.                                       |
@@ -87,7 +87,7 @@ The tier is the receiving operator's, from its pin; nothing a peer sends changes
 | 1    | peered     | the last 30 days                                        | 1000                     | 300                      |
 | 2    | governance | at least 30 days (the reference service serves 30 days) | 2000                     | 600                      |
 
-Inbox entries are the entries of pages a peer pushes to this instance's inbox; journal reads are a peer's requests to `/peer/outbox` and `/peer/backfill` together. A subscriber's pull of a peer is bounded only by the journal-read budget the peer gives it: the subscriber does not count the pages it pulls against the inbox budget it gives that peer. An unsigned request to `/peer/outbox` is served, and rate limited, as tier 0 (§9). Instances can also be discovered through a TUF-signed registry, whose entries become pins; see the onboarding guide, §2 and §5.
+Inbox entries are the entries of pages a peer pushes to this instance's inbox; journal reads are a peer's requests to `/peer/outbox`, `/peer/backfill`, `/peer/state` and `/peer/records` together. A subscriber's pull of a peer is bounded only by the journal-read budget the peer gives it: the subscriber does not count the pages it pulls against the inbox budget it gives that peer. An unsigned request to `/peer/outbox` is served, and rate limited, as tier 0 (§9). Instances can also be discovered through a TUF-signed registry, whose entries become pins; see the onboarding guide, §2 and §5.
 
 ## 4. Message signing
 
@@ -139,9 +139,9 @@ A body is bound by an [RFC 9530](https://www.rfc-editor.org/rfc/rfc9530) `Conten
 
 | Message                                                                                                                              | Signed                       |
 | ------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------- |
-| Requests to `/peer/backfill`, `/peer/subscriptions[/<id>]`, `/peer/stream`, `/peer/inbox`                                            | yes, required                |
+| Requests to `/peer/backfill`, `/peer/state`, `/peer/records`, `/peer/subscriptions[/<id>]`, `/peer/stream`, `/peer/inbox`            | yes, required                |
 | Requests to `/peer/outbox`                                                                                                           | optional; unsigned is tier 0 |
-| `200` and `304` answers of `/peer/outbox`, `200` answers of `/peer/backfill`                                                         | yes                          |
+| `200` and `304` answers of `/peer/outbox`, `200` answers of `/peer/backfill`, `/peer/state` and `/peer/records`                      | yes                          |
 | Webhook pushes (`POST` to the subscriber's inbox)                                                                                    | yes                          |
 | The actor and peers documents, subscription answers, inbox answers, the event stream, error answers, `/status` and `/status/journal` | no                           |
 
@@ -173,7 +173,7 @@ Each instance keeps a journal of changes to its own records. Each entry has a cu
 
 A page serves only settled entries: an entry is served only once no transaction that could still add an entry ordered before it is open, so a page never contains an entry that an entry published later could precede, and a cursor never has to move back. While a write transaction stays open anywhere on the publisher's database server, entries committed after it began wait. The publisher logs a warning while that lasts longer than its `convergenceBound`, and `GET /status/journal` answers `{ "epoch", "heldSince", "lagSec" }`: when the oldest entry still held back was journalled (null when none is) and how many seconds ago.
 
-Every page has a `highWaterMark`: the cursor of the last entry the publisher read for the page, whether or not the subscriber's filter kept it, or the requested cursor when nothing new is settled. A subscriber stores it and sends it as `after` next time.
+Every page has a `highWaterMark`: the cursor of the last entry the publisher read for the page, whether or not the subscriber's filter kept it, or the requested cursor when nothing new is settled; a page that says `beyondWindow` may move it further (§6). A subscriber stores it and sends it as `after` next time.
 
 ### Epochs
 
@@ -187,6 +187,8 @@ A subscriber MUST keep the epoch with its cursor and:
 - when a page names another epoch than the one stored, or says `cursorAhead`, not land the page, set its cursor back to `"0.0"`, store the page's epoch and read the journal again from the start; what it already holds lands as stale (§6);
 - treat `cursorAhead` on a request from `"0.0"` as the publisher's error;
 - when its cursor is `"0.0"` and only the epoch differs, store the page's epoch and land the page.
+
+Reading the journal again does not tell a subscriber what the publisher's restored history no longer has: a record created after the backup, a later version of a record, a withdrawal. After it reset its cursor for another epoch or `cursorAhead`, a subscriber that is to hold the publisher's state MUST compare its copies with the publisher's present state and repair them (§6, _The publisher's record state_); one that does not keeps records and versions the publisher no longer has.
 
 The reference puller follows at most one such restart per pull and none within an hour of the last; another is refused and counted against the peer's health, the cursor left where it is. A page without an `epoch`, or with one that is not a string of 1 to 64 characters, is refused. Pushed pages carry the epoch too, but the push cursor lives at the publisher, so the inbox does not act on it; a push cursor that is ahead of the journal is set back to `"0.0"` by the publisher. The cursor of the event stream lives at the subscriber, and the stream's first event states the epoch and whether the cursor asked for is ahead (§8): a stream subscriber keeps the epoch with its cursor by the same rules, and on another epoch reconnects without a cursor.
 
@@ -237,6 +239,10 @@ A malformed parameter, or one not in this table, is answered `400` with `{ "erro
 
 `archive` is `{ "builtAt": <ISO 8601>, "files": { "feature", "situation", "offer", "observation": { "url", "sha256", "bytes" } } }`: the latest nightly GeoParquet file of each class, its SHA-256 (64 lowercase hex digits) and size. The files may be served from anywhere; a receiver MUST check each against the hash and size the signed page states before landing it, and lands them in that class order before the page. When an archive exists, the window reaches back to when its night's build began, but at most 36 hours before the tier's floor, so nothing falls between the archive and the live journal. See [archive.md](./archive.md).
 
+Neither the archive nor the live journal says what the publisher ended before the window: a delete or an erasure is in no archive, and the archive holds less than the journal carries (for example, no situation whose validity has ended). A page that says `beyondWindow` and has no `next` (it served every settled entry within the window after the cursor) has as its `highWaterMark` the cursor of the newest settled entry before the window after the requested cursor, when that lies past the last entry the page read: no entry is skipped, since every settled one within the window is in the page and one not yet settled has a higher `txid`, and the subscriber's next request starts after the part of the journal its window hides instead of being told it is beyond the window again. A page with `next` keeps the `highWaterMark` of the last entry it read.
+
+After landing a page that says `beyondWindow`, with or without an archive, a subscriber that is to hold the publisher's state MUST compare its copies with the publisher's present state and repair them (below, _The publisher's record state_); one that does not keeps records the publisher ended.
+
 A page stays within what a receiver accepts. Its entries take at most 900,000 bytes together, each entry counted as the UTF-8 length of its JSON, which leaves room for the rest of the page under the 1 MiB (1,048,576 bytes) a receiver accepts. When the next entry the filter keeps would take the page past that, the page ends before it: its `highWaterMark` is the cursor of the last entry before it and it carries `next`, so the following request continues with that entry. An entry larger than 900,000 bytes on its own is not federated: it is left out of every page, the `highWaterMark` moves past it as past an entry the filter leaves out, and the reference publisher logs a warning naming the record.
 
 The ETag of an outbox page is `"<highWaterMark>-<hash>"`, the hash covering the epoch, the requested cursor, the limit, the filter, the requester's tier and the archive's `builtAt`. A request whose `If-None-Match` equals it is answered `304` without a body, signed and covering `etag`.
@@ -271,6 +277,60 @@ A record is admitted only if its `provenance.instanceId` is the peer it came fro
 Landing: a change no newer than the copy held lands as `stale` and changes nothing, so a page that arrives by push and by pull lands once. A record held under the same id from another instance is not overwritten. A delete applies only to a copy the peer owns, and is `stale` when the copy changed to a later revision since. An erasure (`rights_revoked`) ends every revision, and the receiver refuses further deliveries of that record (by `canonicalId`) from that peer for 30 days. A local failure rejects the whole page, so the publisher or puller retries it.
 
 The reference puller also requires of each page that it carries at most the `limit` it asked for and 1 MiB, arrives within 60 seconds, carries a valid `highWaterMark` not before the cursor asked for, and that every entry lies after that cursor and at or before the `highWaterMark`; it advances its cursor to the `highWaterMark` only once the page landed. It asks for 500 entries a page and, in each round, reads pages from each peer for up to 20 seconds while the pages carry `next`; while any peer has more left the next round starts at once, otherwise every 30 seconds. A peer that answers `429`, or `503` with `Retry-After`, ends that peer's pull, and is not asked again for `Retry-After` seconds (60 when the value is unreadable); the reference puller does not count that answer against the peer's availability. When a page is larger than 1 MiB it stops reading it and asks for the same cursor again with a quarter of the `limit` (at least 1), keeping the smaller `limit` for the rest of that pull; a page still too large at a `limit` of 1 is refused, as an entry larger than the receiver accepts, and counted against the peer's health. The next pull starts at the full `limit` again.
+
+### The publisher's record state
+
+Two routes let a subscriber compare its copies with what the publisher holds now. Both require a signature from a pinned peer and pass the gates of `/peer/backfill`: an unsigned or failing request is a `401` (§4), a blocked peer a `403`, a peer whose pin requires mutual TLS a `403` without it, and each request counts as one journal read against the peer's budget (§3, §9), checked before its parameters or body are parsed. A `200` answer is signed and bound to the request (§4). Both serve exactly what the outbox would serve that peer (the publisher's own records, not an on-demand answer or a fused row, of a source not restricted, under a public licence) and are not bounded by the peer's journal window: the window bounds the journal, not what a peer may hold. Observations are not served: a subscriber keeps no tombstone of a reading, a reading ends by its own validity or its source's liveness, and a newer reading replaces an older one.
+
+`GET /peer/state` lists the live records of one class:
+
+| Parameter                   | Value                                                                                                         |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `class`                     | required: `feature`, `situation` or `offer`; any other value, `observation` included, is answered `400`       |
+| `after`                     | optional: a record id of 1 to 512 bytes; the listing continues strictly after it                              |
+| `limit`                     | rows scanned per page, at least 1; default 1000, at most 1000 (a larger value is lowered to 1000)             |
+| the filter parameters of §6 | as for `/peer/outbox`, parsed by the same rules; a malformed or unknown parameter is answered `400` naming it |
+
+Ids are ordered by their UTF-8 bytes (Postgres `COLLATE "C"`), and `after` is compared the same way, so both sides agree whatever their database's collation. The publisher scans up to `limit` records of the class after `after` that are live and that the outbox may carry, and lists those the filter keeps as a `create` entry of them would be kept (a crowd report the crowd withdrew, which the journal serves as a `delete`, is not listed):
+
+```json
+{
+  "type": "RecordStatePage",
+  "epoch": "<journal epoch>",
+  "class": "situation",
+  "items": [{ "id": "…", "revision": 3, "recordedAt": "2026-01-01T00:00:00.000Z" }],
+  "through": "<id of the last record scanned>",
+  "next": "<baseUrl>/peer/state?class=situation&after=<through>&…"
+}
+```
+
+`revision` and `recordedAt` are those of the stored record: a record version is identified by the two together, `recordedAt` being set by the instance that sealed the revision and kept on every copy. `through` and `next` are present exactly when the page scanned `limit` records, so more may follow; `next` carries `class`, `after` and the request's filter and `limit` parameters. Without them the listing reached the end of the class. `items` may be empty on a page with `next`, when the filter left out everything scanned. The page covers the ids after `after` up to and including `through`, or to the end of the class.
+
+`POST /peer/records` answers for named records. The body is `application/json`, `{ "class": "situation", "ids": ["…"] }`, with nothing else: `class` as above and 1 to 100 distinct ids, each a non-empty string of at most 512 bytes; anything else is answered `400`, a body larger than 1 MiB `413`. For each id, in request order, the answer holds one of:
+
+- a live record the outbox may carry: a `create` entry carrying the record as the journal would carry it now, in the entry shape of §6 with `txid` `"0"`, `seq` `0` and `createdAt` the time of the answer;
+- a record that ended, when a peer may hold it: a `delete` entry with `reason` the reason it ended for and `revision` the revision it ended at; a crowd report the crowd withdrew is a `delete` as the journal serves it;
+- no record of the class with that id, one the outbox never carries (another instance's record, an on-demand answer, a fused row), one ended that no peer can hold, or a live one the outbox does not carry (its source turned restricted, its licence is not public): the id is listed in `unknown`, so the answer says nothing of a record the outbox does not carry. A subscriber that holds such a record ends its copy as withdrawn.
+
+A peer may hold a record when the journal has entries of it, or when a subscription wants its class and its source is public or the record was stored by the time its source last turned restricted; this is the rule the publisher's own journal follows when it decides whether a record's delete is journalled at all.
+
+The filter is not applied: the requester asks about records it holds or was just listed. Entries are added in request order while their total stays within the page budget of §6 (900,000 bytes); the ids not reached are listed in `unanswered`, to be asked again, and an id whose entry alone is larger is listed in `withheld` and not federated.
+
+```json
+{
+  "type": "RecordsPage",
+  "epoch": "<journal epoch>",
+  "class": "situation",
+  "orderedItems": [ … ],
+  "unknown": ["…"],
+  "unanswered": [],
+  "withheld": []
+}
+```
+
+All three lists are always present, and every id asked for is named exactly once, by an entry or in one list; a subscriber refuses an answer that leaves one out or names another. See [`state.json`](../packages/federation/src/__tests__/vectors/state.json) and [`records.json`](../packages/federation/src/__tests__/vectors/records.json).
+
+The reference subscriber compares its copies of a peer's records when a comparison is due (after it reset its cursor for another epoch or `cursorAhead`, which starts a running comparison over; and after a pull landed a page that said `beyondWindow`, when no comparison is due already and the last one finished more than 24 hours ago or never), once a pull reached the live tail without an error, and only with a peer whose negotiated protocol version is 0.3 or later. It reads the listing of each class in turn (feature, situation, offer) with its own pull filter, checking each page as it checks a pulled page (§6) and stopping at a page of another epoch than the one kept with its cursor. Only after a listing page arrived does it read its copies of the peer's records in the range the page covers, and it asks `POST /peer/records`, in chunks of up to 100 ids and again for `unanswered` ones, for each record that is listed and not held, held at another `(revision, recordedAt)`, or held live but left out of the listing while its pull filter, applied to the stored copy, still keeps it. A copy ended here at the listed version, or rejected or superseded here, is not asked for. It lands each answer as the publisher states it, replacing a copy whatever its revision, unless the copy changed since it was read; an erasure is recorded as a received one is (§6, _Landing_), and a record the receiver refuses (an erased one included) is counted, not held against the peer. A copy of a record listed in `unknown` that it holds live is ended `withdrawn` at the revision held, as a retraction of the peer's, so a later delivery of the record at that revision or a higher one brings it back; ids in `withheld` are left alone. Because the copies are read after the listing arrived and a copy is retired only on an answer given after that read, a record retired this way was gone from the publisher after the subscriber held it. The comparison runs in slices of 20 seconds, stores how far it got after every listing page, waits `Retry-After` on a `429` or a `503` with `Retry-After`, and starts over when a new one becomes due.
 
 ## 7. Subscriptions
 
@@ -358,17 +418,19 @@ with `event: liveness` for a liveness entry. The stream applies the subscription
 | Entries of one page                    | 900,000 bytes together; a larger entry is not served |
 | Request body (inbox, subscriptions)    | 1 MiB (the server answers `413` above)               |
 | Page a puller accepts                  | the `limit` asked for (500), 1 MiB, 60 seconds       |
+| Record state listing (`/peer/state`)   | 1000 records scanned per page                        |
+| Records request (`/peer/records`)      | 1 to 100 ids of at most 512 bytes                    |
 | Signature lifetime, skew, nonce memory | 60 s, ±30 s, 90 s                                    |
 | Epoch length                           | 1 to 64 characters                                   |
 | Subscription lease, renewal            | 30 days, renewed by the subscriber with 15 days left |
 
-Rate limits are per peer, in one-minute windows (a window starts with the first request after the previous one ended), with the budgets of §3: the inbox counts the entries a peer pushes, journal reads count requests, a signed peer's `/peer/outbox` and `/peer/backfill` requests drawing on one budget. Unsigned `/peer/outbox` requests are metered per client address with tier 0's budget, an IPv6 address by its /64 prefix and an IPv4-mapped IPv6 address as the IPv4 address. The check comes after authentication and before the journal is read, so a `304` counts too. A window that has seen nothing yet admits one page of up to 500 entries whatever the budget, and refuses a larger one. Over the budget a request is answered `429` with `Retry-After` (the seconds until the window ends), `Federation-Reason: rate-limited` and a JSON body `{ "error", "retryAfterSec" }`. A peer or reader answered `429` waits `Retry-After` seconds before it sends to that route again. A window in which a peer is refused a second time, so it did not wait, counts against it: 3 such windows in a row (each starting within a minute of the previous one's end; a window between them that is clean or saw a single refusal starts the count again) give the peer the budget of the tier below for 5 minutes, renewed by every further such window. A peer that always waits is refused at most once per window and never gets the lower budget. This changes only its rate, never what was already accepted from it.
+Rate limits are per peer, in one-minute windows (a window starts with the first request after the previous one ended), with the budgets of §3: the inbox counts the entries a peer pushes, journal reads count requests, a signed peer's `/peer/outbox`, `/peer/backfill`, `/peer/state` and `/peer/records` requests drawing on one budget. Unsigned `/peer/outbox` requests are metered per client address with tier 0's budget, an IPv6 address by its /64 prefix and an IPv4-mapped IPv6 address as the IPv4 address. The check comes after authentication and before the journal is read, so a `304` counts too. A window that has seen nothing yet admits one page of up to 500 entries whatever the budget, and refuses a larger one. Over the budget a request is answered `429` with `Retry-After` (the seconds until the window ends), `Federation-Reason: rate-limited` and a JSON body `{ "error", "retryAfterSec" }`. A peer or reader answered `429` waits `Retry-After` seconds before it sends to that route again. A window in which a peer is refused a second time, so it did not wait, counts against it: 3 such windows in a row (each starting within a minute of the previous one's end; a window between them that is clean or saw a single refusal starts the count again) give the peer the budget of the tier below for 5 minutes, renewed by every further such window. A peer that always waits is refused at most once per window and never gets the lower budget. This changes only its rate, never what was already accepted from it.
 
 A peer the operator blocked is answered `403` with `{ "error": "peer is blocked", "reason": "blocked" }` on every authenticated route, and on `/peer/outbox` when the request is signed. A route of a federation that is not enabled answers `404`.
 
 ## 10. Versioning
 
-The protocol version is negotiated through `capabilities.protocolVersion` and `protocolVersions` (§2). The reference service warns its operator at boot when the configured actor does not offer `0.2`, but starts all the same.
+The protocol version is negotiated through `capabilities.protocolVersion` and `protocolVersions` (§2). The reference service warns its operator at boot when the configured actor does not offer `0.3`, but starts all the same. A subscriber compares its copies with a peer's state (§6) only when the version negotiated with it is 0.3 or later.
 
 Record schemas are versioned separately, `<key>@<major>.<minor>`, and negotiated per schema (§2, §6): the same major is compatible, a newer minor's unknown fields are dropped, another major is not exchanged, and instances on different `kernel` majors exchange nothing.
 
@@ -385,4 +447,6 @@ The vectors are JSON files in [`packages/federation/src/__tests__/vectors/`](../
 | `multibase.json`      | The publicKeyMultibase of the test key.                                                                                                                                                                                                                                                                                                     |
 | `cursors.json`        | Valid and invalid cursor wire forms and an ascending order.                                                                                                                                                                                                                                                                                 |
 | `page.json`           | An example page with an epoch, a change of a record the reference registry admits, a retraction, an erasure and a liveness entry.                                                                                                                                                                                                           |
+| `state.json`          | A `/peer/state` page that scanned its limit, with `through` and `next`.                                                                                                                                                                                                                                                                     |
+| `records.json`        | A `/peer/records` request and its answer: a live record, an ended one and an unknown id.                                                                                                                                                                                                                                                    |
 | `entries.json`        | Entries the reference reader accepts, as what, and entries it refuses, with the reason.                                                                                                                                                                                                                                                     |
