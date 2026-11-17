@@ -12,7 +12,7 @@
  */
 
 import {
-  ACTIVITY_JSON,
+  FEDERATION_JSON,
   FEDERATION_REASON_HEADER,
   type InstanceKey,
   type MtlsContext,
@@ -27,7 +27,7 @@ import { loadArchive } from "./archive.js";
 import { readBackfill } from "./backfill.js";
 import { OutboxQueryError, parseOutboxQuery } from "./outbox-query.js";
 import type { PeerBook } from "./peer-book.js";
-import { requirePeer, respondIfBlocked } from "./peer-request.js";
+import { headerStrings, requirePeer, respondIfBlocked } from "./peer-request.js";
 
 const BACKFILL_PATH = "/peer/backfill";
 
@@ -113,15 +113,22 @@ export function registerBackfillRoutes(app: FastifyInstance, ctx: BackfillRouteC
     // file hashes and the cursor are signed.
     const key = await ctx.signingKey();
     const body = Buffer.from(JSON.stringify(page));
+    // Bound to the request it answers, under the target URI the request's
+    // own signature was verified against.
+    const answered = {
+      method: req.method,
+      url: `${ctx.baseUrl}${req.url}`,
+      headers: headerStrings(req.headers),
+    };
     const signed = await signMessage({
-      method: "GET",
-      url: partOf,
-      headers: { "content-type": ACTIVITY_JSON },
+      ...answered,
+      headers: { "content-type": FEDERATION_JSON },
       body,
       keyId: key.keyId,
       privateKey: key.privateKey,
       isResponse: true,
       status: 200,
+      request: answered,
     });
     return reply.status(200).headers(signed.headers).send(body);
   });

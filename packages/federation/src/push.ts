@@ -26,15 +26,13 @@
  * on pull). A recovered peer re-enables push with a PATCH (resets the counter).
  */
 import type postgres from "postgres";
+import { FEDERATION_JSON } from "./actor.js";
 import { signMessage } from "./http-signature.js";
 import type { InstanceKey } from "./keys.js";
 import { type OutboxPage, readOutbox } from "./outbox.js";
 import { isPeerBlocked } from "./peer-blocklist.js";
 import type { RecordFilter } from "./record-filter.js";
 import type { FederationSubscription } from "./subscriptions.js";
-
-/** ActivityStreams content type the pushed page (and the pull outbox) use. */
-const ACTIVITY_JSON = "application/activity+json";
 
 /** Consecutive push failures that flip a subscription to `push_disabled`. */
 export const PUSH_FAILURE_THRESHOLD = 5;
@@ -159,7 +157,7 @@ export async function deliverWebhook(
     const signed = await signMessage({
       method: "POST",
       url: subscription.inboxUrl!,
-      headers: { "content-type": ACTIVITY_JSON },
+      headers: { "content-type": FEDERATION_JSON },
       body,
       keyId: opts.signingKey.keyId,
       privateKey: opts.signingKey.privateKey,

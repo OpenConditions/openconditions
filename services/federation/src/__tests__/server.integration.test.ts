@@ -118,7 +118,7 @@ describe("federation enabled", () => {
     await expect(build({ sql, env: archive, logger: false })).rejects.toThrow(/ARCHIVE_URL/);
   }, 30_000);
 
-  it("bootstraps an instance key and serves the actor document as activity+json", async () => {
+  it("bootstraps an instance key and serves the actor document as plain JSON", async () => {
     const app = await build({ sql, env: ENABLED_ENV, logger: false, now: () => NOW });
     try {
       const res = await app.inject({
@@ -126,7 +126,7 @@ describe("federation enabled", () => {
         url: "/.well-known/openconditions/actor.json",
       });
       expect(res.statusCode).toBe(200);
-      expect(res.headers["content-type"]).toContain("application/activity+json");
+      expect(res.headers["content-type"]).toContain("application/json");
       const doc = res.json() as ActorDocument;
       expect(doc.id).toBe("https://conditions.example.org/.well-known/openconditions/actor.json");
       expect(doc.type).toEqual(["Service", "MobilityCommonsInstance"]);

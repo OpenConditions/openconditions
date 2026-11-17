@@ -9,7 +9,7 @@
  */
 
 import type postgres from "postgres";
-import type { ActorDocument } from "./actor.js";
+import { type ActorDocument, FEDERATION_JSON } from "./actor.js";
 import { type NegotiableCapabilities, negotiateCapabilities } from "./capabilities.js";
 import { chainedActorKeys, type KeyAnchors, storeLearnedKeys, trustedKeys } from "./peer-keys.js";
 import { type PeerRecord, verifyActorAgainstPin } from "./peers.js";
@@ -106,7 +106,7 @@ export async function refreshPeerCapabilities(
   let actor: unknown;
   try {
     const res = await opts.fetchImpl(peer.actorUrl, {
-      headers: { accept: "application/activity+json, application/json" },
+      headers: { accept: FEDERATION_JSON },
     });
     if (!res.ok) return { ok: false, reason: `the actor document answered ${res.status}` };
     actor = await res.json();

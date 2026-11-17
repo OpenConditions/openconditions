@@ -208,7 +208,7 @@ describe("GET /peer/backfill", () => {
       const headers = await signedGet(tier1Peer, path);
       const res = await app.inject({ method: "GET", url: path, headers });
       expect(res.statusCode).toBe(200);
-      expect(res.headers["content-type"]).toContain("application/activity+json");
+      expect(res.headers["content-type"]).toContain("application/json");
 
       const page = res.json();
       expect(ids(page)).toContain(situationId("bf-route-recent"));
@@ -223,17 +223,29 @@ describe("GET /peer/backfill", () => {
       expect(page.archive).toEqual(archive);
 
       const [key] = await loadActiveKeys(sql, NOW);
-      const verified = await verifyMessage({
-        method: "GET",
-        url: `${BASE_URL}/peer/backfill`,
-        status: 200,
-        isResponse: true,
-        headers: headerStrings(res.headers as Record<string, unknown>),
-        body: res.rawPayload,
-        resolvePublicKey: async (keyId) => (keyId === key!.keyId ? key!.publicKey : null),
-        nonceStore: new InMemoryNonceStore(),
-      });
-      expect(verified).toEqual({ ok: true, keyId: key!.keyId });
+      const verifyAs = (request: {
+        method: string;
+        url: string;
+        headers: Record<string, string>;
+      }) =>
+        verifyMessage({
+          ...request,
+          status: 200,
+          isResponse: true,
+          request,
+          headers: headerStrings(res.headers as Record<string, unknown>),
+          body: res.rawPayload,
+          resolvePublicKey: async (keyId) => (keyId === key!.keyId ? key!.publicKey : null),
+          nonceStore: new InMemoryNonceStore(),
+        });
+      const sent = { method: "GET", url: `${BASE_URL}${path}`, headers };
+      expect(await verifyAs(sent)).toEqual({ ok: true, keyId: key!.keyId });
+      // The page is bound to the request it answers: not to another cursor's.
+      const otherPath = "/peer/backfill?limit=500&after=1.1";
+      const other = await signedGet(tier1Peer, otherPath);
+      expect(
+        await verifyAs({ method: "GET", url: `${BASE_URL}${otherPath}`, headers: other }),
+      ).toEqual({ ok: false, reason: "bad-signature" });
     } finally {
       await app.close();
       await sql`DELETE FROM conditions.archive_file`;

@@ -15,10 +15,16 @@
  * Every request is RFC-9421-signed with this instance's key, which the peer
  * verifies against its pin of this instance; the peer sees and changes only
  * this instance's own subscriptions. A response the peer signs is verified
- * against the pin of the peer ({@link verifyPeerResponse}).
+ * against the pin of the peer and the request it answers
+ * ({@link verifyPeerResponse}).
  */
-import { ACTOR_WELL_KNOWN_PATH } from "./actor.js";
-import { type NonceStore, signMessage, verifyMessage } from "./http-signature.js";
+import { ACTOR_WELL_KNOWN_PATH, FEDERATION_JSON } from "./actor.js";
+import {
+  type AnsweredRequest,
+  type NonceStore,
+  signMessage,
+  verifyMessage,
+} from "./http-signature.js";
 import type { InstanceKey } from "./keys.js";
 import { rawEd25519FromMultibase } from "./multibase.js";
 import type { PeerRecord } from "./peers.js";
@@ -77,6 +83,13 @@ function canonical(value: unknown): unknown {
   return value;
 }
 
+/** A signed request sent to a peer: the peer's response and the request as it was sent. */
+export interface PeerExchange {
+  response: Response;
+  /** What the peer's signed response must be bound to ({@link verifyPeerResponse}). */
+  request: AnsweredRequest;
+}
+
 /** Sends a request to a peer, signed with this instance's key. */
 export async function signedPeerRequest(
   fetchImpl: typeof fetch,
@@ -85,31 +98,34 @@ export async function signedPeerRequest(
   url: string,
   body?: unknown,
   signal?: AbortSignal,
-): Promise<Response> {
+): Promise<PeerExchange> {
   const payload = body === undefined ? undefined : Buffer.from(JSON.stringify(body));
   const signed = await signMessage({
     method,
     url,
-    headers: payload === undefined ? {} : { "content-type": "application/json" },
+    headers: payload === undefined ? {} : { "content-type": FEDERATION_JSON },
     ...(payload === undefined ? {} : { body: payload }),
     keyId: key.keyId,
     privateKey: key.privateKey,
   });
-  return fetchImpl(url, {
+  const response = await fetchImpl(url, {
     method,
     headers: signed.headers,
     ...(payload === undefined ? {} : { body: payload }),
     ...(signal === undefined ? {} : { signal }),
   });
+  return { response, request: { method, url, headers: signed.headers } };
 }
 
 /**
  * Whether a peer's response carries a valid signature under one of the keys
- * pinned for that peer, over the body as received.
+ * pinned for that peer, over the body as received and bound to `request`, the
+ * request as this instance sent it.
  */
 export async function verifyPeerResponse(
   peer: Pick<PeerRecord, "pinnedKeys">,
-  res: { status: number; headers: Headers; body: Uint8Array; url: string },
+  res: { status: number; headers: Headers; body: Uint8Array },
+  request: AnsweredRequest,
   nonceStore: NonceStore,
 ): Promise<boolean> {
   const pins = new Set(peer.pinnedKeys);
@@ -118,10 +134,11 @@ export async function verifyPeerResponse(
     headers[name] = value;
   });
   const result = await verifyMessage({
-    method: "GET",
-    url: res.url,
+    method: request.method,
+    url: request.url,
     status: res.status,
     isResponse: true,
+    request,
     headers,
     body: res.body,
     nonceStore,
@@ -173,12 +190,17 @@ export async function ensurePeerSubscription(
     priorityOnly: want.priorityOnly,
   };
   try {
-    const listed = await signedPeerRequest(opts.fetchImpl, opts.signingKey, "GET", url);
+    const { response: listed } = await signedPeerRequest(
+      opts.fetchImpl,
+      opts.signingKey,
+      "GET",
+      url,
+    );
     if (!listed.ok) return failure(listed, "listing the subscriptions");
     const { subscriptions } = (await listed.json()) as { subscriptions?: FederationSubscription[] };
     const held = (subscriptions ?? []).find((s) => sameTarget(s, want));
     if (held === undefined) {
-      const created = await signedPeerRequest(
+      const { response: created } = await signedPeerRequest(
         opts.fetchImpl,
         opts.signingKey,
         "POST",
@@ -194,7 +216,7 @@ export async function ensurePeerSubscription(
       held.priorityOnly === want.priorityOnly &&
       JSON.stringify(canonical(held.filter)) === JSON.stringify(canonical(want.filter));
     if (same) return { ok: true, status: "unchanged", id: held.id };
-    const patched = await signedPeerRequest(
+    const { response: patched } = await signedPeerRequest(
       opts.fetchImpl,
       opts.signingKey,
       "PATCH",

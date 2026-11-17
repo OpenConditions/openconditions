@@ -4,6 +4,7 @@ import { httpbis } from "http-message-signatures";
 import { parseDictionary, serializeDictionary } from "structured-headers";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  type AnsweredRequest,
   CLOCK_SKEW_SEC,
   EXPIRES_WINDOW_SEC,
   FEDERATION_REASON_HEADER,
@@ -21,6 +22,9 @@ const ED25519 = { name: "Ed25519" } as const;
 
 const BODY = new TextEncoder().encode('{"hello": "world"}');
 const URL_ = "https://peer.example/api/federation/inbox";
+
+/** An unsigned request the responses in these tests answer. */
+const ANSWERED: AnsweredRequest = { method: "POST", url: URL_, headers: {} };
 
 async function makeKey(): Promise<InstanceKey> {
   return generateInstanceKey(new Date().toISOString());
@@ -97,8 +101,24 @@ describe("signMessage", () => {
         keyId: key.keyId,
         privateKey: key.privateKey,
         isResponse: true,
+        request: ANSWERED,
       }),
     ).rejects.toThrow(/status/);
+  });
+
+  it("requires the request it answers when signing a response", async () => {
+    const key = await makeKey();
+    await expect(
+      signMessage({
+        method: "POST",
+        url: URL_,
+        headers: {},
+        keyId: key.keyId,
+        privateKey: key.privateKey,
+        isResponse: true,
+        status: 200,
+      }),
+    ).rejects.toThrow(/request/);
   });
 });
 
@@ -168,6 +188,7 @@ describe("verifyMessage round-trip", () => {
       keyId: key.keyId,
       privateKey: key.privateKey,
       isResponse: true,
+      request: ANSWERED,
       status: 200,
     });
     expect(headers["Signature-Input"]).toContain('"@status"');
@@ -178,6 +199,7 @@ describe("verifyMessage round-trip", () => {
       headers,
       body: BODY,
       isResponse: true,
+      request: ANSWERED,
       resolvePublicKey: resolverFor(key),
       nonceStore: new InMemoryNonceStore(),
     });
@@ -194,6 +216,7 @@ describe("verifyMessage round-trip", () => {
       keyId: key.keyId,
       privateKey: key.privateKey,
       isResponse: true,
+      request: ANSWERED,
       status: 304,
     });
     expect(headers["Signature-Input"]).toContain('"etag"');
@@ -204,6 +227,7 @@ describe("verifyMessage round-trip", () => {
       status: 304,
       headers,
       isResponse: true,
+      request: ANSWERED,
       resolvePublicKey: resolverFor(key),
       nonceStore: new InMemoryNonceStore(),
     });
@@ -215,6 +239,7 @@ describe("verifyMessage round-trip", () => {
       status: 304,
       headers: { ...headers, etag: '"999-deadbeef"' },
       isResponse: true,
+      request: ANSWERED,
       resolvePublicKey: resolverFor(key),
       nonceStore: new InMemoryNonceStore(),
     });
@@ -232,6 +257,7 @@ describe("verifyMessage round-trip", () => {
         keyId: key.keyId,
         privateKey: key.privateKey,
         isResponse: true,
+        request: ANSWERED,
         status: 304,
       }),
     ).rejects.toThrow(/etag/);
@@ -247,6 +273,7 @@ describe("verifyMessage round-trip", () => {
       keyId: key.keyId,
       privateKey: key.privateKey,
       isResponse: true,
+      request: ANSWERED,
       status: 200,
     });
     const result = await verifyMessage({
@@ -256,6 +283,7 @@ describe("verifyMessage round-trip", () => {
       headers,
       body: BODY,
       isResponse: true,
+      request: ANSWERED,
       resolvePublicKey: resolverFor(key),
       nonceStore: new InMemoryNonceStore(),
     });
@@ -773,6 +801,202 @@ describe("verify bypass hardening — multi-signature and coverage", () => {
     expect(federationFailureHeaders("insufficient-coverage")).toEqual({
       [FEDERATION_REASON_HEADER]: "insufficient-coverage",
     });
+  });
+});
+
+describe("response signatures bound to the request they answer", () => {
+  const PAGE_A = "https://peer.example/peer/outbox?after=10.1&kinds=incident";
+  const PAGE_B = "https://peer.example/peer/outbox?after=20.1&kinds=incident";
+
+  /** A signed GET of `url`, as a puller sends one. */
+  async function sentRequest(key: InstanceKey, url: string) {
+    const { headers } = await signMessage({
+      method: "GET",
+      url,
+      headers: {},
+      keyId: key.keyId,
+      privateKey: key.privateKey,
+    });
+    return { method: "GET", url, headers };
+  }
+
+  async function signedResponse(key: InstanceKey, request: AnsweredRequest) {
+    const { headers } = await signMessage({
+      ...request,
+      headers: { "Content-Type": "application/json" },
+      body: BODY,
+      keyId: key.keyId,
+      privateKey: key.privateKey,
+      isResponse: true,
+      status: 200,
+      request,
+    });
+    return headers;
+  }
+
+  function verifyResponse(key: InstanceKey, headers: Record<string, string>, request = ANSWERED) {
+    return verifyMessage({
+      ...request,
+      status: 200,
+      headers,
+      body: BODY,
+      isResponse: true,
+      request,
+      resolvePublicKey: resolverFor(key),
+      nonceStore: new InMemoryNonceStore(),
+    });
+  }
+
+  /** A response signature over exactly `fields`, bypassing signMessage's choice of components. */
+  async function handSigned(
+    key: InstanceKey,
+    fields: string[],
+    request: { method: string; url: string; headers: Record<string, string> },
+  ) {
+    const now = Math.floor(Date.now() / 1000);
+    const digest = Buffer.from(await globalThis.crypto.subtle.digest("SHA-256", BODY)).toString(
+      "base64",
+    );
+    const signed = await httpbis.signMessage(
+      {
+        key: { id: key.keyId, alg: "ed25519", sign: ed25519Signer(key.privateKey) },
+        name: "oc",
+        fields,
+        params: ["created", "expires", "keyid", "nonce", "tag"],
+        paramValues: {
+          created: new Date(now * 1000),
+          expires: new Date((now + 60) * 1000),
+          nonce: globalThis.crypto.randomUUID(),
+          tag: FEDERATION_TAG,
+        },
+      },
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json", "Content-Digest": `sha-256=:${digest}:` },
+      },
+      request,
+    );
+    return flattenHeaders(signed.headers);
+  }
+
+  it("covers the request's method, target URI and Signature field", async () => {
+    const key = await makeKey();
+    const request = await sentRequest(key, PAGE_A);
+    const headers = await signedResponse(key, request);
+    expect(headers["Signature-Input"]).toContain(
+      '("@status" "@method";req "@target-uri";req "signature";req "content-type" "content-digest")',
+    );
+    expect(await verifyResponse(key, headers, request)).toEqual({ ok: true, keyId: key.keyId });
+  });
+
+  it("refuses a response signed for one request as the answer to another query", async () => {
+    const key = await makeKey();
+    const forA = { method: "GET", url: PAGE_A, headers: {} };
+    const headers = await signedResponse(key, forA);
+    const asB = { method: "GET", url: PAGE_B, headers: {} };
+    expect(await verifyResponse(key, headers, asB)).toEqual({ ok: false, reason: "bad-signature" });
+  });
+
+  it("refuses a response to one signed request as the answer to another signed one", async () => {
+    const key = await makeKey();
+    const first = await sentRequest(key, PAGE_A);
+    const second = await sentRequest(key, PAGE_A);
+    const headers = await signedResponse(key, first);
+    expect(await verifyResponse(key, headers, second)).toEqual({
+      ok: false,
+      reason: "bad-signature",
+    });
+  });
+
+  it("verifies a response to an unsigned request without signature;req", async () => {
+    const key = await makeKey();
+    const unsigned = { method: "GET", url: PAGE_A, headers: {} };
+    const headers = await signedResponse(key, unsigned);
+    expect(headers["Signature-Input"]).not.toContain('"signature";req');
+    expect(await verifyResponse(key, headers, unsigned)).toEqual({ ok: true, keyId: key.keyId });
+  });
+
+  it("refuses a response that does not cover the request-bound components", async () => {
+    const key = await makeKey();
+    const unsigned = { method: "GET", url: PAGE_A, headers: {} };
+    for (const fields of [
+      ["@status", "content-type", "content-digest"],
+      ["@status", '"@method";req', "content-type", "content-digest"],
+      ["@status", '"@target-uri";req', "content-type", "content-digest"],
+    ]) {
+      const headers = await handSigned(key, fields, unsigned);
+      expect(await verifyResponse(key, headers, unsigned), fields.join(" ")).toEqual({
+        ok: false,
+        reason: "insufficient-coverage",
+      });
+    }
+  });
+
+  it("refuses a response to a signed request that omits signature;req", async () => {
+    const key = await makeKey();
+    const request = await sentRequest(key, PAGE_A);
+    const headers = await handSigned(
+      key,
+      ["@status", '"@method";req', '"@target-uri";req', "content-type", "content-digest"],
+      request,
+    );
+    expect(await verifyResponse(key, headers, request)).toEqual({
+      ok: false,
+      reason: "insufficient-coverage",
+    });
+  });
+
+  it("does not count a request-bound component as the message's own", async () => {
+    const key = await makeKey();
+    const now = Math.floor(Date.now() / 1000);
+    // The library's types allow request-bound components only on a response.
+    const signWithRequest = httpbis.signMessage as unknown as (
+      config: Parameters<typeof httpbis.signMessage>[0],
+      message: object,
+      req: object,
+    ) => Promise<{ headers: Record<string, string | string[]> }>;
+    const signed = await signWithRequest(
+      {
+        key: { id: key.keyId, alg: "ed25519", sign: ed25519Signer(key.privateKey) },
+        name: "oc",
+        fields: ['"@method";req', '"@target-uri";req'],
+        params: ["created", "expires", "keyid", "nonce", "tag"],
+        paramValues: {
+          created: new Date(now * 1000),
+          expires: new Date((now + 60) * 1000),
+          nonce: "n-req-on-request",
+          tag: FEDERATION_TAG,
+        },
+      },
+      { method: "GET", url: URL_, headers: {} },
+      { method: "GET", url: URL_, headers: {} },
+    );
+    const result = await verifyMessage({
+      method: "GET",
+      url: URL_,
+      headers: flattenHeaders(signed.headers),
+      resolvePublicKey: resolverFor(key),
+      nonceStore: new InMemoryNonceStore(),
+      now,
+    });
+    expect(result).toEqual({ ok: false, reason: "insufficient-coverage" });
+  });
+
+  it("refuses to verify a response without the request it answers", async () => {
+    const key = await makeKey();
+    const headers = await signedResponse(key, ANSWERED);
+    await expect(
+      verifyMessage({
+        method: "POST",
+        url: URL_,
+        status: 200,
+        headers,
+        body: BODY,
+        isResponse: true,
+        resolvePublicKey: resolverFor(key),
+        nonceStore: new InMemoryNonceStore(),
+      }),
+    ).rejects.toThrow(/request/);
   });
 });
 

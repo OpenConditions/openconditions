@@ -10,10 +10,10 @@
  */
 
 import {
-  ACTIVITY_JSON,
   ACTOR_WELL_KNOWN_PATH,
   buildActorDocument,
   createInMemoryRateLimiter,
+  FEDERATION_JSON,
   InMemoryNonceStore,
   type InstanceKey,
   loadActiveKeys,
@@ -43,7 +43,7 @@ import { resolveFederationSettings } from "./config.js";
 import { registerInboxRoutes } from "./inbox-routes.js";
 import { OutboxQueryError, parseOutboxQuery } from "./outbox-query.js";
 import { PeerBook } from "./peer-book.js";
-import { optionalPeer, proxyMtlsContext, respondIfBlocked } from "./peer-request.js";
+import { headerStrings, optionalPeer, proxyMtlsContext, respondIfBlocked } from "./peer-request.js";
 import { registerSubscriptionRoutes } from "./subscription-routes.js";
 
 /** The pull-side peer exchange path the Actor document advertises as `outbox`. */
@@ -151,7 +151,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
 
   app.get(ACTOR_WELL_KNOWN_PATH, async (_req, reply) => {
     const doc = buildActorDocument(actorConfig, await activeKeys(), advertisedSchemaVersions);
-    return reply.type(ACTIVITY_JSON).send(JSON.stringify(doc));
+    return reply.type(FEDERATION_JSON).send(JSON.stringify(doc));
   });
 
   // What this instance subscribes to or pulls at a peer is its own business.
@@ -203,6 +203,13 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     }
 
     const partOf = `${actorConfig.baseUrl}${OUTBOX_PATH}`;
+    // The signed response is bound to the request it answers, under the same
+    // target URI request verification reconstructs (base URL + path and query).
+    const answered = {
+      method: req.method,
+      url: `${actorConfig.baseUrl}${req.url}`,
+      headers: headerStrings(req.headers),
+    };
     const key = await signingKey();
     const limit = Math.min(Math.max(parsed.limit ?? OUTBOX_DEFAULT_LIMIT, 1), OUTBOX_MAX_LIMIT);
 
@@ -237,14 +244,14 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
       // A 304 has no body (no content-digest), so the ETag is the only thing to
       // authenticate — cover it explicitly so a MITM cannot tamper it.
       const signed = await signMessage({
-        method: "GET",
-        url: partOf,
+        ...answered,
         headers: { etag },
         coverHeaders: ["etag"],
         keyId: key.keyId,
         privateKey: key.privateKey,
         isResponse: true,
         status: 304,
+        request: answered,
       });
       return reply.status(304).headers(signed.headers).send();
     }
@@ -253,14 +260,14 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     // Content-Digest, which is what makes the high-water mark itself signed.
     const body = Buffer.from(JSON.stringify(page));
     const signed = await signMessage({
-      method: "GET",
-      url: partOf,
-      headers: { "content-type": ACTIVITY_JSON, etag },
+      ...answered,
+      headers: { "content-type": FEDERATION_JSON, etag },
       body,
       keyId: key.keyId,
       privateKey: key.privateKey,
       isResponse: true,
       status: 200,
+      request: answered,
     });
     return reply.status(200).headers(signed.headers).send(body);
   });
@@ -268,10 +275,8 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
   // The signature must verify against the RECEIVED bytes, so every
   // authenticated POST/PATCH body is kept raw (the handlers parse the JSON
   // themselves after authenticating). Registered once for all peer routes.
-  app.addContentTypeParser(
-    ["application/json", "application/activity+json"],
-    { parseAs: "buffer" },
-    (_req, body, done) => done(null, body),
+  app.addContentTypeParser(FEDERATION_JSON, { parseAs: "buffer" }, (_req, body, done) =>
+    done(null, body),
   );
 
   const allowedHosts = parseAllowedHosts(env["OPENCONDITIONS_EGRESS_ALLOWED_HOSTS"]);

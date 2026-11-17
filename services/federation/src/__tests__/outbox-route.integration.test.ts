@@ -78,6 +78,11 @@ async function seed(local: string, opts: OwnSituationOptions = {}): Promise<void
 
 const ids = (page: OutboxPage) => page.orderedItems.map((e) => e.recordId);
 
+/** An unsigned GET of `path`, as the served response signature is bound to it. */
+function anonymousGet(path: string) {
+  return { method: "GET", url: `${ACTOR_CONFIG.baseUrl}${path}`, headers: {} };
+}
+
 function headerStrings(headers: Record<string, unknown>): Record<string, string> {
   const out: Record<string, string> = {};
   for (const [name, value] of Object.entries(headers)) {
@@ -134,7 +139,7 @@ describe("GET /peer/outbox", () => {
     try {
       const res = await app.inject({ method: "GET", url: "/peer/outbox" });
       expect(res.statusCode).toBe(200);
-      expect(res.headers["content-type"]).toContain("application/activity+json");
+      expect(res.headers["content-type"]).toContain("application/json");
       expect(res.headers["etag"]).toMatch(/^"\d+\.\d+-[0-9a-f]+"$/);
 
       const page = res.json() as OutboxPage;
@@ -162,6 +167,7 @@ describe("GET /peer/outbox", () => {
         url: OUTBOX_URL,
         status: 200,
         isResponse: true,
+        request: anonymousGet("/peer/outbox"),
         headers: headerStrings(res.headers as Record<string, unknown>),
         body: res.rawPayload,
         resolvePublicKey: async (keyId) => (keyId === key!.keyId ? key!.publicKey : null),
@@ -304,11 +310,24 @@ describe("GET /peer/outbox", () => {
         url: OUTBOX_URL,
         status: 304,
         isResponse: true,
+        request: anonymousGet("/peer/outbox"),
         headers: headerStrings(notModified.headers as Record<string, unknown>),
         resolvePublicKey: async (keyId) => (keyId === key!.keyId ? key!.publicKey : null),
         nonceStore: new InMemoryNonceStore(),
       });
       expect(verified.ok).toBe(true);
+      // The 304 answers this request only: not one for another cursor.
+      const elsewhere = await verifyMessage({
+        method: "GET",
+        url: OUTBOX_URL,
+        status: 304,
+        isResponse: true,
+        request: anonymousGet("/peer/outbox?after=1.1"),
+        headers: headerStrings(notModified.headers as Record<string, unknown>),
+        resolvePublicKey: async (keyId) => (keyId === key!.keyId ? key!.publicKey : null),
+        nonceStore: new InMemoryNonceStore(),
+      });
+      expect(elsewhere).toEqual({ ok: false, reason: "bad-signature" });
 
       await seed("route-etag-new");
       const changed = await app.inject({
@@ -360,6 +379,7 @@ describe("GET /peer/outbox", () => {
         url: OUTBOX_URL,
         status: 304,
         isResponse: true,
+        request: anonymousGet("/peer/outbox"),
         headers: { ...headers, etag: '"999-deadbeef"' },
         resolvePublicKey: async (keyId) => (keyId === key!.keyId ? key!.publicKey : null),
         nonceStore: new InMemoryNonceStore(),
@@ -417,6 +437,7 @@ describe("GET /peer/outbox", () => {
         url: OUTBOX_URL,
         status: 200,
         isResponse: true,
+        request: anonymousGet("/peer/outbox?limit=500"),
         headers: headerStrings(res.headers as Record<string, unknown>),
         body: res.rawPayload,
         resolvePublicKey: async (keyId) => (keyId === key!.keyId ? key!.publicKey : null),
@@ -430,6 +451,7 @@ describe("GET /peer/outbox", () => {
         url: OUTBOX_URL,
         status: 200,
         isResponse: true,
+        request: anonymousGet("/peer/outbox?limit=500"),
         headers: headerStrings(res.headers as Record<string, unknown>),
         body: Buffer.from(res.rawPayload.toString("utf8").replace('"withdrawn"', '"expired"')),
         resolvePublicKey: async (keyId) => (keyId === key!.keyId ? key!.publicKey : null),
@@ -539,6 +561,59 @@ describe("GET /peer/outbox — the tier-bounded public snapshot", () => {
       });
       expect(res.statusCode).toBe(200);
       expect(ids(res.json() as OutboxPage)).toContain(situationId("snap-t1-2day"));
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+
+  it("binds a signed page to the signed request it answers, query included", async () => {
+    const peer = await generateInstanceKey(new Date().toISOString());
+    const app = await build({ sql, env: peersEnv(peer, 1), logger: false, now: () => NOW });
+    try {
+      const path = "/peer/outbox?limit=2&kinds=incident";
+      const sent = await signedGet(peer, path);
+      const res = await app.inject({ method: "GET", url: path, headers: sent });
+      expect(res.statusCode).toBe(200);
+      expect(res.headers["signature-input"]).toContain(
+        '"@method";req "@target-uri";req "signature";req',
+      );
+
+      const [key] = await loadActiveKeys(sql, NOW);
+      const verifyAs = (request: {
+        method: string;
+        url: string;
+        headers: Record<string, string>;
+      }) =>
+        verifyMessage({
+          ...request,
+          status: 200,
+          isResponse: true,
+          request,
+          headers: headerStrings(res.headers as Record<string, unknown>),
+          body: res.rawPayload,
+          resolvePublicKey: async (keyId) => (keyId === key!.keyId ? key!.publicKey : null),
+          nonceStore: new InMemoryNonceStore(),
+        });
+      const url = `${ACTOR_CONFIG.baseUrl}${path}`;
+      expect(await verifyAs({ method: "GET", url, headers: sent })).toEqual({
+        ok: true,
+        keyId: key!.keyId,
+      });
+      // The same page offered as the answer to another cursor.
+      const otherPath = "/peer/outbox?limit=2&kinds=incident&after=1.1";
+      const other = await signedGet(peer, otherPath);
+      expect(
+        await verifyAs({
+          method: "GET",
+          url: `${ACTOR_CONFIG.baseUrl}${otherPath}`,
+          headers: other,
+        }),
+      ).toEqual({ ok: false, reason: "bad-signature" });
+      // Or as the answer to the request without the Signature it carried.
+      expect(await verifyAs({ method: "GET", url, headers: {} })).toEqual({
+        ok: false,
+        reason: "bad-signature",
+      });
     } finally {
       await app.close();
     }

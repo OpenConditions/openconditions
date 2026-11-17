@@ -8,7 +8,11 @@
  * RFC 9421 Appendix B.2.6 Ed25519 test vector. The Ed25519 primitive itself
  * is native WebCrypto, reusing the {@link InstanceKey} handles from keys.ts.
  * Bodies are bound via an RFC 9530 Content-Digest (sha-256) covered by the
- * signature and verified against the RECEIVED bytes.
+ * signature and verified against the RECEIVED bytes. A response signature is
+ * bound to the request it answers through RFC 9421 request-bound components
+ * (`;req`): the request's method, target URI and, when the request was
+ * signed, its whole Signature field. A valid answer to one request therefore
+ * never verifies as the answer to another (a different cursor or filter).
  *
  * The replay policy here is TRANSPORT protection, independent of any event
  * TTL: short created/expires windows, bounded clock skew, and a mandatory
@@ -143,8 +147,19 @@ export class InMemoryNonceStore implements NonceStore {
   }
 }
 
-export interface SignParams {
+/** The request a response answers, as the requester sent it. */
+export interface AnsweredRequest {
   method: string;
+  /** The full target URI the request was signed for (and sent to). */
+  url: string;
+  /** The request's headers; only its `Signature` field is read. */
+  headers: Record<string, string>;
+}
+
+export interface SignParams {
+  /** The request's method; a response signature reads {@link request} instead. */
+  method: string;
+  /** The request's target URI; a response signature reads {@link request} instead. */
   url: string;
   headers: Record<string, string>;
   body?: Uint8Array;
@@ -164,6 +179,12 @@ export interface SignParams {
   /** Required when `isResponse` — covered as `@status`. */
   status?: number;
   /**
+   * Required when `isResponse`: the request this response answers. Its
+   * `@method` and `@target-uri` are always covered as request-bound
+   * components, and its `signature` field too when it carried one.
+   */
+  request?: AnsweredRequest;
+  /**
    * Extra response header names to add to the covered components — for a
    * bodyless response (e.g. a 304) whose only meaningful field beyond `@status`
    * is a header like `etag`, so that header is bound by the signature and a
@@ -179,12 +200,20 @@ export interface VerifyResult {
 }
 
 export interface VerifyParams {
+  /** The request's method; a response is verified against {@link request} instead. */
   method: string;
+  /** The request's target URI; a response is verified against {@link request} instead. */
   url: string;
   status?: number;
   headers: Record<string, string>;
   body?: Uint8Array;
   isResponse?: boolean;
+  /**
+   * Required when `isResponse`: the request as it was sent. The response must
+   * cover its `@method` and `@target-uri`, and its `signature` field when the
+   * request carried one.
+   */
+  request?: AnsweredRequest;
   /** Resolves an RFC 9421 `keyid` to an Ed25519 verify handle, or null if unknown. */
   resolvePublicKey: (keyId: string) => Promise<CryptoKey | null>;
   /** Per-peer replay cache; the peer is keyed by `keyid`. */
@@ -223,6 +252,18 @@ export async function contentDigest(
   return `${algorithm}=:${Buffer.from(digest).toString("base64")}:`;
 }
 
+/** The request-bound components a response to `request` covers. */
+function requestBoundFields(request: AnsweredRequest): string[] {
+  const fields = ['"@method";req', '"@target-uri";req'];
+  if (findHeader(request.headers, "signature") !== undefined) fields.push('"signature";req');
+  return fields;
+}
+
+/** The answered request in the shape the library derives `;req` components from. */
+function libraryRequest(request: AnsweredRequest) {
+  return { method: request.method, url: request.url, headers: { ...request.headers } };
+}
+
 /**
  * Signs a federated HTTP message per RFC 9421 with Ed25519, returning the full
  * header set to send: the input headers plus Content-Digest (when a body is
@@ -230,13 +271,18 @@ export async function contentDigest(
  *
  * Covered components — requests: `@method`, `@target-uri`, plus `content-type`
  * (when present alongside a body) and `content-digest` (when a body is
- * present); responses: `@status` plus the same content components, plus any
- * `coverHeaders` (e.g. `etag` on a bodyless 304). Signature parameters:
- * `created`, `expires`, `keyid`, `nonce`, `tag`.
+ * present); responses: `@status`, then the answered request's `@method;req`,
+ * `@target-uri;req` and (when the request was signed) `signature;req`, plus
+ * the same content components and any `coverHeaders` (e.g. `etag` on a
+ * bodyless 304). Signature parameters: `created`, `expires`, `keyid`,
+ * `nonce`, `tag`.
  */
 export async function signMessage(p: SignParams): Promise<{ headers: Record<string, string> }> {
   if (p.isResponse && typeof p.status !== "number") {
     throw new TypeError("signMessage: a response signature requires a status");
+  }
+  if (p.isResponse && p.request === undefined) {
+    throw new TypeError("signMessage: a response signature requires the request it answers");
   }
   const created = p.created ?? Math.floor(Date.now() / 1000);
   const expires = p.expires ?? created + EXPIRES_WINDOW_SEC;
@@ -247,7 +293,9 @@ export async function signMessage(p: SignParams): Promise<{ headers: Record<stri
   const hasBody = p.body !== undefined && p.body.byteLength > 0;
   if (hasBody) headers["Content-Digest"] = await contentDigest(p.body as Uint8Array);
 
-  const fields = p.isResponse ? ["@status"] : ["@method", "@target-uri"];
+  const fields = p.isResponse
+    ? ["@status", ...requestBoundFields(p.request as AnsweredRequest)]
+    : ["@method", "@target-uri"];
   if (hasBody) {
     if (findHeader(headers, "content-type") !== undefined) fields.push("content-type");
     fields.push("content-digest");
@@ -281,7 +329,11 @@ export async function signMessage(p: SignParams): Promise<{ headers: Record<stri
   };
 
   const signed = p.isResponse
-    ? await httpbis.signMessage(config, { status: p.status as number, headers })
+    ? await httpbis.signMessage(
+        config,
+        { status: p.status as number, headers },
+        libraryRequest(p.request as AnsweredRequest),
+      )
     : await httpbis.signMessage(config, { method: p.method, url: p.url, headers });
 
   const flattened: Record<string, string> = {};
@@ -317,10 +369,16 @@ export async function verifyContentDigest(headerValue: string, body: Uint8Array)
   return checked > 0;
 }
 
+/** One covered component: its name and the names of its parameters (`req`, `sf`, ...). */
+interface CoveredComponent {
+  name: string;
+  params: string[];
+}
+
 interface ParsedSignatureInput {
   /** The signature's label in the Signature/Signature-Input dictionaries. */
   label: string;
-  fields: string[];
+  fields: CoveredComponent[];
   created?: number;
   expires?: number;
   keyId?: string;
@@ -349,7 +407,10 @@ function parseSignatureInputs(headerValue: string): ParsedSignatureInput[] | nul
     };
     inputs.push({
       label,
-      fields: items.map(([bare]) => String(bare)),
+      fields: items.map(([bare, itemParams]) => ({
+        name: String(bare),
+        params: [...itemParams.keys()],
+      })),
       created: num("created"),
       expires: num("expires"),
       keyId: str("keyid"),
@@ -361,19 +422,38 @@ function parseSignatureInputs(headerValue: string): ParsedSignatureInput[] | nul
 }
 
 /**
+ * Whether `input` covers the component `name` of the message itself (no
+ * parameters at all), or with `req` set, the component of the request the
+ * message answers (exactly the `req` parameter).
+ */
+function covers(input: ParsedSignatureInput, name: string, req = false): boolean {
+  return input.fields.some(
+    (field) =>
+      field.name === name &&
+      (req ? field.params.length === 1 && field.params[0] === "req" : field.params.length === 0),
+  );
+}
+
+/**
  * Whether the covered-component set is strong enough to bind the message.
  * Requests must cover `@method` plus either `@target-uri` (which subsumes
  * scheme/authority/path/query) or, if signing pseudo-headers individually,
  * `@authority` + `@path` + `@query` together — covering `@authority` + `@path`
  * alone would leave the query string unsigned, which a MITM could tamper with.
- * Responses must cover `@status`.
+ * Responses must cover `@status` and the request they answer: its
+ * `@method;req` and `@target-uri;req`, and its `signature;req` when the
+ * request that was sent carried a Signature field.
  */
 function coversRequiredComponents(input: ParsedSignatureInput, p: VerifyParams): boolean {
-  if (p.isResponse) return input.fields.includes("@status");
-  const f = input.fields;
-  if (!f.includes("@method")) return false;
-  if (f.includes("@target-uri")) return true;
-  return f.includes("@authority") && f.includes("@path") && f.includes("@query");
+  if (p.isResponse) {
+    if (!covers(input, "@status")) return false;
+    if (!covers(input, "@method", true) || !covers(input, "@target-uri", true)) return false;
+    const requestSigned = findHeader(p.request?.headers ?? {}, "signature") !== undefined;
+    return !requestSigned || covers(input, "signature", true);
+  }
+  if (!covers(input, "@method")) return false;
+  if (covers(input, "@target-uri")) return true;
+  return covers(input, "@authority") && covers(input, "@path") && covers(input, "@query");
 }
 
 /**
@@ -419,6 +499,9 @@ export async function verifyMessage(p: VerifyParams): Promise<VerifyResult> {
   const fail = (reason: FederationFailureReason): VerifyResult => ({ ok: false, reason });
   const now = p.now ?? Math.floor(Date.now() / 1000);
   const hasBody = p.body !== undefined && p.body.byteLength > 0;
+  if (p.isResponse && p.request === undefined) {
+    throw new TypeError("verifyMessage: a response is verified against the request it answers");
+  }
 
   // A Content-Digest is checked whenever one is sent, empty content included:
   // otherwise stripping the body of a signed message would go unnoticed, since
@@ -458,7 +541,7 @@ export async function verifyMessage(p: VerifyParams): Promise<VerifyResult> {
   const nonce = input.nonce;
 
   if (!coversRequiredComponents(input, p)) return fail("insufficient-coverage");
-  if (hasBody && !input.fields.includes("content-digest")) return fail("bad-digest");
+  if (hasBody && !covers(input, "content-digest")) return fail("bad-digest");
 
   const publicKey = await p.resolvePublicKey(keyId);
   if (publicKey === null) return fail("unknown-key");
@@ -493,10 +576,11 @@ export async function verifyMessage(p: VerifyParams): Promise<VerifyResult> {
   let verified: boolean | null;
   try {
     verified = p.isResponse
-      ? await httpbis.verifyMessage(verifyConfig, {
-          status: p.status as number,
-          headers: restrictedHeaders,
-        })
+      ? await httpbis.verifyMessage(
+          verifyConfig,
+          { status: p.status as number, headers: restrictedHeaders },
+          libraryRequest(p.request as AnsweredRequest),
+        )
       : await httpbis.verifyMessage(verifyConfig, {
           method: p.method,
           url: p.url,

@@ -66,7 +66,7 @@ async function signed(
   const s = await signMessage({
     method,
     url: `${BASE_URL}${path}`,
-    headers: body ? { "content-type": "application/activity+json" } : {},
+    headers: body ? { "content-type": "application/json" } : {},
     ...(body ? { body } : {}),
     keyId: key.keyId,
     privateKey: key.privateKey,

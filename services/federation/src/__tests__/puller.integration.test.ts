@@ -92,29 +92,52 @@ const pageOf = (items: unknown[], highWaterMark: string, more: Rec = {}) => ({
   ...more,
 });
 
-/** A response as the peer signs one, with `key`. */
-async function signed(body: Buffer, key = peerKey, status = 200): Promise<Response> {
-  const s = await signMessage({
-    method: "GET",
-    url: `https://${PEER}/peer/outbox`,
-    headers: { "content-type": "application/activity+json" },
-    body,
-    keyId: key.keyId,
-    privateKey: key.privateKey,
-    isResponse: true,
-    status,
-  });
-  return new Response(new Uint8Array(body), { status, headers: s.headers });
+/** A request as the fake peer receives it. */
+interface Asked {
+  url: string;
+  headers: Record<string, string>;
+}
+
+type Answer = (asked: Asked) => Promise<Response>;
+
+/**
+ * An answer the peer signs with `key`, bound to the request it answers;
+ * `boundTo` binds it to another request instead.
+ */
+function signed(
+  body: Buffer,
+  key = peerKey,
+  status = 200,
+  boundTo?: (asked: Asked) => Asked,
+): Answer {
+  return async (asked) => {
+    const answered = boundTo === undefined ? asked : boundTo(asked);
+    const request = { method: "GET", ...answered };
+    const s = await signMessage({
+      ...request,
+      headers: { "content-type": "application/json" },
+      body,
+      keyId: key.keyId,
+      privateKey: key.privateKey,
+      isResponse: true,
+      status,
+      request,
+    });
+    return new Response(new Uint8Array(body), { status, headers: s.headers });
+  };
 }
 
 /** A peer that answers each request with the next of `answers`, recording the URLs asked. */
-function fakePeer(answers: (() => Promise<Response>)[]) {
+function fakePeer(answers: Answer[]) {
   const asked: string[] = [];
-  const fetchImpl = (async (input: string | URL | Request) => {
+  const fetchImpl = (async (input: string | URL | Request, init?: RequestInit) => {
     asked.push(String(input));
     const next = answers.shift();
     if (next === undefined) throw new Error("no more answers");
-    return next();
+    return next({
+      url: String(input),
+      headers: { ...(init?.headers as Record<string, string> | undefined) },
+    });
   }) as typeof fetch;
   return { fetchImpl, asked };
 }
@@ -188,7 +211,7 @@ describe("pulling a peer", () => {
 
   it("lands a signed page through the inbox and advances its cursor", async () => {
     const { fetchImpl, asked } = fakePeer([
-      async () => signed(json(pageOf([entry(peerSituation(PEER, "ok-1"), 10, 1)], "10.1"))),
+      signed(json(pageOf([entry(peerSituation(PEER, "ok-1"), 10, 1)], "10.1"))),
     ]);
     const result = await pullPeer(sql, peer(), ctx(fetchImpl));
     expect(result).toMatchObject({ pages: 1, accepted: 1, cursor: "10.1" });
@@ -214,7 +237,7 @@ describe("pulling a peer", () => {
 
   it("refuses a page signed by a key the peer record does not pin", async () => {
     const page = json(pageOf([entry(peerSituation(PEER, "forged"), 10, 1)], "10.1"));
-    const { fetchImpl } = fakePeer([async () => signed(page, stranger)]);
+    const { fetchImpl } = fakePeer([signed(page, stranger)]);
     expect(await pullPeer(sql, peer(), ctx(fetchImpl))).toMatchObject({
       pages: 0,
       error: "the page does not carry the peer's signature",
@@ -222,18 +245,34 @@ describe("pulling a peer", () => {
     expect(await landed()).toEqual([]);
   });
 
+  it("refuses a genuine page signed as the answer to another request", async () => {
+    const page = json(pageOf([entry(peerSituation(PEER, "elsewhere"), 10, 1)], "10.1"));
+    const otherCursor = (asked: Asked) => ({
+      ...asked,
+      url: asked.url.replace("after=0.0", "after=5.0"),
+    });
+    const withoutSignature = (asked: Asked) => ({ ...asked, headers: {} });
+    for (const boundTo of [otherCursor, withoutSignature]) {
+      const { fetchImpl } = fakePeer([signed(page, peerKey, 200, boundTo)]);
+      expect(await pullPeer(sql, peer(), ctx(fetchImpl))).toMatchObject({
+        pages: 0,
+        error: "the page does not carry the peer's signature",
+      });
+    }
+    expect(await landed()).toEqual([]);
+    expect(await cursor()).toBeUndefined();
+  });
+
   it("admits each record as a pushed one: another instance's record is refused", async () => {
     const relayed = peerSituation("third.example.org", "relayed");
-    const { fetchImpl } = fakePeer([
-      async () => signed(json(pageOf([entry(relayed, 10, 1)], "10.1"))),
-    ]);
+    const { fetchImpl } = fakePeer([signed(json(pageOf([entry(relayed, 10, 1)], "10.1")))]);
     expect(await pullPeer(sql, peer(), ctx(fetchImpl))).toMatchObject({ accepted: 0, skipped: 1 });
     expect(await landed()).toEqual([]);
   });
 
   it("refuses a page larger than a pushed page may be, unread past the cap", async () => {
     const huge = Buffer.alloc(2 * 1024 * 1024, 0x20);
-    const { fetchImpl } = fakePeer([async () => signed(huge)]);
+    const { fetchImpl } = fakePeer([signed(huge)]);
     expect(await pullPeer(sql, peer(), ctx(fetchImpl))).toMatchObject({
       pages: 0,
       error: "the page is larger than 1048576 bytes",
@@ -244,9 +283,7 @@ describe("pulling a peer", () => {
     const items = Array.from({ length: PULL_PAGE_LIMIT + 1 }, (_, i) =>
       entry(peerSituation(PEER, `many-${i}`), 10, i + 1),
     );
-    const { fetchImpl } = fakePeer([
-      async () => signed(json(pageOf(items, `10.${PULL_PAGE_LIMIT + 1}`))),
-    ]);
+    const { fetchImpl } = fakePeer([signed(json(pageOf(items, `10.${PULL_PAGE_LIMIT + 1}`)))]);
     expect(await pullPeer(sql, peer(), ctx(fetchImpl))).toMatchObject({
       pages: 0,
       error: `the page holds more than ${PULL_PAGE_LIMIT} entries`,
@@ -261,7 +298,7 @@ describe("pulling a peer", () => {
     const replayed = pageOf([entry(peerSituation(PEER, "old"), 20, 5)], "20.6");
     const beyond = pageOf([entry(peerSituation(PEER, "beyond"), 21, 1)], "20.9");
     for (const page of [replayed, beyond]) {
-      const { fetchImpl } = fakePeer([async () => signed(json(page))]);
+      const { fetchImpl } = fakePeer([signed(json(page))]);
       expect(await pullPeer(sql, peer(), ctx(fetchImpl))).toMatchObject({
         pages: 0,
         error: "the page's entries lie outside the cursor it was asked for",
@@ -272,8 +309,9 @@ describe("pulling a peer", () => {
   });
 
   it("stops at a page that says there is more without moving its cursor", async () => {
-    const stuck = () =>
-      signed(json(pageOf([], "0.0", { next: `https://${PEER}/peer/outbox?after=0.0` })));
+    const stuck = signed(
+      json(pageOf([], "0.0", { next: `https://${PEER}/peer/outbox?after=0.0` })),
+    );
     const { fetchImpl, asked } = fakePeer([stuck, stuck, stuck]);
     expect(await pullPeer(sql, peer(), ctx(fetchImpl))).toMatchObject({ pages: 1 });
     expect(asked).toHaveLength(1);
@@ -281,7 +319,7 @@ describe("pulling a peer", () => {
 
   it("takes no more of a peer than its tier's rate admits a push", async () => {
     const items = [entry(peerSituation(PEER, "rated"), 10, 1)];
-    const { fetchImpl } = fakePeer([async () => signed(json(pageOf(items, "10.1")))]);
+    const { fetchImpl } = fakePeer([signed(json(pageOf(items, "10.1")))]);
     const rateLimiter = createInMemoryRateLimiter({
       policyForTier: () => ({ inboxPerMin: 0, backfillPerMin: 0 }),
       maxPageSize: 0,
