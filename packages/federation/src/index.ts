@@ -176,6 +176,7 @@ export { loadPeers, verifyActorAgainstPin } from "./peers.js";
 export type {
   DeliverWebhookOptions,
   DeliverWebhookOutcome,
+  DisabledPush,
   WebhookCycleOptions,
   WebhookCycleResult,
 } from "./push.js";

@@ -244,11 +244,20 @@ export async function deliverWebhook(
   };
 }
 
+/** A subscription a cycle turned `push_disabled` after repeated failures. */
+export interface DisabledPush {
+  subscriptionId: string;
+  peerId: string;
+  /** The status of the last failed push; absent when the inbox gave no answer. */
+  httpStatus?: number;
+}
+
 export interface WebhookCycleResult {
   attempted: number;
   delivered: number;
   failed: number;
-  disabled: number;
+  /** The subscriptions this cycle disabled, so the caller can say so. */
+  disabled: DisabledPush[];
   /** Subscriptions whose inbox asked to retry later. */
   deferred: number;
   /** Entries stepped over because they are too large for any page. */
@@ -282,7 +291,7 @@ export async function runWebhookDeliveryCycle(
     attempted: 0,
     delivered: 0,
     failed: 0,
-    disabled: 0,
+    disabled: [],
     deferred: 0,
     withheld: [],
   };
@@ -339,7 +348,13 @@ export async function runWebhookDeliveryCycle(
     }
     if (outcome.status === "delivered") result.delivered += 1;
     else if (outcome.status === "failed") result.failed += 1;
-    else if (outcome.status === "disabled") result.disabled += 1;
+    else if (outcome.status === "disabled") {
+      result.disabled.push({
+        subscriptionId: row.id,
+        peerId: row.peer_id,
+        ...(outcome.httpStatus !== undefined ? { httpStatus: outcome.httpStatus } : {}),
+      });
+    }
   }
   return result;
 }

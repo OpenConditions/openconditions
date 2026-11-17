@@ -222,6 +222,13 @@ async function boot() {
           backoff,
         });
         warnWithheld(pushed.withheld);
+        for (const { subscriptionId, peerId, httpStatus } of pushed.disabled) {
+          console.warn(
+            `[federation-api] push to ${peerId} disabled after repeated failures ` +
+              `(subscription ${subscriptionId}, last answer ${httpStatus ?? "none"}): ` +
+              "it stays off until the peer mends its subscription; its pull still gets everything",
+          );
+        }
       } catch (err) {
         console.error("[federation-api] webhook cycle failed:", err);
       } finally {

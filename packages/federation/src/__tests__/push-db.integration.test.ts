@@ -10,7 +10,12 @@ import {
   readOutbox,
 } from "../outbox.js";
 import { blockPeer, unblockPeer } from "../peer-blocklist.js";
-import { deliverWebhook, PUSH_FAILURE_THRESHOLD, runWebhookDeliveryCycle } from "../push.js";
+import {
+  type DisabledPush,
+  deliverWebhook,
+  PUSH_FAILURE_THRESHOLD,
+  runWebhookDeliveryCycle,
+} from "../push.js";
 import { createInMemoryRateLimiter } from "../rate.js";
 import type { OutboxEntry, RecordOutboxEntry } from "../record-filter.js";
 import {
@@ -812,5 +817,43 @@ describe("runWebhookDeliveryCycle — who is pushed what", () => {
         now: justBefore,
       }),
     ).toMatchObject({ attempted: 1, delivered: 1 });
+  });
+
+  it("names each subscription it disabled, with the last answer its inbox gave", async () => {
+    await sql`DELETE FROM conditions.federation_subscription`;
+    const sub = await webhookSubFromNow({ priorityOnly: false, bbox: [4, 50, 6, 54] });
+    await insertEvent("disabling");
+    const failing = mockInbox([502]);
+    const disabled: DisabledPush[] = [];
+    for (let i = 1; i <= PUSH_FAILURE_THRESHOLD; i++) {
+      const result = await runWebhookDeliveryCycle(sql, {
+        signingKey,
+        fetchImpl: failing.fetchImpl,
+        partOf: PARTOF,
+        now: NOW,
+      });
+      if (i < PUSH_FAILURE_THRESHOLD) expect(result).toMatchObject({ failed: 1, disabled: [] });
+      disabled.push(...result.disabled);
+    }
+    expect(disabled).toEqual([{ subscriptionId: sub.id, peerId: PEER_ID, httpStatus: 502 }]);
+    expect(await getSubscription(sql, sub.id, NOW)).toMatchObject({ status: "push_disabled" });
+
+    // An inbox that gave no answer at all leaves the status out.
+    await sql`DELETE FROM conditions.federation_subscription`;
+    const silent = await webhookSubFromNow({ priorityOnly: false, bbox: [4, 50, 6, 54] });
+    await sql`
+      UPDATE conditions.federation_subscription
+         SET push_failures = ${PUSH_FAILURE_THRESHOLD - 1} WHERE id = ${silent.id}`;
+    await insertEvent("disabling-silent");
+    const unreachable = (async () => {
+      throw new Error("connection refused");
+    }) as unknown as typeof fetch;
+    const result = await runWebhookDeliveryCycle(sql, {
+      signingKey,
+      fetchImpl: unreachable,
+      partOf: PARTOF,
+      now: NOW,
+    });
+    expect(result.disabled).toEqual([{ subscriptionId: silent.id, peerId: PEER_ID }]);
   });
 });
