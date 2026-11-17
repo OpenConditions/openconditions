@@ -644,6 +644,43 @@ describe("a page that says the cursor is beyond the window", () => {
     expect((await reconcileState())?.reconcile_due_since).toBeNull();
   });
 
+  it("makes one due when the peer had not answered a pull for 30 days, whatever the page says", async () => {
+    await holdCursor("20.5", EPOCH);
+    await sql`
+      UPDATE conditions.federation_peer_cursor SET updated_at = now() - interval '31 days'
+       WHERE peer_instance_id = ${PEER}`;
+    // The peer pruned every entry since: its page is empty and names no window.
+    const { fetchImpl } = fakePeer([signed(json(pageOf([], "20.5")))]);
+    const result = await pullPeer(sql, peer(), ctx(fetchImpl));
+    expect(result).toMatchObject({ longAbsence: true });
+    expect(result.beyondWindow).toBeUndefined();
+    expect((await reconcileState())?.reconcile_due_since).not.toBeNull();
+    // The answer is noted, so the next pull finds no absence.
+    await sql`
+      UPDATE conditions.federation_peer_cursor
+         SET reconcile_due_since = NULL, reconciled_at = now() - interval '2 days'
+       WHERE peer_instance_id = ${PEER}`;
+    const again = fakePeer([signed(json(pageOf([], "20.5")))]);
+    expect((await pullPeer(sql, peer(), ctx(again.fetchImpl))).longAbsence).toBeUndefined();
+    expect((await reconcileState())?.reconcile_due_since).toBeNull();
+  });
+
+  it("makes none due for a peer that answered within 30 days, or one that does not answer", async () => {
+    await holdCursor("20.5", EPOCH);
+    await sql`
+      UPDATE conditions.federation_peer_cursor SET updated_at = now() - interval '29 days'
+       WHERE peer_instance_id = ${PEER}`;
+    const { fetchImpl } = fakePeer([signed(json(pageOf([], "20.5")))]);
+    expect((await pullPeer(sql, peer(), ctx(fetchImpl))).longAbsence).toBeUndefined();
+    expect((await reconcileState())?.reconcile_due_since).toBeNull();
+    await sql`
+      UPDATE conditions.federation_peer_cursor SET updated_at = now() - interval '31 days'
+       WHERE peer_instance_id = ${PEER}`;
+    const down = fakePeer([async () => new Response("no", { status: 502 })]);
+    expect((await pullPeer(sql, peer(), ctx(down.fetchImpl))).error).toBeDefined();
+    expect((await reconcileState())?.reconcile_due_since).toBeNull();
+  });
+
   it("never restarts a comparison already running", async () => {
     await holdCursor("20.5", EPOCH);
     await sql`

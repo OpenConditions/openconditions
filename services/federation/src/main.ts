@@ -63,6 +63,8 @@ const SEED_RETRY_MS = 5 * 60 * 1000;
 
 /** How often each pinned peer's capabilities are re-verified and its subscriptions mended. */
 const CAPABILITIES_CYCLE_MS = 60 * 60 * 1000;
+/** The first wait before peer upkeep that left a peer unverified is tried again. */
+const UPKEEP_RETRY_MS = 60 * 1000;
 
 /** How often the instance key is checked for rotation. */
 const KEY_CYCLE_MS = 6 * 60 * 60 * 1000;
@@ -180,12 +182,15 @@ async function boot() {
           settings.actor!.instanceId,
         );
         if (kept.status !== "current") {
+          // A first key signs at once; a rotated one only after peers had time to read it.
           const signsFrom = new Date(
             kept.key.notBefore.getTime() + KEY_PUBLICATION_LEAD_DAYS * 86_400_000,
           );
+          const signing =
+            kept.status === "rotated" ? `signing from ${signsFrom.toISOString()}` : "signing now";
           console.info(
             `[federation-api] instance key ${kept.status}: ${kept.key.keyId}, valid until ` +
-              `${kept.key.notAfter.toISOString()}, signing from ${signsFrom.toISOString()}`,
+              `${kept.key.notAfter.toISOString()}, ${signing}`,
           );
         }
       } catch (err) {
@@ -349,20 +354,32 @@ async function boot() {
   // against its pin and negotiated, at boot and hourly after. Its records are
   // admitted against them; a peer not yet verified is asked to retry its
   // inbox delivery. A peer this instance subscribes to is kept pushing to its
-  // inbox: a subscription missing, changed or disabled there is mended.
+  // inbox: a subscription missing, changed or disabled there is mended. A run
+  // in which a peer could not be verified or a subscription not kept is tried
+  // again after a minute, then after twice as long each time up to the hour,
+  // so a peer that was down at boot is not left unverified for an hour.
   let capabilitiesTimer: NodeJS.Timeout | undefined;
+  // Set once the service closes, so an upkeep run that ends then schedules no next one.
+  let closing = false;
   let registryTimer: NodeJS.Timeout | undefined;
   if (settings.enabled) {
     const egress = peerFetch(settings);
     let upkeepRunning = false;
+    let upkeepRetryMs = UPKEEP_RETRY_MS;
     const refreshAll = async () => {
       if (upkeepRunning) return;
       upkeepRunning = true;
+      // Whether every peer was verified and every subscription kept.
+      let complete = false;
       try {
         const results = await refreshPeers(sql, settings, peers, {
           fetchImpl: egress,
           now: new Date().toISOString(),
         });
+        complete = results.every(
+          (r) =>
+            r.capabilities.ok && r.subscription?.ok !== false && r.pullSubscription?.ok !== false,
+        );
         for (const { peer, capabilities, subscription, pullSubscription } of results) {
           if (!capabilities.ok) {
             console.warn(
@@ -384,10 +401,18 @@ async function boot() {
         console.error("[federation-api] peer upkeep failed:", err);
       } finally {
         upkeepRunning = false;
+        const next = complete ? CAPABILITIES_CYCLE_MS : upkeepRetryMs;
+        upkeepRetryMs = complete
+          ? UPKEEP_RETRY_MS
+          : Math.min(upkeepRetryMs * 2, CAPABILITIES_CYCLE_MS);
+        if (capabilitiesTimer) clearTimeout(capabilitiesTimer);
+        if (!closing) {
+          capabilitiesTimer = setTimeout(() => void refreshAll(), next);
+          capabilitiesTimer.unref();
+        }
       }
     };
     void refreshAll();
-    capabilitiesTimer = setInterval(() => void refreshAll(), CAPABILITIES_CYCLE_MS);
 
     // Registry discovery: daily, and an hour after a sync that failed. The
     // peers a verified sync found are verified and kept up like the
@@ -603,6 +628,12 @@ async function boot() {
           if (result.error !== undefined) {
             console.warn(`[federation-api] pull of ${peer.instanceId}: ${result.error}`);
           }
+          if ("longAbsence" in result && result.longAbsence === true) {
+            console.info(
+              `[federation-api] pull of ${peer.instanceId}: its first answer in over 30 days; ` +
+                "this instance's copies of its records are compared with its present state",
+            );
+          }
           if ("archive" in result && result.archive !== undefined) {
             const { accepted, stale, skipped } = result.archive;
             console.info(
@@ -677,9 +708,10 @@ async function boot() {
   }
 
   const close = async () => {
+    closing = true;
     if (webhookTimer) clearInterval(webhookTimer);
     if (keyTimer) clearInterval(keyTimer);
-    if (capabilitiesTimer) clearInterval(capabilitiesTimer);
+    if (capabilitiesTimer) clearTimeout(capabilitiesTimer);
     if (registryTimer) clearTimeout(registryTimer);
     if (pullTimer) clearInterval(pullTimer);
     if (partitionTimer) clearInterval(partitionTimer);
