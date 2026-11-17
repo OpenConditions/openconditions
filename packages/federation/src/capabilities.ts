@@ -26,7 +26,13 @@ import { sharedSchemaMajors } from "@openconditions/model";
  * docs/federation-protocol.md describes it. An instance advertises it in its
  * actor's `capabilities.protocolVersion` (or `protocolVersions`).
  */
-export const FEDERATION_PROTOCOL_VERSION = "0.2";
+export const FEDERATION_PROTOCOL_VERSION = "0.3";
+
+/**
+ * The first protocol version whose publishers serve the record state routes
+ * (`/peer/state` and `/peer/records`) a subscriber compares its copies with.
+ */
+export const RECORD_STATE_PROTOCOL_VERSION = "0.3";
 
 /**
  * The negotiation input — the subset of `ActorCapabilities` the intersection
@@ -73,7 +79,7 @@ function protocolSet(caps: NegotiableCapabilities): string[] {
 
 /** Semver-ish ordering: compare dot-separated segments numerically where both
  *  are numbers (so `1.10` > `1.9`), else lexically. */
-function compareVersions(a: string, b: string): number {
+export function compareVersions(a: string, b: string): number {
   const pa = a.split(".");
   const pb = b.split(".");
   const len = Math.max(pa.length, pb.length);

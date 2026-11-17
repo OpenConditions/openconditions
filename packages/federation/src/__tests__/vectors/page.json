@@ -1,6 +1,6 @@
 {
   "description": "An outbox page as /peer/outbox or /peer/backfill serves it and a webhook push sends it: one change, a retraction ordered by revision, an erasure and a source's liveness. The record is the publisher's own, sealed for schema kernel and situation/incident as this build registers them.",
-  "protocolVersion": "0.2",
+  "protocolVersion": "0.3",
   "publisherInstanceId": "publisher.example",
   "page": {
     "type": "OrderedCollectionPage",

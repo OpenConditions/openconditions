@@ -27,8 +27,10 @@ export { detectAnomaly, peerWindowStats } from "./anomaly.js";
 export type { NegotiableCapabilities, NegotiatedCapabilities } from "./capabilities.js";
 export {
   CapabilityNegotiationError,
+  compareVersions,
   FEDERATION_PROTOCOL_VERSION,
   negotiateCapabilities,
+  RECORD_STATE_PROTOCOL_VERSION,
 } from "./capabilities.js";
 export type {
   AnsweredRequest,
@@ -128,6 +130,7 @@ export type { BlockedPeer, BlockPeerInput } from "./peer-blocklist.js";
 export { blockPeer, isPeerBlocked, listBlockedPeers, unblockPeer } from "./peer-blocklist.js";
 export type { PeerVersions } from "./peer-capabilities.js";
 export {
+  loadPeerProtocolVersion,
   loadPeerVersions,
   peerVersionsFromActor,
   refreshPeerCapabilities,
@@ -202,6 +205,29 @@ export {
   federatedSnapshot,
   RECORD_FILTER_KEYS,
 } from "./record-filter.js";
+export type {
+  Parsed,
+  RecordStateClass,
+  RecordStateItem,
+  RecordStatePage,
+  RecordStateQuery,
+  RecordsPage,
+  RecordsQuery,
+} from "./record-state.js";
+export {
+  compareRecordIds,
+  isRecordStateClass,
+  RECORD_ID_MAX_BYTES,
+  RECORD_STATE_CLASSES,
+  RECORD_STATE_PAGE_LIMIT,
+  RECORDS_MAX_IDS,
+  readRecordState,
+  readRecordStatePage,
+  readRecords,
+  readRecordsPage,
+  readRecordsRequest,
+  recordStateStatement,
+} from "./record-state.js";
 export type { RegistryEntry, RegistryOperator } from "./registry.js";
 export { parseRegistryEntry, registryEntryFileName, registryToPeerRecords } from "./registry.js";
 export type { RegistrySyncOptions, RegistrySyncResult } from "./registry-sync.js";

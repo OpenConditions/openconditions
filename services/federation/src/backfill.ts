@@ -27,6 +27,7 @@
 
 import {
   decodeOutboxCursor,
+  encodeOutboxCursor,
   OUTBOX_CURSOR_START,
   type OutboxCursor,
   type OutboxPage,
@@ -145,25 +146,33 @@ function normalizeCursor(after: OutboxCursor | string | undefined): OutboxCursor
   return cursor;
 }
 
-/** Whether any COMMITTED entry strictly after the cursor falls before the floor
- *  — i.e. the request's range reaches into the pre-window past the archive
- *  covers. Independent of the subscriber filter: the redirect is about the time
+/** The newest SETTLED entry strictly after the cursor that falls before the
+ *  floor, or null when there is none — i.e. whether the request's range
+ *  reaches into the pre-window past the archive covers, and how far.
+ *  Independent of the subscriber filter: the redirect is about the time
  *  RANGE, not which types survive the filter. */
-async function hasPreFloorEntries(
+async function lastPreFloorEntry(
   sql: postgres.Sql,
   after: OutboxCursor,
   floorIso: string,
-): Promise<boolean> {
-  const rows = await sql<{ exists: boolean }[]>`
-    SELECT EXISTS (
-      SELECT 1
+): Promise<OutboxCursor | null> {
+  const [row] = await sql<{ txid: string; seq: string }[]>`
+    SELECT txid::text AS txid, seq::text AS seq
       FROM conditions.federation_outbox
-      WHERE (txid > ${after.txid}::xid8
-             OR (txid = ${after.txid}::xid8 AND seq > ${after.seq}))
-        AND txid < pg_snapshot_xmin(pg_current_snapshot())
-        AND created_at < ${floorIso}::timestamptz
-    ) AS exists`;
-  return rows[0]?.exists === true;
+     WHERE (txid > ${after.txid}::xid8
+            OR (txid = ${after.txid}::xid8 AND seq > ${after.seq}))
+       AND txid < pg_snapshot_xmin(pg_current_snapshot())
+       AND created_at < ${floorIso}::timestamptz
+     ORDER BY txid DESC, seq DESC
+     LIMIT 1`;
+  return row === undefined ? null : { txid: row.txid, seq: Number(row.seq) };
+}
+
+/** Whether cursor `b` is past cursor `a` in the journal's `(txid, seq)` order. */
+function isPast(a: OutboxCursor, b: OutboxCursor): boolean {
+  const ta = BigInt(a.txid);
+  const tb = BigInt(b.txid);
+  return tb > ta || (tb === ta && b.seq > a.seq);
 }
 
 /**
@@ -174,6 +183,15 @@ async function hasPreFloorEntries(
  * for the deep past); the live page still serves the in-window entries after
  * the cursor, gap-free. What was withheld for its size is listed beside the
  * page, for the caller to report.
+ *
+ * A beyond-window page that reached the end of the settled in-window entries
+ * (it has no `next`) moves its `highWaterMark` on to the newest settled
+ * pre-floor entry after the cursor, when that lies past it: every settled
+ * in-window entry after the cursor is in the page already, and one still
+ * unsettled has a higher txid, so nothing is skipped, and the subscriber's
+ * next read starts after the stretch the window hides instead of being told
+ * it is beyond the window again. The page and that entry are read in one
+ * snapshot, so they agree on what is settled.
  */
 export async function readBackfill(sql: postgres.Sql, q: BackfillQuery): Promise<BackfillRead> {
   const nowIso = q.now ?? new Date().toISOString();
@@ -183,20 +201,33 @@ export async function readBackfill(sql: postgres.Sql, q: BackfillQuery): Promise
   );
   const after = normalizeCursor(q.after);
 
-  const page = await readOutbox(sql, {
-    after,
-    ...(q.filter !== undefined ? { filter: q.filter } : {}),
-    ...(q.limit !== undefined ? { limit: q.limit } : {}),
-    ...(q.nextParams !== undefined ? { nextParams: q.nextParams } : {}),
-    partOf: q.partOf ?? "/peer/backfill",
-    minCreatedAt: floorIso,
-    now: nowIso,
-  });
+  return (await sql.begin("isolation level repeatable read", async (tx) => {
+    const db = tx as unknown as postgres.Sql;
+    const page = await readOutbox(db, {
+      after,
+      ...(q.filter !== undefined ? { filter: q.filter } : {}),
+      ...(q.limit !== undefined ? { limit: q.limit } : {}),
+      ...(q.nextParams !== undefined ? { nextParams: q.nextParams } : {}),
+      partOf: q.partOf ?? "/peer/backfill",
+      minCreatedAt: floorIso,
+      now: nowIso,
+    });
 
-  const result: BackfillRead = { ...page };
-  if (await hasPreFloorEntries(sql, after, floorIso)) {
-    result.beyondWindow = true;
-    if (q.archive !== undefined) result.archive = q.archive;
-  }
-  return result;
+    const result: BackfillRead = { ...page };
+    const preFloor = await lastPreFloorEntry(db, after, floorIso);
+    if (preFloor !== null) {
+      result.beyondWindow = true;
+      if (q.archive !== undefined) result.archive = q.archive;
+      const frontier = decodeOutboxCursor(page.highWaterMark);
+      if (
+        page.next === undefined &&
+        page.cursorAhead === undefined &&
+        frontier !== null &&
+        isPast(frontier, preFloor)
+      ) {
+        result.highWaterMark = encodeOutboxCursor(preFloor);
+      }
+    }
+    return result;
+  })) as BackfillRead;
 }

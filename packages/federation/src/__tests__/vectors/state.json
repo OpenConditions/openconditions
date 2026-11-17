@@ -1,0 +1,22 @@
+{
+  "description": "A GET /peer/state page, asked for situations within a bbox with limit=2: it scanned two live records the outbox may carry, the filter kept one, and since it scanned its limit it names the last id scanned (through) and the next page. The ended record of records.json is not listed (only live records are), and neither is an id the publisher does not know.",
+  "protocolVersion": "0.3",
+  "request": {
+    "class": "situation",
+    "limit": 2
+  },
+  "page": {
+    "type": "RecordStatePage",
+    "epoch": "3f0c2a5e-8b1d-4c7e-9a64-5d2f1b0e7c93",
+    "class": "situation",
+    "items": [
+      {
+        "id": "oc:situation:nl-ndw-events:NDW04_123456",
+        "revision": 3,
+        "recordedAt": "2026-01-01T00:00:00.000Z"
+      }
+    ],
+    "through": "oc:situation:nl-ndw-events:NDW04_700000",
+    "next": "https://publisher.example/peer/state?class=situation&after=oc%3Asituation%3Anl-ndw-events%3ANDW04_700000&bbox=4%2C51%2C6%2C53&limit=2"
+  }
+}

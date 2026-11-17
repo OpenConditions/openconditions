@@ -41,6 +41,14 @@
  * the start, that page is not landed, and the journal is read again from the
  * start, landing what this instance already holds as stale. One such reset
  * is followed per pull and per hour; another is refused as the peer's fault.
+ *
+ * Neither a journal that started over nor the archive says what the peer
+ * ended meanwhile: a record the peer no longer has is in neither. So a reset
+ * makes a comparison of this instance's copies with the peer's present state
+ * due (`reconcile_due_since`), starting a running one over, and so does a page
+ * that says the cursor is beyond the window, unless one is due already or the
+ * last one finished within a day; it runs once the pull reached the live tail
+ * (reconcile.ts).
  */
 import { ingestFederatedPage } from "@openconditions/contributions-api/federation/inbox";
 import {
@@ -113,6 +121,8 @@ export interface PullResult {
   more: boolean;
   /** How long the peer asked not to be asked again, in seconds, when it did. */
   retryAfterSec?: number;
+  /** Whether the stored cursor moved in this pull. */
+  advanced: boolean;
   /** Why the pull stopped short, when it did. */
   error?: string;
 }
@@ -196,7 +206,8 @@ async function adoptEpoch(
 
 /**
  * Sets the cursor back to the start of the peer's journal `epoch`: the one
- * write that moves it back.
+ * write that moves it back. A comparison with the peer's state becomes due,
+ * from the start, even when one was running.
  */
 async function resetCursor(
   sql: postgres.Sql,
@@ -206,11 +217,34 @@ async function resetCursor(
 ): Promise<void> {
   await sql`
     INSERT INTO conditions.federation_peer_cursor
-      (peer_instance_id, cursor, updated_at, journal_epoch, cursor_reset_at)
-    VALUES (${peerId}, '0.0', ${now}, ${epoch}, ${now})
+      (peer_instance_id, cursor, updated_at, journal_epoch, cursor_reset_at, reconcile_due_since)
+    VALUES (${peerId}, '0.0', ${now}, ${epoch}, ${now}, ${now})
     ON CONFLICT (peer_instance_id) DO UPDATE
       SET cursor = '0.0', updated_at = excluded.updated_at,
-          journal_epoch = excluded.journal_epoch, cursor_reset_at = excluded.cursor_reset_at`;
+          journal_epoch = excluded.journal_epoch, cursor_reset_at = excluded.cursor_reset_at,
+          reconcile_due_since = excluded.reconcile_due_since,
+          reconcile_class = NULL, reconcile_after = NULL`;
+}
+
+/**
+ * Makes a comparison with the peer's state due because a page said the
+ * cursor is beyond the peer's window: only when none is due already (a
+ * running one is never restarted for this; only a cursor reset does that)
+ * and the last one finished more than {@link ARCHIVE_RELAND_MS} ago, or
+ * never. A publisher that keeps saying so for the same stretch of its
+ * journal therefore costs one comparison a day at most.
+ */
+async function markReconcileDue(sql: postgres.Sql, peerId: string, now: string): Promise<void> {
+  const settledBefore = new Date(Date.parse(now) - ARCHIVE_RELAND_MS).toISOString();
+  await sql`
+    INSERT INTO conditions.federation_peer_cursor AS held
+      (peer_instance_id, updated_at, reconcile_due_since)
+    VALUES (${peerId}, ${now}, ${now})
+    ON CONFLICT (peer_instance_id) DO UPDATE
+      SET reconcile_due_since = excluded.reconcile_due_since,
+          reconcile_class = NULL, reconcile_after = NULL
+      WHERE held.reconcile_due_since IS NULL
+        AND (held.reconciled_at IS NULL OR held.reconciled_at <= ${settledBefore})`;
 }
 
 /** The least time between two archives of one peer landed here. */
@@ -272,10 +306,10 @@ export const PULL_PAGE_LIMIT = OUTBOX_MAX_LIMIT;
 /** How long a page may take to arrive, its body included. */
 export const PULL_PAGE_TIMEOUT_MS = 60_000;
 
-class PageTooLarge extends Error {}
+export class PageTooLarge extends Error {}
 
 /** Reads a body of at most `max` bytes, cancelling the stream past it. */
-async function readCapped(res: Response, max: number): Promise<Uint8Array> {
+export async function readCapped(res: Response, max: number): Promise<Uint8Array> {
   const chunks: Uint8Array[] = [];
   let size = 0;
   const reader = res.body?.getReader();
@@ -293,6 +327,21 @@ async function readCapped(res: Response, max: number): Promise<Uint8Array> {
   return new Uint8Array(Buffer.concat(chunks));
 }
 
+/**
+ * How long a peer that answered `res` asked not to be asked again, in
+ * seconds: for a 429, or a 503 with a Retry-After, the header's seconds when
+ * readable and positive, else {@link PULL_RETRY_AFTER_DEFAULT_SEC}; undefined
+ * for any other answer.
+ */
+export function retryAfterOf(res: Response): number | undefined {
+  const header = res.headers.get("retry-after");
+  if (res.status !== 429 && !(res.status === 503 && header !== null)) return undefined;
+  const asked = Number(header);
+  return header !== null && Number.isFinite(asked) && asked > 0
+    ? asked
+    : PULL_RETRY_AFTER_DEFAULT_SEC;
+}
+
 /** The `(txid, seq)` cursor of an entry, or null for one without a usable one. */
 function entryCursor(item: unknown): string | null {
   if (item === null || typeof item !== "object") return null;
@@ -307,9 +356,10 @@ function entryCursor(item: unknown): string | null {
  * throws for the peer's answers. A page passes what a pushed page passes: the
  * peer is not blocked here, the page carries the peer's signature under a
  * pinned key, its size stays within a push's and its entry count within the
- * limit asked for, and each record is admitted by the same inbox. Its entries must lie after the cursor asked for and up to the
- * page's own high-water mark, so a replayed or forged page cannot move the
- * cursor anywhere else; a page that moves it nowhere ends the pull.
+ * limit asked for, and each record is admitted by the same inbox. Its entries
+ * must lie after the cursor asked for and up to the page's own high-water
+ * mark, so a replayed or forged page cannot move the cursor anywhere else; a
+ * page that moves it nowhere ends the pull.
  */
 export async function pullPeer(
   sql: postgres.Sql,
@@ -326,6 +376,7 @@ export async function pullPeer(
     skipped: 0,
     cursor: stored.cursor,
     more: false,
+    advanced: false,
   };
   if (await isPeerBlocked(sql, peer.instanceId)) {
     return { ...result, error: "the peer is blocked here" };
@@ -377,20 +428,11 @@ export async function pullPeer(
       return { ...result, error: `the peer could not be reached: ${String(err)}` };
     }
     if (res.status === 429 || res.status === 503) {
-      const header = res.headers.get("retry-after");
-      const asked = Number(header);
-      const waits = res.status === 429 || header !== null;
+      const retryAfterSec = retryAfterOf(res);
       return {
         ...result,
         more: true,
-        ...(waits
-          ? {
-              retryAfterSec:
-                header !== null && Number.isFinite(asked) && asked > 0
-                  ? asked
-                  : PULL_RETRY_AFTER_DEFAULT_SEC,
-            }
-          : {}),
+        ...(retryAfterSec !== undefined ? { retryAfterSec } : {}),
         error: `the peer asked to retry later (${res.status})`,
       };
     }
@@ -447,6 +489,7 @@ export async function pullPeer(
           return refuse("schema", "the peer's journal restarted again within the hour");
         }
         await resetCursor(sql, peer.instanceId, epoch, ctx.now());
+        result.advanced = true;
         stored.journalEpoch = epoch;
         stored.cursorResetAt = new Date(nowMs);
         result.cursor = "0.0";
@@ -467,7 +510,10 @@ export async function pullPeer(
     if (after(frontier, result.cursor) || !items.every(inWindow)) {
       return refuse("schema", "the page's entries lie outside the cursor it was asked for");
     }
-    if (page.beyondWindow === true) result.beyondWindow = true;
+    if (page.beyondWindow === true && result.beyondWindow === undefined) {
+      result.beyondWindow = true;
+      await markReconcileDue(sql, peer.instanceId, ctx.now());
+    }
     // What the window no longer holds lands from the archive first; the
     // pages after it carry what changed since.
     const manifest =
@@ -520,6 +566,7 @@ export async function pullPeer(
     if (!after(result.cursor, frontier)) break;
     await storeCursor(sql, peer.instanceId, frontier, epoch, ctx.now());
     result.cursor = frontier;
+    result.advanced = true;
     if (page.next === undefined) break;
     catchingUp = true;
   }

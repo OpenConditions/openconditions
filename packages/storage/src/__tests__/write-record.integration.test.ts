@@ -227,6 +227,72 @@ describe("writeRecord with a stored record", () => {
     });
   });
 
+  it("writes a record as stated over a copy at the same or a higher revision", async () => {
+    await writeRecord(sql, { stored: peerRecord(3) }, ctx(T1));
+    const restated = peerRecord(2, {
+      headline: [{ lang: "nl", text: "Hersteld" }],
+      recordedAt: T2,
+    });
+    // Without the option the revision rule keeps the copy.
+    expect(await writeRecord(sql, { stored: restated }, ctx(T2))).toMatchObject({
+      status: "stale",
+      revision: 3,
+    });
+    expect(await writeRecord(sql, { stored: restated, asStated: true }, ctx(T2))).toMatchObject({
+      status: "updated",
+      revision: 2,
+    });
+    const [row] = await sql`
+      SELECT revision, recorded_at, record #>> '{headline,0,text}' AS headline
+        FROM conditions.situation`;
+    expect(row).toEqual({ revision: 2, recorded_at: new Date(T2), headline: "Hersteld" });
+    const sameRevision = peerRecord(2, { recordedAt: T1 });
+    expect(await writeRecord(sql, { stored: sameRevision, asStated: true }, ctx(T2))).toMatchObject(
+      { status: "updated", revision: 2 },
+    );
+    // The history above the stated revision went with the copy it replaced.
+    expect(
+      (await revisions("oc:situation:be-flanders-events:p1")).map((r) => r["revision"]),
+    ).toEqual([2]);
+  });
+
+  it("restores an ended copy as stated, at a lower revision", async () => {
+    await writeRecord(sql, { stored: peerRecord(1) }, ctx(T1));
+    await writeRecord(
+      sql,
+      { stored: peerRecord(4, { tombstone: { reason: "withdrawn", at: T1 } }) },
+      ctx(T1),
+    );
+    expect(
+      await writeRecord(sql, { stored: peerRecord(2), asStated: true }, ctx(T2)),
+    ).toMatchObject({ status: "restored", revision: 2 });
+    const [row] = await sql`SELECT revision, tombstone_reason FROM conditions.situation`;
+    expect(row).toEqual({ revision: 2, tombstone_reason: null });
+  });
+
+  it("still never writes as stated over another instance's record or a decided tombstone", async () => {
+    const own = situationDraft("p1", {
+      id: "oc:situation:be-flanders-events:p1",
+      provenance: {
+        ...(situationDraft("p1")["provenance"] as object),
+        sourceId: "be-flanders-events",
+        recordId: "p1",
+      },
+    });
+    await writeRecord(sql, { draft: own }, ctx(T1));
+    expect(
+      await writeRecord(sql, { stored: peerRecord(1), asStated: true }, ctx(T2)),
+    ).toMatchObject({ status: "foreign" });
+
+    await sql`TRUNCATE conditions.situation CASCADE`;
+    await writeRecord(sql, { stored: peerRecord(3) }, ctx(T1));
+    await sql`
+      UPDATE conditions.situation SET tombstone_reason = 'rejected', tombstoned_at = ${T1}`;
+    expect(
+      await writeRecord(sql, { stored: peerRecord(2), asStated: true }, ctx(T2)),
+    ).toMatchObject({ status: "stale", revision: 3 });
+  });
+
   it("lets a draft written here take over a peer's copy of the same content", async () => {
     const own = situationDraft("p1", {
       id: "oc:situation:be-flanders-events:p1",

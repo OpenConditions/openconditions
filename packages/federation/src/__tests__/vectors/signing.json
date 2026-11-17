@@ -1,6 +1,6 @@
 {
   "description": "A signed GET of the outbox and the signed page that answers it, bound to that request. The key is the RFC 9421 Appendix B.1.4 test-key-ed25519, a published test key: never use it for anything else.",
-  "protocolVersion": "0.2",
+  "protocolVersion": "0.3",
   "key": {
     "source": "RFC 9421 Appendix B.1.4 test-key-ed25519",
     "privateKeyPkcs8Base64": "MC4CAQAwBQYDK2VwBCIEIJ+DYvh6SEqVTm50DFtMDoQikTmiCqirVv9mWG9qfSnF",

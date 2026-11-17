@@ -28,6 +28,15 @@
  *
  * A permanent problem with one entry skips it and is reported; a local
  * failure rejects the page so the peer retries from its cursor.
+ *
+ * The peer's answer to a comparison of copies (`/peer/records`) lands as
+ * stated instead ({@link landStatedEntries}): it is the peer's present state,
+ * which replaces a copy from a history the peer no longer has whatever the
+ * revisions, but never one that changed since this instance compared it: each
+ * answer carries the version held then, checked again under the record's
+ * lock. A copy the peer no longer knows is retired ({@link retireRecords}) as
+ * a retraction of the peer's at the revision held, which a later delivery of
+ * the record restores.
  */
 
 import { checkGeometryPlausibility } from "@openconditions/contrib-core";
@@ -36,6 +45,7 @@ import type { RevisionedClass } from "@openconditions/core/server";
 import { admitFederatedRecord, readInboundEntry } from "@openconditions/federation/admit";
 import type { Registry } from "@openconditions/model";
 import {
+  DECIDED_TOMBSTONE_REASONS,
   isLapsedCopy,
   restoreLapsedCopies,
   tombstoneRecords,
@@ -222,12 +232,14 @@ async function recordReceipts(
                                  conditions.federation_source_receipt.cadence_sec)`;
 }
 
-async function landRecord(
-  sql: Sql,
+/**
+ * A peer's record admitted as the inbox admits it, with a plausible geometry,
+ * or why it is refused.
+ */
+function admitForLanding(
   wire: unknown,
   ctx: InboxContext,
-  deps: InboxDeps,
-): Promise<"accepted" | "stale" | string> {
+): { record: Record<string, unknown> } | { refused: string } {
   const admission = admitFederatedRecord(
     ctx.registry,
     {
@@ -238,17 +250,32 @@ async function landRecord(
     wire,
   );
   if (!admission.admitted) {
-    return "skipped" in admission
-      ? admission.skipped
-      : admission.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ");
+    return {
+      refused:
+        "skipped" in admission
+          ? admission.skipped
+          : admission.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; "),
+    };
   }
   const record = admission.record;
   const geometry = (record["location"] as { geometry: GeoJsonGeometry | null } | undefined)
     ?.geometry;
   if (geometry !== null && geometry !== undefined) {
     const reasons = checkGeometryPlausibility(geometry);
-    if (reasons.length > 0) return `implausible geometry: ${reasons.join(", ")}`;
+    if (reasons.length > 0) return { refused: `implausible geometry: ${reasons.join(", ")}` };
   }
+  return { record };
+}
+
+async function landRecord(
+  sql: Sql,
+  wire: unknown,
+  ctx: InboxContext,
+  deps: InboxDeps,
+): Promise<"accepted" | "stale" | string> {
+  const admitted = admitForLanding(wire, ctx);
+  if ("refused" in admitted) return admitted.refused;
+  const record = admitted.record;
   const sourceId = (record["provenance"] as { sourceId: string }).sourceId;
   const isCrowd = record["class"] === "situation" && actorOf(record).origin === "crowd";
   // The erasure check and the write share the record's lock with a retraction
@@ -421,4 +448,268 @@ async function applyRetraction(
     });
     return "tombstoned";
   }) as Promise<string>;
+}
+
+/** The version of a copy this instance held when it compared it with the peer's state. */
+export interface HeldVersion {
+  revision: number;
+  recordedAt: string;
+  ended: boolean;
+}
+
+export interface StatedResult {
+  /** Copies created, or changed to the version stated. */
+  updated: number;
+  /** Ended copies live again as stated. */
+  restored: number;
+  /** Copies ended as stated. */
+  ended: number;
+  /** Answers that changed nothing: the copy was already as stated, or changed since it was compared. */
+  unchanged: number;
+  /** Answers that cannot land here, each with why. */
+  refused: { recordId?: string; reason: string }[];
+}
+
+interface StoredVersion {
+  source_id: string;
+  instance_id: string;
+  revision: number;
+  recorded_at: Date;
+  ended: boolean;
+  tombstone_reason: string | null;
+}
+
+/** The stored version of a record, read under its lock. */
+async function storedVersion(
+  tx: postgres.TransactionSql,
+  cls: RevisionedClass,
+  id: string,
+): Promise<StoredVersion | undefined> {
+  const [row] = await tx.unsafe<StoredVersion[]>(
+    `SELECT source_id, instance_id, revision, recorded_at,
+            tombstoned_at IS NOT NULL AS ended, tombstone_reason
+       FROM conditions.${cls} WHERE id = $1`,
+    [id],
+  );
+  return row;
+}
+
+/** Whether the stored version is still the one held at the comparison. */
+function stillHeld(row: StoredVersion | undefined, held: HeldVersion | null): boolean {
+  if (held === null) return row === undefined;
+  return (
+    row !== undefined &&
+    row.revision === held.revision &&
+    row.recorded_at.getTime() === Date.parse(held.recordedAt) &&
+    row.ended === held.ended
+  );
+}
+
+/**
+ * Lands the peer's answers to a comparison as the peer states them, each
+ * against the version `held` names for its record (null: none was held). A
+ * record is admitted as the inbox admits one (an erased one is still
+ * refused: the erasure outlives a restore at the peer) and written over the
+ * copy whatever their revisions (`asStated`); a delete ends the copy with
+ * the reason at the revision stated, an erasure recording its fact as a
+ * retraction does. Under the record's lock the copy is read again: one that
+ * changed since the comparison, by a push or a pull that landed meanwhile,
+ * is left as it is. An answer that cannot land is refused, not counted
+ * against the peer: it would be refused again at every comparison.
+ */
+export async function landStatedEntries(
+  sql: Sql,
+  entries: readonly unknown[],
+  held: ReadonlyMap<string, HeldVersion | null>,
+  ctx: InboxContext,
+  deps: InboxDeps = {},
+): Promise<StatedResult> {
+  const result: StatedResult = { updated: 0, restored: 0, ended: 0, unchanged: 0, refused: [] };
+  for (const item of entries) {
+    const read = readInboundEntry(item);
+    if (!read.ok) {
+      result.refused.push({
+        ...(read.recordId === undefined ? {} : { recordId: read.recordId }),
+        reason: read.reason,
+      });
+      continue;
+    }
+    const entry = read.entry;
+    if (entry.operation === "liveness") {
+      result.refused.push({ reason: "a liveness entry is not a record's state" });
+      continue;
+    }
+    const before = held.get(entry.recordId);
+    if (before === undefined || !CLASSES_WITH_TOMBSTONES.has(entry.recordClass)) {
+      result.refused.push({ recordId: entry.recordId, reason: "the record was not compared" });
+      continue;
+    }
+    // The version held was compared for the record the entry names, so the
+    // record it carries must be that one.
+    if (entry.operation !== "delete") {
+      const carried = entry.record as { id?: unknown; class?: unknown };
+      if (carried.id !== entry.recordId || carried.class !== entry.recordClass) {
+        result.refused.push({
+          recordId: entry.recordId,
+          reason: "the entry carries another record than it names",
+        });
+        continue;
+      }
+    }
+    const outcome =
+      entry.operation === "delete"
+        ? await endAsStated(sql, entry, before, ctx)
+        : await landAsStated(sql, entry.record, before, ctx, deps);
+    if (outcome === "updated") result.updated += 1;
+    else if (outcome === "restored") result.restored += 1;
+    else if (outcome === "ended") result.ended += 1;
+    else if (outcome === "unchanged") result.unchanged += 1;
+    else result.refused.push({ recordId: entry.recordId, reason: outcome });
+  }
+  return result;
+}
+
+async function landAsStated(
+  sql: Sql,
+  wire: unknown,
+  before: HeldVersion | null,
+  ctx: InboxContext,
+  deps: InboxDeps,
+): Promise<"updated" | "restored" | "unchanged" | string> {
+  const admitted = admitForLanding(wire, ctx);
+  if ("refused" in admitted) return admitted.refused;
+  const record = admitted.record;
+  const cls = record["class"] as RevisionedClass;
+  const id = record["id"] as string;
+  const sourceId = (record["provenance"] as { sourceId: string }).sourceId;
+  const isCrowd = cls === "situation" && actorOf(record).origin === "crowd";
+  const written = await sql.begin(async (tx) => {
+    await lockRecord(tx, cls, id);
+    if (await isErased(tx, record["canonicalId"] as string, ctx.now, ctx.peerInstanceId)) {
+      return "erased" as const;
+    }
+    if (!stillHeld(await storedVersion(tx, cls, id), before)) return "moved" as const;
+    await tx`SELECT pg_advisory_xact_lock(hashtext(${sourceId}))`;
+    const result = await writeRecordIn(
+      tx,
+      { stored: record, asStated: true },
+      { registry: ctx.registry, instanceId: ctx.localInstanceId, now: ctx.now },
+    );
+    if (
+      isCrowd &&
+      (result.status === "created" || result.status === "updated" || result.status === "restored")
+    ) {
+      await landCrowdEvidence(sql, tx, result.id, ctx);
+    }
+    return result;
+  });
+  if (written === "erased") return "the record was erased";
+  if (written === "moved") return "unchanged";
+  switch (written.status) {
+    case "rejected":
+      return written.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ");
+    case "foreign":
+      return "another instance's record holds this id here";
+    case "created":
+    case "updated":
+    case "restored":
+      if (isCrowd) await runCrowdHooks(sql, written.id, ctx, deps);
+      return written.status === "restored" ? "restored" : "updated";
+    default:
+      return "unchanged";
+  }
+}
+
+async function endAsStated(
+  sql: Sql,
+  entry: {
+    recordClass: string;
+    recordId: string;
+    canonicalId: string | null;
+    reason: string;
+    revision?: number;
+  },
+  before: HeldVersion | null,
+  ctx: InboxContext,
+): Promise<"ended" | "unchanged" | string> {
+  const cls = entry.recordClass as RevisionedClass;
+  const erasure = entry.reason === ERASURE_REASON;
+  return sql.begin(async (tx) => {
+    await lockRecord(tx, cls, entry.recordId);
+    if (erasure) await recordErasure(tx, entry.canonicalId, ctx.now, ctx.peerInstanceId);
+    const row = await storedVersion(tx, cls, entry.recordId);
+    if (row === undefined || !stillHeld(row, before)) return "unchanged";
+    if (row.instance_id !== ctx.peerInstanceId) return "the record is not the peer's";
+    if (row.ended && row.tombstone_reason === entry.reason && row.revision === entry.revision) {
+      return "unchanged";
+    }
+    // A copy rejected or superseded here stays as this instance decided,
+    // unless the rights to it are gone.
+    if (row.ended && !erasure && DECIDED_TOMBSTONE_REASONS.has(row.tombstone_reason ?? "")) {
+      return "unchanged";
+    }
+    await tx`SELECT pg_advisory_xact_lock(hashtext(${row.source_id}))`;
+    if (entry.revision !== undefined) {
+      await tx.unsafe(
+        `DELETE FROM conditions.${cls}_revision WHERE ${cls}_id = $1 AND revision >= $2`,
+        [entry.recordId, entry.revision],
+      );
+    }
+    await tombstoneRecords(tx, cls, [entry.recordId], entry.reason, {
+      registry: ctx.registry,
+      now: ctx.now,
+      byOwner: true,
+      ...(entry.revision !== undefined ? { ownerRevision: entry.revision } : {}),
+    });
+    await leaveCanonicalView(tx, ctx.registry, { class: cls, id: entry.recordId }, row.source_id, {
+      instanceId: ctx.localInstanceId,
+      now: ctx.now,
+    });
+    return "ended";
+  }) as Promise<string>;
+}
+
+/**
+ * Retires copies of records the peer no longer knows: each held live at the
+ * version `held` names is ended `withdrawn`, as the peer's retraction at the
+ * revision held, so a later delivery of the record at that revision or a
+ * higher one restores it. A copy that changed since the comparison is left
+ * as it is.
+ */
+export async function retireRecords(
+  sql: Sql,
+  cls: RevisionedClass,
+  held: ReadonlyMap<string, HeldVersion>,
+  ctx: InboxContext,
+): Promise<{ retired: number; unchanged: number }> {
+  const result = { retired: 0, unchanged: 0 };
+  for (const [id, before] of held) {
+    const retired = await sql.begin(async (tx) => {
+      await lockRecord(tx, cls, id);
+      const row = await storedVersion(tx, cls, id);
+      if (
+        row === undefined ||
+        row.ended ||
+        !stillHeld(row, before) ||
+        row.instance_id !== ctx.peerInstanceId
+      ) {
+        return false;
+      }
+      await tx`SELECT pg_advisory_xact_lock(hashtext(${row.source_id}))`;
+      await tombstoneRecords(tx, cls, [id], "withdrawn", {
+        registry: ctx.registry,
+        now: ctx.now,
+        byOwner: true,
+        ownerRevision: row.revision,
+      });
+      await leaveCanonicalView(tx, ctx.registry, { class: cls, id }, row.source_id, {
+        instanceId: ctx.localInstanceId,
+        now: ctx.now,
+      });
+      return true;
+    });
+    if (retired) result.retired += 1;
+    else result.unchanged += 1;
+  }
+  return result;
 }
