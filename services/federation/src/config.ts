@@ -32,7 +32,12 @@ export interface FederationSettings {
    * when this process terminates TLS itself.
    */
   clientCertHeader?: string;
-  /** The addresses the client certificate header is taken from; any, when absent. */
+  /**
+   * The reverse proxies in front of the service: the client certificate
+   * header is taken only from them (from any connection when absent), and so
+   * is `X-Forwarded-For`, which says the client address anonymous outbox
+   * reads are metered by (the connection's own address when absent).
+   */
   trustedProxies?: BlockList;
 }
 
@@ -115,12 +120,6 @@ export function resolveFederationSettings(
     );
   }
   const trustedProxies = resolveProxies(env["OPENCONDITIONS_FEDERATION_TRUSTED_PROXIES"]);
-  if (trustedProxies !== undefined && !clientCertHeader) {
-    throw new Error(
-      "OPENCONDITIONS_FEDERATION_TRUSTED_PROXIES names the proxies of " +
-        "OPENCONDITIONS_FEDERATION_CLIENT_CERT_HEADER, which is not set",
-    );
-  }
   return {
     enabled: true,
     actor,

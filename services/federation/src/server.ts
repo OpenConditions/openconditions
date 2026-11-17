@@ -11,9 +11,11 @@
 
 import {
   ACTOR_WELL_KNOWN_PATH,
+  anonymousRateKey,
   buildActorDocument,
   createInMemoryRateLimiter,
   FEDERATION_JSON,
+  FEDERATION_REASON_HEADER,
   InMemoryNonceStore,
   type InstanceKey,
   loadActiveKeys,
@@ -25,6 +27,7 @@ import {
   PEERS_WELL_KNOWN_PATH,
   type RateLimiter,
   readJournalLag,
+  recordPeerFailure,
   signingKeyOf,
   signMessage,
 } from "@openconditions/federation";
@@ -44,7 +47,13 @@ import { resolveFederationSettings } from "./config.js";
 import { registerInboxRoutes } from "./inbox-routes.js";
 import { OutboxQueryError, parseOutboxQuery } from "./outbox-query.js";
 import { PeerBook } from "./peer-book.js";
-import { headerStrings, optionalPeer, proxyMtlsContext, respondIfBlocked } from "./peer-request.js";
+import {
+  headerStrings,
+  isTrustedProxy,
+  optionalPeer,
+  proxyMtlsContext,
+  respondIfBlocked,
+} from "./peer-request.js";
 import { registerSubscriptionRoutes } from "./subscription-routes.js";
 
 /** The pull-side peer exchange path the Actor document advertises as `outbox`. */
@@ -102,7 +111,17 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
       ? proxyMtlsContext(settings.clientCertHeader, settings.trustedProxies)
       : undefined);
 
-  const app = Fastify({ logger: options.logger ?? true });
+  // `req.ip` believes X-Forwarded-For only from the configured proxies. It
+  // says nothing but where an anonymous outbox read is metered: the mutual-TLS
+  // check reads the connection's own address, and signed target URIs come
+  // from the configured base URL.
+  const proxies = settings.trustedProxies;
+  const app = Fastify({
+    logger: options.logger ?? true,
+    ...(proxies !== undefined
+      ? { trustProxy: (address: string) => isTrustedProxy(proxies, address) }
+      : {}),
+  });
 
   app.get("/status", async (_req, reply) => {
     return reply.send({
@@ -176,11 +195,13 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
   // optionally-authenticated outbox, subscriptions, SSE stream, inbox, backfill).
   const nonceStore = new InMemoryNonceStore();
 
-  // One rate limiter shared by inbox + backfill so a peer's sustained-overrun
-  // tier downgrade is consistent across both transport surfaces. In-memory =
-  // single-instance; a multi-replica deployment would back it with Redis.
+  // One rate limiter shared by inbox, backfill and outbox so a peer's
+  // sustained-overrun tier downgrade is consistent across the transport
+  // surfaces. In-memory = single-instance; a multi-replica deployment would
+  // back it with Redis.
   const rateLimiter = options.rateLimiter ?? createInMemoryRateLimiter();
 
+  let warnedUntrustedProxy = false;
   app.get(OUTBOX_PATH, async (req, reply) => {
     // The public outbox is OPTIONALLY authenticated: an unsigned request is the
     // public Tier-0 snapshot (last 24h); a signed pinned peer gets its own tier's
@@ -203,6 +224,42 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
       return reply;
     }
     const tier: 0 | 1 | 2 = auth.peerId !== null ? (peers.find(auth.peerId)?.trustTier ?? 0) : 0;
+
+    // Behind a reverse proxy that is not named as trusted, every anonymous
+    // reader arrives from the proxy's address and shares one budget, which a
+    // single reader can use up. Said once, since the operator has to fix it.
+    if (
+      auth.peerId === null &&
+      proxies === undefined &&
+      !warnedUntrustedProxy &&
+      req.headers["x-forwarded-for"] !== undefined
+    ) {
+      warnedUntrustedProxy = true;
+      req.log.warn(
+        "anonymous outbox reads arrive through a proxy that " +
+          "OPENCONDITIONS_FEDERATION_TRUSTED_PROXIES does not name: they are metered as one " +
+          "client address and share one rate budget",
+      );
+    }
+
+    // Metered before any journal read, the 304 included. A peer's outbox and
+    // backfill reads are the two halves of one journal read and draw on one
+    // budget; an anonymous reader gets the tier-0 budget per client address.
+    const rate = rateLimiter.check(
+      auth.peerId ?? anonymousRateKey(req.ip),
+      "backfill",
+      tier,
+      1,
+      Date.parse(now()),
+    );
+    if (!rate.ok) {
+      if (auth.peerId !== null) await recordPeerFailure(sql, auth.peerId, "rate", now());
+      return reply
+        .status(429)
+        .header("Retry-After", String(rate.retryAfterSec ?? 60))
+        .header(FEDERATION_REASON_HEADER, "rate-limited")
+        .send({ error: "outbox rate limit exceeded", retryAfterSec: rate.retryAfterSec });
+    }
 
     let parsed: ReturnType<typeof parseOutboxQuery>;
     try {

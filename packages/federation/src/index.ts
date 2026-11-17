@@ -90,6 +90,7 @@ export {
   rawEd25519FromMultibase,
 } from "./multibase.js";
 export type {
+  CursorStanding,
   OutboxCursor,
   OutboxOperation,
   OutboxPage,
@@ -102,6 +103,7 @@ export {
   OUTBOX_DEFAULT_LIMIT,
   OUTBOX_MAX_LIMIT,
   outboxEtag,
+  readCursorStanding,
   readOutbox,
 } from "./outbox.js";
 export type { PruneOutboxOptions, PruneOutboxResult } from "./outbox-retention.js";
@@ -163,8 +165,15 @@ export type {
   WebhookCycleResult,
 } from "./push.js";
 export { deliverWebhook, PUSH_FAILURE_THRESHOLD, runWebhookDeliveryCycle } from "./push.js";
-export type { PeerRatePolicy, RateCheckResult, RateLimiter, RateLimiterOptions } from "./rate.js";
+export type {
+  InMemoryRateLimiter,
+  PeerRatePolicy,
+  RateCheckResult,
+  RateLimiter,
+  RateLimiterOptions,
+} from "./rate.js";
 export {
+  anonymousRateKey,
   createInMemoryRateLimiter,
   RATE_DOWNGRADE_COOLDOWN_SEC,
   RATE_DOWNGRADE_WINDOWS,

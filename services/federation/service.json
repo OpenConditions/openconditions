@@ -118,7 +118,7 @@
       "OPENCONDITIONS_FEDERATION_TRUSTED_PROXIES": {
         "type": "string",
         "title": "Trusted proxies",
-        "description": "With a client certificate header: the comma-separated addresses or subnets (10.0.0.2, 172.18.0.0/16) the header is taken from. Empty: from any connection, so the proxy must be the only way to the service.",
+        "description": "The comma-separated addresses or subnets (10.0.0.2, 172.18.0.0/16) of the reverse proxies in front of the service. The client certificate header is taken only from them, and so is X-Forwarded-For, the client address anonymous outbox reads are rate limited by. Empty: the client certificate header from any connection, so the proxy must be the only way to the service, and every anonymous reader behind a proxy metered as the proxy's address.",
         "default": "",
         "x-openmapx-secret": false
       },

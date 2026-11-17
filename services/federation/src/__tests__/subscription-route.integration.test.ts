@@ -697,6 +697,130 @@ describe("GET /peer/stream — authenticated SSE THROUGH the subscription model"
   }, 30_000);
 });
 
+describe("GET /peer/stream — resuming from a cursor", () => {
+  /** Opens the stream at `path` as peer A and collects its events for `ms`. */
+  async function streamOf(
+    port: number,
+    path: string,
+    headers: Record<string, string> = {},
+    ms = 2_500,
+  ): Promise<{ status: number; events: SseEvent[] }> {
+    const req = await signed(peerA, "GET", path);
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, {
+      headers: { ...req.headers, ...headers },
+    });
+    if (res.status !== 200) return { status: res.status, events: [] };
+    const reader = res.body!.getReader();
+    const events = await readEvents(reader, Number.POSITIVE_INFINITY, ms);
+    await reader.cancel();
+    return { status: res.status, events };
+  }
+
+  /** The wire cursor of a situation's newest journal entry. */
+  async function cursorOf(local: string): Promise<string> {
+    const [row] = await sql<{ txid: string; seq: string }[]>`
+      SELECT txid::text AS txid, seq::text AS seq FROM conditions.federation_outbox
+      WHERE record_id = ${situationId(local)} ORDER BY txid DESC, seq DESC LIMIT 1`;
+    return `${row!.txid}.${row!.seq}`;
+  }
+
+  const records = (events: SseEvent[]) =>
+    events
+      .filter((e) => e.event === "record")
+      .map((e) => (JSON.parse(e.data) as { entry: RecordOutboxEntry }).entry.recordId);
+
+  async function setUp(app: Awaited<ReturnType<typeof build>>, lon: number) {
+    const id = await createSub(app, peerA, {
+      deliveryMode: "sse",
+      priorityOnly: false,
+      filter: { bbox: [lon - 0.5, 51, lon + 0.5, 53] },
+    });
+    const first = `resume-${lon}-first`;
+    const second = `resume-${lon}-second`;
+    await insertSituation(first, { lon });
+    await insertSituation(second, { lon: lon + 0.1 });
+    return { path: `/peer/stream?subscriptionId=${id}`, first, second };
+  }
+
+  it("opens with the journal's epoch and where it starts, then streams after the cursor named", async () => {
+    const app = await build({ sql, env: enabledEnv, logger: false });
+    await app.listen({ port: 0, host: "127.0.0.1" });
+    try {
+      const { port } = app.server.address() as { port: number };
+      const { path, first, second } = await setUp(app, 33.5);
+      const [{ epoch }] = await sql<{ epoch: string }[]>`
+        SELECT epoch::text AS epoch FROM conditions.federation_journal`;
+
+      const whole = await streamOf(port, path);
+      expect(whole.events[0]).toEqual({
+        event: "journal",
+        data: JSON.stringify({ epoch, cursor: "0.0" }),
+      });
+      expect(records(whole.events)).toEqual([situationId(first), situationId(second)]);
+
+      const cursor = await cursorOf(first);
+      const resumed = await streamOf(port, `${path}&after=${cursor}`);
+      expect(JSON.parse(resumed.events[0]!.data)).toEqual({ epoch, cursor });
+      expect(records(resumed.events)).toEqual([situationId(second)]);
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+
+  it("resumes after Last-Event-ID, and after `after` when both are sent", async () => {
+    const app = await build({ sql, env: enabledEnv, logger: false });
+    await app.listen({ port: 0, host: "127.0.0.1" });
+    try {
+      const { port } = app.server.address() as { port: number };
+      const { path, first, second } = await setUp(app, 34.5);
+      const cursor = await cursorOf(first);
+
+      const byHeader = await streamOf(port, path, { "last-event-id": cursor });
+      expect(JSON.parse(byHeader.events[0]!.data).cursor).toBe(cursor);
+      expect(records(byHeader.events)).toEqual([situationId(second)]);
+
+      const both = await streamOf(port, `${path}&after=${cursor}`, { "last-event-id": "0.0" });
+      expect(records(both.events)).toEqual([situationId(second)]);
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+
+  it("answers 400 for a malformed cursor in either place", async () => {
+    const app = await build({ sql, env: enabledEnv, logger: false });
+    await app.listen({ port: 0, host: "127.0.0.1" });
+    try {
+      const { port } = app.server.address() as { port: number };
+      const { path } = await setUp(app, 35.5);
+      expect((await streamOf(port, `${path}&after=abc`)).status).toBe(400);
+      expect((await streamOf(port, `${path}&after=`)).status).toBe(400);
+      expect((await streamOf(port, path, { "last-event-id": "1.x" })).status).toBe(400);
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+
+  it("says cursorAhead for a cursor the journal has not reached, and streams from the start", async () => {
+    const app = await build({ sql, env: enabledEnv, logger: false });
+    await app.listen({ port: 0, host: "127.0.0.1" });
+    try {
+      const { port } = app.server.address() as { port: number };
+      const { path, first, second } = await setUp(app, 36.5);
+      const ahead = await streamOf(port, `${path}&after=999999999999.1`);
+      expect(ahead.events[0]!.event).toBe("journal");
+      expect(JSON.parse(ahead.events[0]!.data)).toMatchObject({
+        cursor: "0.0",
+        cursorAhead: true,
+      });
+      expect(records(ahead.events)).toEqual(
+        expect.arrayContaining([situationId(first), situationId(second)]),
+      );
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+});
+
 describe("PATCH re-enables a push_disabled subscription (recovery)", () => {
   it("resets status to active and push_failures to 0", async () => {
     const app = await build({ sql, env: enabledEnv, logger: false });

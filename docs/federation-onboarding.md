@@ -296,15 +296,16 @@ these not being right:
 
 Optional:
 
-| Variable                                       | Meaning                                                                                                                                                                                                            |
-| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `OPENCONDITIONS_FEDERATION_REGISTRY_URL`       | A federation registry (TUF metadata under `/metadata`, entries under `/targets`) whose verified instances join the peers, daily (§5). Needs `…_REGISTRY_ROOT`.                                                     |
-| `OPENCONDITIONS_FEDERATION_REGISTRY_ROOT`      | The registry's trusted `root.json`, obtained out of band (inline JSON or a path).                                                                                                                                  |
-| `OPENCONDITIONS_FEDERATION_REGISTRY_CACHE`     | Where verified registry metadata is kept between syncs, for rollback protection (default `./data/registry`; `/data/registry` on the service's volume under OpenMapX).                                              |
-| `OPENCONDITIONS_FEDERATION_CLIENT_CERT_HEADER` | For peers with `mtlsRequired` behind a TLS-terminating proxy: the header the proxy puts a verified client certificate's SHA-256 fingerprint in (see _Mutual TLS_ below).                                           |
-| `OPENCONDITIONS_EGRESS_ALLOWED_HOSTS`          | Comma-separated host names the service may reach although they resolve to private addresses: a peer, archive or inbox on the same private network. Every other private, loopback or link-local address is refused. |
-| `OPENCONDITIONS_FETCH_TIMEOUT_MS`              | How long a request to a peer may take (default 60000). A peer's archive files have an hour each.                                                                                                                   |
-| `OPENCONDITIONS_MAX_REDIRECTS`                 | How many redirects a request to a peer follows (default 5); each hop is checked as the first.                                                                                                                      |
+| Variable                                       | Meaning                                                                                                                                                                                                                      |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `OPENCONDITIONS_FEDERATION_REGISTRY_URL`       | A federation registry (TUF metadata under `/metadata`, entries under `/targets`) whose verified instances join the peers, daily (§5). Needs `…_REGISTRY_ROOT`.                                                               |
+| `OPENCONDITIONS_FEDERATION_REGISTRY_ROOT`      | The registry's trusted `root.json`, obtained out of band (inline JSON or a path).                                                                                                                                            |
+| `OPENCONDITIONS_FEDERATION_REGISTRY_CACHE`     | Where verified registry metadata is kept between syncs, for rollback protection (default `./data/registry`; `/data/registry` on the service's volume under OpenMapX).                                                        |
+| `OPENCONDITIONS_FEDERATION_CLIENT_CERT_HEADER` | For peers with `mtlsRequired` behind a TLS-terminating proxy: the header the proxy puts a verified client certificate's SHA-256 fingerprint in (see _Mutual TLS_ below).                                                     |
+| `OPENCONDITIONS_FEDERATION_TRUSTED_PROXIES`    | Comma-separated addresses or subnets (`10.0.0.2`, `172.18.0.0/16`) of the reverse proxies in front of the service. Only from them are `X-Forwarded-For` and the client certificate header believed (see _Mutual TLS_ below). |
+| `OPENCONDITIONS_EGRESS_ALLOWED_HOSTS`          | Comma-separated host names the service may reach although they resolve to private addresses: a peer, archive or inbox on the same private network. Every other private, loopback or link-local address is refused.           |
+| `OPENCONDITIONS_FETCH_TIMEOUT_MS`              | How long a request to a peer may take (default 60000). A peer's archive files have an hour each.                                                                                                                             |
+| `OPENCONDITIONS_MAX_REDIRECTS`                 | How many redirects a request to a peer follows (default 5); each hop is checked as the first.                                                                                                                                |
 
 A peer record with `subscribe` makes this instance a subscriber of that peer:
 
@@ -451,9 +452,7 @@ maps.example.org {
 and `OPENCONDITIONS_FEDERATION_CLIENT_CERT_HEADER=X-Client-Cert-Sha256`.
 Behind a proxy, every peer with `mtlsRequired` must pin `mtlsFingerprints`
 (the boot fails otherwise), and a header sent twice names no certificate.
-`OPENCONDITIONS_FEDERATION_TRUSTED_PROXIES` (comma-separated addresses or
-subnets, `172.18.0.0/16`) takes the header only from those, so another
-container on the network cannot set it.
+`OPENCONDITIONS_FEDERATION_TRUSTED_PROXIES` (comma-separated addresses or subnets, `172.18.0.0/16`) takes the header only from those, so another container on the network cannot set it. It is not tied to mutual TLS: an unsigned `/peer/outbox` read is rate limited at tier 0's budget per client address (an IPv6 address by its /64 prefix), and the service takes that address from `X-Forwarded-For`, which Caddy's `reverse_proxy` sets, only on a connection from one of these proxies. Without the setting, every anonymous reader behind a proxy is metered as the proxy's one address.
 Fingerprints match however they are written (`AB:CD:…` or `abcd…`). A peer
 without `mtlsRequired` is unaffected; mTLS never replaces the signature.
 

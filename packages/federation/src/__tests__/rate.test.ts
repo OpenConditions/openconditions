@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  anonymousRateKey,
   createInMemoryRateLimiter,
   RATE_DOWNGRADE_COOLDOWN_SEC,
   RATE_DOWNGRADE_WINDOWS,
@@ -163,5 +164,74 @@ describe("createInMemoryRateLimiter", () => {
     const over = limiter.check("greedy", "backfill", 0, 1, 0);
     expect(over.ok).toBe(false);
     expect(over.retryAfterSec).toBeGreaterThan(0);
+  });
+});
+
+describe("forgetting quiet keys", () => {
+  it("forgets a key whose window ended, once per window", () => {
+    const limiter = createInMemoryRateLimiter();
+    limiter.check("anonymous:192.0.2.1", "backfill", 0, 1, 0);
+    limiter.check("anonymous:192.0.2.2", "backfill", 0, 1, 10_000);
+    expect(limiter.trackedEntries()).toBe(2);
+    // The sweep of this window already ran at 0: nothing is forgotten yet.
+    limiter.check("anonymous:192.0.2.3", "backfill", 0, 1, MIN - 1);
+    expect(limiter.trackedEntries()).toBe(3);
+    // The next sweep forgets the window that ended; the others still run.
+    limiter.check("anonymous:192.0.2.3", "backfill", 0, 1, MIN);
+    expect(limiter.trackedEntries()).toBe(2);
+    limiter.check("anonymous:192.0.2.4", "backfill", 0, 1, 3 * MIN);
+    expect(limiter.trackedEntries()).toBe(1);
+  });
+
+  it("keeps a downgrade while it holds, and forgets it once it lapsed", () => {
+    const limiter = createInMemoryRateLimiter();
+    const cap = ratePolicyForTier(1).inboxPerMin;
+    let now = 0;
+    for (let w = 0; w < RATE_DOWNGRADE_WINDOWS; w++) {
+      burstOverCap(limiter, "noisy", 1, cap, now);
+      now += MIN;
+    }
+    // Another key's traffic sweeps after the noisy peer's windows ended.
+    now += 2 * MIN;
+    limiter.check("quiet", "inbox", 1, 1, now);
+    expect(limiter.check("noisy", "backfill", 1, 1, now).downgraded).toBe(true);
+
+    now = (RATE_DOWNGRADE_WINDOWS - 1) * MIN + RATE_DOWNGRADE_COOLDOWN_SEC * 1000 + 2 * MIN;
+    limiter.check("quiet", "inbox", 1, 1, now);
+    expect(limiter.trackedEntries()).toBe(1);
+  });
+
+  it("keeps a streak that can still go on", () => {
+    const limiter = createInMemoryRateLimiter({ downgradeWindows: 2 });
+    const cap = ratePolicyForTier(1).inboxPerMin;
+    burstOverCap(limiter, "noisy", 1, cap, 0);
+    // A sweep in the next window keeps the streak, so a second overrun downgrades.
+    limiter.check("quiet", "inbox", 1, 1, MIN);
+    burstOverCap(limiter, "noisy", 1, cap, MIN + 1);
+    expect(limiter.check("noisy", "backfill", 1, 1, MIN + 2).downgraded).toBe(true);
+  });
+});
+
+describe("anonymousRateKey", () => {
+  it("keys an IPv4 address as itself", () => {
+    expect(anonymousRateKey("192.0.2.7")).toBe("\u0000anonymous:192.0.2.7");
+  });
+
+  it("keys an IPv6 address by its /64 prefix", () => {
+    expect(anonymousRateKey("2001:db8:1:2:aaaa::1")).toBe("\u0000anonymous:2001:db8:1:2::/64");
+    expect(anonymousRateKey("2001:DB8:1:2:ffff:ffff:ffff:ffff")).toBe(
+      "\u0000anonymous:2001:db8:1:2::/64",
+    );
+    expect(anonymousRateKey("2001:db8::1")).toBe("\u0000anonymous:2001:db8:0:0::/64");
+    expect(anonymousRateKey("fe80::1%eth0")).toBe("\u0000anonymous:fe80:0:0:0::/64");
+  });
+
+  it("keys an IPv4-mapped IPv6 address as the IPv4 address", () => {
+    expect(anonymousRateKey("::ffff:192.0.2.7")).toBe("\u0000anonymous:192.0.2.7");
+    expect(anonymousRateKey("::ffff:c000:207")).toBe("\u0000anonymous:192.0.2.7");
+  });
+
+  it("gives everything that is not an address one key", () => {
+    expect(anonymousRateKey("not an address")).toBe("\u0000anonymous:unknown");
   });
 });

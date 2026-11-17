@@ -5,8 +5,10 @@ import type {
   OutboxPage as WireOutboxPage,
 } from "@openconditions/federation";
 import {
+  createInMemoryRateLimiter,
   encodeOutboxCursor,
   generateInstanceKey,
+  getPeerHealth,
   InMemoryNonceStore,
   loadActiveKeys,
   signMessage,
@@ -636,5 +638,101 @@ describe("GET /peer/outbox — the tier-bounded public snapshot", () => {
     } finally {
       await app.close();
     }
+  }, 30_000);
+});
+
+describe("GET /peer/outbox — rate limits", () => {
+  /** Two journal reads a minute at tier 0, three above it. */
+  const tight = () =>
+    createInMemoryRateLimiter({
+      policyForTier: (tier) => ({ inboxPerMin: 1000, backfillPerMin: tier === 0 ? 2 : 3 }),
+    });
+
+  const anonymous = (
+    app: Awaited<ReturnType<typeof build>>,
+    remoteAddress: string,
+    headers: Record<string, string> = {},
+  ) => app.inject({ method: "GET", url: "/peer/outbox", remoteAddress, headers });
+
+  it("meters an anonymous reader at tier 0 per client address, the 304 included", async () => {
+    const app = await build({
+      sql,
+      env: ENABLED_ENV,
+      logger: false,
+      now: () => NOW,
+      rateLimiter: tight(),
+    });
+    try {
+      const first = await anonymous(app, "192.0.2.1");
+      expect(first.statusCode).toBe(200);
+      const etag = String(first.headers["etag"]);
+      expect((await anonymous(app, "192.0.2.1", { "if-none-match": etag })).statusCode).toBe(304);
+
+      const over = await anonymous(app, "192.0.2.1", { "if-none-match": etag });
+      expect(over.statusCode).toBe(429);
+      expect(Number(over.headers["retry-after"])).toBeGreaterThan(0);
+      expect(over.headers["federation-reason"]).toBe("rate-limited");
+      expect(over.json()).toMatchObject({ error: expect.any(String), retryAfterSec: 60 });
+      // An address in the same IPv6 /64 is the same reader; another address is not.
+      expect((await anonymous(app, "192.0.2.2")).statusCode).toBe(200);
+      expect((await anonymous(app, "2001:db8:1:2::1")).statusCode).toBe(200);
+      expect((await anonymous(app, "2001:db8:1:2::2")).statusCode).toBe(200);
+      expect((await anonymous(app, "2001:db8:1:2::3")).statusCode).toBe(429);
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+
+  it("draws a signed peer's outbox and backfill reads from one budget, at its pinned tier", async () => {
+    const peer = await generateInstanceKey(new Date().toISOString());
+    const app = await build({
+      sql,
+      env: peersEnv(peer, 1),
+      logger: false,
+      now: () => NOW,
+      rateLimiter: tight(),
+    });
+    try {
+      const read = async (path: string) =>
+        app.inject({ method: "GET", url: path, headers: await signedGet(peer, path) });
+      expect((await read("/peer/outbox")).statusCode).toBe(200);
+      expect((await read("/peer/backfill")).statusCode).toBe(200);
+      expect((await read("/peer/outbox?limit=5")).statusCode).toBe(200);
+      const before = (await getPeerHealth(sql, "peer-snap"))?.rateViolations ?? 0;
+      const over = await read("/peer/outbox?limit=6");
+      expect(over.statusCode).toBe(429);
+      expect(over.headers["federation-reason"]).toBe("rate-limited");
+      expect((await getPeerHealth(sql, "peer-snap"))?.rateViolations).toBe(before + 1);
+      expect((await read("/peer/backfill?limit=6")).statusCode).toBe(429);
+      // Anonymous readers from the same address keep their own budget.
+      expect((await app.inject({ method: "GET", url: "/peer/outbox" })).statusCode).toBe(200);
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+
+  it("takes the client address from X-Forwarded-For only on a connection from a trusted proxy", async () => {
+    const readers = async (proxies: string | undefined) => {
+      const env =
+        proxies === undefined
+          ? ENABLED_ENV
+          : { ...ENABLED_ENV, OPENCONDITIONS_FEDERATION_TRUSTED_PROXIES: proxies };
+      const app = await build({ sql, env, logger: false, now: () => NOW, rateLimiter: tight() });
+      try {
+        const statuses: number[] = [];
+        // Three clients behind the proxy at 127.0.0.1 read once each.
+        for (const client of ["198.51.100.1", "198.51.100.2", "198.51.100.3"]) {
+          const res = await anonymous(app, "127.0.0.1", { "x-forwarded-for": client });
+          statuses.push(res.statusCode);
+        }
+        return statuses;
+      } finally {
+        await app.close();
+      }
+    };
+    expect(await readers("127.0.0.0/8")).toEqual([200, 200, 200]);
+    // Without the setting, or from a proxy not named, all three are the proxy's address.
+    expect(await readers(undefined)).toEqual([200, 200, 429]);
+    expect(await readers("10.0.0.2")).toEqual([200, 200, 429]);
   }, 30_000);
 });

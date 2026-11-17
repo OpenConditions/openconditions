@@ -235,6 +235,31 @@ function rowToEntry(row: JournalRow): OutboxEntry | undefined {
   return record === undefined ? undefined : { ...base, operation: row.operation, record };
 }
 
+/** Where a cursor stands against the journal: its epoch, and whether the cursor is ahead of it. */
+export interface CursorStanding {
+  epoch: string;
+  cursorAhead: boolean;
+}
+
+/**
+ * The journal's epoch, and whether `cursor` names a transaction this history
+ * has not reached. A cursor whose txid is at or past the snapshot's xmin is
+ * one this journal never handed out (a page's high-water mark always lies
+ * below the xmin of its time, and xmin never goes back within one history).
+ */
+export async function readCursorStanding(
+  sql: postgres.Sql,
+  cursor: OutboxCursor | string,
+): Promise<CursorStanding> {
+  const { txid } = normalizeCursor(cursor);
+  const [journal] = await sql<{ epoch: string; ahead: boolean }[]>`
+    SELECT epoch::text AS epoch,
+           ${txid}::xid8 >= pg_snapshot_xmin(pg_current_snapshot()) AS ahead
+      FROM conditions.federation_journal`;
+  if (journal === undefined) throw new Error("conditions.federation_journal has no row");
+  return { epoch: journal.epoch, cursorAhead: journal.ahead };
+}
+
 /**
  * Reads one outbox page: entries strictly after the composite `(txid, seq)`
  * cursor, in `(txid, seq)` order, `limit` rows scanned at most, with the
@@ -256,10 +281,8 @@ function rowToEntry(row: JournalRow): OutboxEntry | undefined {
  * the request `after` when nothing stable is new. Re-reading the same cursor is
  * idempotent — the journal is append-only.
  *
- * Every page carries the journal's epoch. A cursor whose txid is at or past
- * the snapshot's xmin is one this journal never handed out (a page's
- * high-water mark always lies below the xmin of its time, and xmin never goes
- * back within one history), so the page says `cursorAhead`.
+ * Every page carries the journal's epoch, and says `cursorAhead` for a cursor
+ * this journal never handed out ({@link readCursorStanding}).
  */
 export async function readOutbox(sql: postgres.Sql, q: OutboxQuery): Promise<OutboxPage> {
   const after = normalizeCursor(q.after);
@@ -267,11 +290,7 @@ export async function readOutbox(sql: postgres.Sql, q: OutboxQuery): Promise<Out
   const partOf = q.partOf ?? "/peer/outbox";
   const now = q.now ?? new Date().toISOString();
 
-  const [journal] = await sql<{ epoch: string; ahead: boolean }[]>`
-    SELECT epoch::text AS epoch,
-           ${after.txid}::xid8 >= pg_snapshot_xmin(pg_current_snapshot()) AS ahead
-      FROM conditions.federation_journal`;
-  if (journal === undefined) throw new Error("conditions.federation_journal has no row");
+  const journal = await readCursorStanding(sql, after);
 
   // The push-channel restriction, applied AT SQL so the frontier is over the
   // priority subsequence (a delete always stays in the channel).
@@ -311,7 +330,7 @@ export async function readOutbox(sql: postgres.Sql, q: OutboxQuery): Promise<Out
     orderedItems,
   };
   if (q.priorityOnly) page.priorityRestricted = true;
-  if (journal.ahead) page.cursorAhead = true;
+  if (journal.cursorAhead) page.cursorAhead = true;
   if (rows.length === limit) {
     const params = q.nextParams ? `&${q.nextParams}` : "";
     page.next = `${partOf}?after=${highWaterMark}${params}`;

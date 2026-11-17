@@ -2,7 +2,8 @@
  * Per-peer, per-kind federation rate limiting — a TRANSPORT control.
  *
  * A pinned peer gets a tier-aware budget for how many events it may push to the
- * inbox and how many backfill reads it may make per minute. Overrun is refused
+ * inbox and how many journal reads (backfill and outbox, under the "backfill"
+ * kind) it may make per minute. Overrun is refused
  * with a 429 + Retry-After; SUSTAINED overrun (an over-limit rejection in
  * {@link RATE_DOWNGRADE_WINDOWS} consecutive windows) triggers a TEMPORARY tier
  * downgrade: the peer's effective tier for rate/window purposes drops by one for
@@ -18,7 +19,12 @@
  * The limiter is in-memory and per-instance — correct for a single replica. A
  * multi-replica deployment would back the windows with Redis (INCR + EXPIRE per
  * peer/kind/window); the interface is unchanged.
+ *
+ * Besides pinned peers it meters anonymous outbox readers, one key per client
+ * address ({@link anonymousRateKey}), so the keys are not a short fixed list:
+ * the limiter forgets a window once it ended and a downgrade once it lapsed.
  */
+import { isIPv4, isIPv6 } from "node:net";
 import { OUTBOX_MAX_LIMIT } from "./outbox.js";
 
 /** A peer's per-minute transport budget, derived from its trust tier. */
@@ -102,6 +108,12 @@ interface DowngradeState {
   effectiveTierUntil: number;
 }
 
+/** The in-memory limiter, which can also say how many entries it holds. */
+export interface InMemoryRateLimiter extends RateLimiter {
+  /** The window and downgrade entries held now, after the last sweep. */
+  trackedEntries(): number;
+}
+
 export interface RateLimiterOptions {
   policyForTier?: (tier: 0 | 1 | 2) => PeerRatePolicy;
   downgradeWindows?: number;
@@ -115,7 +127,7 @@ export interface RateLimiterOptions {
  * sustained-overrun tier downgrade. Single-instance; swap the window store for
  * Redis to scale across replicas.
  */
-export function createInMemoryRateLimiter(options: RateLimiterOptions = {}): RateLimiter {
+export function createInMemoryRateLimiter(options: RateLimiterOptions = {}): InMemoryRateLimiter {
   const policyForTier = options.policyForTier ?? ratePolicyForTier;
   const downgradeWindows = options.downgradeWindows ?? RATE_DOWNGRADE_WINDOWS;
   const cooldownMs = (options.downgradeCooldownSec ?? RATE_DOWNGRADE_COOLDOWN_SEC) * 1000;
@@ -123,6 +135,25 @@ export function createInMemoryRateLimiter(options: RateLimiterOptions = {}): Rat
 
   const windows = new Map<string, WindowState>();
   const downgrades = new Map<string, DowngradeState>();
+  let lastSweep: number | undefined;
+
+  // Forgets the windows that ended and the downgrades that lapsed, at most
+  // once per window. A downgrade entry is kept while it holds and while its
+  // streak can still go on (an overrun in this window or the one before), so
+  // forgetting it never shortens a downgrade or restarts a streak.
+  function sweep(now: number): void {
+    if (lastSweep !== undefined && now - lastSweep < RATE_WINDOW_MS) return;
+    lastSweep = now;
+    for (const [key, state] of windows) {
+      if (now - state.windowStart >= RATE_WINDOW_MS) windows.delete(key);
+    }
+    const windowIndex = Math.floor(now / RATE_WINDOW_MS);
+    for (const [peerId, state] of downgrades) {
+      if (now >= state.effectiveTierUntil && state.lastOverWindow < windowIndex - 1) {
+        downgrades.delete(peerId);
+      }
+    }
+  }
 
   function effectiveTier(peerId: string, registeredTier: 0 | 1 | 2, now: number): 0 | 1 | 2 {
     const state = downgrades.get(peerId);
@@ -159,7 +190,9 @@ export function createInMemoryRateLimiter(options: RateLimiterOptions = {}): Rat
   }
 
   return {
+    trackedEntries: () => windows.size + downgrades.size,
     check(peerId, kind, registeredTier, count, now) {
+      sweep(now);
       const tier = effectiveTier(peerId, registeredTier, now);
       const policy = policyForTier(tier);
       const cap = kind === "inbox" ? policy.inboxPerMin : policy.backfillPerMin;
@@ -196,4 +229,56 @@ export function createInMemoryRateLimiter(options: RateLimiterOptions = {}): Rat
       return { ok: true, effectiveTier: tierAfter, downgraded: tierAfter < registeredTier };
     },
   };
+}
+
+/** The longest text an IPv6 address with a zone can be; anything longer is not one. */
+const MAX_ADDRESS_LENGTH = 100;
+
+/** The eight 16-bit groups of an IPv6 address, or undefined when it is not one. */
+function ipv6Groups(address: string): number[] | undefined {
+  if (address.length > MAX_ADDRESS_LENGTH) return undefined;
+  const zone = address.indexOf("%");
+  const plain = zone === -1 ? address : address.slice(0, zone);
+  if (!isIPv6(plain)) return undefined;
+  let text = plain.toLowerCase();
+  // A dotted IPv4 tail (`::ffff:192.0.2.1`) stands for the last two groups.
+  if (text.includes(".")) {
+    const cut = text.lastIndexOf(":") + 1;
+    const [a = 0, b = 0, c = 0, d = 0] = text.slice(cut).split(".").map(Number);
+    text = `${text.slice(0, cut)}${((a << 8) | b).toString(16)}:${((c << 8) | d).toString(16)}`;
+  }
+  const [head = "", rest] = text.split("::");
+  const front = head === "" ? [] : head.split(":");
+  const back = rest === undefined || rest === "" ? [] : rest.split(":");
+  const zeros = rest === undefined ? [] : Array<string>(8 - front.length - back.length).fill("0");
+  return [...front, ...zeros, ...back].map((group) => Number.parseInt(group, 16));
+}
+
+/**
+ * What every anonymous reader's key starts with. The NUL keeps the keys apart
+ * from the instance ids pinned peers are metered under, whatever a peers
+ * configuration names an instance.
+ */
+const ANONYMOUS = "\u0000anonymous:";
+
+/**
+ * The rate-limiter key of an anonymous reader at `address`. An IPv4 address
+ * counts as itself, an IPv4-mapped IPv6 address as the IPv4 address it maps,
+ * and any other IPv6 address as its /64 prefix: one host is usually handed a
+ * whole /64, and would otherwise read under a fresh key from every address in
+ * it. Anything that is not an address shares one key, so a proxy that
+ * forwards arbitrary text cannot mint a budget per string.
+ */
+export function anonymousRateKey(address: string): string {
+  if (isIPv4(address)) return `${ANONYMOUS}${address}`;
+  const groups = ipv6Groups(address);
+  if (groups === undefined) return `${ANONYMOUS}unknown`;
+  if (groups.slice(0, 5).every((g) => g === 0) && groups[5] === 0xffff) {
+    const [hi = 0, lo = 0] = groups.slice(6);
+    return `${ANONYMOUS}${hi >> 8}.${hi & 0xff}.${lo >> 8}.${lo & 0xff}`;
+  }
+  return `${ANONYMOUS}${groups
+    .slice(0, 4)
+    .map((g) => g.toString(16))
+    .join(":")}::/64`;
 }

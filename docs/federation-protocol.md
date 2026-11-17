@@ -79,13 +79,13 @@ Trust between instances is a bilateral pin: each operator configures the other's
 
 The tier is the receiving operator's, from its pin; nothing a peer sends changes it. It decides how far back the journal is served live and the peer's rate budget:
 
-| Tier | Meaning    | Journal served live                                     | Inbox entries per minute | Backfill requests per minute |
-| ---- | ---------- | ------------------------------------------------------- | ------------------------ | ---------------------------- |
-| 0    | public     | the last 24 hours                                       | 100                      | 100                          |
-| 1    | peered     | the last 30 days                                        | 1000                     | 300                          |
-| 2    | governance | at least 30 days (the reference service serves 30 days) | 2000                     | 600                          |
+| Tier | Meaning    | Journal served live                                     | Inbox entries per minute | Journal reads per minute |
+| ---- | ---------- | ------------------------------------------------------- | ------------------------ | ------------------------ |
+| 0    | public     | the last 24 hours                                       | 100                      | 100                      |
+| 1    | peered     | the last 30 days                                        | 1000                     | 300                      |
+| 2    | governance | at least 30 days (the reference service serves 30 days) | 2000                     | 600                      |
 
-An unsigned request to `/peer/outbox` is served as tier 0. Instances can also be discovered through a TUF-signed registry, whose entries become pins; see the onboarding guide, §2 and §5.
+Journal reads are requests to `/peer/outbox` and `/peer/backfill` together. An unsigned request to `/peer/outbox` is served, and rate limited, as tier 0 (§9). Instances can also be discovered through a TUF-signed registry, whose entries become pins; see the onboarding guide, §2 and §5.
 
 ## 4. Message signing
 
@@ -186,7 +186,7 @@ A subscriber MUST keep the epoch with its cursor and:
 - treat `cursorAhead` on a request from `"0.0"` as the publisher's error;
 - when its cursor is `"0.0"` and only the epoch differs, store the page's epoch and land the page.
 
-The reference puller follows at most one such restart per pull and none within an hour of the last; another is refused and counted against the peer's health, the cursor left where it is. A page without an `epoch`, or with one that is not a string of 1 to 64 characters, is refused. Pushed pages carry the epoch too, but the push cursor lives at the publisher, so the inbox does not act on it; a push cursor that is ahead of the journal is set back to `"0.0"` by the publisher.
+The reference puller follows at most one such restart per pull and none within an hour of the last; another is refused and counted against the peer's health, the cursor left where it is. A page without an `epoch`, or with one that is not a string of 1 to 64 characters, is refused. Pushed pages carry the epoch too, but the push cursor lives at the publisher, so the inbox does not act on it; a push cursor that is ahead of the journal is set back to `"0.0"` by the publisher. The cursor of the event stream lives at the subscriber, and the stream's first event states the epoch and whether the cursor asked for is ahead (§8): a stream subscriber keeps the epoch with its cursor by the same rules, and on another epoch reconnects without a cursor.
 
 ### Retention
 
@@ -198,8 +198,8 @@ Entries older than 37 days (the widest live window, 30 days, plus 7 days) are de
 
 | Route                | Authentication              | Serves                                                                                           |
 | -------------------- | --------------------------- | ------------------------------------------------------------------------------------------------ |
-| `GET /peer/outbox`   | optional (unsigned: tier 0) | the journal after `after`, within the requester's tier window; ETag and `304`                    |
-| `GET /peer/backfill` | required                    | the same page within the pinned tier's window, counted against the backfill rate budget; no ETag |
+| `GET /peer/outbox`   | optional (unsigned: tier 0) | the journal after `after`, within the requester's tier window; ETag and `304`; rate limited (§9) |
+| `GET /peer/backfill` | required                    | the same page within the pinned tier's window; rate limited (§9); no ETag                        |
 
 The reference puller reads `/peer/backfill` while catching up (from `"0.0"`, or after a page that had a `next`) and `/peer/outbox` once it reached the live tail.
 
@@ -327,7 +327,16 @@ Entries refused inside an authenticated page are listed in `skipped`; they do no
 
 ### The event stream
 
-`GET /peer/stream?subscriptionId=<id>` (signed) streams a subscription's entries as server-sent events (`text/event-stream`): `400` without `subscriptionId`, `404` or `403` as for the subscription routes. Each entry is one event:
+`GET /peer/stream?subscriptionId=<id>[&after=<cursor>]` (signed; `after` is part of the signed target URI) streams a subscription's entries as server-sent events (`text/event-stream`): `400` without `subscriptionId` or with a malformed cursor, `404` or `403` as for the subscription routes.
+
+The subscriber holds the stream's cursor: server-sent events have no acknowledgement, so the publisher cannot know what arrived and stores nothing of how far a stream got. The stream starts after `after`; without it, after the cursor in a `Last-Event-ID` request header (what an EventSource client sends when it reconnects; every entry event's `id` is its cursor); without either, at the subscription's stored cursor. The first event of every stream is
+
+```text
+event: journal
+data: {"epoch":"<epoch>","cursor":"<cursor>"}
+```
+
+with the journal's epoch and the cursor the stream starts after. When the cursor asked for is ahead of the journal (§5), the event adds `"cursorAhead":true`, `cursor` is `"0.0"` and the stream starts from the beginning. Each entry is then one event:
 
 ```text
 event: record
@@ -335,7 +344,7 @@ id: <cursor>
 data: {"cursor":"<cursor>","entry":{…}}
 ```
 
-with `event: liveness` for a liveness entry. The stream starts at the subscription's stored cursor, applies its filter, `priorityOnly` and the peer's tier window, reads every 3 seconds (at most 500 entries at a time), and writes a comment line `: ping <cursor>` every 3 seconds unless the connection is backed up. The cursor the stream reaches is not stored, so a reconnecting stream starts again from the subscription's cursor.
+with `event: liveness` for a liveness entry. The stream applies the subscription's filter, `priorityOnly` and the peer's tier window, reads every 3 seconds (at most 500 entries at a time), and writes a comment line `: ping <cursor>` every 3 seconds unless the connection is backed up.
 
 ## 9. Limits and errors
 
@@ -348,7 +357,7 @@ with `event: liveness` for a liveness entry. The stream starts at the subscripti
 | Epoch length                           | 1 to 64 characters                                   |
 | Subscription lease, renewal            | 30 days, renewed by the subscriber with 15 days left |
 
-Rate limits are per peer and per minute, in fixed one-minute windows, with the budgets of §3: the inbox counts entries, the backfill counts requests. A window that has seen nothing yet admits one page of up to 500 entries whatever the budget, and refuses a larger one. Over the budget a request is answered `429` with `Retry-After` and `Federation-Reason: rate-limited`. A peer over its budget in 3 consecutive windows gets the budget of the tier below for 5 minutes; this changes only its rate, never what was already accepted from it. `/peer/outbox` is not rate limited.
+Rate limits are per peer and per minute, in fixed one-minute windows, with the budgets of §3: the inbox counts entries, journal reads count requests, a signed peer's `/peer/outbox` and `/peer/backfill` requests drawing on one budget. Unsigned `/peer/outbox` requests are metered per client address with tier 0's budget, an IPv6 address by its /64 prefix and an IPv4-mapped IPv6 address as the IPv4 address. The check comes after authentication and before the journal is read, so a `304` counts too. A window that has seen nothing yet admits one page of up to 500 entries whatever the budget, and refuses a larger one. Over the budget a request is answered `429` with `Retry-After`, `Federation-Reason: rate-limited` and a JSON body `{ "error", "retryAfterSec" }`. A peer over its budget in 3 consecutive windows gets the budget of the tier below for 5 minutes; this changes only its rate, never what was already accepted from it.
 
 A peer the operator blocked is answered `403` with `{ "error": "peer is blocked", "reason": "blocked" }` on every authenticated route, and on `/peer/outbox` when the request is signed. A route of a federation that is not enabled answers `404`.
 
