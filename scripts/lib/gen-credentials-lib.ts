@@ -171,13 +171,13 @@ export const SERVICE_FIELDS: Readonly<Record<string, ServiceField>> = {
   DATABASE_URL: {
     title: "Database URL",
     description:
-      "Required. PostgreSQL/PostGIS connection URL of the shared OpenMapX database for a dedicated role, e.g. postgresql://openconditions_ingest:<password>@postgis:5432/openmapx. Never use the PostgreSQL superuser; create the role as OpenMapX's community extensions guide describes. The service refuses to start without it.",
+      "Required. PostgreSQL/PostGIS connection URL of the shared OpenMapX database for a dedicated role, e.g. postgresql://openconditions_ingest:<password>@openmapx-postgis:5432/openmapx. Never use the PostgreSQL superuser; create the role as OpenMapX's community extensions guide describes. The service refuses to start without it.",
     secret: true,
   },
   OPENCONDITIONS_OPERATOR_TOKEN: {
     title: "Operator token",
     description:
-      "Bearer token granting the operator scope (restricted sources, no rate limit); at least 32 characters, or the service fails boot. Must equal OpenMapX's own OPENCONDITIONS_OPERATOR_TOKEN, which app-api and the data-manager send. Unset, OpenMapX reads in the public scope and serves none of the restricted sources, those whose licence or terms keep their records from public redistribution: Tankerkönig (DE), E-Control (AT) and OpenStreetMap fuel stations, OpenStreetMap, BNLS (FR) and Mobidrom Park+Ride (DE) car parks, and OpenStreetMap, Open Charge Map and NAP Slovenija charge points.",
+      "Bearer token granting the operator scope (restricted sources, no rate limit); at least 32 characters, or the service fails boot. Must equal OpenMapX's own OPENCONDITIONS_OPERATOR_TOKEN, which OpenMapX's api and data-manager services send. Unset, OpenMapX reads in the public scope and serves none of the restricted sources, those whose licence or terms keep their records from public redistribution: Tankerkönig (DE), E-Control (AT) and OpenStreetMap fuel stations, OpenStreetMap, BNLS (FR) and Mobidrom Park+Ride (DE) car parks, and OpenStreetMap, Open Charge Map and NAP Slovenija charge points.",
     secret: true,
   },
   SEGMENT_REGIONS: {

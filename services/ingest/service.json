@@ -68,13 +68,13 @@
       "DATABASE_URL": {
         "type": "string",
         "title": "Database URL",
-        "description": "Required. PostgreSQL/PostGIS connection URL of the shared OpenMapX database for a dedicated role, e.g. postgresql://openconditions_ingest:<password>@postgis:5432/openmapx. Never use the PostgreSQL superuser; create the role as OpenMapX's community extensions guide describes. The service refuses to start without it.",
+        "description": "Required. PostgreSQL/PostGIS connection URL of the shared OpenMapX database for a dedicated role, e.g. postgresql://openconditions_ingest:<password>@openmapx-postgis:5432/openmapx. Never use the PostgreSQL superuser; create the role as OpenMapX's community extensions guide describes. The service refuses to start without it.",
         "x-openmapx-secret": true
       },
       "OPENCONDITIONS_OPERATOR_TOKEN": {
         "type": "string",
         "title": "Operator token",
-        "description": "Bearer token granting the operator scope (restricted sources, no rate limit); at least 32 characters, or the service fails boot. Must equal OpenMapX's own OPENCONDITIONS_OPERATOR_TOKEN, which app-api and the data-manager send. Unset, OpenMapX reads in the public scope and serves none of the restricted sources, those whose licence or terms keep their records from public redistribution: Tankerkönig (DE), E-Control (AT) and OpenStreetMap fuel stations, OpenStreetMap, BNLS (FR) and Mobidrom Park+Ride (DE) car parks, and OpenStreetMap, Open Charge Map and NAP Slovenija charge points.",
+        "description": "Bearer token granting the operator scope (restricted sources, no rate limit); at least 32 characters, or the service fails boot. Must equal OpenMapX's own OPENCONDITIONS_OPERATOR_TOKEN, which OpenMapX's api and data-manager services send. Unset, OpenMapX reads in the public scope and serves none of the restricted sources, those whose licence or terms keep their records from public redistribution: Tankerkönig (DE), E-Control (AT) and OpenStreetMap fuel stations, OpenStreetMap, BNLS (FR) and Mobidrom Park+Ride (DE) car parks, and OpenStreetMap, Open Charge Map and NAP Slovenija charge points.",
         "x-openmapx-secret": true
       },
       "SEGMENT_REGIONS": {
@@ -904,7 +904,7 @@
       "OVERPASS_URL": {
         "type": "string",
         "title": "Overpass URL",
-        "description": "Base URL of the Overpass instance (http://overpass:80, https://overpass-api.de) or its full interpreter URL (http://overpass:80/api/interpreter), as OpenMapX's OVERPASS_URL accepts: queries go to the base URL plus /api/interpreter. Defaults to the public instance, which allows about 10,000 requests a day; point it at a self-hosted Overpass for heavier use. A private host also needs OPENCONDITIONS_EGRESS_ALLOWED_HOSTS.",
+        "description": "Base URL of the Overpass instance (http://openmapx-overpass:80, https://overpass-api.de) or its full interpreter URL (http://openmapx-overpass:80/api/interpreter), as OpenMapX's OVERPASS_URL accepts: queries go to the base URL plus /api/interpreter. Defaults to the public instance, which allows about 10,000 requests a day; point it at a self-hosted Overpass for heavier use. A private host also needs OPENCONDITIONS_EGRESS_ALLOWED_HOSTS.",
         "default": "https://overpass-api.de",
         "x-openmapx-secret": false
       },

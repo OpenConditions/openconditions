@@ -673,9 +673,11 @@ OpenStreetMap source as `${@overpass.url}/api/interpreter`.
 
 A setting is a base URL, which carries no query or fragment. Its trailing
 slashes are dropped, and when the template follows it with a path the value
-already ends with, that path is not written twice: `http://overpass:80`,
-`http://overpass:80/` and `http://overpass:80/api/interpreter` all fill
-`${@overpass.url}/api/interpreter` as `http://overpass:80/api/interpreter`.
+already ends with, that path is not written twice:
+`http://openmapx-overpass:80`, `http://openmapx-overpass:80/` and
+`http://openmapx-overpass:80/api/interpreter` all fill
+`${@overpass.url}/api/interpreter` as
+`http://openmapx-overpass:80/api/interpreter`.
 A value with a query or fragment is taken as written, apart from its trailing
 slashes. The road-graph import and the maxspeed lookup build their URL by the
 same rule. A feed's own credentials and the fields of an account group are
