@@ -93,12 +93,12 @@ escapes it.
   stops the service at boot, naming the file and the cause.
   - `DATABASE_URL` is required: the service refuses to start without it. On the
     shared OpenMapX database it connects as the service's own role, for example
-    `postgresql://openconditions_ingest:<password>@postgis:5432/openmapx`.
+    `postgresql://openconditions_ingest:<password>@openmapx-postgis:5432/openmapx`.
     Never use the PostgreSQL superuser: create the role as OpenMapX's community
     extensions guide describes.
   - `OPENCONDITIONS_OPERATOR_TOKEN` must equal OpenMapX's own
-    `OPENCONDITIONS_OPERATOR_TOKEN` (its `.env`), which `app-api` and the
-    data-manager send as their bearer token; the two are set separately.
+    `OPENCONDITIONS_OPERATOR_TOKEN` (its `.env`), which its `api` and
+    `data-manager` services send as their bearer token; the two are set separately.
     Without it, OpenMapX reads in the public scope and serves no Tankerkönig
     (DE), E-Control (AT) or OpenStreetMap station: its fuel layer shows France
     and Spain only, its parking layer no OpenStreetMap, BNLS (FR) or
@@ -111,8 +111,8 @@ escapes it.
     traffic cycles. So set this credential first, then OpenMapX's `.env`, and change
     both together when rotating it. After changing OpenMapX's
     `OPENCONDITIONS_OPERATOR_TOKEN`, run
-    `pnpm openmapx services start app-api data-manager` on the OpenMapX host;
-    the admin panel never recreates `app-api`.
+    `pnpm openmapx services start api data-manager` on the OpenMapX host;
+    the admin panel never recreates `api`.
 - **Settings**: every other knob (`OPENCONDITIONS_INSTANCE_ID`, the crowd
   credit `/sources` states, `OPENCONDITIONS_CROWD_LICENSE` and
   `OPENCONDITIONS_CROWD_SOURCE_URI`, which must equal the contributions
@@ -420,8 +420,9 @@ metadata is generated — run `pnpm gen:credentials` after changing a feed's
 credentials or auth.
 
 `OVERPASS_URL` is a setting, not a credential: the **base URL** of the Overpass
-instance (`http://overpass:80`, default `https://overpass-api.de`) or its full
-interpreter URL (`http://overpass:80/api/interpreter`), the two forms OpenMapX's
+instance (`http://openmapx-overpass:80`, default `https://overpass-api.de`) or
+its full interpreter URL (`http://openmapx-overpass:80/api/interpreter`), the
+two forms OpenMapX's
 own `OVERPASS_URL` accepts; a trailing slash is ignored, and a base URL carries
 no query or fragment. The OpenStreetMap sources, the road-graph import and the
 maxspeed fallback all query `<base>/api/interpreter`. In an OpenMapX deployment

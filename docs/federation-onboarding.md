@@ -519,7 +519,7 @@ services:
     restart: unless-stopped
     environment:
       # The ingest service's own role, never the PostgreSQL superuser.
-      DATABASE_URL: postgresql://openconditions_ingest:${OPENCONDITIONS_INGEST_DB_PASSWORD}@postgis:5432/openmapx
+      DATABASE_URL: postgresql://openconditions_ingest:${OPENCONDITIONS_INGEST_DB_PASSWORD}@openmapx-postgis:5432/openmapx
       OPENCONDITIONS_INSTANCE_ID: maps.example.org
       OPENCONDITIONS_FEDERATION_ENABLED: "true"
       OPENCONDITIONS_FEDERATION_ACTOR: /config/actor.json

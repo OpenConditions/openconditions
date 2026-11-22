@@ -83,9 +83,10 @@ function withoutTrailingSlash(url: string): string {
 /**
  * The base a setting's value names for a template that appends `path` to it:
  * the value without its trailing slashes and, when it already ends with that
- * path, without the path too. So `http://overpass:80/`, `http://overpass:80`
- * and `http://overpass:80/api/interpreter` all name `http://overpass:80`
- * for `/api/interpreter`. The path matches only whole: it starts with `/`. A
+ * path, without the path too. So `http://openmapx-overpass:80/`,
+ * `http://openmapx-overpass:80` and
+ * `http://openmapx-overpass:80/api/interpreter` all name
+ * `http://openmapx-overpass:80` for `/api/interpreter`. The path matches only whole: it starts with `/`. A
  * base URL carries no query or fragment; a value with one never ends with the
  * path, so it is taken as written apart from its trailing slashes.
  */
