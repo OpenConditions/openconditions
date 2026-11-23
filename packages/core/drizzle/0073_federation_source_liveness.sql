@@ -1,2 +1,0 @@
-ALTER TABLE "conditions"."federation_outbox" DROP CONSTRAINT "federation_outbox_operation_enum";--> statement-breakpoint
-ALTER TABLE "conditions"."federation_outbox" ADD CONSTRAINT "federation_outbox_operation_enum" CHECK ("conditions"."federation_outbox"."operation" IN ('create','update','delete','liveness'));

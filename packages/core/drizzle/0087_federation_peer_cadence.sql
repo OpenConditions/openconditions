@@ -1,1 +1,0 @@
-ALTER TABLE "conditions"."federation_source_receipt" ADD COLUMN "cadence_sec" integer;

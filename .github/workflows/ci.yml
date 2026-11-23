@@ -122,6 +122,9 @@ jobs:
       - name: Credential guide up to date
         run: pnpm check-credentials
 
+      - name: Migrations match the schema code
+        run: pnpm check:migrations
+
       - name: Test
         run: pnpm test
         env:

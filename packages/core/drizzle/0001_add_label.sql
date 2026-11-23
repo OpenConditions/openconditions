@@ -1,1 +1,0 @@
-ALTER TABLE "conditions"."observations" ADD COLUMN "label" text;

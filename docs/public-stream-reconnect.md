@@ -257,7 +257,7 @@ server tests alone do not establish client correctness.
 ## Why federation replay is not a shortcut
 
 The audited capture in
-[`0062_federation_capture.sql`](../packages/core/drizzle/0062_federation_capture.sql)
+[`0001_database_objects.sql`](../packages/core/drizzle/0001_database_objects.sql)
 is subscriber-gated and deliberately omits ordinary feed expiry extensions when
 revision/evidence do not change; earlier capture excludes peer/on-demand records.
 Public SSE does not create a federation subscription. Therefore its current

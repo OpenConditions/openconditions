@@ -1,1 +1,0 @@
-CREATE INDEX "idx_report_evidence_actor" ON "conditions"."report_evidence" USING btree ("actor_key_id","occurred_at");

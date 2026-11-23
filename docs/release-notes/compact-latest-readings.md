@@ -1,8 +1,8 @@
 # Compact latest observation storage
 
-Affected versions: Unreleased source builds containing migration 0091 and the compact latest-reading writer. No product version is assigned by this change.
+Affected versions: Unreleased source builds containing the compact latest-reading writer and its decoder. No product version is assigned by this change.
 
-Action: Apply the bundled migration before starting the new writer. Normal service startup does this automatically. Migration 0091 replaces the PostgreSQL reconstruction function without rewriting existing rows or changing server settings. New readings gradually adopt the compact representation; their first conversion replaces the series template once.
+Action: None. Normal service startup applies the database migrations, which install the PostgreSQL reconstruction function, before the writer starts. New readings gradually adopt the compact representation; their first conversion replaces the series template once.
 
 Compatibility: Full API records, measurement times, history, rollups and contributor receipts are preserved. The decoder accepts both representations. When rolling back application images, keep the new decoder: restoring the old decoder would expose incomplete records for compact rows that remain. No full-table rewrite or configuration change is needed.
 

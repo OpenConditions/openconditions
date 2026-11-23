@@ -1,1 +1,0 @@
-ALTER TABLE "conditions"."source_status" ADD COLUMN "raw_hot_evicted_at" timestamp with time zone;

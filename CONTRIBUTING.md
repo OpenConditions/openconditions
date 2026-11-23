@@ -20,7 +20,8 @@ covered by our [Code of Conduct](CODE_OF_CONDUCT.md).
 - **The data model** — record classes and the registry live in
   [`@openconditions/model`](packages/model) and its domain modules (roads:
   [`@openconditions/model-roads`](packages/model-roads)); read helpers and the
-  database schema in [`@openconditions/core`](packages/core).
+  database schema in [`@openconditions/core`](packages/core). Schema changes
+  follow [database migrations](docs/database-migrations.md).
 - **The OpenLR resolver** — the Python map-matcher in
   [`services/openlr-resolver`](services/openlr-resolver).
 - **Bug reports / feature requests** — file an issue with reproduction steps and
@@ -61,6 +62,7 @@ TypeScript / Node:
 pnpm lint        # Biome + the import-boundary gate
 pnpm typecheck   # tsc across the workspace (turbo)
 pnpm check-credentials
+pnpm check:migrations # migrations match the schema code (on a committed tree)
 pnpm check:model
 pnpm check:feed-schemas
 pnpm feeds:lint
@@ -71,7 +73,7 @@ pnpm verify:full # all Node checks above, including the packed consumer
 ```
 
 `verify:full` includes lint/import boundaries, workspace and script types, generated credentials,
-model artifacts, feed schemas, feed lint, the full Node suite and the packed-package consumer. The latter uses the pinned pnpm CLI and may fetch pinned consumer tools/type dependencies from npm; it retains the actual tarball identity and consumer lock in its receipt. See the [OCPI qualification instructions](packages/ocpi/README.md#qualify-a-tarball-without-publishing) for supplied immutable bytes. It needs Docker/PostGIS for database
+the migrations drift gate, model artifacts, feed schemas, feed lint, the full Node suite and the packed-package consumer. The latter uses the pinned pnpm CLI and may fetch pinned consumer tools/type dependencies from npm; it retains the actual tarball identity and consumer lock in its receipt. See the [OCPI qualification instructions](packages/ocpi/README.md#qualify-a-tarball-without-publishing) for supplied immutable bytes. It needs Docker/PostGIS for database
 tests. For the same OpenLR cross-check as CI, install the hash-pinned
 `packages/openlr/python/requirements.txt` into your Python environment, put it on `PATH` and set
 `OPENLR_CROSSCHECK=required`. This command does not run the separate resolver checks, independent

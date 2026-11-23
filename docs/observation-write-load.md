@@ -67,7 +67,7 @@ A preliminary 64 MiB stress run with a one-second vacuum interval averaged 29% f
 
 ### Deploy or roll back the lookup
 
-Deploy the application images normally. This lookup change adds no migration or PostgreSQL setting, and it creates no table conversion period. The previous application images can be restored directly. Continue retaining migration 0091's compact-record decoder as required by the earlier codec rollout. Compare matching production windows using the counters below, including latest update volume, HOT rate, successful source polls and rejected readings. The `readings/lookup` timer now includes the early sealing work, so its individual stage duration is not directly comparable with older images.
+Deploy the application images normally. This lookup change adds no migration or PostgreSQL setting, and it creates no table conversion period. The previous application images can be restored directly. Keep the compact-record decoder `conditions.observation_record` as the codec rollout requires. Compare matching production windows using the counters below, including latest update volume, HOT rate, successful source polls and rejected readings. The `readings/lookup` timer now includes the early sealing work, so its individual stage duration is not directly comparable with older images.
 
 ### Full-day production result
 
@@ -101,15 +101,15 @@ Mean physical cgroup writes fell from 861 MB to 613 MB (29%), WAL from 321 MB to
 
 ### Deploy or roll back fused lineage
 
-Migration 0092 installs the compatible decoder before polling starts. It changes functions only: no rows are scanned or rewritten, and no PostgreSQL settings change. Existing series convert on their next changed reading, replacing their template once. Exclude that conversion period from steady-state measurements.
+The database migrations install the compatible decoder before polling starts. Existing series convert on their next changed reading, replacing their template once. Exclude that conversion period from steady-state measurements.
 
-Application rollback may restore the previous images, whose writers emit the old representation. Keep migration 0092's decoder and helper while compact fused rows remain, as well as the compact-identity support from 0091. Do not roll those functions back or bulk rewrite rows. The added cost is lineage reconstruction when a full fused record is read; native records avoid the helper. The private storage format adds a compatibility obligation for future readers and migrations.
+Application rollback may restore the previous images, whose writers emit the old representation. Keep the decoder `conditions.observation_record` and its helper `conditions.observation_fusion_provenance` while compact fused rows remain. Do not roll those functions back or bulk rewrite rows. The added cost is lineage reconstruction when a full fused record is read; native records avoid the helper. The private storage format adds a compatibility obligation for future readers and migrations.
 
 ## Rollout and rollback
 
-Deploy the decoder migration before any new writer starts. Normal service startup runs migrations before polling. Migration 0091 replaces a function; it does not scan or rewrite the latest table or change PostgreSQL settings. Older rows stay readable and are converted naturally when their next changed reading arrives. The first conversion replaces a series template once, so initial rollout writes are not steady-state measurements.
+Normal service startup runs the database migrations, which install the decoder, before polling. Older rows stay readable and are converted naturally when their next changed reading arrives. The first conversion replaces a series template once, so initial rollout writes are not steady-state measurements.
 
-The previous application can be restored without undoing the decoder migration. Its writers emit the old representation, which the new decoder also accepts. Keep migration 0091's decoder while any compact readings remain. Do not replace it with the old decoder as a rollback step, and do not bulk rewrite the table merely to convert rows.
+The previous application can be restored without a database change. Its writers emit the old representation, which the decoder also accepts. Keep the decoder while any compact readings remain. Do not replace it with the old decoder as a rollback step, and do not bulk rewrite the table merely to convert rows.
 
 ## Production comparison
 

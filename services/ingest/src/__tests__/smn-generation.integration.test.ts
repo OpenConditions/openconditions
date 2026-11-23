@@ -359,35 +359,6 @@ for (const order of [
   });
 }
 
-it("upgrades the existing one-ID durable table without changing its original bytes or retention claim", async () => {
-  const db = await createTestDatabase();
-  try {
-    await db.sql`DROP TABLE conditions.smn_cap_decision`;
-    await db.sql`DROP TABLE conditions.smn_cap_message`;
-    const migrations = new URL("../../../../packages/core/drizzle/", import.meta.url);
-    await db.sql.unsafe(readFileSync(new URL("0094_smn_cap_message.sql", migrations), "utf8"));
-    const original = readFileSync(new URL("ar-000.xml", dir));
-    const alert = readCapXml(original, true);
-    await db.sql`INSERT INTO conditions.smn_cap_message(source_id,identifier,body,retain_until) VALUES ('legacy',${alert.identifier},${original},'2026-11-15T23:13:22Z')`;
-    const migration = readFileSync(new URL("0095_glorious_adam_destine.sql", migrations), "utf8");
-    for (const statement of migration.split("--> statement-breakpoint"))
-      await db.sql.unsafe(statement);
-    const rows =
-      await db.sql`SELECT identifier,variant,body,retrieval,retain_until FROM conditions.smn_cap_message`;
-    expect(rows).toHaveLength(1);
-    expect(rows[0]!.identifier).toBe(alert.identifier);
-    expect(rows[0]!.body).toEqual(original);
-    expect(rows[0]!.retrieval).toEqual({ legacy: true });
-    expect(rows[0]!.retain_until.toISOString()).toBe("2026-11-15T23:13:22.000Z");
-    expect(rows[0]!.variant).toBe(createHash("sha256").update(original).digest("hex"));
-    const sibling = readFileSync(new URL("ar-011.xml", dir));
-    await db.sql`INSERT INTO conditions.smn_cap_message(source_id,identifier,body,retain_until) VALUES ('legacy',${alert.identifier},${sibling},'2026-11-15T23:13:22Z')`;
-    expect(await db.sql`SELECT body FROM conditions.smn_cap_message`).toHaveLength(2);
-  } finally {
-    await db.close();
-  }
-});
-
 it("bounds variants by count and combined original/provenance bytes before publication", async () => {
   const db = await createTestDatabase();
   try {

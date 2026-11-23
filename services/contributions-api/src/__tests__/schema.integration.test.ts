@@ -67,7 +67,7 @@ describe("contribution tables exist", () => {
   }, 30_000);
 });
 
-describe("migration 0045 — crowd evidence keyed by record", () => {
+describe("crowd evidence keyed by record", () => {
   it("sub_claim names its subject by class, id and component", async () => {
     expect(await tableColumns("sub_claim")).toEqual(
       new Set([
@@ -154,7 +154,7 @@ describe("migration 0045 — crowd evidence keyed by record", () => {
   }, 30_000);
 });
 
-describe("migration 0009 — spent_token single-use ledger", () => {
+describe("spent_token single-use ledger", () => {
   it("creates spent_token with its columns", async () => {
     expect(await tableColumns("spent_token")).toEqual(
       new Set(["token_hash", "purpose", "spent_at"]),

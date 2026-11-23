@@ -279,7 +279,7 @@ async function fetchFlaggedItem(id: string): Promise<FlaggedItemShape | undefine
   return (await flaggedPage()).items.find((i) => i.record.id === id);
 }
 
-describe("migration 0012 — conditions.block_list", () => {
+describe("conditions.block_list", () => {
   it("creates the block_list table with the expected columns", async () => {
     const cols = await sql<{ column_name: string; is_nullable: string }[]>`
       SELECT column_name, is_nullable FROM information_schema.columns

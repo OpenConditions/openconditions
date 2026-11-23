@@ -1,2 +1,0 @@
-CREATE INDEX "idx_conditions_obs_corroborations" ON "conditions"."observations" USING gin ("corroborations");--> statement-breakpoint
-CREATE INDEX "idx_conditions_obs_replaces" ON "conditions"."observations" USING gin ("replaces");
