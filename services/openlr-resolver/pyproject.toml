@@ -9,7 +9,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "Apache-2.0" }
 dependencies = [
-    "fastapi==0.162.5",
+    "fastapi==0.165.0",
     "uvicorn[standard]==0.54.0",
     "openlr==1.0.1",
     "openlr-dereferencer==1.2.0",
@@ -27,9 +27,9 @@ build = [
 ]
 dev = [
     "pytest==9.2.0",
-    "httpx2==2.16.0",
+    "httpx2==2.16.2",
     "testcontainers==4.15.0",
-    "ruff==0.17.5",
+    "ruff==0.17.6",
     "pip-audit==2.10.1",
 ]
 
