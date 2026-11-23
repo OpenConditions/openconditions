@@ -736,6 +736,20 @@
       "when": 1794938607378,
       "tag": "0104_federation_journal_identity",
       "breakpoints": true
+    },
+    {
+      "idx": 105,
+      "version": "7",
+      "when": 1795462944093,
+      "tag": "0105_osm_oneway_direction",
+      "breakpoints": true
+    },
+    {
+      "idx": 106,
+      "version": "7",
+      "when": 1795462945855,
+      "tag": "0106_invalidate_legacy_road_graph",
+      "breakpoints": true
     }
   ]
 }

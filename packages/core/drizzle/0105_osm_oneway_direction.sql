@@ -1,0 +1,1 @@
+ALTER TABLE "conditions"."osm_road" ADD COLUMN "oneway_reversed" boolean DEFAULT false NOT NULL;

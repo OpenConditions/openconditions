@@ -41,15 +41,11 @@ async function buildRegion(sql: Sql, region: string, now: () => string): Promise
              END,
              r.maxspeed_kph, ${now()}
       FROM conditions.osm_road r
-      -- Known limitation: this only ever emits 'f' for a oneway way (node-order
-      -- geometry), never 'b'. An OSM oneway=-1 way is digitized against its
-      -- direction of travel (carried upstream as OsmWay.onewayReversed), so it
-      -- should build as a reversed ':b' segment instead — but osm_road has no
-      -- orientation column yet to read that from. Refining this later means
-      -- adding that flag and reading it here; additive, no consumer change
-      -- since segment_id stays opaque text.
       CROSS JOIN LATERAL (
-        SELECT unnest(CASE WHEN r.oneway THEN ARRAY['f'] ELSE ARRAY['f', 'b'] END) AS dir
+        SELECT unnest(CASE
+          WHEN NOT r.oneway THEN ARRAY['f', 'b']
+          WHEN r.oneway_reversed THEN ARRAY['b']
+          ELSE ARRAY['f'] END) AS dir
       ) d
       WHERE r.region = ${region}
       ON CONFLICT (segment_id) DO UPDATE SET
