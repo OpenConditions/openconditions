@@ -48,7 +48,7 @@
     "@openconditions/test-database": "workspace:*",
     "@types/node": "^26.6.6",
     "eventsource": "5.1.5",
-    "hyparquet": "1.33.0",
+    "hyparquet": "1.33.1",
     "testcontainers": "^12.2.1",
     "tsup": "^9.0.0",
     "tsx": "^4.23.15",
