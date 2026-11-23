@@ -423,15 +423,15 @@ importers:
       '@openconditions/model':
         specifier: workspace:*
         version: link:../model
+      '@photostructure/tz-lookup':
+        specifier: ^11.8.0
+        version: 11.8.0
       drizzle-orm:
         specifier: ^0.45.4
         version: 0.45.4(postgres@3.4.9(patch_hash=f166baacad93fb94d0375f423cf9d25a8eda7963bf438669d4a1e5a1ffb4d0a8))
       postgres:
         specifier: ^3.4.9
         version: 3.4.9(patch_hash=f166baacad93fb94d0375f423cf9d25a8eda7963bf438669d4a1e5a1ffb4d0a8)
-      tz-lookup:
-        specifier: ^6.1.25
-        version: 6.1.25
     devDependencies:
       '@openconditions/test-database':
         specifier: workspace:*
@@ -439,9 +439,6 @@ importers:
       '@types/geojson':
         specifier: ^7946.0.16
         version: 7946.0.16
-      '@types/tz-lookup':
-        specifier: ^6.1.2
-        version: 6.1.2
       drizzle-kit:
         specifier: ^0.31.11
         version: 0.31.11
@@ -2063,6 +2060,9 @@ packages:
   '@oxc-project/types@0.155.0':
     resolution: {integrity: sha512-SeE8JPwW1xs1tHeNycjUtUBdhorRa8o4jlvjwk49R7/Z291i+4DQa7JJIgOm/TaYQZx+QrPQbVJ/9c8dMIZN8Q==}
 
+  '@photostructure/tz-lookup@11.8.0':
+    resolution: {integrity: sha512-RvTkAjjWAfgvoaHVXugwi9XOw4rwyrL8wuqox4PwRLW9FZwpmPhNUY31MgY7k5avK6sbD9S7i1/rUtM4A310/g==}
+
   '@pinojs/redact@0.4.0':
     resolution: {integrity: sha512-k2ENnmBugE/rzQfEcdWHcCY+/FM3VLzH9cYEsbdsoqrvzAKRhUZeRNhAZvB8OitQJ1TBed3yqWtdjzS6wJKBwg==}
 
@@ -2561,9 +2561,6 @@ packages:
 
   '@types/ssh2@1.15.6':
     resolution: {integrity: sha512-oGdxhBqcRTwSTKFm+9EiKzkNVYRLEFkcW44lhguvBalGJbWfGnDt/ezwSUZc+SF9m9bMc3VyklNAtp7zICjS5w==}
-
-  '@types/tz-lookup@6.1.2':
-    resolution: {integrity: sha512-9y31Xf/8FHXrCHjvVjGZLcsayAa6ABNc8bZlk6MPOQLLlr41tICSqW3TRPRIx2nodbzdKs5N7ipHWBrUsWUiAA==}
 
   '@vitest/coverage-v8@5.1.1':
     resolution: {integrity: sha512-xL4NkbVx/UqqDHaXSOyvB8qsSoLQ+dVNGR9H2Bh/4ggQtmaPFNPUC9gZQwKZePLOQ6WDcgwXVnPulFW9eCHt0w==}
@@ -4011,9 +4008,6 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
-  tz-lookup@6.1.25:
-    resolution: {integrity: sha512-fFewT9o1uDzsW1QnUU1ValqaihFnwiUiiHr1S79/fxOzKXYYvX+EHeRnpvQJ9B3Qg67wPXT6QF2Esc4pFOrvLg==}
-
   ufo@1.6.4:
     resolution: {integrity: sha512-JFNbkD1Svwe0KvGi8GOeLcP4kAWQ609twvCdcHxq1oSL8svv39ZuSvajcD8B+5D0eL4+s1Is2D/O6KN3qcTeRA==}
 
@@ -4755,6 +4749,8 @@ snapshots:
 
   '@oxc-project/types@0.155.0': {}
 
+  '@photostructure/tz-lookup@11.8.0': {}
+
   '@pinojs/redact@0.4.0': {}
 
   '@pkgjs/parseargs@0.11.0':
@@ -5056,8 +5052,6 @@ snapshots:
   '@types/ssh2@1.15.6':
     dependencies:
       '@types/node': 18.19.130
-
-  '@types/tz-lookup@6.1.2': {}
 
   '@vitest/coverage-v8@5.1.1(vitest@5.1.1)':
     dependencies:
@@ -6463,8 +6457,6 @@ snapshots:
   tweetnacl@0.14.5: {}
 
   typescript@6.0.3: {}
-
-  tz-lookup@6.1.25: {}
 
   ufo@1.6.4: {}
 
