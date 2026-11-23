@@ -1,4 +1,5 @@
 import { parseMaxspeedKph } from "./maxspeed.js";
+import { parseOnewayTag } from "./oneway.js";
 
 /**
  * A single OSM highway way as parsed from an Overpass `out geom` response.
@@ -10,8 +11,8 @@ export interface OsmWay {
   oneway: boolean;
   /**
    * Set when `tags.oneway === "-1"`: the way carries traffic against its
-   * node order, so the segment builder should reverse `coords` before
-   * treating the way as a forward-direction segment.
+   * node order. The segment builder emits `:b` with reversed geometry;
+   * raw coordinates remain in source node order.
    */
   onewayReversed?: boolean;
   ref?: string;
@@ -75,16 +76,14 @@ export function parseOverpassWays(input: string | Buffer): OsmWay[] {
 
     const tags = el.tags ?? {};
     const onewayTag = tags.oneway;
-    const oneway = onewayTag === "yes" || onewayTag === "true" || onewayTag === "-1";
     const maxspeedKph = tags.maxspeed ? parseMaxspeedKph(tags.maxspeed) : null;
 
     const way: OsmWay = {
       wayId: el.id,
       coords,
       highway: tags.highway ?? "",
-      oneway,
+      ...parseOnewayTag(onewayTag),
     };
-    if (onewayTag === "-1") way.onewayReversed = true;
     if (tags.ref) way.ref = tags.ref;
     if (tags.name) way.name = tags.name;
     if (maxspeedKph !== null && maxspeedKph !== undefined) way.maxspeedKph = maxspeedKph;

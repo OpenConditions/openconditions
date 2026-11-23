@@ -2,7 +2,11 @@ import { randomUUID } from "node:crypto";
 import { isLockTimeout } from "@openconditions/storage";
 import type postgres from "postgres";
 import { loadHighwayClasses } from "./highway-classes.js";
-import { loadOsmRegions, osmRegionImportFingerprint } from "./osm-import.js";
+import {
+  loadOsmRegions,
+  OSM_WAY_DIRECTION_VERSION,
+  osmRegionImportFingerprint,
+} from "./osm-import.js";
 
 type Sql = postgres.Sql;
 
@@ -80,6 +84,17 @@ export async function activateRoadGraph(
   if (missing.length > 0) {
     throw new Error(
       `road graph preflight: missing current configured imports: ${missing.map((r) => r.id).join(", ")}`,
+    );
+  }
+  // The builder also visits retained rows outside current coverage. They must
+  // not regain graph authority with direction defaults from a legacy import.
+  const legacy = await sql<{ region: string }[]>`
+    SELECT DISTINCT region FROM conditions.osm_road
+    WHERE import_provenance->>'way_direction_version' IS DISTINCT FROM ${String(OSM_WAY_DIRECTION_VERSION)}
+    ORDER BY region`;
+  if (legacy.length > 0) {
+    throw new Error(
+      `road graph preflight: legacy direction imports: ${legacy.map((row) => row.region).join(", ")}; reacquire retained regions or explicitly retire obsolete coverage`,
     );
   }
   const [{ imported_at }] = await sql<{ imported_at: Date | string | null }[]>`

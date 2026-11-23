@@ -1,4 +1,5 @@
 import { parseMaxspeedKph } from "./maxspeed.js";
+import { parseOnewayTag } from "./oneway.js";
 import type { OsmWay } from "./overpass.js";
 
 interface GeojsonFeature {
@@ -54,12 +55,10 @@ export function parseOsmiumGeojsonSeq(input: string | Buffer): OsmWay[] {
     const props = feat.properties ?? {};
     const highway = typeof props.highway === "string" ? props.highway : "";
     const onewayTag = typeof props.oneway === "string" ? props.oneway : undefined;
-    const oneway = onewayTag === "yes" || onewayTag === "true" || onewayTag === "-1";
     const maxspeedRaw = typeof props.maxspeed === "string" ? props.maxspeed : undefined;
     const maxspeedKph = maxspeedRaw ? parseMaxspeedKph(maxspeedRaw) : null;
 
-    const way: OsmWay = { wayId, coords, highway, oneway };
-    if (onewayTag === "-1") way.onewayReversed = true;
+    const way: OsmWay = { wayId, coords, highway, ...parseOnewayTag(onewayTag) };
     if (typeof props.ref === "string") way.ref = props.ref;
     if (typeof props.name === "string") way.name = props.name;
     if (maxspeedKph != null) way.maxspeedKph = maxspeedKph;

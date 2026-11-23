@@ -165,6 +165,7 @@ export const osmRoad = conditionsSchema.table(
     geom: geometry("geom").notNull(),
     highway: text("highway").notNull(),
     oneway: boolean("oneway").notNull().default(false),
+    onewayReversed: boolean("oneway_reversed").notNull().default(false),
     ref: text("ref"),
     name: text("name"),
     maxspeedKph: doublePrecision("maxspeed_kph"),

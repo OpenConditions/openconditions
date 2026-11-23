@@ -327,8 +327,7 @@ reader applies them.
 
 ### Direction modes
 
-A dual carriageway in OSM is two separate oneway ways, each yielding only an `f`
-segment, so the bearing test picks the carriageway. A single bidirectional way
+A dual carriageway in OSM is two separate oneway ways, each yielding its travel-direction segment (`f`, or `b` for `oneway=-1`), so the bearing test picks the carriageway. A single bidirectional way
 yields an `f` and a `b` segment carrying the same line in the opposite vertex
 order (the `b` geometry is stored reversed, so both run in travel direction).
 
@@ -852,3 +851,27 @@ as normal.
 
 Partial edges are not expressible for routing either, so the first and last edge
 of a span are closed whole.
+
+## Upgrading one-way direction data
+
+The direction-aware importer recognizes explicit `oneway=yes`, `true`, `1` and `-1`. It keeps `osm_road.geom` in OSM node order and stores `oneway_reversed` separately. A reverse one-way road produces only `${way_id}:b`, with geometry running in travel direction. Ordinary one-way roads produce `:f`; bidirectional roads produce both. This change does not add implied motorway, roundabout or mode-specific access rules.
+
+Migrations `0105_osm_oneway_direction` and `0106_invalidate_legacy_road_graph` add the flag, mark any existing graph `rebuilding` and mark stored bindings `obsolete`. Earlier imports discarded reverse direction and misclassified `oneway=1`, so the new column's default cannot repair those rows. Existing road data and event records are retained, but graph-derived route effects are withheld until the graph is ready again. Plan the upgrade and reimport in a maintenance window; a large extract can take time to acquire and rebuild.
+
+Stop pre-fix ingest workers before applying these migrations, and upgrade all graph-writing workers together. An older worker does not understand the new provenance contract and must not rebuild or reactivate the graph during this upgrade. Normal service startup applies migrations; it does not itself reacquire OSM roads.
+
+Retain the complete `SEGMENT_REGIONS` configuration and let `SEGMENT_REBUILD_CRON` run the full rebuild: fresh acquisition of every configured region, segment construction, OpenLR encoding, sensor rematching, graph activation and event rebinding. To avoid waiting for the weekly schedule, temporarily choose a maintenance-window cron expression, apply the service settings and restore the usual schedule after completion. Check the stage results and errors; a nonzero total or a ready graph alone does not prove every OpenLR descriptor or event binding succeeded. Do not bypass an undercoverage failure just to complete the upgrade.
+
+Successful imports now include `way_direction_version: 1` in their stored provenance and configuration fingerprint. Activation refuses legacy fingerprints even when the region configuration is unchanged. Rebuilding segments from the old rows, or restarting the service, is therefore insufficient. Verify a new ready graph generation after reacquisition, inspect the import provenance for each configured region, and check binding coverage and `/feeds/status` before relying on route effects. The complete rebuild removes obsolete `:f`/`:b` segments, refreshes OpenLR descriptors and sensor fractions, and rebinds events under the new generation.
+
+Activation also rejects legacy direction provenance in retained rows for regions no longer listed in `SEGMENT_REGIONS`: the builder and sensor matcher can still visit those rows. Inspect the stored provenance directly in the database:
+
+```sql
+SELECT region, import_provenance->>'way_direction_version' AS way_direction_version,
+       count(*) AS ways
+FROM conditions.osm_road
+GROUP BY region, import_provenance->>'way_direction_version'
+ORDER BY region, way_direction_version NULLS FIRST;
+```
+
+Reacquire every region whose coverage you intend to retain. For a region deliberately retired from this deployment, remove its `osm_road` rows during the maintenance window while the graph is `rebuilding`, then run the complete rebuild to sweep orphan segments and refresh dependent bindings. This is an operator decision; the upgrade does not delete coverage automatically. Do not repair readiness by editing provenance or stamping a version onto old rows.

@@ -13,6 +13,8 @@ import { pbfToWays } from "./osmium.js";
 
 type Sql = postgres.Sql;
 
+export const OSM_WAY_DIRECTION_VERSION = 1;
+
 /**
  * One configured region of the OSM highway import: a bounding box and the
  * IANA tz used to bucket that region's segment speeds locally.
@@ -40,6 +42,8 @@ export function osmRegionImportProvenance(
   env: NodeJS.ProcessEnv = process.env,
 ): Record<string, unknown> {
   return {
+    // Legacy imports lost reverse direction; graph readiness requires reacquisition.
+    way_direction_version: OSM_WAY_DIRECTION_VERSION,
     region_id: region.id,
     bbox: region.bbox,
     timezone: region.tz,
@@ -303,6 +307,7 @@ interface OsmRoadRow {
   geometry_json: string;
   highway: string;
   oneway: boolean;
+  oneway_reversed: boolean;
   ref: string | null;
   name: string | null;
   maxspeed_kph: number | null;
@@ -318,6 +323,7 @@ function osmRoadRowOf(way: OsmWay, region: OsmRegion, importedAt: string): OsmRo
     geometry_json: JSON.stringify({ type: "LineString", coordinates: way.coords }),
     highway: way.highway,
     oneway: way.oneway,
+    oneway_reversed: way.oneway && way.onewayReversed === true,
     ref: way.ref ?? null,
     name: way.name ?? null,
     maxspeed_kph: way.maxspeedKph ?? null,
@@ -378,14 +384,14 @@ export async function importOsmRoads(
         for (const batch of chunk(rows, CHUNK_SIZE)) {
           await tx`
             INSERT INTO conditions.osm_road
-              (way_id, geom, highway, oneway, ref, name, maxspeed_kph, region,
+              (way_id, geom, highway, oneway, oneway_reversed, ref, name, maxspeed_kph, region,
                import_config_hash, import_provenance, imported_at)
             SELECT
               way_id, ST_SetSRID(ST_GeomFromGeoJSON(geometry_json), 4326),
-              highway, oneway, ref, name, maxspeed_kph, region,
+              highway, oneway, oneway_reversed, ref, name, maxspeed_kph, region,
               import_config_hash, import_provenance, imported_at
             FROM jsonb_to_recordset(${tx.json(batch as AnyJson)}::jsonb) AS t(
-              way_id bigint, geometry_json text, highway text, oneway boolean,
+              way_id bigint, geometry_json text, highway text, oneway boolean, oneway_reversed boolean,
               ref text, name text, maxspeed_kph double precision, region text,
               import_config_hash text, import_provenance jsonb, imported_at timestamptz
             )
@@ -393,6 +399,7 @@ export async function importOsmRoads(
               geom = excluded.geom,
               highway = excluded.highway,
               oneway = excluded.oneway,
+              oneway_reversed = excluded.oneway_reversed,
               ref = excluded.ref,
               name = excluded.name,
               maxspeed_kph = excluded.maxspeed_kph,
