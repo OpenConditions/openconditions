@@ -1,10 +1,10 @@
+import tzLookup from "@photostructure/tz-lookup";
 import type { Geometry } from "geojson";
-import tzLookup from "tz-lookup";
 
 /**
- * IANA timezone name for a coordinate (e.g. `"Europe/Berlin"`), or `null` when
- * the lookup fails (coordinate outside the dataset, e.g. open ocean). Thin
- * wrapper over `tz-lookup`, which takes `(lat, lng)`.
+ * Approximate IANA timezone for a coordinate, or `null` for invalid input.
+ * Uses compact offline boundary data from `@photostructure/tz-lookup`,
+ * which takes `(lat, lng)`. Offset rules come from the consumer's runtime.
  */
 export function timeZoneAt(lat: number, lng: number): string | null {
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;

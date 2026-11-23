@@ -25,7 +25,8 @@
   "types": "./dist/index.d.ts",
   "files": [
     "dist",
-    "drizzle"
+    "drizzle",
+    "NOTICE"
   ],
   "scripts": {
     "build": "tsup",
@@ -36,7 +37,6 @@
   "devDependencies": {
     "@openconditions/test-database": "workspace:*",
     "@types/geojson": "^7946.0.16",
-    "@types/tz-lookup": "^6.1.2",
     "drizzle-kit": "^0.31.11",
     "tsup": "^9.0.0",
     "typescript": "^6.0.3",
@@ -44,9 +44,9 @@
   },
   "dependencies": {
     "@openconditions/model": "workspace:*",
+    "@photostructure/tz-lookup": "^11.8.0",
     "drizzle-orm": "^0.45.4",
-    "postgres": "^3.4.9",
-    "tz-lookup": "^6.1.25"
+    "postgres": "^3.4.9"
   },
   "private": true
 }
