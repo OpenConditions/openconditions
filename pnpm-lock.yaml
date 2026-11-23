@@ -504,8 +504,8 @@ importers:
         specifier: 5.0.2
         version: 5.0.2
       http-message-signatures:
-        specifier: 1.0.6
-        version: 1.0.6
+        specifier: 1.1.0
+        version: 1.1.0
       postgres:
         specifier: ^3.4.9
         version: 3.4.9(patch_hash=f166baacad93fb94d0375f423cf9d25a8eda7963bf438669d4a1e5a1ffb4d0a8)
@@ -3182,8 +3182,8 @@ packages:
   graceful-fs@4.2.11:
     resolution: {integrity: sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ==}
 
-  http-message-signatures@1.0.6:
-    resolution: {integrity: sha512-mGaW/gs0WyP1X4wcc0iHguoDuv/LGyGLbvn8NWgbSdR+opFXKncrNiwQO8bN5rZ5j0z9HrwrRj33CzIK5dhGXA==}
+  http-message-signatures@1.1.0:
+    resolution: {integrity: sha512-occWOsgt6jbkelKPf+2BeDIJ8yrtTtqO3vOUbZqpLGjeWbFV1lTjn2c7j6k0X6CaVhy5ANAXrA9bHAlrwUzbbg==}
 
   human-id@4.2.2:
     resolution: {integrity: sha512-Z+8unD6em/MJwyrkWQ2M3wygRGI1+MztbutiNwk1DCuEPXOZRWGjtcMPZYP1exY9iNZMhd7ZOSMQSo9WYtiQRw==}
@@ -5598,7 +5598,7 @@ snapshots:
 
   graceful-fs@4.2.11: {}
 
-  http-message-signatures@1.0.6:
+  http-message-signatures@1.1.0:
     dependencies:
       structured-headers: 2.1.1
 
