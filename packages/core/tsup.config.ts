@@ -1,7 +1,9 @@
 import { defineConfig } from "tsup";
 
 export default defineConfig({
-  entry: ["src/index.ts", "src/server.ts"],
+  // `credentials` is its own entry so parser packages can read secrets
+  // without loading the server barrel (database, crypto, migrations).
+  entry: ["src/index.ts", "src/server.ts", "src/credentials.ts"],
   format: ["esm", "cjs"],
   dts: true,
   sourcemap: true,
