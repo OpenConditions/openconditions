@@ -2,6 +2,7 @@ import {
   assertStoredCodesRegistered,
   resolveInstanceId,
   runMigrations,
+  sealInstanceId,
 } from "@openconditions/core/server";
 import { resolveCrowdCredit } from "@openconditions/ingest-framework";
 import { productionRegistry } from "@openconditions/model-registry";
@@ -47,12 +48,17 @@ async function boot() {
   // the check row, the stored grants and the stored private keys were sealed
   // with.
   const secretsKey = readIngestSecretsKey(process.env);
-  const crowd = resolveCrowdCredit(process.env, resolveInstanceId());
-  console.info(`[ingest] instance id ${resolveInstanceId()}, role ${role}`);
+  // Required: a missing or malformed id fails boot before the database is
+  // touched, and, after the migrations, so does one other than the id the
+  // first ingest process sealed.
+  const instanceId = resolveInstanceId();
+  const crowd = resolveCrowdCredit(process.env, instanceId);
+  console.info(`[ingest] instance id ${instanceId}, role ${role}`);
   console.info("[ingest] applying database migrations…");
   await runMigrations(DATABASE_URL);
   console.info("[ingest] migrations applied");
   await checkIngestSecrets(sql, secretsKey);
+  await sealInstanceId(sql, instanceId);
   const model = productionRegistry();
   const catalog = await loadIngestCatalog();
   const plan = planIngest(catalog);
@@ -97,7 +103,7 @@ async function boot() {
         catalog,
         fetch: undiciFetch as unknown as typeof fetch,
         deadlineMs: onDemandDeadlineMsFromEnv(),
-        instanceId: resolveInstanceId(),
+        instanceId,
         inFlight,
       },
     });
@@ -111,7 +117,7 @@ async function boot() {
   });
   const stopRecordJobs = startRecordJobs(sql, maintenanceSql, {
     registry: model,
-    instanceId: resolveInstanceId(),
+    instanceId,
     feeds: catalog.feeds,
     primary,
   });
@@ -125,7 +131,7 @@ async function boot() {
     const fusedRefresh = startFusedRefresh((opts) =>
       refreshOutdatedFusions(sql, {
         registry: model,
-        instanceId: resolveInstanceId(),
+        instanceId,
         now: () => new Date().toISOString(),
         ...opts,
       }),

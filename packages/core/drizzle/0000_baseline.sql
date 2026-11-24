@@ -598,6 +598,14 @@ CREATE TABLE "conditions"."geonet_coverage" (
 	CONSTRAINT "geonet_coverage_order_check" CHECK ("conditions"."geonet_coverage"."covered_from" < "conditions"."geonet_coverage"."covered_until")
 );
 --> statement-breakpoint
+CREATE TABLE "conditions"."instance_identity" (
+	"id" smallint PRIMARY KEY DEFAULT 1 NOT NULL,
+	"instance_id" text NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "instance_identity_id_check" CHECK ("conditions"."instance_identity"."id" = 1),
+	CONSTRAINT "instance_identity_instance_id_check" CHECK (length("instance_id") <= 253 AND "instance_id" ~ '^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$')
+);
+--> statement-breakpoint
 CREATE TABLE "conditions"."issuer_key" (
 	"key_id" text PRIMARY KEY NOT NULL,
 	"public_key" "bytea" NOT NULL,

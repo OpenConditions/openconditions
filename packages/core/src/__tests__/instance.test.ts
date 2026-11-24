@@ -6,23 +6,21 @@ describe("resolveInstanceId", () => {
     expect(resolveInstanceId({ OPENCONDITIONS_INSTANCE_ID: "  node-a  " })).toBe("node-a");
   });
 
-  it("falls back to 'local' when unset", () => {
-    expect(resolveInstanceId({})).toBe("local");
+  it("refuses a missing, empty or whitespace-only value instead of defaulting", () => {
+    for (const env of [
+      {},
+      { OPENCONDITIONS_INSTANCE_ID: "" },
+      { OPENCONDITIONS_INSTANCE_ID: "   " },
+    ]) {
+      expect(() => resolveInstanceId(env)).toThrow(/OPENCONDITIONS_INSTANCE_ID is required/);
+    }
   });
 
-  it("falls back to 'local' for a whitespace-only value", () => {
-    expect(resolveInstanceId({ OPENCONDITIONS_INSTANCE_ID: "   " })).toBe("local");
-  });
-
-  it("falls back to 'local' for an empty value (Compose ${VAR:-} injection)", () => {
-    expect(resolveInstanceId({ OPENCONDITIONS_INSTANCE_ID: "" })).toBe("local");
-  });
-
-  it("accepts a hostname and rejects ids that cannot be a record-id namespace", () => {
+  it("accepts a DNS name and rejects anything else", () => {
     expect(resolveInstanceId({ OPENCONDITIONS_INSTANCE_ID: "maps.example.org" })).toBe(
       "maps.example.org",
     );
-    for (const bad of ["a:b", "Maps.example.org", "node_a", "-node", "node-"]) {
+    for (const bad of ["a:b", "Maps.example.org", "node_a", "-node", "node-", "a..b", "a-.b"]) {
       expect(() => resolveInstanceId({ OPENCONDITIONS_INSTANCE_ID: bad })).toThrow(
         /not a valid instance id/,
       );

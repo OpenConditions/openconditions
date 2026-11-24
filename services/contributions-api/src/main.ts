@@ -7,8 +7,10 @@
 
 import {
   assertStoredCodesRegistered,
+  resolveInstanceId,
   schemaWaitTimeoutMs,
   secretsKeyFromEnv,
+  waitForInstanceId,
   waitForSchemaVersion,
   waitForSecretsKeyCheck,
 } from "@openconditions/core/server";
@@ -41,6 +43,7 @@ async function boot() {
   // database is read.
   const schemaWaitMs = schemaWaitTimeoutMs(process.env, "OPENCONDITIONS_SCHEMA_WAIT_TIMEOUT_MS");
   const secretsKey = secretsKeyFromEnv(process.env);
+  const instanceId = resolveInstanceId(process.env);
 
   // Requests and short sweeps only: a statement past 30 s or a lock wait past
   // 10 s fails rather than holding one of the five connections. Startup
@@ -71,6 +74,13 @@ async function boot() {
     timeoutMs: schemaWaitMs,
     onWait: () =>
       console.info("[contributions-api] waiting for the ingest service to seal the key check"),
+  });
+  // The crowd records it lands carry the instance id; one other than the id
+  // the ingest service sealed stops the boot.
+  await waitForInstanceId(sql, instanceId, {
+    timeoutMs: schemaWaitMs,
+    onWait: () =>
+      console.info("[contributions-api] waiting for the ingest service to seal the instance id"),
   });
   const registry = productionRegistry();
   await assertStoredCodesRegistered(sql, registry, { sourceFormats: false });

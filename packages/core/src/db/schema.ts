@@ -1,4 +1,10 @@
-import { enumCheckSql, RECORD_CLASSES, TOMBSTONE_REASONS } from "@openconditions/model";
+import {
+  CONFIGURED_INSTANCE_ID_PATTERN,
+  enumCheckSql,
+  MAX_INSTANCE_ID_LENGTH,
+  RECORD_CLASSES,
+  TOMBSTONE_REASONS,
+} from "@openconditions/model";
 import { sql } from "drizzle-orm";
 import {
   bigint,
@@ -722,6 +728,29 @@ export const secretsKeyCheck = conditionsSchema.table(
   (t) => [
     check("secrets_key_check_id_check", sql`${t.id} = 1`),
     check("secrets_key_check_value_check", sealedSecretCheck("value")),
+  ],
+);
+
+/**
+ * One row: the instance id, which the first ingest process to start writes
+ * once. Every record id this instance originates, and every crowd signature
+ * over one, carries it, so every service refuses to start with another id.
+ */
+export const instanceIdentity = conditionsSchema.table(
+  "instance_identity",
+  {
+    id: smallint("id").primaryKey().default(1),
+    instanceId: text("instance_id").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    check("instance_identity_id_check", sql`${t.id} = 1`),
+    check(
+      "instance_identity_instance_id_check",
+      sql.raw(
+        `length("instance_id") <= ${MAX_INSTANCE_ID_LENGTH} AND "instance_id" ~ '${CONFIGURED_INSTANCE_ID_PATTERN.source}'`,
+      ),
+    ),
   ],
 );
 

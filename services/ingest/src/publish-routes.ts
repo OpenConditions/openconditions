@@ -293,8 +293,9 @@ export function registerFeedStatusRoute(
   sourceStatus?: SourceStatusReader,
   graphStatus?: FeedGraphStatusReader,
 ): void {
-  const instanceId = resolveInstanceId();
   app.get("/feeds/status", async () => {
+    // The service validated it at boot, before any route was registered.
+    const instanceId = resolveInstanceId();
     const collectedAt = new Date().toISOString();
     let durable = new Map<string, SourceOperationalStatus>();
     let graph: FeedGraphStatus = { generation: null, status: "unknown", regions: [] };

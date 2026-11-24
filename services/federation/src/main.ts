@@ -7,7 +7,9 @@
 
 import {
   assertStoredCodesRegistered,
+  resolveInstanceId,
   schemaWaitTimeoutMs,
+  waitForInstanceId,
   waitForSchemaVersion,
   waitForSecretsKeyCheck,
 } from "@openconditions/core/server";
@@ -93,6 +95,9 @@ async function boot() {
   // A malformed timeout, and with federation enabled a missing or malformed
   // secrets key or actor, fails boot before the database is read.
   const schemaWaitMs = schemaWaitTimeoutMs(process.env, "OPENCONDITIONS_SCHEMA_WAIT_TIMEOUT_MS");
+  // Required whether or not federation is enabled: the journal and the
+  // archives it keeps hold this instance's record ids.
+  const instanceId = resolveInstanceId(process.env);
   const settings = resolveFederationSettings(process.env);
   if (settings.enabled) {
     // The actor says which protocol versions it speaks; peers negotiate on
@@ -143,6 +148,12 @@ async function boot() {
       ),
   });
   console.info("[federation-api] database schema is at this build's version");
+  // An instance id other than the one the ingest service sealed stops the boot.
+  await waitForInstanceId(sql, instanceId, {
+    timeoutMs: schemaWaitMs,
+    onWait: () =>
+      console.info("[federation-api] waiting for the ingest service to seal the instance id"),
+  });
   await assertStoredCodesRegistered(sql, productionRegistry(), { sourceFormats: false });
 
   // The journal must belong to the database's current history before anything

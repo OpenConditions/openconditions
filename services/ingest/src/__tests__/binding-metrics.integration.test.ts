@@ -2,7 +2,7 @@ import { RESOLVER_VERSION } from "@openconditions/roads";
 import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import Fastify from "fastify";
 import type postgres from "postgres";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { FeedStatusStore } from "../feed-status.js";
 import { createBindingMetricsReader } from "../pipeline/binding-metrics.js";
 import { registerPublishRoutes } from "../publish-routes.js";
@@ -34,6 +34,7 @@ async function insertBinding(
 }
 
 beforeAll(async () => {
+  vi.stubEnv("OPENCONDITIONS_INSTANCE_ID", "test.example.org");
   db = await createTestDatabase();
   sql = db.sql;
   await sql`
@@ -50,6 +51,7 @@ beforeAll(async () => {
 }, 120_000);
 
 afterAll(async () => {
+  vi.unstubAllEnvs();
   await db?.close();
 }, 30_000);
 

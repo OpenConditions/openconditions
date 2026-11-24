@@ -104,7 +104,11 @@ escapes it.
     `OPENCONDITIONS_OPERATOR_TOKEN`, run
     `pnpm openmapx services start api data-manager` on the OpenMapX host;
     the admin panel never recreates `api`.
-- **Settings**: every other knob (`OPENCONDITIONS_INSTANCE_ID`, the crowd
+- **Instance id**: `OPENCONDITIONS_INSTANCE_ID`, required, a lower-case DNS
+  name set once before the first start and never changed. The first ingest
+  process seals it in the database, and every other service needs the same
+  value; see [the instance id](../../README.md#the-instance-id).
+- **Settings**: every other knob (the crowd
   credit `/sources` states, `OPENCONDITIONS_CROWD_LICENSE` and
   `OPENCONDITIONS_CROWD_SOURCE_URI`, which must equal the contributions
   API's, the rate

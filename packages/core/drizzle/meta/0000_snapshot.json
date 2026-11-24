@@ -1,5 +1,5 @@
 {
-  "id": "07985733-6696-46d3-9be2-7d3a6a1af430",
+  "id": "85c04e68-b70a-47cc-b014-5c7f9ae1e1af",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -4829,6 +4829,48 @@
         "geonet_coverage_order_check": {
           "name": "geonet_coverage_order_check",
           "value": "\"conditions\".\"geonet_coverage\".\"covered_from\" < \"conditions\".\"geonet_coverage\".\"covered_until\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "conditions.instance_identity": {
+      "name": "instance_identity",
+      "schema": "conditions",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "smallint",
+          "primaryKey": true,
+          "notNull": true,
+          "default": 1
+        },
+        "instance_id": {
+          "name": "instance_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "instance_identity_id_check": {
+          "name": "instance_identity_id_check",
+          "value": "\"conditions\".\"instance_identity\".\"id\" = 1"
+        },
+        "instance_identity_instance_id_check": {
+          "name": "instance_identity_instance_id_check",
+          "value": "length(\"instance_id\") <= 253 AND \"instance_id\" ~ '^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$'"
         }
       },
       "isRLSEnabled": false

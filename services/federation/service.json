@@ -82,7 +82,7 @@
       "OPENCONDITIONS_INSTANCE_ID": {
         "type": "string",
         "title": "Instance id",
-        "description": "This instance's stable id, the same value as the ingest and contributions services': the actor's instanceId must equal it, or the service refuses to start. Empty: local.",
+        "description": "Required. Copy the value of openconditions-ingest's Instance id, a lower-case DNS name such as maps.example.org; enabled, the actor's instanceId must equal it too. The service refuses to start without it, with a value that is not a DNS name, or with another id than the one the ingest service sealed in the database.",
         "default": "",
         "x-openmapx-secret": false
       },

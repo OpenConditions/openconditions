@@ -2,7 +2,7 @@ import { fileURLToPath } from "node:url";
 import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import Fastify from "fastify";
 import type postgres from "postgres";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { registerApiRoutes } from "../api/routes.js";
 import { loadIngestCatalog } from "../domains.js";
 import { FeedStatusStore } from "../feed-status.js";
@@ -18,6 +18,7 @@ const AT = "at=2026-09-06T10:00:00Z";
 type Rec = Record<string, unknown>;
 
 beforeAll(async () => {
+  vi.stubEnv("OPENCONDITIONS_INSTANCE_ID", "test.example.org");
   db = await createTestDatabase();
   sql = db.sql;
   app = Fastify();
@@ -26,6 +27,7 @@ beforeAll(async () => {
 }, 120_000);
 
 afterAll(async () => {
+  vi.unstubAllEnvs();
   await app?.close();
   await db?.close();
 }, 30_000);

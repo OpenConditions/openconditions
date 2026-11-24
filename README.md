@@ -127,10 +127,11 @@ pnpm build
 
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/openconditions \
 OPENCONDITIONS_SECRETS_KEY_FILE="$PWD/.secrets-key" \
+OPENCONDITIONS_INSTANCE_ID=dev.localhost \
   pnpm --filter @openconditions/ingest dev
 ```
 
-The service applies its migrations, starts polling the enabled feeds, and serves on `:4100`. Keep `.secrets-key`: a start with another key refuses to read what the first one stored (see [secrets encrypted at rest](#secrets-encrypted-at-rest)).
+The service applies its migrations, starts polling the enabled feeds, and serves on `:4100`. Keep `.secrets-key`: a start with another key refuses to read what the first one stored (see [secrets encrypted at rest](#secrets-encrypted-at-rest)). Keep the instance id too: the database is sealed to it (see [the instance id](#the-instance-id)).
 
 ### Public API
 
@@ -198,6 +199,12 @@ charging layer, the webcam layer and the hazard overlays. A request carrying `Au
 <OPENCONDITIONS_OPERATOR_TOKEN>` reads in the operator scope, which withholds nothing; without it a read is
 public-scope. Reads with a bbox fetch stale on-demand feeds first, waiting at most
 `OPENCONDITIONS_ON_DEMAND_DEADLINE_MS` (default 3000). See [services/ingest/README.md](services/ingest/README.md).
+
+## The instance id
+
+Every record an instance originates is named `oc:<class>:<instanceId>:<localId>`, federation peers know the instance by that id, and crowd votes are signed over record ids. The id therefore never changes once records exist. `OPENCONDITIONS_INSTANCE_ID` is required, with no default, on every OpenConditions service: the ingest service, the heavy-feeds ingest process, the contributions API and the federation service, all with the same value. It is a lower-case DNS name, labels of letters, digits and inner dashes up to 63 characters joined by single dots, at most 253 characters, for example the instance's public host name `maps.example.org`.
+
+After migrating, the first ingest process to start seals the id in `conditions.instance_identity`, once. Every service then refuses to start with another id, naming the sealed one, and the contributions and federation services wait at start until the row is there. A service also refuses to start without the variable or with a value that is not a DNS name. To use another id, start over with an empty database: the stored records, the crowd's signed votes and every peer's copies carry the sealed one.
 
 ## Secrets encrypted at rest
 

@@ -12,3 +12,4 @@ export * from "./crypto/secrets-key-check.js";
 export * from "./crypto/stored-secrets.js";
 export * from "./db/index.js";
 export * from "./instance.js";
+export * from "./instance-identity.js";
