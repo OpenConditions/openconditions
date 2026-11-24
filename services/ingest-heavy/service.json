@@ -1,7 +1,7 @@
 {
   "id": "openconditions-ingest-heavy",
   "name": "OpenConditions Ingest (heavy feeds)",
-  "version": "0.1.0",
+  "version": "0.8.1",
   "description": "Optional second OpenConditions ingest process, from the same image: it polls only the feeds its Feeds this process polls setting names (such as nl-ndw-flow and nl-ndw-charging), so their long parses and writes stop delaying the other feeds. It serves no API and runs no maintenance; openconditions-ingest does both and must leave these feeds to it (its Feeds left to another process setting).",
   "author": "OpenConditions",
   "license": "AGPL-3.0-or-later",
@@ -10,7 +10,7 @@
   "quality": "community-verified",
   "container": {
     "image": "ghcr.io/openconditions/ingest",
-    "tag": "latest",
+    "tag": "0.8.1",
     "environment": {
       "PORT": "4100",
       "HOST": "0.0.0.0",
@@ -38,7 +38,8 @@
       "timeout": "5s",
       "retries": 5,
       "startPeriod": "30s"
-    }
+    },
+    "digest": "sha256:b71815688e8179e70b844aad31dc967698792af30cd5fd53f80a2b56c22d6ed1"
   },
   "volumes": [
     {
