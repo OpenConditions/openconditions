@@ -1,6 +1,10 @@
 import { readFile } from "node:fs/promises";
 import { runMigrations } from "@openconditions/core/server";
-import { createTestDatabase } from "@openconditions/test-database";
+import {
+  createTestDatabase,
+  createTestRole,
+  type TestDatabase,
+} from "@openconditions/test-database";
 import { expect, it } from "vitest";
 
 const folder = new URL("../../../../packages/core/drizzle/", import.meta.url);
@@ -28,10 +32,72 @@ it("serializes bootstrap and migrations on a fresh database", async () => {
     await Promise.all(Array.from({ length: 3 }, () => runMigrations(fresh.url)));
     const entries = await journalLength();
     const [count] =
-      await fresh.sql`SELECT count(*)::int AS n, count(DISTINCT created_at)::int AS distinct_n FROM drizzle.__drizzle_migrations_oc`;
+      await fresh.sql`SELECT count(*)::int AS n, count(DISTINCT created_at)::int AS distinct_n FROM conditions.__drizzle_migrations`;
     expect(count).toEqual({ n: entries, distinct_n: entries });
   } finally {
     await fresh.close();
+  }
+}, 120_000);
+
+/** The tables of the `conditions` schema, partitions included. */
+async function conditionsTables(db: TestDatabase): Promise<string[]> {
+  const rows = await db.sql<{ name: string }[]>`
+    SELECT relname AS name FROM pg_class
+    WHERE relnamespace = 'conditions'::regnamespace AND relkind IN ('r', 'p') ORDER BY 1`;
+  return rows.map((r) => r.name);
+}
+
+it("migrates as a role that owns only conditions, and keeps the history there", async () => {
+  const db = await createTestDatabase({ empty: true });
+  const ingest = await createTestRole(db);
+  try {
+    // As OpenMapX's database comes: PostGIS created by the superuser, and
+    // another Drizzle project's history schema this role has no access to.
+    await db.sql`CREATE EXTENSION postgis`;
+    await db.sql`CREATE SCHEMA drizzle`;
+    const [database] = await db.sql<{ name: string }[]>`SELECT current_database() AS name`;
+    await db.sql.unsafe(`GRANT CREATE ON DATABASE "${database!.name}" TO "${ingest.name}"`);
+
+    await runMigrations(ingest.url);
+
+    expect(
+      await db.sql`SELECT nspname AS schema, pg_get_userbyid(nspowner) AS owner FROM pg_namespace
+        WHERE nspname IN ('conditions', 'drizzle') ORDER BY 1`,
+    ).toEqual([
+      { schema: "conditions", owner: ingest.name },
+      { schema: "drizzle", owner: "oc" },
+    ]);
+    expect(
+      await db.sql`SELECT count(*)::int AS n FROM pg_class
+      WHERE relnamespace = 'drizzle'::regnamespace`,
+    ).toEqual([{ n: 0 }]);
+    expect(
+      await db.sql`SELECT count(*)::int AS n FROM pg_class
+      WHERE relnamespace = 'conditions'::regnamespace
+        AND relowner <> (SELECT oid FROM pg_roles WHERE rolname = ${ingest.name})`,
+    ).toEqual([{ n: 0 }]);
+    expect(await db.sql`SELECT count(*)::int AS n FROM conditions.__drizzle_migrations`).toEqual([
+      { n: await journalLength() },
+    ]);
+  } finally {
+    await db.close();
+    await ingest.drop();
+  }
+}, 120_000);
+
+it("migrating after the conditions schema was dropped recreates every table", async () => {
+  const db = await createTestDatabase();
+  try {
+    const before = await conditionsTables(db);
+    expect(before).toContain("__drizzle_migrations");
+    await db.sql`DROP SCHEMA conditions CASCADE`;
+    await runMigrations(db.url);
+    expect(await conditionsTables(db)).toEqual(before);
+    expect(await db.sql`SELECT count(*)::int AS n FROM conditions.__drizzle_migrations`).toEqual([
+      { n: await journalLength() },
+    ]);
+  } finally {
+    await db.close();
   }
 }, 120_000);
 

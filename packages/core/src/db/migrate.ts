@@ -4,6 +4,10 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";
 
+/** Where the applied migrations are recorded: `conditions.__drizzle_migrations`. */
+export const MIGRATIONS_SCHEMA = "conditions";
+export const MIGRATIONS_TABLE = "__drizzle_migrations";
+
 /**
  * Resolves the drizzle-kit migrations folder relative to the running module,
  * tolerating both layouts this code runs in:
@@ -12,7 +16,7 @@ import postgres from "postgres";
  *  - inlined into a service bundle: the service's build copies `drizzle/` next
  *    to its entry, so `./drizzle` resolves there.
  */
-function resolveMigrationsFolder(): string {
+export function resolveMigrationsFolder(): string {
   const candidates = ["../drizzle", "./drizzle"].map((rel) =>
     fileURLToPath(new URL(rel, import.meta.url)),
   );
@@ -27,10 +31,12 @@ function resolveMigrationsFolder(): string {
  * Applies all pending migrations in `packages/core/drizzle/` (a baseline
  * drizzle-kit generates from the schema code, and a custom file with what it
  * cannot express; see docs/database-migrations.md) to the database. Applied
- * migrations are tracked in `drizzle.__drizzle_migrations_oc` — a dedicated
- * table so an OpenConditions DB shared with another Drizzle project (e.g.
- * OpenMapX in dev) keeps separate histories. Idempotent; safe to run on every
- * service boot.
+ * migrations are tracked in `conditions.__drizzle_migrations`, inside the
+ * schema they describe: the history stays apart from another Drizzle
+ * project's in a shared database (OpenMapX keeps its own in `drizzle`), the
+ * role that owns `conditions` needs no other schema, and dropping `conditions`
+ * drops its history with it. Idempotent. Only the ingest service runs it at
+ * boot; the other services wait for its result with `waitForSchemaVersion`.
  *
  * Takes a connection string (not a client) and opens its own short-lived
  * `max: 1` connection: drizzle's postgres-js driver replaces the client's type
@@ -63,7 +69,8 @@ export async function runMigrations(connectionString: string): Promise<void> {
     await client`CREATE SCHEMA IF NOT EXISTS conditions`;
     await migrate(drizzle(client), {
       migrationsFolder,
-      migrationsTable: "__drizzle_migrations_oc",
+      migrationsSchema: MIGRATIONS_SCHEMA,
+      migrationsTable: MIGRATIONS_TABLE,
     });
   } finally {
     try {

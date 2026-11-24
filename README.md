@@ -110,7 +110,7 @@ services/            deployable services (AGPL-3.0)
   openlr-resolver/   Python/FastAPI OpenLR → geometry map-matcher (dormant)
 ```
 
-The ingest service owns and migrates the `conditions` schema itself, idempotently, on boot.
+The ingest service owns and migrates the `conditions` schema itself, idempotently, on boot. The contributions and federation services apply no migrations: they wait at boot until the schema reaches their version (see [database migrations](docs/database-migrations.md#who-migrates)).
 
 Instances federate their records with each other: the [federation onboarding guide](docs/federation-onboarding.md) covers running and peering an instance, and the [federation wire protocol](docs/federation-protocol.md) specifies what instances exchange.
 

@@ -326,6 +326,7 @@ describe("service manifests on OpenMapX's config model", () => {
     ]);
     const expected = {
       OPENCONDITIONS_INSTANCE_ID: "",
+      OPENCONDITIONS_SCHEMA_WAIT_TIMEOUT_MS: "",
       OPENCONDITIONS_ISSUER_NAME: "",
       OPENCONDITIONS_CROSS_VALIDATE_SWEEP: "",
       OPENCONDITIONS_CROWD_LICENSE: "",
@@ -346,6 +347,7 @@ describe("service manifests on OpenMapX's config model", () => {
     });
     expect(secrets(m)).toEqual(["DATABASE_URL", "OPENCONDITIONS_FEDERATION_CLIENT_KEY"]);
     expect(properties(m)["OPENCONDITIONS_FEDERATION_ENABLED"]?.default).toBe("");
+    expect(properties(m)["OPENCONDITIONS_SCHEMA_WAIT_TIMEOUT_MS"]?.default).toBe("");
   });
 
   test("federation: not in the extension, which would start it on every install unreachable", () => {

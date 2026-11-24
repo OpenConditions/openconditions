@@ -43,4 +43,14 @@ export {
   sensorSegment,
   sourceStatus,
 } from "./schema.js";
+export {
+  type AppliedSchemaVersion,
+  appliedSchemaVersion,
+  DEFAULT_SCHEMA_WAIT_TIMEOUT_MS,
+  expectedSchemaVersion,
+  type SchemaVersion,
+  schemaWaitTimeoutMs,
+  type WaitForSchemaVersionOptions,
+  waitForSchemaVersion,
+} from "./schema-version.js";
 export { oauthGrant, source } from "./source-schema.js";

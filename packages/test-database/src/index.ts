@@ -46,6 +46,40 @@ export interface TestDatabaseOptions {
   empty?: boolean;
 }
 
+/** A login role on the shared server, as a service's own database role. */
+export interface TestRole {
+  name: string;
+  /** The test database's URL, logging in as this role. */
+  url: string;
+  /** Drops the role; close every database it holds objects or grants in first. */
+  drop(): Promise<void>;
+}
+
+/**
+ * A login role with no privileges beyond PUBLIC's, for testing what a
+ * service's own role may do in `database`. Roles belong to the whole server,
+ * so each gets a unique name.
+ */
+export async function createTestRole(database: TestDatabase): Promise<TestRole> {
+  const shared = inject("postgis");
+  if (!shared) throw new Error("No shared PostGIS server: run the integration Vitest project");
+  const name = `r_${randomUUID().replaceAll("-", "")}`;
+  const password = randomUUID().replaceAll("-", "");
+  await administer(shared.adminUrl, (admin) =>
+    admin.unsafe(`CREATE ROLE "${name}" LOGIN PASSWORD '${password}'`),
+  );
+  const url = new URL(database.url);
+  url.username = name;
+  url.password = password;
+  return {
+    name,
+    url: url.toString(),
+    async drop() {
+      await administer(shared.adminUrl, (admin) => admin.unsafe(`DROP ROLE IF EXISTS "${name}"`));
+    },
+  };
+}
+
 async function administer<T>(adminUrl: string, run: (admin: postgres.Sql) => Promise<T>) {
   const admin = postgres(adminUrl, { max: 1, onnotice: () => {} });
   try {

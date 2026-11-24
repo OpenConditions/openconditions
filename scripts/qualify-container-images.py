@@ -98,12 +98,13 @@ def write_json(path, value):
         stream.write("\n")
 
 
-def command(args, *, cwd=None, log=None, check=True, timeout=120):
+def command(args, *, cwd=None, log=None, check=True, timeout=120, stdin=None):
     if args[0] == "git":
         args = ["git", "--no-replace-objects", *args[1:]]
     result = subprocess.run(
         args,
         cwd=cwd,
+        input=stdin,
         text=True,
         stdout=log or subprocess.PIPE,
         stderr=subprocess.STDOUT if log else subprocess.PIPE,
@@ -549,6 +550,32 @@ print(json.dumps({'graphCounts':counts,'match':x,'invalidReferenceStatus':400,'g
 """
 
 
+def ingest_migration_script(source):
+    """The source's migrations, recorded in conditions.__drizzle_migrations as the
+    ingest service's migrator records them (the file's SHA-256 and its journal `when`).
+    The contributions and federation services apply no migrations: they wait at boot
+    until that history reaches their build's latest journal entry."""
+    folder = source / "packages/core/drizzle"
+    journal = decode((folder / "meta/_journal.json").read_bytes())
+    parts = [
+        "CREATE EXTENSION IF NOT EXISTS postgis;",
+        "CREATE SCHEMA IF NOT EXISTS conditions;",
+        "CREATE TABLE IF NOT EXISTS conditions.__drizzle_migrations "
+        "(id SERIAL PRIMARY KEY, hash text NOT NULL, created_at bigint);",
+    ]
+    for entry in journal["entries"]:
+        tag, when = entry["tag"], entry["when"]
+        if not re.fullmatch(r"[0-9]{4}_[a-z0-9_]+", tag) or type(when) is not int:
+            fail("unexpected migrations journal entry")
+        body = (folder / f"{tag}.sql").read_bytes().decode("utf-8")
+        parts.append(body)
+        parts.append(
+            "INSERT INTO conditions.__drizzle_migrations (hash, created_at) "
+            f"VALUES ('{hashlib.sha256(body.encode()).hexdigest()}', {when});"
+        )
+    return "\n".join(parts) + "\n"
+
+
 def runtime_smoke(image, identity, source, output, *, exercise=None):
     label = uuid.uuid4().hex
     network, db, app = [f"oc-image-{label}{suffix}" for suffix in ("", "-db", "-app")]
@@ -653,6 +680,31 @@ def runtime_smoke(image, identity, source, output, *, exercise=None):
         if not re.fullmatch(r"16[0-9]{4}\|3\.[0-9.]+", physical):
             fail("unexpected physical PostGIS version")
         record["physicalPostGIS"] = physical
+        if image in ("contributions-api", "federation"):
+            command(
+                [
+                    "docker",
+                    "exec",
+                    "-i",
+                    "-e",
+                    "PGPASSWORD=fixture",
+                    db,
+                    "psql",
+                    "-h",
+                    "127.0.0.1",
+                    "-U",
+                    "fixture",
+                    "-d",
+                    "fixture",
+                    "-v",
+                    "ON_ERROR_STOP=1",
+                    "--single-transaction",
+                    "-q",
+                    "-f",
+                    "-",
+                ],
+                stdin=ingest_migration_script(source),
+            )
         env = {
             "DATABASE_URL": f"postgresql://fixture:fixture@{db}:5432/fixture",
             "HOST": "0.0.0.0",
@@ -729,7 +781,7 @@ def runtime_smoke(image, identity, source, output, *, exercise=None):
                 ).stdout.strip()
             )
             if tables < 10:
-                fail("bundled migrations were not applied")
+                fail("migrations were not applied")
             record["checks"]["migratedTables"] = tables
             if image == "ingest":
                 record["checks"]["osmiumVersion"] = command(

@@ -73,6 +73,13 @@
         "default": "",
         "x-openmapx-secret": false
       },
+      "OPENCONDITIONS_SCHEMA_WAIT_TIMEOUT_MS": {
+        "type": "string",
+        "title": "Schema wait timeout (ms)",
+        "description": "The ingest service migrates the database; this service waits at start until the schema is at its version or newer, and stops with what it expected and found after this long. Empty: 300000.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
       "OPENCONDITIONS_FEDERATION_ACTOR": {
         "type": "string",
         "title": "Actor config",

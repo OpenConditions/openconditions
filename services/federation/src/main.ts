@@ -1,10 +1,15 @@
 /**
- * Boot entry for the federation service: applies migrations, opens the
- * shared postgres pool, builds the Fastify app, and listens. Tests import
- * build() from server.ts instead of running this file.
+ * Boot entry for the federation service: takes the single-process lock, opens
+ * the shared postgres pool, waits until the ingest service has migrated the
+ * database to this build's schema version, builds the Fastify app, and
+ * listens. Tests import build() from server.ts instead of running this file.
  */
 
-import { assertStoredCodesRegistered, runMigrations } from "@openconditions/core/server";
+import {
+  assertStoredCodesRegistered,
+  schemaWaitTimeoutMs,
+  waitForSchemaVersion,
+} from "@openconditions/core/server";
 import {
   advanceJournalSeenXid,
   createInMemoryRateLimiter,
@@ -83,9 +88,8 @@ const EXPIRY_CYCLE_MS = 60 * 60 * 1000;
 
 async function boot() {
   const url = requireCredential(process.env, "DATABASE_URL");
-  console.info("[federation-api] applying database migrations…");
-  await runMigrations(url);
-  console.info("[federation-api] migrations applied");
+  // A malformed timeout fails boot before the database is read.
+  const schemaWaitMs = schemaWaitTimeoutMs(process.env, "OPENCONDITIONS_SCHEMA_WAIT_TIMEOUT_MS");
 
   let waiting = false;
   const lock = await holdProcessLock(url, {
@@ -113,6 +117,15 @@ async function boot() {
       idle_in_transaction_session_timeout: 60_000,
     },
   });
+  // The ingest service migrates; this service only reads the version it reached.
+  await waitForSchemaVersion(sql, {
+    timeoutMs: schemaWaitMs,
+    onWait: (found, expected) =>
+      console.info(
+        `[federation-api] waiting for the ingest service to migrate the database to ${expected.tag}: ${found}`,
+      ),
+  });
+  console.info("[federation-api] database schema is at this build's version");
   await assertStoredCodesRegistered(sql, productionRegistry(), { sourceFormats: false });
   const settings = resolveFederationSettings(process.env);
   if (settings.enabled) {

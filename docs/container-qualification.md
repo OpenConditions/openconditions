@@ -22,8 +22,10 @@ published, no operator database or credentials are used, and provider egress is 
 grant/reviewer credentials are freshly generated. Database readiness uses a real TCP query to the
 fixture database, rather than accepting the image's temporary bootstrap server.
 
-- Every Node service applies its bundled migrations, returns its status document and exercises native
-  WebCrypto. Federation's default-disabled status is recorded; this does not prove enabled peer or
+- Ingest applies its bundled migrations. For contributions-api and federation, which apply none and
+  wait at boot for the schema version, the script first applies the source's migrations to the
+  fixture database and records them as the ingest service does. Every Node service returns its status
+  document and exercises native WebCrypto. Federation's default-disabled status is recorded; this does not prove enabled peer or
   public-host behavior. Independent federation interoperability remains a separate CI gate.
 - Ingest additionally exercises its compiled osmium binary on a real OSM fixture, verifies baked feed
   credentials and migration metadata, and makes an Impit native request to its own health endpoint.

@@ -1,10 +1,15 @@
 /**
- * Boot entry for the contributions service: applies migrations, opens the
- * shared postgres pool, builds the Fastify app, and listens. Tests import
- * build() from server.ts instead of running this file.
+ * Boot entry for the contributions service: opens the shared postgres pool,
+ * waits until the ingest service has migrated the database to this build's
+ * schema version, builds the Fastify app, and listens. Tests import build()
+ * from server.ts instead of running this file.
  */
 
-import { assertStoredCodesRegistered, runMigrations } from "@openconditions/core/server";
+import {
+  assertStoredCodesRegistered,
+  schemaWaitTimeoutMs,
+  waitForSchemaVersion,
+} from "@openconditions/core/server";
 import { requireCredential } from "@openconditions/ingest-framework";
 import { productionRegistry } from "@openconditions/model-registry";
 import postgres from "postgres";
@@ -30,9 +35,8 @@ const CROSS_VALIDATE_SWEEP_MS = 3 * 60_000;
 
 async function boot() {
   const url = requireCredential(process.env, "DATABASE_URL");
-  console.info("[contributions-api] applying database migrations…");
-  await runMigrations(url);
-  console.info("[contributions-api] migrations applied");
+  // A malformed timeout fails boot before the database is read.
+  const schemaWaitMs = schemaWaitTimeoutMs(process.env, "OPENCONDITIONS_SCHEMA_WAIT_TIMEOUT_MS");
 
   // Requests and short sweeps only: a statement past 30 s or a lock wait past
   // 10 s fails rather than holding one of the five connections. Startup
@@ -48,6 +52,15 @@ async function boot() {
       idle_in_transaction_session_timeout: 60_000,
     },
   });
+  // The ingest service migrates; this service only reads the version it reached.
+  await waitForSchemaVersion(sql, {
+    timeoutMs: schemaWaitMs,
+    onWait: (found, expected) =>
+      console.info(
+        `[contributions-api] waiting for the ingest service to migrate the database to ${expected.tag}: ${found}`,
+      ),
+  });
+  console.info("[contributions-api] database schema is at this build's version");
   const registry = productionRegistry();
   await assertStoredCodesRegistered(sql, registry, { sourceFormats: false });
   const app = await build({ sql, registry });
