@@ -90,8 +90,23 @@ const EXPIRY_CYCLE_MS = 60 * 60 * 1000;
 
 async function boot() {
   const url = requireCredential(process.env, "DATABASE_URL");
-  // A malformed timeout fails boot before the database is read.
+  // A malformed timeout, and with federation enabled a missing or malformed
+  // secrets key or actor, fails boot before the database is read.
   const schemaWaitMs = schemaWaitTimeoutMs(process.env, "OPENCONDITIONS_SCHEMA_WAIT_TIMEOUT_MS");
+  const settings = resolveFederationSettings(process.env);
+  if (settings.enabled) {
+    // The actor says which protocol versions it speaks; peers negotiate on
+    // what it says, so one that leaves out the version this build speaks is
+    // worth a warning, though not a failed boot.
+    const { protocolVersion, protocolVersions } = settings.actor!.capabilities;
+    const offered = new Set([protocolVersion, ...(protocolVersions ?? [])]);
+    if (!offered.has(FEDERATION_PROTOCOL_VERSION)) {
+      console.warn(
+        `[federation-api] the actor offers protocol ${[...offered].join(", ")}, ` +
+          `not ${FEDERATION_PROTOCOL_VERSION}, the version this build speaks`,
+      );
+    }
+  }
 
   let waiting = false;
   const lock = await holdProcessLock(url, {
@@ -129,20 +144,6 @@ async function boot() {
   });
   console.info("[federation-api] database schema is at this build's version");
   await assertStoredCodesRegistered(sql, productionRegistry(), { sourceFormats: false });
-  const settings = resolveFederationSettings(process.env);
-  if (settings.enabled) {
-    // The actor says which protocol versions it speaks; peers negotiate on
-    // what it says, so one that leaves out the version this build speaks is
-    // worth a warning, though not a failed boot.
-    const { protocolVersion, protocolVersions } = settings.actor!.capabilities;
-    const offered = new Set([protocolVersion, ...(protocolVersions ?? [])]);
-    if (!offered.has(FEDERATION_PROTOCOL_VERSION)) {
-      console.warn(
-        `[federation-api] the actor offers protocol ${[...offered].join(", ")}, ` +
-          `not ${FEDERATION_PROTOCOL_VERSION}, the version this build speaks`,
-      );
-    }
-  }
 
   // The journal must belong to the database's current history before anything
   // reads or seeds it: after a restore, a timeline change or the operator's
