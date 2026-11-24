@@ -55,6 +55,7 @@ import { TokenVerifier } from "./issuer/verify.js";
 import { ClaimRefusedError, GeometryInvalidError, landReport } from "./landing/land.js";
 import { ConflictingReportError, landObservationReport } from "./landing/observation.js";
 import { isPoliceCategoryEnabled, isPoliceClaim } from "./policy/police.js";
+import { isRelayed, RELAY_BUCKET, resolveRelayTrust } from "./relay.js";
 import { makeRequireReviewer, resolveReviewerToken } from "./reviewer/auth.js";
 import { blockKey, listBlocked, unblockKey } from "./reviewer/blocklist.js";
 import { acceptSituation, rejectSituation } from "./reviewer/decide.js";
@@ -159,7 +160,7 @@ interface SubClaimBody {
 
 const SUB_CLAIM_ACTIONS = new Set(["confirm", "negate", "flag"]);
 
-/** Minimal per-IP token bucket for the enrollment endpoint. */
+/** Minimal keyed token bucket for the enrollment endpoint: per address, or the relay's. */
 class EnrollLimiter {
   private readonly buckets = new Map<string, { tokens: number; lastRefill: number }>();
 
@@ -168,16 +169,16 @@ class EnrollLimiter {
     private readonly windowMs: number,
   ) {}
 
-  allow(ip: string, nowMs: number): boolean {
+  allow(key: string, nowMs: number): boolean {
     if (this.buckets.size > 10_000) {
-      for (const [key, stale] of this.buckets) {
-        if (nowMs - stale.lastRefill > this.windowMs * 2) this.buckets.delete(key);
+      for (const [stored, stale] of this.buckets) {
+        if (nowMs - stale.lastRefill > this.windowMs * 2) this.buckets.delete(stored);
       }
     }
-    let bucket = this.buckets.get(ip);
+    let bucket = this.buckets.get(key);
     if (bucket === undefined) {
       bucket = { tokens: this.max, lastRefill: nowMs };
-      this.buckets.set(ip, bucket);
+      this.buckets.set(key, bucket);
     }
     const elapsed = nowMs - bucket.lastRefill;
     bucket.tokens = Math.min(this.max, bucket.tokens + (elapsed / this.windowMs) * this.max);
@@ -224,6 +225,8 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
   // production exactly like the grant secret.
   const reviewerToken = resolveReviewerToken(env, (msg) => attesterLog.warn(msg));
   const requireReviewer = makeRequireReviewer(reviewerToken);
+  // A set but short relay token, or a malformed relay limit, fails boot.
+  const relay = resolveRelayTrust(env);
 
   // A key other than the one the ingest service sealed the check row with,
   // or an instance id other than the sealed one, stops the boot; then every
@@ -241,14 +244,22 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
   const verifier = new TokenVerifier({ issuerName, log: originLog });
   app.decorate("tokenVerifier", verifier);
 
+  // The only address-keyed limit: a relayed request is counted in the relay's
+  // bucket, since the relay forwards no client address (see relay.ts).
   const enrollLimiter = new EnrollLimiter(ATTESTER_POLICY.enrollRateLimitPerMinute, 60_000);
+  const relayEnrollLimiter =
+    relay === undefined ? undefined : new EnrollLimiter(relay.enrollLimitPerMinute, 60_000);
 
   app.get("/status", async (_req, reply) => {
     return reply.send({ status: "ok", service: "openconditions-contributions-api" });
   });
 
   app.post<{ Body: EnrollBody }>("/contrib/enroll", async (req, reply) => {
-    if (!enrollLimiter.allow(req.ip, Date.now())) {
+    const allowed =
+      relayEnrollLimiter !== undefined && isRelayed(req, relay)
+        ? relayEnrollLimiter.allow(RELAY_BUCKET, Date.now())
+        : enrollLimiter.allow(req.ip, Date.now());
+    if (!allowed) {
       return reply.status(429).send({ error: "Too many enrollment attempts" });
     }
     const { pubJwk, proof } = req.body ?? {};

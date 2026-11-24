@@ -194,7 +194,7 @@ describe("service manifests on OpenMapX's config model", () => {
    * contributions API fetches nothing through the egress guard or the
    * downloader, writes single records rather than a feed's poll, and runs no
    * rollups. The federation service bundles the contributions API for its
-   * inbox only: it issues no grants, serves no reviewer, lands no crowd
+   * inbox only: it issues no grants, serves no reviewer, trusts no relay, lands no crowd
    * report of its own and runs no sweep, and downloads no feed.
    */
   const unreached: Record<string, readonly string[]> = {
@@ -227,6 +227,8 @@ describe("service manifests on OpenMapX's config model", () => {
       "OPENCONDITIONS_LATEST_CACHE_MB",
       "OPENCONDITIONS_MAX_FEED_BYTES",
       "OPENCONDITIONS_MAX_OBSERVATIONS_PER_POLL",
+      "OPENCONDITIONS_RELAY_ENROLL_LIMIT_PER_MINUTE",
+      "OPENCONDITIONS_RELAY_TOKEN",
       "OPENCONDITIONS_REVIEWER_TOKEN",
       "OPENCONDITIONS_ROLLUP_DAILY_DAYS",
       "OPENCONDITIONS_ROLLUP_HOURLY_DAYS",
@@ -339,17 +341,19 @@ describe("service manifests on OpenMapX's config model", () => {
     }
   });
 
-  test("contributions-api: its database URL, secrets key, grant secret and reviewer token are vault secrets", () => {
+  test("contributions-api: its database URL, secrets key, grant secret, reviewer token and relay token are vault secrets", () => {
     const m = manifest("contributions-api");
     expect(m.container.environment).toEqual({ PORT: "4200", HOST: "0.0.0.0" });
     expect(secrets(m).sort()).toEqual([
       "DATABASE_URL",
       "OPENCONDITIONS_GRANT_SECRET",
+      "OPENCONDITIONS_RELAY_TOKEN",
       "OPENCONDITIONS_REVIEWER_TOKEN",
       "OPENCONDITIONS_SECRETS_KEY",
     ]);
     const expected = {
       OPENCONDITIONS_INSTANCE_ID: "",
+      OPENCONDITIONS_RELAY_ENROLL_LIMIT_PER_MINUTE: "",
       OPENCONDITIONS_SCHEMA_WAIT_TIMEOUT_MS: "",
       OPENCONDITIONS_ISSUER_NAME: "",
       OPENCONDITIONS_CROSS_VALIDATE_SWEEP: "",

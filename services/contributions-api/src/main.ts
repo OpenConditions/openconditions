@@ -24,6 +24,7 @@ import {
   sweepCrossValidateObservations,
   sweepFederatedCrossValidate,
 } from "./evidence/crossValidateSweep.js";
+import { resolveRelayTrust } from "./relay.js";
 import { build } from "./server.js";
 
 const PORT = parseInt(process.env["PORT"] || "4200", 10);
@@ -44,6 +45,7 @@ async function boot() {
   const schemaWaitMs = schemaWaitTimeoutMs(process.env, "OPENCONDITIONS_SCHEMA_WAIT_TIMEOUT_MS");
   const secretsKey = secretsKeyFromEnv(process.env);
   const instanceId = resolveInstanceId(process.env);
+  resolveRelayTrust(process.env);
 
   // Requests and short sweeps only: a statement past 30 s or a lock wait past
   // 10 s fails rather than holding one of the five connections. Startup

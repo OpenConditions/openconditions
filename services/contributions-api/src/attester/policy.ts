@@ -152,7 +152,10 @@ export const ATTESTER_POLICY = {
   /** Cohort prior for a brand-new reporter's Beta reliability posterior. */
   cohortPriorAlpha: 2,
   cohortPriorBeta: 2,
-  /** Enrollment endpoint rate limit, per client IP. */
+  /**
+   * Enrollment endpoint rate limit, per client IP. Requests bearing the relay
+   * token share the relay's own limit instead (see relay.ts).
+   */
   enrollRateLimitPerMinute: 10,
   /** Additive trustSignal weights (clamped to [0, 1] after summing). */
   trust: {
