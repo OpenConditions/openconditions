@@ -520,9 +520,10 @@ export async function readSeries(
   if (series.retention_days === null || entry.retention?.latestOnly) {
     return { status: "no_history", property: entry.code };
   }
+  const now = q.now ?? new Date();
   const resolution = seriesResolution(entry, {
     from: q.from,
-    now: q.now ?? new Date(),
+    now,
     ...(q.resolution !== undefined ? { requested: q.resolution } : {}),
   });
   if (resolution === undefined) return { status: "no_rollup", property: entry.code };
@@ -541,6 +542,14 @@ export async function readSeries(
   const to = q.to.toISOString();
   if (resolution === "raw") {
     const [start, issued] = q.cursor === undefined ? [] : q.cursor.split("|");
+    // A reading is served while it is inside the property's current raw
+    // retention. Each reading stays in the partition of the class it was
+    // written under, which drops it when that class's days are over, so after
+    // a retention change one may still be stored past the current window:
+    // it is not served. A reading of another class inside the window is.
+    const rawDays = entry.retention?.rawDays ?? 0;
+    const retainedFrom = rawDays > 0 ? now.getTime() - rawDays * DAY_MS : -Infinity;
+    const rawFrom = retainedFrom > q.from.getTime() ? new Date(retainedFrom).toISOString() : from;
     // The cursor binds as text: a client serialising a timestamptz parameter
     // through a Date cannot carry the `-infinity` of a reading that is no forecast.
     const rows = await db.execute<
@@ -548,31 +557,18 @@ export async function readSeries(
     >(
       `SELECT o.*, a.payload_hashes, receipt.provenance AS captured_provenance,
               (SELECT min(n.phenomenon_start) FROM conditions.observation n
-                WHERE n.series_id = o.series_id AND n.retention_days = o.retention_days
-                  AND n.phenomenon_start > o.phenomenon_start)
+                WHERE n.series_id = o.series_id AND n.phenomenon_start > o.phenomenon_start)
                 AS superseded_at
          FROM conditions.observation o
          LEFT JOIN conditions.source_poll_attempt a ON a.id = o.fetch_id
          LEFT JOIN conditions.contributor_receipt receipt
            ON receipt.id = o.extra #>> '{provenance,creditReceiptId}' AND receipt.version = ${CONTRIBUTOR_RECEIPT_VERSION}
-        WHERE o.series_id = $1 AND o.retention_days = $7
-          AND o.phenomenon_start >= $2 AND o.phenomenon_start < $3
+        WHERE o.series_id = $1 AND o.phenomenon_start >= $2 AND o.phenomenon_start < $3
           AND ($4::text IS NULL
             OR (o.phenomenon_start, o.issued_at) > ($4::text::timestamptz, $5::text::timestamptz))
         ORDER BY o.phenomenon_start, o.issued_at
         LIMIT $6`,
-      // The series' retention class names the one partition its history is
-      // in; a reading stored under a class the property no longer keeps is
-      // past the series' retention and left to that partition's own.
-      [
-        series.series_id,
-        from,
-        to,
-        start ?? null,
-        issued ?? null,
-        q.limit + 1,
-        series.retention_days,
-      ],
+      [series.series_id, rawFrom, to, start ?? null, issued ?? null, q.limit + 1],
     );
     const page = rows.slice(0, q.limit);
     // A polled feed's change-only reading held until the next change; the
