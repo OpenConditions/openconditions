@@ -1,7 +1,8 @@
 -- What drizzle-kit cannot express: the partitioned observation history, the
--- storage settings of the latest readings, functions, triggers and the
--- federation journal's first epoch. Everything drizzle-kit can express is
--- declared in the schema code and generated into the baseline.
+-- storage settings of the latest readings, functions, triggers, the
+-- federation journal's first epoch and the grants to the roles of OpenMapX's
+-- traffic tile and the contributions service. Everything drizzle-kit can
+-- express is declared in the schema code and generated into the baseline.
 --
 -- The compact observation history: one row per reading of a series in
 -- observation_latest, holding only what varies between readings. Partitioned
@@ -519,3 +520,60 @@ CREATE TRIGGER federation_capture AFTER INSERT OR UPDATE ON "conditions"."observ
 -- federation service once it can read it.
 INSERT INTO "conditions"."federation_journal" (epoch, started_at, seen_xid, timeline_id)
 VALUES (gen_random_uuid(), now(), pg_snapshot_xmax(pg_current_snapshot()), NULL);
+--> statement-breakpoint
+-- OpenMapX's traffic tile runs as openmapx_tiles_owner, a role OpenMapX
+-- creates that cannot log in. It reads exactly what conditions.segment_flow
+-- reads, so credentials, crowd data and everything else stay unreadable to
+-- it. Grants go to roles that exist when this migration runs: OpenMapX and
+-- the operator create them before the ingest service first starts.
+DO $$
+BEGIN
+  IF EXISTS (SELECT FROM pg_roles WHERE rolname = 'openmapx_tiles_owner') THEN
+    GRANT USAGE ON SCHEMA "conditions" TO openmapx_tiles_owner;
+    GRANT SELECT ON "conditions"."road_segment", "conditions"."segment_speed",
+      "conditions"."source", "conditions"."public_license_policy" TO openmapx_tiles_owner;
+    GRANT EXECUTE ON FUNCTION "conditions".segment_flow(integer, integer, integer, json),
+      "conditions".flow_public_licenses(text[]), "conditions".flow_osm_credit()
+      TO openmapx_tiles_owner;
+  END IF;
+END
+$$;
+--> statement-breakpoint
+-- The contributions service's own role gets what its queries use. It reads
+-- the migration history to wait for the schema version, and the stored codes
+-- at start. It keeps the crowd's reporters, block list, reports, votes and
+-- evidence, the issuer's keys and the tokens it issues and redeems. A report
+-- lands as a situation, with its effects, revision and graph binding, or as a
+-- latest reading of a feed's feature; its evidence refreshes the fused
+-- readings, and a cross-check reads the feeds' readings and their history.
+-- Its writes to situations and latest readings also run the federation
+-- capture triggers, which read the subscriptions and journal into the outbox.
+-- Crowd readings keep no history (every crowd-reported property keeps its
+-- latest reading only), and crowd records carry no relations.
+DO $$
+BEGIN
+  IF EXISTS (SELECT FROM pg_roles WHERE rolname = 'openconditions_contributions') THEN
+    GRANT USAGE ON SCHEMA "conditions" TO openconditions_contributions;
+    GRANT SELECT ON "conditions"."__drizzle_migrations", "conditions"."source",
+      "conditions"."feature", "conditions"."feature_component", "conditions"."offer",
+      "conditions"."feature_canonical", "conditions"."observation",
+      "conditions"."observation_rollup_progress", "conditions"."source_status",
+      "conditions"."source_poll_attempt", "conditions"."federation_subscription"
+      TO openconditions_contributions;
+    GRANT INSERT ON "conditions"."situation_revision" TO openconditions_contributions;
+    GRANT SELECT, INSERT ON "conditions"."issuer_key", "conditions"."spent_token",
+      "conditions"."report_evidence", "conditions"."sub_claim", "conditions"."contributor_receipt",
+      "conditions"."federation_outbox" TO openconditions_contributions;
+    GRANT SELECT, DELETE ON "conditions"."record_relation" TO openconditions_contributions;
+    GRANT SELECT, INSERT, DELETE ON "conditions"."report_refusal", "conditions"."situation_effect"
+      TO openconditions_contributions;
+    GRANT SELECT, INSERT, UPDATE ON "conditions"."reporter", "conditions"."token_quota",
+      "conditions"."situation", "conditions"."binding_queue" TO openconditions_contributions;
+    GRANT SELECT, INSERT, UPDATE, DELETE ON "conditions"."block_list",
+      "conditions"."observation_latest" TO openconditions_contributions;
+    GRANT USAGE ON SEQUENCE "conditions"."report_evidence_id_seq",
+      "conditions"."report_refusal_id_seq", "conditions"."observation_latest_series_id_seq",
+      "conditions"."federation_outbox_seq_seq" TO openconditions_contributions;
+  END IF;
+END
+$$;

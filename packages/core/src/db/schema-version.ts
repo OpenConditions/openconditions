@@ -83,7 +83,11 @@ export interface WaitForSchemaVersionOptions {
   timeoutMs: number;
   /** How often to read the history while waiting; 2 s. */
   pollMs?: number;
-  /** Called once, when the first read finds the schema behind, with what it found. */
+  /**
+   * Called with what a read found while the schema is behind: at the first
+   * such read, and again whenever a read finds something else, such as a
+   * history that now exists but which this role may not read.
+   */
   onWait?: (found: string, expected: SchemaVersion) => void;
   /** The migrations folder whose journal names the expected version; the bundled one. */
   migrationsFolder?: string;
@@ -105,7 +109,7 @@ export async function waitForSchemaVersion(
   const expected = expectedSchemaVersion(options.migrationsFolder);
   const pollMs = options.pollMs ?? DEFAULT_POLL_MS;
   const deadline = Date.now() + options.timeoutMs;
-  let told = false;
+  let told: string | undefined;
   for (;;) {
     const found = await appliedSchemaVersion(sql);
     if (found.state === "applied" && found.when >= expected.when) return;
@@ -118,9 +122,10 @@ export async function waitForSchemaVersion(
           "this release or a newer one and that its migration succeeded",
       );
     }
-    if (!told) {
-      options.onWait?.(describe(found), expected);
-      told = true;
+    const seen = describe(found);
+    if (seen !== told) {
+      options.onWait?.(seen, expected);
+      told = seen;
     }
     await sleep(Math.min(pollMs, left));
   }

@@ -80,6 +80,39 @@ export async function createTestRole(database: TestDatabase): Promise<TestRole> 
   };
 }
 
+/**
+ * The roles the custom migration grants to by name: the one OpenMapX's
+ * traffic tile function runs as, which cannot log in, and the contributions
+ * service's login.
+ */
+export const TILES_OWNER_ROLE = "openmapx_tiles_owner";
+export const CONTRIBUTIONS_ROLE = "openconditions_contributions";
+/** The contributions role's password on the throwaway test server. */
+const CONTRIBUTIONS_PASSWORD = "contributions";
+
+/**
+ * Creates the roles the custom migration grants to, as an operator creates
+ * them. The global setup calls it once, after migrating the template, so a
+ * clone of the template holds no grants to them; a suite that tests the
+ * grants migrates an empty database.
+ */
+export async function createGranteeRoles(adminUrl: string): Promise<void> {
+  await administer(adminUrl, (admin) =>
+    admin.unsafe(`
+      CREATE ROLE ${TILES_OWNER_ROLE} NOLOGIN NOINHERIT;
+      CREATE ROLE ${CONTRIBUTIONS_ROLE} LOGIN PASSWORD '${CONTRIBUTIONS_PASSWORD}';
+    `),
+  );
+}
+
+/** `database`'s URL, logging in as the contributions service's role. */
+export function contributionsRoleUrl(database: TestDatabase): string {
+  const url = new URL(database.url);
+  url.username = CONTRIBUTIONS_ROLE;
+  url.password = CONTRIBUTIONS_PASSWORD;
+  return url.toString();
+}
+
 async function administer<T>(adminUrl: string, run: (admin: postgres.Sql) => Promise<T>) {
   const admin = postgres(adminUrl, { max: 1, onnotice: () => {} });
   try {

@@ -568,7 +568,12 @@ def ingest_migration_script(source):
         if not re.fullmatch(r"[0-9]{4}_[a-z0-9_]+", tag) or type(when) is not int:
             fail("unexpected migrations journal entry")
         body = (folder / f"{tag}.sql").read_bytes().decode("utf-8")
-        parts.append(body)
+        # drizzle runs each breakpoint chunk as its own query, so a chunk may
+        # end without a semicolon; psql reads one script, which needs it.
+        for chunk in body.split("--> statement-breakpoint"):
+            statement = chunk.strip()
+            if statement:
+                parts.append(statement if statement.endswith(";") else f"{statement}\n;")
         parts.append(
             "INSERT INTO conditions.__drizzle_migrations (hash, created_at) "
             f"VALUES ('{hashlib.sha256(body.encode()).hexdigest()}', {when});"
@@ -654,7 +659,7 @@ def runtime_smoke(image, identity, source, output, *, exercise=None):
                 POSTGIS,
             ]
         )
-        sql = [
+        psql = [
             "docker",
             "exec",
             "-e",
@@ -667,8 +672,8 @@ def runtime_smoke(image, identity, source, output, *, exercise=None):
             "fixture",
             "-d",
             "fixture",
-            "-Atqc",
         ]
+        sql = [*psql, "-Atqc"]
         deadline = time.monotonic() + 120
         while command([*sql, "select 1"], check=False).returncode:
             if time.monotonic() > deadline:
@@ -683,19 +688,9 @@ def runtime_smoke(image, identity, source, output, *, exercise=None):
         if image in ("contributions-api", "federation"):
             command(
                 [
-                    "docker",
-                    "exec",
+                    *psql[:2],
                     "-i",
-                    "-e",
-                    "PGPASSWORD=fixture",
-                    db,
-                    "psql",
-                    "-h",
-                    "127.0.0.1",
-                    "-U",
-                    "fixture",
-                    "-d",
-                    "fixture",
+                    *psql[2:],
                     "-v",
                     "ON_ERROR_STOP=1",
                     "--single-transaction",
