@@ -161,15 +161,19 @@ nothing journalled to correct, so it is taken as in sync with its flag.
 
 The sweep, every five minutes, takes these actions:
 
-| What                                                                | Action                                                        |
-| ------------------------------------------------------------------- | ------------------------------------------------------------- |
-| A record whose `freshness.expiresAt` has passed                     | Tombstoned `expired`                                          |
-| A feed record of a source with no successful poll for an hour       | Tombstoned `expired`                                          |
-| A peer's copy without expiry, its peer silent about its source      | Tombstoned `expired`, back when the peer's liveness returns   |
-| A record tombstoned more than `OPENCONDITIONS_HISTORY_DAYS` (7) ago | Purged with its revisions, bindings, crowd evidence and votes |
-| A revision recorded more than `OPENCONDITIONS_HISTORY_DAYS` ago     | Deleted, unless it is its record's latest                     |
-| An on-demand row at expiry                                          | Deleted (it was a cache, with no history)                     |
-| A series of a transient property past its reading's expiry          | Deleted, bulk or on demand (nothing else ends it)             |
+| What                                                                               | Action                                                                                 |
+| ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| A record whose `freshness.expiresAt` has passed                                    | Tombstoned `expired`                                                                   |
+| A feed record of a source with no successful poll for an hour                      | Tombstoned `expired`                                                                   |
+| A peer's copy without expiry, its peer silent about its source                     | Tombstoned `expired`, back when the peer's liveness returns                            |
+| A record tombstoned more than `OPENCONDITIONS_HISTORY_DAYS` (7) ago                | Purged with its revisions, bindings, crowd evidence and votes                          |
+| A revision recorded more than `OPENCONDITIONS_HISTORY_DAYS` ago                    | Deleted, unless it is its record's latest                                              |
+| An on-demand row at expiry                                                         | Deleted (it was a cache, with no history)                                              |
+| A series of a transient property past its reading's expiry                         | Deleted, bulk or on demand (nothing else ends it)                                      |
+| A crowd reporter whose last enrollment and entitlement end lie over 12 months back | Deleted, with its votes, refusals and token quotas; its evidence stays without its key |
+| A token quota of a UTC day that has ended                                          | Deleted                                                                                |
+| A spent token past its issuer key's validity                                       | Deleted (the token can no longer be redeemed)                                          |
+| A federation erasure fact past its 30 days                                         | Deleted                                                                                |
 
 A peer's copy without an expiry of its own lives as long as its peer says so,
 so a peer that goes dark would leave it live here for good. Only for a peer
@@ -188,6 +192,8 @@ A declared validity end is never a tombstone reason: a source that still
 publishes an ended record keeps it, and reads filter by time. A source whose
 lock stays held past the sweep's `lock_timeout` (a long publication) is left
 to the next sweep and counted as `busy`.
+
+The crowd and federation bookkeeping is deleted in batches of 500 rows, one transaction each, so the sweep never holds a long lock on it. A row another transaction holds, such as a reporter enrolling at that moment, is skipped and left to the next sweep. A reporter's `last_active_at` and `entitlement_expires_at` are both required, and both must lie more than 12 months back. Enrolling again after the deletion starts a new reporter with the cohort's prior reputation; a key on the block list stays blocked, since the block list is kept.
 
 ## Observations
 

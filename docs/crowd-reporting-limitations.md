@@ -93,6 +93,7 @@ publication.
 - **Per-record privacy class.** Every crowd record carries the
   `crowd_pseudonym` privacy class; the reporter's key rests in its provenance
   and is stripped at every egress (API, emitters, federation, archive).
+- **Retention.** A reporter row holds the public key, the reputation, the entitlement window and when the reporter last enrolled. It holds no OSM account id and no e-mail address. The ingest service's records sweep deletes a reporter once both its last enrollment and the end of its entitlement lie more than 12 months back. The deletion takes its votes, refusals and token quotas with it and removes its key from the evidence it gave, which stays as keyless evidence. Token quotas are deleted once their UTC day has ended, and spent tokens once their issuer key's validity has ended. Deleting a reporter row by hand (`DELETE FROM conditions.reporter`) has the same effect on these tables. The reporter's key also rests in the provenance of what it reported: a crowd situation keeps it until the situation is purged, `OPENCONDITIONS_HISTORY_DAYS` after it ended, and a crowd reading keeps it in its series' latest reading until a later reading replaces it.
 - **Probe/speed data is a separate, later, gated layer.** Continuous
   speed/flow contribution (with distributed aggregation and differential privacy)
   is out of scope here and is not covered by this page.
