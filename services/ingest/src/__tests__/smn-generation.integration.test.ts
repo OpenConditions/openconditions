@@ -268,7 +268,7 @@ for (const order of [
     const rows = () =>
       db.sql`SELECT id, record FROM conditions.situation WHERE source_id=${feed.id} AND tombstoned_at IS NULL ORDER BY id`;
     const durable = () =>
-      db.sql`SELECT identifier, body, retain_until FROM conditions.smn_cap_message WHERE source_id=${feed.id} ORDER BY identifier`;
+      db.sql`SELECT identifier, body, retain_until FROM conditions.smn_cap_message WHERE source_id=${feed.id} ORDER BY identifier, variant`;
     registerScope(app, "test-operator-token-351-collision");
     registerApiRoutes(app, db.sql, { registry, now: () => new Date(at), catalog: REPO_CATALOG });
     try {
