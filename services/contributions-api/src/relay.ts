@@ -7,9 +7,9 @@
  * application; the relay limits its own clients per address. Without the
  * token configured every request is keyed on its address as before.
  */
-import { createHash, timingSafeEqual } from "node:crypto";
 import { strictCredential } from "@openconditions/ingest-framework";
 import type { FastifyRequest } from "fastify";
+import { bearerToken, constantTimeEquals } from "./bearer.js";
 
 export const RELAY_TOKEN_VARIABLE = "OPENCONDITIONS_RELAY_TOKEN";
 export const RELAY_ENROLL_LIMIT_VARIABLE = "OPENCONDITIONS_RELAY_ENROLL_LIMIT_PER_MINUTE";
@@ -22,6 +22,9 @@ export const DEFAULT_RELAY_ENROLL_LIMIT_PER_MINUTE = 600;
 
 /** The bucket key of relayed requests; an address can never take this form. */
 export const RELAY_BUCKET = "relay";
+
+/** How often a bearer that is not the relay token is reported at most. */
+export const RELAY_WARNING_INTERVAL_MS = 10 * 60_000;
 
 export interface RelayTrust {
   token: string;
@@ -56,20 +59,23 @@ export function resolveRelayTrust(env: Record<string, string | undefined>): Rela
   return { token, enrollLimitPerMinute };
 }
 
-/** Constant-time string equality; hashing first keeps it length-safe. */
-function constantTimeEquals(a: string, b: string): boolean {
-  const ha = createHash("sha256").update(a, "utf8").digest();
-  const hb = createHash("sha256").update(b, "utf8").digest();
-  return timingSafeEqual(ha, hb);
+/**
+ * How a request stands to the configured relay: `relayed` when its bearer is
+ * the relay token (compared in constant time), `other-bearer` when a relay is
+ * configured and the request carries another bearer (a relay whose token
+ * differs from this service's), `none` otherwise.
+ */
+export function relayStatus(
+  req: FastifyRequest,
+  relay: RelayTrust | undefined,
+): "relayed" | "other-bearer" | "none" {
+  if (relay === undefined) return "none";
+  const provided = bearerToken(req);
+  if (constantTimeEquals(provided, relay.token)) return "relayed";
+  return provided === "" ? "none" : "other-bearer";
 }
 
-/** Whether the request's bearer is the relay token, compared in constant time. */
+/** Whether the request's bearer is the relay token. */
 export function isRelayed(req: FastifyRequest, relay: RelayTrust | undefined): boolean {
-  if (relay === undefined) return false;
-  const header = req.headers["authorization"];
-  const provided =
-    typeof header === "string" && header.startsWith("Bearer ")
-      ? header.slice("Bearer ".length)
-      : "";
-  return constantTimeEquals(provided, relay.token);
+  return relayStatus(req, relay) === "relayed";
 }

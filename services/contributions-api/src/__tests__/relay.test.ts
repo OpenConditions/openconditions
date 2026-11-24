@@ -1,6 +1,11 @@
 import type { FastifyRequest } from "fastify";
 import { describe, expect, it } from "vitest";
-import { DEFAULT_RELAY_ENROLL_LIMIT_PER_MINUTE, isRelayed, resolveRelayTrust } from "../relay.js";
+import {
+  DEFAULT_RELAY_ENROLL_LIMIT_PER_MINUTE,
+  isRelayed,
+  relayStatus,
+  resolveRelayTrust,
+} from "../relay.js";
 
 const TOKEN = "r".repeat(32);
 
@@ -57,5 +62,13 @@ describe("isRelayed", () => {
 
   it("is never true without a configured relay", () => {
     expect(isRelayed(request(`Bearer ${TOKEN}`), undefined)).toBe(false);
+  });
+
+  it("tells another bearer apart from none, only when a relay is configured", () => {
+    expect(relayStatus(request(`Bearer ${TOKEN}`), relay)).toBe("relayed");
+    expect(relayStatus(request("Bearer not-the-token"), relay)).toBe("other-bearer");
+    expect(relayStatus(request(), relay)).toBe("none");
+    expect(relayStatus(request("Basic abc"), relay)).toBe("none");
+    expect(relayStatus(request("Bearer not-the-token"), undefined)).toBe("none");
   });
 });

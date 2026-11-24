@@ -34,8 +34,11 @@ afterAll(async () => {
   await db?.close();
 }, 30_000);
 
-async function app(env: Record<string, string>): Promise<FastifyInstance> {
-  const built = await build({ sql: db.sql, env: { ...BASE_ENV, ...env }, logger: false });
+async function app(
+  env: Record<string, string>,
+  logger: Parameters<typeof build>[0]["logger"] = false,
+): Promise<FastifyInstance> {
+  const built = await build({ sql: db.sql, env: { ...BASE_ENV, ...env }, logger });
   apps.push(built);
   return built;
 }
@@ -86,10 +89,29 @@ describe("the enrollment limit behind a relay", () => {
     expect(direct[perAddress]).toBe(429);
   });
 
-  it("keys a wrong bearer on its address", async () => {
-    const server = await app({ OPENCONDITIONS_RELAY_TOKEN: RELAY_TOKEN });
+  it("keys a wrong bearer on its address, and warns once without the token or address", async () => {
+    const lines: string[] = [];
+    const server = await app(
+      { OPENCONDITIONS_RELAY_TOKEN: RELAY_TOKEN },
+      { level: "warn", stream: { write: (line: string) => lines.push(line) } },
+    );
     const codes = await enrollments(server, perAddress + 1, "10.0.0.3", "Bearer not-the-token");
     expect(codes[perAddress]).toBe(429);
+    const warnings = lines.filter((line) => line.includes("other than OPENCONDITIONS_RELAY_TOKEN"));
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).not.toContain("not-the-token");
+    expect(warnings[0]).not.toContain(RELAY_TOKEN);
+    expect(warnings[0]).not.toContain("10.0.0.3");
+  });
+
+  it("does not warn about requests without a bearer", async () => {
+    const lines: string[] = [];
+    const server = await app(
+      { OPENCONDITIONS_RELAY_TOKEN: RELAY_TOKEN },
+      { level: "warn", stream: { write: (line: string) => lines.push(line) } },
+    );
+    await enrollments(server, 2, "10.0.0.4");
+    expect(lines.filter((line) => line.includes("OPENCONDITIONS_RELAY_TOKEN"))).toEqual([]);
   });
 
   it("refuses to build with a set but short relay token", async () => {

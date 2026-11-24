@@ -6,9 +6,9 @@
  * 32-byte digest first, so neither the comparison nor a length check leaks how
  * much of a guess was right).
  */
-import { createHash, timingSafeEqual } from "node:crypto";
 import { strictCredential } from "@openconditions/ingest-framework";
 import type { FastifyReply, FastifyRequest, preHandlerHookHandler } from "fastify";
+import { bearerToken, constantTimeEquals } from "../bearer.js";
 
 /**
  * Resolves the reviewer bearer token from the environment, mirroring the grant
@@ -43,27 +43,6 @@ export function resolveReviewerToken(
     "OPENCONDITIONS_REVIEWER_TOKEN is not set; generated an EPHEMERAL reviewer token — it dies on restart and no operator can know it. Set the env var for anything beyond local development.",
   );
   return ephemeral;
-}
-
-/** Constant-time string equality; hashing first keeps it length-safe. */
-function constantTimeEquals(a: string, b: string): boolean {
-  const ha = createHash("sha256").update(a, "utf8").digest();
-  const hb = createHash("sha256").update(b, "utf8").digest();
-  return timingSafeEqual(ha, hb);
-}
-
-/**
- * Extract a `Bearer <token>` credential from the Authorization header. Returns
- * the empty string when the header is missing or not a bearer scheme, so the
- * caller always feeds a string into the constant-time compare (never short-
- * circuiting on absence).
- */
-function bearerToken(req: FastifyRequest): string {
-  const header = req.headers["authorization"];
-  if (typeof header !== "string" || !header.startsWith("Bearer ")) {
-    return "";
-  }
-  return header.slice("Bearer ".length);
 }
 
 /**

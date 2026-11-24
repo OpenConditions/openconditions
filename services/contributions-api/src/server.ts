@@ -56,7 +56,12 @@ import { TokenVerifier } from "./issuer/verify.js";
 import { ClaimRefusedError, GeometryInvalidError, landReport } from "./landing/land.js";
 import { ConflictingReportError, landObservationReport } from "./landing/observation.js";
 import { isPoliceCategoryEnabled, isPoliceClaim } from "./policy/police.js";
-import { isRelayed, RELAY_BUCKET, resolveRelayTrust } from "./relay.js";
+import {
+  RELAY_BUCKET,
+  RELAY_WARNING_INTERVAL_MS,
+  relayStatus,
+  resolveRelayTrust,
+} from "./relay.js";
 import { makeRequireReviewer, resolveReviewerToken } from "./reviewer/auth.js";
 import { blockKey, listBlocked, unblockKey } from "./reviewer/blocklist.js";
 import { acceptSituation, rejectSituation } from "./reviewer/decide.js";
@@ -265,16 +270,31 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
   const enrollLimiter = new EnrollLimiter(ATTESTER_POLICY.enrollRateLimitPerMinute, 60_000);
   const relayEnrollLimiter =
     relay === undefined ? undefined : new EnrollLimiter(relay.enrollLimitPerMinute, 60_000);
+  // A relay whose token differs from this service's is limited by its own
+  // address, for all its users together; say so, at most every ten minutes,
+  // naming neither token nor address.
+  let lastRelayMismatchWarning = Number.NEGATIVE_INFINITY;
 
   app.get("/status", async (_req, reply) => {
     return reply.send({ status: "ok", service: "openconditions-contributions-api" });
   });
 
   app.post<{ Body: EnrollBody }>("/contrib/enroll", async (req, reply) => {
+    const nowMs = Date.now();
+    const relayed = relayStatus(req, relay);
+    if (
+      relayed === "other-bearer" &&
+      nowMs - lastRelayMismatchWarning >= RELAY_WARNING_INTERVAL_MS
+    ) {
+      lastRelayMismatchWarning = nowMs;
+      attesterLog.warn(
+        "an enrollment carried a bearer token other than OPENCONDITIONS_RELAY_TOKEN and was limited by its address: check that the relay's OPENCONDITIONS_RELAY_TOKEN equals this service's",
+      );
+    }
     const allowed =
-      relayEnrollLimiter !== undefined && isRelayed(req, relay)
-        ? relayEnrollLimiter.allow(RELAY_BUCKET, Date.now())
-        : enrollLimiter.allow(req.ip, Date.now());
+      relayEnrollLimiter !== undefined && relayed === "relayed"
+        ? relayEnrollLimiter.allow(RELAY_BUCKET, nowMs)
+        : enrollLimiter.allow(req.ip, nowMs);
     if (!allowed) {
       return reply.status(429).send({ error: "Too many enrollment attempts" });
     }
