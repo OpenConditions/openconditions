@@ -14,9 +14,9 @@ Compatibility: The resulting schema differs from the one the earlier migrations 
 
 - Secrets: OAuth tokens and the issuer and federation private keys are stored encrypted, checked against the `secrets_key_check` table.
 - Crowd data: the dropped columns and the retention above.
-- Names: every constraint and index is named after its table and columns (`<table>_pkey`, `<table>_<columns>_key`, `<table>_<column>_fkey`, `<table>_<columns>_idx`, `<table>_<what>_check`).
+- Names: every constraint and index is named after its table and columns (`<table>_pkey`, `<table>_<columns>_key`, `<table>_<column>_fkey`, `<table>_<columns>_idx`, `<table>_<what>_check`) or, for partial, collated, expression and over-long indexes, after their purpose; the GeoNet coverage CHECK is now `geonet_coverage_order_check`.
 - Ids and types: the five `bigserial` ids are identity columns, with the same sequence names; `jma_budget.day` is a `date`; `segment_observation.confidence` is `confidence_score`; `smn_cap_message.retrieval` has no default.
-- Checks: closed value sets are checked (level of service, segment speed confidence, binding status and direction, subscription status, erasure reason), and so is the GeoNet coverage window.
+- Checks: closed value sets are checked (level of service, segment speed confidence, binding status and direction, subscription status, erasure reason).
 - Indexes: three indexes that a primary key serves or nothing reads are gone, the crowd evidence index keys on the evidence state alone, and `feature` and `offer` have indexes for the records sweep.
 - Storage: `observation`, `observation_latest` and `observation_rollup_hourly` store their fixed-width columns first.
 

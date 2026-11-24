@@ -225,7 +225,7 @@ export async function fuseSegmentSpeed(
   // their proven field origins with the measurement, before it reaches fusion.
   await sql`DELETE FROM conditions.segment_speed WHERE is_estimated = false`;
 
-  // Confidence is a producer-derived class, not observation.confidence:
+  // Confidence is a producer-derived class, not segment_observation.confidence_score:
   // measured credits the selected speed input when present, otherwise the
   // selected declared LOS ties. Estimated confidence also depends on the OSM
   // geometry used to bind/propagate that donor, even with no target baseline.
