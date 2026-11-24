@@ -13,7 +13,11 @@ import {
   type RegistryModule,
 } from "@openconditions/model";
 import { productionModules } from "@openconditions/model-registry";
-import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
+import {
+  createTestDatabase,
+  TEST_SECRETS_KEY,
+  type TestDatabase,
+} from "@openconditions/test-database";
 import type { FastifyInstance } from "fastify";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -34,6 +38,7 @@ const GRANT_SECRET_VALUE = "reports-route-test-secret";
 const GRANT_SECRET = new TextEncoder().encode(GRANT_SECRET_VALUE);
 const ENV = {
   OPENCONDITIONS_GRANT_SECRET: GRANT_SECRET_VALUE,
+  OPENCONDITIONS_SECRETS_KEY: TEST_SECRETS_KEY,
   OPENCONDITIONS_INSTANCE_ID: INSTANCE,
 };
 /** An obstruction's crowd lifetime: the default claim's. */

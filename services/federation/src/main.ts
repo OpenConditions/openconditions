@@ -12,6 +12,7 @@ import {
 } from "@openconditions/core/server";
 import {
   advanceJournalSeenXid,
+  assertInstanceKeysOpen,
   createInMemoryRateLimiter,
   ensureJournalEpoch,
   expireSubscriptions,
@@ -187,10 +188,13 @@ async function boot() {
   // key created or rotated at boot is logged as on the timer.
   let keyTimer: NodeJS.Timeout | undefined;
   if (settings.enabled) {
+    // A key that cannot open the stored instance keys fails boot, naming the key.
+    await assertInstanceKeysOpen(sql, settings.secretsKey!);
     const maintainKey = async () => {
       try {
         const kept = await maintainInstanceKey(
           sql,
+          settings.secretsKey!,
           new Date().toISOString(),
           settings.actor!.instanceId,
         );
@@ -244,7 +248,11 @@ async function boot() {
       if (cycleRunning) return;
       cycleRunning = true;
       try {
-        const signingKey = await loadSigningKey(sql, new Date().toISOString());
+        const signingKey = await loadSigningKey(
+          sql,
+          settings.secretsKey!,
+          new Date().toISOString(),
+        );
         if (!signingKey) return;
         const pushed = await runWebhookDeliveryCycle(sql, {
           signingKey,
@@ -603,7 +611,11 @@ async function boot() {
       pullRunning = true;
       let again = false;
       try {
-        const signingKey = await loadSigningKey(sql, new Date().toISOString());
+        const signingKey = await loadSigningKey(
+          sql,
+          settings.secretsKey!,
+          new Date().toISOString(),
+        );
         if (!signingKey) return;
         for (const peer of peers.all()) {
           if (peer.pull === undefined) continue;

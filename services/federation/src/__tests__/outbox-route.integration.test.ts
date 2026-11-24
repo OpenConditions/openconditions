@@ -1,4 +1,4 @@
-import { runMigrations } from "@openconditions/core/server";
+import { runMigrations, SecretsKey } from "@openconditions/core/server";
 import type {
   InstanceKey,
   RecordOutboxEntry,
@@ -14,6 +14,7 @@ import {
   signMessage,
   verifyMessage,
 } from "@openconditions/federation";
+import { TEST_SECRETS_KEY } from "@openconditions/test-database";
 import {
   assertPostgisProfile,
   POSTGIS_IMAGES,
@@ -65,6 +66,7 @@ const ACTOR_CONFIG = {
 
 const ENABLED_ENV = {
   OPENCONDITIONS_FEDERATION_ENABLED: "true",
+  OPENCONDITIONS_SECRETS_KEY: TEST_SECRETS_KEY,
   OPENCONDITIONS_INSTANCE_ID: ACTOR_CONFIG.instanceId,
   OPENCONDITIONS_FEDERATION_ACTOR: JSON.stringify(ACTOR_CONFIG),
 };
@@ -159,7 +161,7 @@ describe("GET /peer/outbox", () => {
         provenance: { instanceId: "oc-test", sourceId: "nl-ndw-events" },
       });
 
-      const [key] = await loadActiveKeys(sql, NOW);
+      const [key] = await loadActiveKeys(sql, SecretsKey.parse(TEST_SECRETS_KEY), NOW);
       const verified = await verifyMessage({
         method: "GET",
         url: OUTBOX_URL,
@@ -303,7 +305,7 @@ describe("GET /peer/outbox", () => {
       expect(notModified.headers["etag"]).toBe(etag);
       expect(notModified.headers["signature"]).toBeDefined();
 
-      const [key] = await loadActiveKeys(sql, NOW);
+      const [key] = await loadActiveKeys(sql, SecretsKey.parse(TEST_SECRETS_KEY), NOW);
       const verified = await verifyMessage({
         method: "GET",
         url: OUTBOX_URL,
@@ -371,7 +373,7 @@ describe("GET /peer/outbox", () => {
       expect(notModified.statusCode).toBe(304);
       expect(notModified.headers["signature-input"]).toContain('"etag"');
 
-      const [key] = await loadActiveKeys(sql, NOW);
+      const [key] = await loadActiveKeys(sql, SecretsKey.parse(TEST_SECRETS_KEY), NOW);
       const headers = headerStrings(notModified.headers as Record<string, unknown>);
       const tampered = await verifyMessage({
         method: "GET",
@@ -443,7 +445,7 @@ describe("GET /peer/outbox", () => {
       });
       expect(tomb.record).toBeUndefined();
 
-      const [key] = await loadActiveKeys(sql, NOW);
+      const [key] = await loadActiveKeys(sql, SecretsKey.parse(TEST_SECRETS_KEY), NOW);
       const verified = await verifyMessage({
         method: "GET",
         url: OUTBOX_URL,
@@ -590,7 +592,7 @@ describe("GET /peer/outbox — the tier-bounded public snapshot", () => {
         '"@method";req "@target-uri";req "signature";req',
       );
 
-      const [key] = await loadActiveKeys(sql, NOW);
+      const [key] = await loadActiveKeys(sql, SecretsKey.parse(TEST_SECRETS_KEY), NOW);
       const verifyAs = (request: {
         method: string;
         url: string;

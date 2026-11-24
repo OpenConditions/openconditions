@@ -1,4 +1,4 @@
-import { runMigrations } from "@openconditions/core/server";
+import { runMigrations, SecretsKey } from "@openconditions/core/server";
 import {
   generateInstanceKey,
   InMemoryNonceStore,
@@ -8,6 +8,7 @@ import {
   signMessage,
   verifyMessage,
 } from "@openconditions/federation";
+import { TEST_SECRETS_KEY } from "@openconditions/test-database";
 import {
   assertPostgisProfile,
   POSTGIS_IMAGES,
@@ -114,6 +115,7 @@ beforeAll(async () => {
 
   enabledEnv = {
     OPENCONDITIONS_FEDERATION_ENABLED: "true",
+    OPENCONDITIONS_SECRETS_KEY: TEST_SECRETS_KEY,
     OPENCONDITIONS_INSTANCE_ID: ACTOR_CONFIG.instanceId,
     OPENCONDITIONS_FEDERATION_ACTOR: JSON.stringify(ACTOR_CONFIG),
     OPENCONDITIONS_FEDERATION_ARCHIVE_URL: ARCHIVE_URL,
@@ -218,7 +220,7 @@ describe("GET /peer/backfill", () => {
       // Signed with the page: each file's hash and size.
       expect(page.archive).toEqual(archive);
 
-      const [key] = await loadActiveKeys(sql, NOW);
+      const [key] = await loadActiveKeys(sql, SecretsKey.parse(TEST_SECRETS_KEY), NOW);
       const verifyAs = (request: {
         method: string;
         url: string;

@@ -62,7 +62,15 @@ describe("contribution tables exist", () => {
   it("token_quota and issuer_key have their columns", async () => {
     expect(await tableColumns("token_quota")).toEqual(new Set(["key_id", "epoch", "issued"]));
     expect(await tableColumns("issuer_key")).toEqual(
-      new Set(["key_id", "public_key", "private_key", "not_before", "not_after"]),
+      new Set([
+        "key_id",
+        "public_key",
+        "private_key_ciphertext",
+        "private_key_iv",
+        "private_key_tag",
+        "not_before",
+        "not_after",
+      ]),
     );
   }, 30_000);
 });

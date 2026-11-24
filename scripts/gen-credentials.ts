@@ -61,6 +61,12 @@ const DEFAULT_ENV_PREAMBLE = `# OpenConditions ingest — environment configurat
 # PostgreSQL/PostGIS connection (REQUIRED — the service refuses to start without it)
 DATABASE_URL=postgres://openconditions:openconditions@localhost:5432/openconditions
 
+# Secrets key (REQUIRED): 64 hex characters, from \`openssl rand -hex 32\`. The
+# OAuth2 grants' tokens are encrypted with it in the database; every
+# OpenConditions service of the instance uses the same key. Keep it out of
+# database backups. OPENCONDITIONS_SECRETS_KEY_FILE may name a file holding it.
+OPENCONDITIONS_SECRETS_KEY=
+
 # HTTP server (optional; defaults shown)
 PORT=4100
 HOST=0.0.0.0

@@ -54,7 +54,7 @@ export async function refreshPeers(
     }).catch((err: unknown) => ({ ok: false as const, reason: String(err) }));
     const result: PeerUpkeep = { peer: peer.instanceId, capabilities };
     if (peer.subscribe !== undefined || peer.pull !== undefined) {
-      const signingKey = await loadSigningKey(sql, opts.now);
+      const signingKey = await loadSigningKey(sql, settings.secretsKey!, opts.now);
       const keep = async (
         want: Parameters<typeof ensurePeerSubscription>[1],
       ): Promise<EnsureSubscriptionOutcome> => {

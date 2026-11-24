@@ -2,6 +2,7 @@ import {
   assertStoredCodesRegistered,
   resolveInstanceId,
   runMigrations,
+  secretsKeyFromEnv,
 } from "@openconditions/core/server";
 import { resolveCrowdCredit } from "@openconditions/ingest-framework";
 import { productionRegistry } from "@openconditions/model-registry";
@@ -18,6 +19,7 @@ import { FeedStatusStore } from "./feed-status.js";
 import { startFusedRefresh } from "./fused-refresh.js";
 import { ingestRoleFromEnv, planIngest } from "./ingest-role.js";
 import { startMemTelemetry } from "./mem.js";
+import { assertGrantsOpen } from "./oauth-grants.js";
 import { onDemandDeadlineMsFromEnv } from "./on-demand/read-through.js";
 import { closeAbandonedPollAttempts } from "./pipeline/source-status.js";
 import { registerPublishRoutes } from "./publish-routes.js";
@@ -41,11 +43,15 @@ async function boot() {
   const role = ingestRoleFromEnv();
   // A malformed operator token fails boot before anything else runs.
   const operatorToken = role === "primary" ? operatorTokenFromEnv() : undefined;
+  // The OAuth2 grants' tokens are sealed with it: a missing or malformed key
+  // fails boot, and so, after the migrations, does one that cannot open them.
+  const secretsKey = secretsKeyFromEnv(process.env);
   const crowd = resolveCrowdCredit(process.env, resolveInstanceId());
   console.info(`[ingest] instance id ${resolveInstanceId()}, role ${role}`);
   console.info("[ingest] applying database migrations…");
   await runMigrations(DATABASE_URL);
   console.info("[ingest] migrations applied");
+  await assertGrantsOpen(sql, secretsKey);
   const model = productionRegistry();
   const catalog = await loadIngestCatalog();
   const plan = planIngest(catalog);
@@ -99,6 +105,7 @@ async function boot() {
   const stopScheduler = startScheduler(sql, maintenanceSql, statusStore, catalog, {
     feeds: plan.feeds,
     primary,
+    secretsKey,
     inFlight,
   });
   const stopRecordJobs = startRecordJobs(sql, maintenanceSql, {

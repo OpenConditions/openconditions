@@ -123,10 +123,11 @@ pnpm install
 pnpm build
 
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/openconditions \
+OPENCONDITIONS_SECRETS_KEY=$(openssl rand -hex 32) \
   pnpm --filter @openconditions/ingest dev
 ```
 
-The service applies its migrations, starts polling the enabled feeds, and serves on `:4100`.
+The service applies its migrations, starts polling the enabled feeds, and serves on `:4100`. Keep the secrets key you generate: a later start with another key refuses to read what the first one stored (see [secrets encrypted at rest](#secrets-encrypted-at-rest)).
 
 ### Public API
 
@@ -186,8 +187,9 @@ webcam layer and its stills) and the hazards domain (the weather alert, wildfire
 overlays).
 
 OpenMapX passes a community service's `container.environment` to the container verbatim, so the services'
-configuration is `configSchema` fields: set the database URL (and the contributions API's grant secret and
-reviewer token) once as secrets in the admin services panel. Until they are set, both services stop at boot
+configuration is `configSchema` fields: set the database URL, the secrets key (the same value in every
+OpenConditions service, see [secrets encrypted at rest](#secrets-encrypted-at-rest)) and the contributions API's
+grant secret and reviewer token once as secrets in the admin services panel. Until they are set, both services stop at boot
 and their containers restart in a loop; once they are, apply the change and the services start. Set any
 setting there, or as `SERVICE_OPENCONDITIONS_INGEST_<KEY>` in OpenMapX's `.env`. Settings kept in OpenMapX's
 `.env` are applied with `pnpm openmapx services start openconditions-ingest` (which resets every setting saved
@@ -202,6 +204,16 @@ charging layer, the webcam layer and the hazard overlays. A request carrying `Au
 <OPENCONDITIONS_OPERATOR_TOKEN>` reads in the operator scope, which withholds nothing; without it a read is
 public-scope. Reads with a bbox fetch stale on-demand feeds first, waiting at most
 `OPENCONDITIONS_ON_DEMAND_DEADLINE_MS` (default 3000). See [services/ingest/README.md](services/ingest/README.md).
+
+## Secrets encrypted at rest
+
+OpenConditions keeps three kinds of secret in the database: the OAuth grants of feeds that need an account login (the access and refresh tokens, for example EUMETSAT's), the contributions API's token-issuer private keys, and the federation service's instance private keys. They are stored encrypted with AES-256-GCM under one key, `OPENCONDITIONS_SECRETS_KEY`, which never enters the database. Each value is bound to its table, column and row, so a value copied to another row does not decrypt. A database dump or backup therefore holds none of these secrets in clear, and it is of no use for them without the key.
+
+Generate the key once with `openssl rand -hex 32`: it is 64 hexadecimal characters, and surrounding whitespace is ignored. Every OpenConditions service of an instance that reads these secrets must hold the same key: the ingest service (and its feed-auth command), the heavy-feeds ingest process, the contributions API and, when federation is enabled, the federation service. Under OpenMapX each service has its own credentials in the admin services panel, so enter the same key once in each of these services; OpenMapX mounts it as a file and sets `OPENCONDITIONS_SECRETS_KEY_FILE`. Outside OpenMapX, set `OPENCONDITIONS_SECRETS_KEY_FILE` to a file holding the key, or `OPENCONDITIONS_SECRETS_KEY` to the key itself.
+
+A service that needs the key refuses to start without it or with a value that is not a key. At start it also decrypts every secret it keeps; a key that cannot decrypt one stops the start with a "wrong key" error that names the table and row, never the key or the value.
+
+The key belongs in your recovery set, kept apart from the database: never put it in a database backup, or the backup holds the secrets after all. Losing it loses the secrets for good. You would then have to log in again to every OAuth grant with the ingest container's feed-auth command (`node dist/feed-auth.js login <grant>`), and the contributions API and the federation service would need new issuer and instance keys. A new federation instance key changes this instance's federation identity: peers that pinned the old key no longer trust this instance until they pin the new one. To start over after a lost key, generate a new key, delete the rows of `conditions.oauth_grant`, `conditions.issuer_key` and `conditions.federation_instance_key`, start the services, and log the grants in again.
 
 ## Crowd reporting
 

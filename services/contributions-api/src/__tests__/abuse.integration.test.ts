@@ -1,7 +1,11 @@
 import { readFileSync } from "node:fs";
 import { generateReporterKey, type ReporterKey } from "@openconditions/contrib-core";
 import { crowdLocalId } from "@openconditions/model";
-import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
+import {
+  createTestDatabase,
+  TEST_SECRETS_KEY,
+  type TestDatabase,
+} from "@openconditions/test-database";
 import type { FastifyInstance } from "fastify";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -26,6 +30,7 @@ beforeAll(async () => {
     sql,
     env: {
       OPENCONDITIONS_GRANT_SECRET: GRANT_SECRET_VALUE,
+      OPENCONDITIONS_SECRETS_KEY: TEST_SECRETS_KEY,
       OPENCONDITIONS_INSTANCE_ID: INSTANCE,
     },
     logger: false,

@@ -7,6 +7,7 @@ import {
   SUBSCRIPTION_LEASE_SEC,
   signMessage,
 } from "@openconditions/federation";
+import { TEST_SECRETS_KEY } from "@openconditions/test-database";
 import {
   assertPostgisProfile,
   POSTGIS_IMAGES,
@@ -98,6 +99,7 @@ beforeAll(async () => {
 
   enabledEnv = {
     OPENCONDITIONS_FEDERATION_ENABLED: "true",
+    OPENCONDITIONS_SECRETS_KEY: TEST_SECRETS_KEY,
     OPENCONDITIONS_INSTANCE_ID: ACTOR_CONFIG.instanceId,
     OPENCONDITIONS_FEDERATION_ACTOR: JSON.stringify(ACTOR_CONFIG),
     OPENCONDITIONS_FEDERATION_PEERS: JSON.stringify([

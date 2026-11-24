@@ -25,6 +25,7 @@ import {
 import {
   contributionsRoleUrl,
   createTestDatabase,
+  TEST_SECRETS_KEY,
   type TestDatabase,
 } from "@openconditions/test-database";
 import type { FastifyInstance } from "fastify";
@@ -68,6 +69,7 @@ const GRANT_SECRET_VALUE = "role-grants-test-grant-secret";
 const REVIEWER_TOKEN = "role-grants-test-reviewer-token";
 const ENV = {
   OPENCONDITIONS_GRANT_SECRET: GRANT_SECRET_VALUE,
+  OPENCONDITIONS_SECRETS_KEY: TEST_SECRETS_KEY,
   OPENCONDITIONS_REVIEWER_TOKEN: REVIEWER_TOKEN,
   OPENCONDITIONS_INSTANCE_ID: INSTANCE,
 };

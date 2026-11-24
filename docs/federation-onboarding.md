@@ -308,6 +308,7 @@ these not being right:
 | `OPENCONDITIONS_FEDERATION_ACTOR`       | The actor config (inline JSON or a path): `instanceId`, `baseUrl` (the public origin peers reach the service at), operator, coverage, licence, tier, and the capabilities the operator states: `protocolVersion` (optionally `protocolVersions`) and `convergenceBound`. The schema versions, wire format, delivery modes and filter keys are advertised from the running build, and configuring them, `maxEventRate` or an actor-wide `mtlsRequired` fails the boot. |
 | `OPENCONDITIONS_FEDERATION_PEERS`       | The peers config (inline JSON array or a path): one record per peer with its `instanceId`, `actorUrl`, `trustTier` and `pinnedKeys` (§3), and none naming this instance.                                                                                                                                                                                                                                                                                              |
 | `OPENCONDITIONS_FEDERATION_ARCHIVE_URL` | Where peers fetch the static archive (default `<baseUrl>/archive`, which the operator serves; see [archive.md](./archive.md)).                                                                                                                                                                                                                                                                                                                                        |
+| `OPENCONDITIONS_SECRETS_KEY`            | The key the instance's private keys are encrypted with in the database, or `…_SECRETS_KEY_FILE` naming a file that holds it: 64 hexadecimal characters, the same key every other OpenConditions service of the instance holds (see [secrets encrypted at rest](../README.md#secrets-encrypted-at-rest)). Missing, malformed, or unable to decrypt a stored instance key, it fails the boot.                                                                           |
 
 Optional:
 
@@ -396,7 +397,7 @@ A peer's readings land in the observation history, whose partitions the ingest s
 ### Keys and rotation
 
 The service creates its Ed25519 instance key on first boot and keeps it in
-the database. A key is valid for six months; 30 days before it expires the
+the database, its private half encrypted with `OPENCONDITIONS_SECRETS_KEY`. Without that key the stored instance keys cannot be used: a lost key means a new instance key, a new federation identity, and every peer pinning this instance again. A key is valid for six months; 30 days before it expires the
 service rotates it: the old key endorses the new one (both sign that the new
 key is this instance's next), and the actor document serves both, with the
 endorsement, until the old one expires. The new key signs only once it has

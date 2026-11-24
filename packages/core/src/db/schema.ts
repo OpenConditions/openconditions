@@ -25,7 +25,14 @@ import {
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
-import { bytea, conditionsSchema, geometry, geometryPoint, xid8 } from "./columns.js";
+import {
+  bytea,
+  conditionsSchema,
+  geometry,
+  geometryPoint,
+  sealedSecretCheck,
+  xid8,
+} from "./columns.js";
 
 /**
  * One row per feed source, updated on every poll cycle (including a 304/
@@ -669,22 +676,31 @@ export const onDemandQuota = conditionsSchema.table("on_demand_quota", {
 
 /**
  * This instance's rotating token-issuer keypairs, each valid across a
- * [not_before, not_after) window.
+ * [not_before, not_after) window. The private key (PKCS#8) is stored sealed
+ * with the instance's secrets key (AES-256-GCM, bound to the key id).
  */
-export const issuerKey = conditionsSchema.table("issuer_key", {
-  keyId: text("key_id").primaryKey(),
-  publicKey: bytea("public_key").notNull(),
-  privateKey: bytea("private_key").notNull(),
-  notBefore: timestamp("not_before", { withTimezone: true }).notNull(),
-  notAfter: timestamp("not_after", { withTimezone: true }).notNull(),
-});
+export const issuerKey = conditionsSchema.table(
+  "issuer_key",
+  {
+    keyId: text("key_id").primaryKey(),
+    publicKey: bytea("public_key").notNull(),
+    privateKeyCiphertext: bytea("private_key_ciphertext").notNull(),
+    privateKeyIv: bytea("private_key_iv").notNull(),
+    privateKeyTag: bytea("private_key_tag").notNull(),
+    notBefore: timestamp("not_before", { withTimezone: true }).notNull(),
+    notAfter: timestamp("not_after", { withTimezone: true }).notNull(),
+  },
+  () => [check("issuer_key_private_key_check", sealedSecretCheck("private_key"))],
+);
 
 /**
  * This instance's rotating federation Ed25519 signing keys. `key_id` and
  * `multibase` are both the key's publicKeyMultibase ("z6Mk…" — served in the
  * Actor document and exchanged out-of-band as the bilateral pin fingerprint);
  * `public_key` is the raw 32-byte Ed25519 key and `private_key` its PKCS#8
- * form — an operator secret that is never served, logged, or federated.
+ * form — an operator secret that is never served, logged, or federated, and
+ * stored sealed with the instance's secrets key (AES-256-GCM, bound to the
+ * key id).
  * Rotation keeps the old and new key's [not_before, not_after) windows
  * overlapping (≥30 days) so peers keep verifying while the new key propagates.
  * Every key but the first is endorsed by the key before it: `endorsed_by` is
@@ -692,18 +708,24 @@ export const issuerKey = conditionsSchema.table("issuer_key", {
  * Ed25519 signature that the new key is this instance's next, which a peer
  * that trusts the old key checks before it trusts the new.
  */
-export const federationInstanceKey = conditionsSchema.table("federation_instance_key", {
-  keyId: text("key_id").primaryKey(),
-  publicKey: bytea("public_key").notNull(),
-  privateKey: bytea("private_key").notNull(),
-  multibase: text("multibase").notNull(),
-  notBefore: timestamp("not_before", { withTimezone: true }).notNull(),
-  notAfter: timestamp("not_after", { withTimezone: true }).notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
-  endorsedBy: text("endorsed_by"),
-  endorsement: bytea("endorsement"),
-  endorsementProof: bytea("endorsement_proof"),
-});
+export const federationInstanceKey = conditionsSchema.table(
+  "federation_instance_key",
+  {
+    keyId: text("key_id").primaryKey(),
+    publicKey: bytea("public_key").notNull(),
+    privateKeyCiphertext: bytea("private_key_ciphertext").notNull(),
+    privateKeyIv: bytea("private_key_iv").notNull(),
+    privateKeyTag: bytea("private_key_tag").notNull(),
+    multibase: text("multibase").notNull(),
+    notBefore: timestamp("not_before", { withTimezone: true }).notNull(),
+    notAfter: timestamp("not_after", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    endorsedBy: text("endorsed_by"),
+    endorsement: bytea("endorsement"),
+    endorsementProof: bytea("endorsement_proof"),
+  },
+  () => [check("federation_instance_key_private_key_check", sealedSecretCheck("private_key"))],
+);
 
 /**
  * The keys of a pinned peer this instance trusts beyond its configured pins:

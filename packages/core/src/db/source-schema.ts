@@ -1,7 +1,7 @@
 import { ACCESS_MODES, enumCheckSql, SOURCE_TIERS } from "@openconditions/model";
 import { sql } from "drizzle-orm";
 import { boolean, check, integer, jsonb, text } from "drizzle-orm/pg-core";
-import { conditionsSchema, tstz } from "./columns.js";
+import { bytea, conditionsSchema, sealedSecretCheck, tstz } from "./columns.js";
 
 /**
  * The feed catalogue as the database sees it: one row per source the ingest
@@ -96,16 +96,29 @@ export const source = conditionsSchema.table(
  * configuration, so it lives here rather than in the environment, and the
  * ingest processes that poll its feeds refresh it under this row's lock.
  * `rejected_at` is set when the provider refused the refresh token; until a
- * new login no request is sent with it.
+ * new login no request is sent with it. Both tokens are stored sealed with
+ * the instance's secrets key (AES-256-GCM, bound to the grant key and the
+ * token's column), never in clear.
  */
-export const oauthGrant = conditionsSchema.table("oauth_grant", {
-  grantKey: text("grant_key").primaryKey(),
-  refreshToken: text("refresh_token").notNull(),
-  refreshIssuedAt: tstz("refresh_issued_at").notNull(),
-  accessToken: text("access_token"),
-  accessExpiresAt: tstz("access_expires_at"),
-  rejectedAt: tstz("rejected_at"),
-  lastError: text("last_error"),
-  lastErrorAt: tstz("last_error_at"),
-  updatedAt: tstz("updated_at").notNull().defaultNow(),
-});
+export const oauthGrant = conditionsSchema.table(
+  "oauth_grant",
+  {
+    grantKey: text("grant_key").primaryKey(),
+    refreshTokenCiphertext: bytea("refresh_token_ciphertext").notNull(),
+    refreshTokenIv: bytea("refresh_token_iv").notNull(),
+    refreshTokenTag: bytea("refresh_token_tag").notNull(),
+    refreshIssuedAt: tstz("refresh_issued_at").notNull(),
+    accessTokenCiphertext: bytea("access_token_ciphertext"),
+    accessTokenIv: bytea("access_token_iv"),
+    accessTokenTag: bytea("access_token_tag"),
+    accessExpiresAt: tstz("access_expires_at"),
+    rejectedAt: tstz("rejected_at"),
+    lastError: text("last_error"),
+    lastErrorAt: tstz("last_error_at"),
+    updatedAt: tstz("updated_at").notNull().defaultNow(),
+  },
+  () => [
+    check("oauth_grant_refresh_token_check", sealedSecretCheck("refresh_token")),
+    check("oauth_grant_access_token_check", sealedSecretCheck("access_token")),
+  ],
+);

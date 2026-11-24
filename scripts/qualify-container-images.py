@@ -708,6 +708,7 @@ def runtime_smoke(image, identity, source, output, *, exercise=None):
             "OPENCONDITIONS_FEEDS_REMOTE_ENABLED": "false",
             "OPENCONDITIONS_GRANT_SECRET": uuid.uuid4().hex + uuid.uuid4().hex,
             "OPENCONDITIONS_REVIEWER_TOKEN": uuid.uuid4().hex + uuid.uuid4().hex,
+            "OPENCONDITIONS_SECRETS_KEY": uuid.uuid4().hex + uuid.uuid4().hex,
         }
         args = [
             "docker",

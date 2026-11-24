@@ -1,8 +1,15 @@
-import type { CatalogFeed } from "@openconditions/ingest-framework";
-import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
+import { SecretsKey } from "@openconditions/core/server";
+import type { CatalogFeed, StoredGrant } from "@openconditions/ingest-framework";
+import {
+  createTestDatabase,
+  dumpHolds,
+  dumpTable,
+  TEST_SECRETS_KEY,
+  type TestDatabase,
+} from "@openconditions/test-database";
 import postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { createOAuthGrants, pgOAuthGrantStore } from "../oauth-grants.js";
+import { assertGrantsOpen, createOAuthGrants, pgOAuthGrantStore } from "../oauth-grants.js";
 import { runFeedAuthCommand } from "../ops/feed-auth.js";
 import { repoFeed } from "./helpers/catalog.js";
 
@@ -10,13 +17,16 @@ import { repoFeed } from "./helpers/catalog.js";
  * The OAuth2 grants in the database: two ingest processes that find the
  * access token expired together spend the refresh token once, a refused
  * refresh token stops the grant until a new login, and the operator's
- * commands store and report a grant without ever printing a token.
+ * commands store and report a grant without ever printing a token. The
+ * tokens are stored sealed with the secrets key, never in clear.
  */
 
 const HOUR = 3_600_000;
 const NOW = Date.parse("2026-10-16T12:00:00Z");
 const KEY = "eumetsat";
 const TOKEN_URL = "https://user.eumetsat.int/cas/oauth2.0/accessToken";
+const secrets = SecretsKey.parse(TEST_SECRETS_KEY);
+const OTHER_KEY = SecretsKey.parse("ab".repeat(32));
 
 let db: TestDatabase;
 let sql: postgres.Sql;
@@ -62,12 +72,28 @@ function tokenEndpoint(answer: { status?: number; body?: unknown } = {}) {
   return { fn, requests };
 }
 
-async function storeGrant(over: { accessExpiresAt?: number } = {}) {
-  await sql`
-    INSERT INTO conditions.oauth_grant
-      (grant_key, refresh_token, refresh_issued_at, access_token, access_expires_at, updated_at)
-    VALUES (${KEY}, 'refresh-1', ${new Date(NOW - HOUR)}, 'access-1',
-            ${new Date(over.accessExpiresAt ?? NOW + 7 * HOUR)}, ${new Date(NOW - HOUR)})`;
+function grant(over: Partial<StoredGrant> = {}): StoredGrant {
+  return {
+    refreshToken: "refresh-1",
+    refreshIssuedAt: NOW - HOUR,
+    accessToken: "access-1",
+    accessExpiresAt: NOW + 7 * HOUR,
+    rejectedAt: null,
+    lastError: null,
+    lastErrorAt: null,
+    updatedAt: NOW - HOUR,
+    ...over,
+  };
+}
+
+async function storeGrant(over: Partial<StoredGrant> = {}, key = KEY) {
+  await pgOAuthGrantStore(sql, secrets).locked(key, (_stored, write) => write(grant(over)));
+}
+
+/** The grant's tokens as the store reads them. */
+async function storedTokens(store = pgOAuthGrantStore(sql, secrets)) {
+  const stored = await store.read(KEY);
+  return { refresh_token: stored?.refreshToken, access_token: stored?.accessToken };
 }
 
 const feed = () => repoFeed("eumetsat-slstr-fires") as CatalogFeed;
@@ -82,8 +108,8 @@ describe("the grants in conditions.oauth_grant", () => {
   it("is refreshed once by two processes that find the access token expired together", async () => {
     await storeGrant({ accessExpiresAt: NOW - 1 });
     const endpoint = tokenEndpoint();
-    const process1 = createOAuthGrants(sql, () => NOW);
-    const process2 = createOAuthGrants(other, () => NOW);
+    const process1 = createOAuthGrants(sql, secrets, () => NOW);
+    const process2 = createOAuthGrants(other, secrets, () => NOW);
     const tokens = await Promise.all([
       process1.accessToken(grantRequest(endpoint.fn)),
       process2.accessToken(grantRequest(endpoint.fn)),
@@ -91,8 +117,105 @@ describe("the grants in conditions.oauth_grant", () => {
     expect(tokens).toEqual(["access-2", "access-2"]);
     expect(endpoint.requests).toHaveLength(1);
     expect(endpoint.requests[0]?.get("refresh_token")).toBe("refresh-1");
-    const [row] = await sql`SELECT refresh_token, access_token FROM conditions.oauth_grant`;
-    expect(row).toEqual({ refresh_token: "refresh-2", access_token: "access-2" });
+    expect(await storedTokens()).toEqual({ refresh_token: "refresh-2", access_token: "access-2" });
+  });
+
+  it("persists the rotated refresh token sealed, never in clear", async () => {
+    await storeGrant({ accessExpiresAt: NOW - 1 });
+    const endpoint = tokenEndpoint();
+    await createOAuthGrants(sql, secrets, () => NOW).accessToken(grantRequest(endpoint.fn));
+    const dump = await dumpTable(sql, "oauth_grant");
+    for (const token of ["refresh-1", "refresh-2", "access-1", "access-2"]) {
+      expect(dumpHolds(dump, token)).toBe(false);
+    }
+    const [row] = await sql`
+      SELECT octet_length(refresh_token_iv) AS iv, octet_length(refresh_token_tag) AS tag,
+             octet_length(access_token_iv) AS access_iv
+      FROM conditions.oauth_grant`;
+    expect(row).toEqual({ iv: 12, tag: 16, access_iv: 12 });
+    expect(await storedTokens()).toEqual({ refresh_token: "refresh-2", access_token: "access-2" });
+  });
+
+  it("reads the tokens back after a restart: a new pool and the key read anew", async () => {
+    await storeGrant();
+    const restarted = postgres(db.url, { max: 1 });
+    try {
+      const store = pgOAuthGrantStore(restarted, SecretsKey.parse(TEST_SECRETS_KEY));
+      expect(await storedTokens(store)).toEqual({
+        refresh_token: "refresh-1",
+        access_token: "access-1",
+      });
+    } finally {
+      await restarted.end();
+    }
+  });
+
+  it("stores a grant with no access token as nulls, and reads it back so", async () => {
+    await storeGrant({ accessToken: null, accessExpiresAt: null });
+    const [row] = await sql`
+      SELECT access_token_ciphertext, access_token_iv, access_token_tag FROM conditions.oauth_grant`;
+    expect(row).toEqual({
+      access_token_ciphertext: null,
+      access_token_iv: null,
+      access_token_tag: null,
+    });
+    expect(await storedTokens()).toEqual({ refresh_token: "refresh-1", access_token: null });
+  });
+
+  it("refuses at start a key that cannot open the stored grants, naming the grant", async () => {
+    await storeGrant();
+    await expect(assertGrantsOpen(sql, secrets)).resolves.toBeUndefined();
+    const failure = assertGrantsOpen(sql, OTHER_KEY);
+    await expect(failure).rejects.toThrow(
+      /^wrong key: OPENCONDITIONS_SECRETS_KEY cannot decrypt conditions\.oauth_grant\.refresh_token of the row eumetsat/,
+    );
+    await expect(failure).rejects.not.toThrow(/refresh-1|access-1/);
+  });
+
+  it("does not open a token copied into another grant's row", async () => {
+    await storeGrant();
+    await storeGrant({ refreshToken: "refresh-acme", accessToken: null }, "acme");
+    await sql`
+      UPDATE conditions.oauth_grant AS acme SET
+        refresh_token_ciphertext = e.refresh_token_ciphertext,
+        refresh_token_iv = e.refresh_token_iv,
+        refresh_token_tag = e.refresh_token_tag
+      FROM conditions.oauth_grant AS e
+      WHERE acme.grant_key = 'acme' AND e.grant_key = ${KEY}`;
+    await expect(pgOAuthGrantStore(sql, secrets).read("acme")).rejects.toThrow(
+      /wrong key: .*conditions\.oauth_grant\.refresh_token of the row acme/,
+    );
+    await expect(assertGrantsOpen(sql, secrets)).rejects.toThrow(/of the row acme/);
+  });
+
+  it("does not open an access token copied into the refresh token's columns", async () => {
+    await storeGrant();
+    await sql`
+      UPDATE conditions.oauth_grant SET
+        refresh_token_ciphertext = access_token_ciphertext,
+        refresh_token_iv = access_token_iv,
+        refresh_token_tag = access_token_tag`;
+    await expect(pgOAuthGrantStore(sql, secrets).read(KEY)).rejects.toThrow(
+      /wrong key: .*conditions\.oauth_grant\.refresh_token of the row eumetsat/,
+    );
+  });
+
+  it("refuses an IV or tag of the wrong length, or a token stored only in part", async () => {
+    const value = Buffer.alloc(16);
+    await expect(
+      sql`
+        INSERT INTO conditions.oauth_grant
+          (grant_key, refresh_token_ciphertext, refresh_token_iv, refresh_token_tag,
+           refresh_issued_at)
+        VALUES ('short', ${value}, ${Buffer.alloc(11)}, ${value}, now())`,
+    ).rejects.toThrow(/oauth_grant_refresh_token_check/);
+    await expect(
+      sql`
+        INSERT INTO conditions.oauth_grant
+          (grant_key, refresh_token_ciphertext, refresh_token_iv, refresh_token_tag,
+           refresh_issued_at, access_token_ciphertext)
+        VALUES ('partial', ${value}, ${Buffer.alloc(12)}, ${value}, now(), ${value})`,
+    ).rejects.toThrow(/oauth_grant_access_token_check/);
   });
 
   it("stops a grant whose refresh token is refused until it is logged in again", async () => {
@@ -100,20 +223,15 @@ describe("the grants in conditions.oauth_grant", () => {
     const endpoint = tokenEndpoint({ status: 400, body: { error: "invalid_grant" } });
     const login = 'log in with "node dist/feed-auth.js login eumetsat" in the ingest container';
     await expect(
-      createOAuthGrants(sql, () => NOW).accessToken(grantRequest(endpoint.fn)),
+      createOAuthGrants(sql, secrets, () => NOW).accessToken(grantRequest(endpoint.fn)),
     ).rejects.toThrow(login);
     await expect(
-      createOAuthGrants(other, () => NOW).accessToken(grantRequest(endpoint.fn)),
+      createOAuthGrants(other, secrets, () => NOW).accessToken(grantRequest(endpoint.fn)),
     ).rejects.toThrow(login);
     expect(endpoint.requests).toHaveLength(1);
-    const [row] = await sql`
-      SELECT refresh_token, access_token, rejected_at, last_error FROM conditions.oauth_grant`;
-    expect(row).toEqual({
-      refresh_token: "refresh-1",
-      access_token: null,
-      rejected_at: new Date(NOW),
-      last_error: "HTTP 400 invalid_grant",
-    });
+    expect(await storedTokens()).toEqual({ refresh_token: "refresh-1", access_token: null });
+    const [row] = await sql`SELECT rejected_at, last_error FROM conditions.oauth_grant`;
+    expect(row).toEqual({ rejected_at: new Date(NOW), last_error: "HTTP 400 invalid_grant" });
   });
 });
 
@@ -123,8 +241,8 @@ describe("feed-auth", () => {
     const asked: { question: string; secret: boolean }[] = [];
     const code = await runFeedAuthCommand(args, {
       feeds: [feed()],
-      grants: createOAuthGrants(sql, () => NOW),
-      store: pgOAuthGrantStore(sql),
+      grants: createOAuthGrants(sql, secrets, () => NOW),
+      store: pgOAuthGrantStore(sql, secrets),
       fetch: fetchFn,
       ask: async (question, opts) => {
         asked.push({ question, secret: opts.secret });
@@ -152,8 +270,8 @@ describe("feed-auth", () => {
       refresh_token: "refresh-elsewhere",
       client_id: "api-public-auth-code",
     });
-    const [row] = await sql`SELECT refresh_token, access_token FROM conditions.oauth_grant`;
-    expect(row).toEqual({ refresh_token: "refresh-2", access_token: "access-2" });
+    expect(await storedTokens()).toEqual({ refresh_token: "refresh-2", access_token: "access-2" });
+    expect(dumpHolds(await dumpTable(sql, "oauth_grant"), "refresh-2")).toBe(false);
     expect(lines[0]).toBe("stored eumetsat");
     expect(lines.join("\n")).toMatch(/access token valid until .* \(8 h 0 min left\)/);
     expect(lines.join("\n")).not.toMatch(/refresh-|access-\d/);
@@ -170,8 +288,8 @@ describe("feed-auth", () => {
     const lines: string[] = [];
     const code = await runFeedAuthCommand(["login", KEY], {
       feeds: [feed()],
-      grants: createOAuthGrants(sql),
-      store: pgOAuthGrantStore(sql),
+      grants: createOAuthGrants(sql, secrets),
+      store: pgOAuthGrantStore(sql, secrets),
       fetch: endpoint.fn,
       ask: async () => `https://api.eumetsat.int/cli#code=OC-42&state=${state}`,
       out: (line) => {
@@ -189,8 +307,7 @@ describe("feed-auth", () => {
     expect(sent.get("grant_type")).toBe("authorization_code");
     expect(sent.get("code")).toBe("OC-42");
     expect(sent.get("code_verifier")).toMatch(/^[A-Za-z0-9_-]{64}$/);
-    const [row] = await sql`SELECT refresh_token FROM conditions.oauth_grant`;
-    expect(row).toEqual({ refresh_token: "refresh-2" });
+    expect((await storedTokens()).refresh_token).toBe("refresh-2");
   });
 
   it("refuses a pasted redirect of another login, and an unknown grant", async () => {

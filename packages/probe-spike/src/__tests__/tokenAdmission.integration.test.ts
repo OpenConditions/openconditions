@@ -11,7 +11,12 @@ import {
   redemptionContext,
   TokenVerifier,
 } from "@openconditions/contributions-api/contrib";
-import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
+import { SecretsKey } from "@openconditions/core/server";
+import {
+  createTestDatabase,
+  TEST_SECRETS_KEY,
+  type TestDatabase,
+} from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
@@ -29,6 +34,7 @@ const { BlindRSAMode, Client, Origin, TokenResponse } = publicVerif;
 const NOW = "2026-07-14T08:00:00.000Z";
 const GRANT_SECRET = new TextEncoder().encode("probe-spike-token-test-secret");
 const noopLog = { info: () => {}, warn: () => {}, error: () => {} };
+const secrets = SecretsKey.parse(TEST_SECRETS_KEY);
 
 const REGION: RegionSpec = {
   regionId: "region-nl-utrecht-coarse",
@@ -46,7 +52,7 @@ beforeAll(async () => {
   db = await createTestDatabase({ pool: { max: 10 } });
   sql = db.sql;
   await ensureBatchSchema(sql);
-  await generateIssuerKey(sql, NOW);
+  await generateIssuerKey(sql, secrets, NOW);
   verifier = new TokenVerifier({ issuerName: DEFAULT_ISSUER_NAME, log: noopLog });
   redeem = (tokenBytes, context, nowIso) => verifier.verify(sql, tokenBytes, context, nowIso);
 }, 180_000);
@@ -66,7 +72,7 @@ async function enroll(): Promise<ReporterKey> {
 
 /** Full client-side Privacy Pass mint against the real issuer, bound to `ctx`. */
 async function mint(keyId: string, ctx: PublicContext, cap: number): Promise<Uint8Array> {
-  const keys = await loadActiveIssuerKeys(sql, NOW, DEFAULT_ISSUER_NAME);
+  const keys = await loadActiveIssuerKeys(sql, secrets, NOW, DEFAULT_ISSUER_NAME);
   const issuerKey = keys[0]!;
   const client = new Client(BlindRSAMode.PSS);
   const origin = new Origin(BlindRSAMode.PSS);
@@ -74,6 +80,7 @@ async function mint(keyId: string, ctx: PublicContext, cap: number): Promise<Uin
   const request = await client.createTokenRequest(challenge, issuerKey.publicKeyBytes);
   const result = await issueToken(sql, keyId, ctx.epoch, request.serialize(), ctx, {
     log: noopLog,
+    secrets,
     now: NOW,
     cap,
   });

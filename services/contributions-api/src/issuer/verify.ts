@@ -26,7 +26,7 @@ import { publicVerif, Token } from "@cloudflare/privacypass-ts";
 import type postgres from "postgres";
 import { type PublicContext, publicContextString, redemptionContext } from "./context.js";
 import type { IssueLogger } from "./issue.js";
-import { loadActiveIssuerKeys } from "./keys.js";
+import { loadIssuerPublicKeys } from "./keys.js";
 
 const { BLIND_RSA, BlindRSAMode, Origin } = publicVerif;
 
@@ -94,7 +94,7 @@ export class TokenVerifier {
       return false;
     }
 
-    const keys = await loadActiveIssuerKeys(sql, nowIso, this.issuerName);
+    const keys = await loadIssuerPublicKeys(sql, nowIso);
     const issuerKey = keys.find(
       (k) =>
         k.tokenKeyId.length === token.authInput.tokenKeyId.length &&

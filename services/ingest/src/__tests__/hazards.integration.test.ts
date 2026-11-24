@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { crc32 } from "node:zlib";
-import { runMigrations } from "@openconditions/core/server";
+import { runMigrations, SecretsKey } from "@openconditions/core/server";
 import { readOutbox } from "@openconditions/federation";
 import {
   type CatalogFeed,
@@ -17,7 +17,7 @@ import {
   sweepRecords,
   syncSources,
 } from "@openconditions/storage";
-import type { TestDatabase } from "@openconditions/test-database";
+import { TEST_SECRETS_KEY, type TestDatabase } from "@openconditions/test-database";
 import {
   assertPostgisProfile,
   POSTGIS_IMAGES,
@@ -30,7 +30,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { registerApiRoutes } from "../api/routes.js";
 import { registerScope } from "../api/scope.js";
 import { formatOf } from "../domains.js";
-import { createOAuthGrants } from "../oauth-grants.js";
+import { createOAuthGrants, pgOAuthGrantStore } from "../oauth-grants.js";
 import { publishSituations, stampAttribution } from "../pipeline/publish.js";
 import { createRoleState, type RunResult, runSource } from "../pipeline/run.js";
 import { createRawArchive, type RawArchive } from "../raw/archive.js";
@@ -53,6 +53,7 @@ const FIXTURES = join(import.meta.dirname, "../../../../packages/hazards/src/__t
 const fixture = (name: string) => readFileSync(join(FIXTURES, name));
 const fixtureText = (name: string) => fixture(name).toString("utf8");
 
+const secretsKey = SecretsKey.parse(TEST_SECRETS_KEY);
 const TOKEN = "operator-token-of-the-hazards-pipeline-suite";
 const OPERATOR = { authorization: `Bearer ${TOKEN}` };
 
@@ -659,7 +660,7 @@ describe("hazards fires, quakes and smoke through the pipeline", () => {
           ? notFound()
           : new Response(fixture(granules[granule]!), { headers: { "content-type": "text/csv" } });
       },
-      createOAuthGrants(sql, () => Date.parse(clock)),
+      createOAuthGrants(sql, secretsKey, () => Date.parse(clock)),
     );
     const source = slstr.feed.id;
     const T = "2026-10-16T21:00:00.000Z";
@@ -677,11 +678,18 @@ describe("hazards fires, quakes and smoke through the pipeline", () => {
       SELECT last_error FROM conditions.source_status WHERE source = ${source}`;
     expect(status?.last_error).toContain("node dist/feed-auth.js login eumetsat");
 
-    await sql`
-      INSERT INTO conditions.oauth_grant
-        (grant_key, refresh_token, refresh_issued_at, access_token, access_expires_at)
-      VALUES ('eumetsat', 'refresh-1', ${new Date(T)}, 'access-1',
-              ${new Date(Date.parse(T) + 8 * 3_600_000)})`;
+    await pgOAuthGrantStore(sql, secretsKey).locked("eumetsat", (_stored, write) =>
+      write({
+        refreshToken: "refresh-1",
+        refreshIssuedAt: Date.parse(T),
+        accessToken: "access-1",
+        accessExpiresAt: Date.parse(T) + 8 * 3_600_000,
+        rejectedAt: null,
+        lastError: null,
+        lastErrorAt: null,
+        updatedAt: Date.parse(T),
+      }),
+    );
     const series = async () => {
       const [row] = await sql<{ n: number }[]>`
         SELECT count(*)::int AS n FROM conditions.observation_latest WHERE source_id = ${source}`;

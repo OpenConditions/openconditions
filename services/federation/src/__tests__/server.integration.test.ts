@@ -1,5 +1,9 @@
 import { type ActorDocument, verifyActorAgainstPin } from "@openconditions/federation";
-import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
+import {
+  createTestDatabase,
+  TEST_SECRETS_KEY,
+  type TestDatabase,
+} from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { build } from "../server.js";
@@ -32,6 +36,7 @@ const PEER = {
 
 const ENABLED_ENV = {
   OPENCONDITIONS_FEDERATION_ENABLED: "true",
+  OPENCONDITIONS_SECRETS_KEY: TEST_SECRETS_KEY,
   OPENCONDITIONS_INSTANCE_ID: ACTOR_CONFIG.instanceId,
   OPENCONDITIONS_FEDERATION_ACTOR: JSON.stringify(ACTOR_CONFIG),
   OPENCONDITIONS_FEDERATION_PEERS: JSON.stringify([PEER]),
@@ -164,6 +169,28 @@ describe("federation enabled", () => {
     } finally {
       await app.close();
     }
+  }, 30_000);
+
+  it("fails the boot closed without a secrets key, or with one that is no key", async () => {
+    const { OPENCONDITIONS_SECRETS_KEY: _key, ...keyless } = ENABLED_ENV;
+    await expect(build({ sql, env: keyless, logger: false })).rejects.toThrow(
+      /OPENCONDITIONS_SECRETS_KEY is required: set OPENCONDITIONS_SECRETS_KEY_FILE/,
+    );
+    const malformed = { ...ENABLED_ENV, OPENCONDITIONS_SECRETS_KEY: "not-a-key" };
+    await expect(build({ sql, env: malformed, logger: false })).rejects.toThrow(
+      /OPENCONDITIONS_SECRETS_KEY must be 64 hexadecimal characters/,
+    );
+  }, 30_000);
+
+  it("fails the boot closed with a key that cannot open the stored instance key", async () => {
+    const app = await build({ sql, env: ENABLED_ENV, logger: false, now: () => NOW });
+    await app.close();
+    const [{ key_id: keyId }] = await sql<{ key_id: string }[]>`
+      SELECT key_id FROM conditions.federation_instance_key LIMIT 1`;
+    const wrong = { ...ENABLED_ENV, OPENCONDITIONS_SECRETS_KEY: "0f".repeat(32) };
+    await expect(build({ sql, env: wrong, logger: false, now: () => NOW })).rejects.toThrow(
+      `wrong key: OPENCONDITIONS_SECRETS_KEY cannot decrypt conditions.federation_instance_key.private_key of the row ${keyId}`,
+    );
   }, 30_000);
 
   it("never serves private key material", async () => {

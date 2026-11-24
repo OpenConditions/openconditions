@@ -631,7 +631,7 @@ publisher that issues no static key (EUMETSAT's Data Store):
 `clientId` names the field holding the public client's id, and its owner names
 the grant: the shared group (`eumetsat`), so one login serves every feed of the
 account, else the feed. The tokens are no configuration but state in the
-database (`conditions.oauth_grant`): `node dist/feed-auth.js login <grant>`
+database (`conditions.oauth_grant`), encrypted with the instance's `OPENCONDITIONS_SECRETS_KEY`: `node dist/feed-auth.js login <grant>`
 in the ingest container (`pnpm --filter @openconditions/ingest feed-auth` in a
 checkout) prints the login URL and exchanges the authorization code pasted
 back with PKCE; `import <grant>` stores a refresh token read from stdin

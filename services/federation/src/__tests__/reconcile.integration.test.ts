@@ -10,7 +10,7 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { ingestFederatedPage } from "@openconditions/contributions-api/federation/inbox";
-import { runMigrations } from "@openconditions/core/server";
+import { runMigrations, SecretsKey } from "@openconditions/core/server";
 import {
   ensureJournalEpoch,
   InMemoryNonceStore,
@@ -27,6 +27,7 @@ import {
   tombstoneRecords,
   writeSnapshot,
 } from "@openconditions/storage";
+import { TEST_SECRETS_KEY } from "@openconditions/test-database";
 import {
   assertPostgisProfile,
   POSTGIS_IMAGES,
@@ -316,13 +317,15 @@ beforeAll(async () => {
   archiveDir = await mkdtemp(path.join(tmpdir(), "oc-reconcile-test-"));
 
   const now = new Date().toISOString();
-  await maintainInstanceKey(sqlA, now, A);
-  await maintainInstanceKey(sqlD, now, D);
-  const [keyA] = (await loadActiveKeys(sqlA, now)) as [InstanceKey];
-  [keyD] = (await loadActiveKeys(sqlD, now)) as [InstanceKey];
+  const secrets = SecretsKey.parse(TEST_SECRETS_KEY);
+  await maintainInstanceKey(sqlA, secrets, now, A);
+  await maintainInstanceKey(sqlD, secrets, now, D);
+  const [keyA] = (await loadActiveKeys(sqlA, secrets, now)) as [InstanceKey];
+  [keyD] = (await loadActiveKeys(sqlD, secrets, now)) as [InstanceKey];
 
   const envA = {
     OPENCONDITIONS_FEDERATION_ENABLED: "true",
+    OPENCONDITIONS_SECRETS_KEY: TEST_SECRETS_KEY,
     OPENCONDITIONS_INSTANCE_ID: A,
     OPENCONDITIONS_FEDERATION_ACTOR: JSON.stringify(actor(A)),
     OPENCONDITIONS_FEDERATION_PEERS: JSON.stringify([peer(D, keyD)]),
@@ -330,6 +333,7 @@ beforeAll(async () => {
   };
   const envD = {
     OPENCONDITIONS_FEDERATION_ENABLED: "true",
+    OPENCONDITIONS_SECRETS_KEY: TEST_SECRETS_KEY,
     OPENCONDITIONS_INSTANCE_ID: D,
     OPENCONDITIONS_FEDERATION_ACTOR: JSON.stringify(actor(D)),
     OPENCONDITIONS_FEDERATION_PEERS: JSON.stringify([peer(A, keyA, { pull: { filter: FILTER } })]),

@@ -13,12 +13,25 @@
  */
 
 import { publicVerif } from "@cloudflare/privacypass-ts";
+import type { SecretsKey } from "@openconditions/core/server";
 import type postgres from "postgres";
 import { ATTESTER_POLICY } from "../attester/policy.js";
 import { type PublicContext, publicContextString } from "./context.js";
 import { type ActiveIssuerKey, DEFAULT_ISSUER_NAME, loadActiveIssuerKeys } from "./keys.js";
 
 const { BLIND_RSA, TokenRequest } = publicVerif;
+
+function loadKeys(sql: postgres.Sql, deps: IssueDeps): Promise<ActiveIssuerKey[]> {
+  if (deps.secrets === undefined) {
+    throw new Error("issueToken needs the issuer keys, or the secrets key to load them");
+  }
+  return loadActiveIssuerKeys(
+    sql,
+    deps.secrets,
+    deps.now ?? new Date().toISOString(),
+    deps.issuerName ?? DEFAULT_ISSUER_NAME,
+  );
+}
 
 export interface IssueLogger {
   info: (obj: Record<string, unknown>, msg?: string) => void;
@@ -34,8 +47,10 @@ export type IssueResult =
 
 export interface IssueDeps {
   log: IssueLogger;
-  /** Currently valid issuer keys; loaded from the DB when omitted. */
+  /** Currently valid issuer keys; loaded from the DB with `secrets` when omitted. */
   keys?: ActiveIssuerKey[];
+  /** The key the issuer keys' private halves are sealed with, to load them. */
+  secrets?: SecretsKey;
   /** Per-epoch issuance ceiling; defaults to the attester policy. */
   cap?: number;
   issuerName?: string;
@@ -87,13 +102,7 @@ export async function issueToken(
     return { issued: false, reason: "bad-request" };
   }
 
-  const keys =
-    deps.keys ??
-    (await loadActiveIssuerKeys(
-      sql,
-      deps.now ?? new Date().toISOString(),
-      deps.issuerName ?? DEFAULT_ISSUER_NAME,
-    ));
+  const keys = deps.keys ?? (await loadKeys(sql, deps));
   const issuerKey = keys.find((k) => k.truncatedTokenKeyId === request.truncatedTokenKeyId);
   if (issuerKey === undefined) {
     log.warn({ purpose, epoch, outcome: "bad-request" }, "token issuance refused: unknown key id");

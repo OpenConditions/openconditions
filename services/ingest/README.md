@@ -84,7 +84,7 @@ and of the workspace packages it depends on: read as `env["X"]` or
 or written as an `OPENCONDITIONS_*` or `*_CRON` name. A name built at run time
 escapes it.
 
-- **Secrets** (`x-openmapx-secret`): `DATABASE_URL`, `OPENCONDITIONS_OPERATOR_TOKEN`
+- **Secrets** (`x-openmapx-secret`): `DATABASE_URL`, `OPENCONDITIONS_SECRETS_KEY`, `OPENCONDITIONS_OPERATOR_TOKEN`
   and the feed credentials. The operator sets each once in the admin services
   panel (`openconditions-ingest`, Credentials). OpenMapX mounts it as a file and
   sets `<KEY>_FILE` to its path; the service reads `<KEY>`, else the file
@@ -96,6 +96,7 @@ escapes it.
     `postgresql://openconditions_ingest:<password>@openmapx-postgis:5432/openmapx`.
     Never use the PostgreSQL superuser: create the role as OpenMapX's community
     extensions guide describes.
+  - `OPENCONDITIONS_SECRETS_KEY` is required: the OAuth2 grants' tokens are encrypted with it in the database. It is 64 hexadecimal characters (`openssl rand -hex 32`) and must be the key every other OpenConditions service of the instance holds, the heavy-feeds process's too; enter the same value in each service's Credentials. The service refuses to start without it, with a malformed one, or with one that cannot decrypt a stored grant. Keep it in your recovery set, apart from database backups; see [secrets encrypted at rest](../../README.md#secrets-encrypted-at-rest).
   - `OPENCONDITIONS_OPERATOR_TOKEN` must equal OpenMapX's own
     `OPENCONDITIONS_OPERATOR_TOKEN` (its `.env`), which its `api` and
     `data-manager` services send as their bearer token; the two are set separately.
@@ -437,8 +438,8 @@ egress guard refuses private addresses otherwise.
 A feed with `oauth2-authorization-code` auth (EUMETSAT's Sentinel-3 fires) reads
 an account the operator logs in once, not a key: its grant lives in
 `conditions.oauth_grant`, which the service renews itself (see
-[`feeds/README.md`](../../feeds/README.md#credentials)). The commands run
-against `DATABASE_URL` in the image as `node dist/feed-auth.js <command>`, in
+[`feeds/README.md`](../../feeds/README.md#credentials)). Its access and refresh tokens are stored encrypted with `OPENCONDITIONS_SECRETS_KEY`. The commands run
+against `DATABASE_URL` with that key, both read from the container's environment, in the image as `node dist/feed-auth.js <command>`, in
 a checkout as `pnpm --filter @openconditions/ingest feed-auth <command>`:
 
 - `login <grant>` prints the provider's login URL and asks for the

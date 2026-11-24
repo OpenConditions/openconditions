@@ -44,10 +44,13 @@ export {
 export { type IssueResult, issueToken } from "./issuer/issue.js";
 export {
   type ActiveIssuerKey,
+  assertIssuerKeysOpen,
   DEFAULT_ISSUER_NAME,
   ensureIssuerKeys,
   generateIssuerKey,
+  type IssuerPublicKey,
   loadActiveIssuerKeys,
+  loadIssuerPublicKeys,
 } from "./issuer/keys.js";
 export { TokenVerifier } from "./issuer/verify.js";
 export {

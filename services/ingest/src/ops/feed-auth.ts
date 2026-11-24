@@ -1,5 +1,6 @@
 import { createInterface } from "node:readline/promises";
 import { Writable } from "node:stream";
+import { secretsKeyFromEnv } from "@openconditions/core/server";
 import {
   authorizationUrl,
   type CatalogFeed,
@@ -220,13 +221,15 @@ async function ask(question: string, opts: { secret: boolean }): Promise<string>
 }
 
 async function main(): Promise<void> {
+  // The ingest container's own key, which the grants' tokens are sealed with.
+  const secretsKey = secretsKeyFromEnv(process.env);
   const sql = postgres(requireCredential(process.env, "DATABASE_URL"), { max: 1 });
   try {
     const catalog = await loadIngestCatalog();
     process.exitCode = await runFeedAuthCommand(process.argv.slice(2), {
       feeds: [...catalog.feeds, ...catalog.disabled],
-      grants: createOAuthGrants(sql),
-      store: pgOAuthGrantStore(sql),
+      grants: createOAuthGrants(sql, secretsKey),
+      store: pgOAuthGrantStore(sql, secretsKey),
       fetch: guardedFetch(undiciFetch as unknown as typeof fetch, guardOptionsFromEnv()),
       ask,
       out: (line) => process.stdout.write(`${line}\n`),

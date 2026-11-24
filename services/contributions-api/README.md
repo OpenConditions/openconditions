@@ -64,6 +64,7 @@ operator's erasure (see `docs/federation-gdpr.md`).
 | `DATABASE_URL`                          | PostgreSQL/PostGIS connection URL. Required.                                                    | none                               |
 | `OPENCONDITIONS_GRANT_SECRET`           | HMAC secret signing reporting grants. Required in production.                                   | ephemeral outside production       |
 | `OPENCONDITIONS_REVIEWER_TOKEN`         | Bearer token of the reviewer surface. Required in production.                                   | ephemeral outside production       |
+| `OPENCONDITIONS_SECRETS_KEY`            | Key the issuer's private keys are encrypted with; the ingest service's. Required.               | none                               |
 | `OPENCONDITIONS_ISSUER_NAME`            | TokenChallenge issuer name.                                                                     | `contributions.openconditions.org` |
 | `OPENCONDITIONS_CROSS_VALIDATE_SWEEP`   | `off` stops the sweep that retries cross-validation of unresolved crowd reports.                | on                                 |
 | `OPENCONDITIONS_INSTANCE_ID`            | This instance's id, the namespace of the crowd records it lands; the ingest service's.          | `local`                            |
@@ -72,7 +73,7 @@ operator's erasure (see `docs/federation-gdpr.md`).
 | `OPENCONDITIONS_ALLOW_POLICE_CATEGORY`  | `true` lets crowd reports of police presence land.                                              | off                                |
 | `OPENCONDITIONS_SCHEMA_WAIT_TIMEOUT_MS` | How long the service waits at start for the schema version, in milliseconds.                    | 300000                             |
 
-Each of the three secrets may instead be a file named by `<KEY>_FILE`. Under
+Each of the four secrets may instead be a file named by `<KEY>_FILE`. The secrets key must be the one every other OpenConditions service of the instance holds; see [Secrets encrypted at rest](../../README.md#secrets-encrypted-at-rest). Under
 OpenMapX the service is a community service whose `container.environment`
 reaches the container verbatim, so `service.json` declares these as
 `configSchema` fields. The secrets are vault secrets the operator sets once in

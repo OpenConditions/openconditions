@@ -7,7 +7,7 @@ import { createHash } from "node:crypto";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { runMigrations } from "@openconditions/core/server";
+import { runMigrations, SecretsKey } from "@openconditions/core/server";
 import {
   InMemoryNonceStore,
   type InstanceKey,
@@ -23,6 +23,7 @@ import {
   tombstoneRecords,
   writeSnapshot,
 } from "@openconditions/storage";
+import { TEST_SECRETS_KEY } from "@openconditions/test-database";
 import {
   assertPostgisProfile,
   POSTGIS_IMAGES,
@@ -39,6 +40,7 @@ import { pullPeer } from "../puller.js";
 import { build } from "../server.js";
 import { registry } from "./record-fixtures.js";
 
+const secrets = SecretsKey.parse(TEST_SECRETS_KEY);
 const A = "a.example.org";
 const D = "d.example.org";
 const SOURCE = "nl-ndw-events";
@@ -198,13 +200,14 @@ beforeAll(async () => {
   archiveDir = await mkdtemp(path.join(tmpdir(), "oc-archive-test-"));
 
   const now = new Date().toISOString();
-  await maintainInstanceKey(sqlA, now, A);
-  await maintainInstanceKey(sqlD, now, D);
-  const [keyA] = (await loadActiveKeys(sqlA, now)) as [InstanceKey];
-  [keyD] = (await loadActiveKeys(sqlD, now)) as [InstanceKey];
+  await maintainInstanceKey(sqlA, secrets, now, A);
+  await maintainInstanceKey(sqlD, secrets, now, D);
+  const [keyA] = (await loadActiveKeys(sqlA, secrets, now)) as [InstanceKey];
+  [keyD] = (await loadActiveKeys(sqlD, secrets, now)) as [InstanceKey];
 
   const envA = {
     OPENCONDITIONS_FEDERATION_ENABLED: "true",
+    OPENCONDITIONS_SECRETS_KEY: TEST_SECRETS_KEY,
     OPENCONDITIONS_INSTANCE_ID: A,
     OPENCONDITIONS_FEDERATION_ACTOR: JSON.stringify(actor(A)),
     OPENCONDITIONS_FEDERATION_PEERS: JSON.stringify([peer(D, keyD)]),
@@ -212,6 +215,7 @@ beforeAll(async () => {
   };
   const envD = {
     OPENCONDITIONS_FEDERATION_ENABLED: "true",
+    OPENCONDITIONS_SECRETS_KEY: TEST_SECRETS_KEY,
     OPENCONDITIONS_INSTANCE_ID: D,
     OPENCONDITIONS_FEDERATION_ACTOR: JSON.stringify(actor(D)),
     OPENCONDITIONS_FEDERATION_PEERS: JSON.stringify([peer(A, keyA, { pull: { filter: FILTER } })]),

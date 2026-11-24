@@ -4,7 +4,7 @@
  * POST /peer/records answers for named records with the entry the journal
  * would carry for each now. Both behind the gates of /peer/backfill.
  */
-import { runMigrations } from "@openconditions/core/server";
+import { runMigrations, SecretsKey } from "@openconditions/core/server";
 import {
   createInMemoryRateLimiter,
   generateInstanceKey,
@@ -18,6 +18,7 @@ import {
   verifyMessage,
 } from "@openconditions/federation";
 import { syncSources } from "@openconditions/storage";
+import { TEST_SECRETS_KEY } from "@openconditions/test-database";
 import {
   assertPostgisProfile,
   POSTGIS_IMAGES,
@@ -151,6 +152,7 @@ beforeAll(async () => {
   peerKey = await generateInstanceKey(new Date().toISOString());
   env = {
     OPENCONDITIONS_FEDERATION_ENABLED: "true",
+    OPENCONDITIONS_SECRETS_KEY: TEST_SECRETS_KEY,
     OPENCONDITIONS_INSTANCE_ID: ACTOR_CONFIG.instanceId,
     OPENCONDITIONS_FEDERATION_ACTOR: JSON.stringify(ACTOR_CONFIG),
     OPENCONDITIONS_FEDERATION_ARCHIVE_URL: `${BASE_URL}/archive`,
@@ -224,7 +226,7 @@ describe("GET /peer/state", () => {
     expect(tail.next).toBeUndefined();
 
     // The answer is signed and bound to the request.
-    const [key] = await loadActiveKeys(sql, NOW);
+    const [key] = await loadActiveKeys(sql, SecretsKey.parse(TEST_SECRETS_KEY), NOW);
     const path = `/peer/state?class=situation&limit=3&${filter}`;
     const headers = await signedGet(path);
     const res = await app.inject({ method: "GET", url: path, headers });

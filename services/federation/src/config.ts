@@ -2,13 +2,14 @@
  * Operator configuration for the federation service. Federation is OPT-IN
  * and off by default: without OPENCONDITIONS_FEDERATION_ENABLED the service
  * serves 404 on the well-known routes and never creates an instance key.
- * When enabled, an invalid or missing actor/peers config fails the boot
- * closed rather than serving a half-formed identity.
+ * When enabled, an invalid or missing actor/peers config, or a missing or
+ * malformed secrets key, fails the boot closed rather than serving a
+ * half-formed identity.
  */
 import { createPrivateKey, type KeyObject, X509Certificate } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { BlockList, isIP } from "node:net";
-import { resolveInstanceId } from "@openconditions/core/server";
+import { resolveInstanceId, type SecretsKey, secretsKeyFromEnv } from "@openconditions/core/server";
 import {
   type ActorConfig,
   loadPeers,
@@ -20,6 +21,8 @@ export interface FederationSettings {
   enabled: boolean;
   /** Present iff enabled. */
   actor?: ActorConfig;
+  /** The key the instance keys' private halves are sealed with. Present iff enabled. */
+  secretsKey?: SecretsKey;
   /** This instance's declared peers (public metadata; empty by default). */
   peers: PeerRecord[];
   /** The static GeoParquet archive URL peers fetch for beyond-window backfill.
@@ -134,9 +137,13 @@ export function resolveFederationSettings(
   }
   const trustedProxies = resolveProxies(env["OPENCONDITIONS_FEDERATION_TRUSTED_PROXIES"]);
   const clientCertificate = resolveClientCertificate(env);
+  // The instance keys' private halves are sealed with it; without it no key
+  // can be stored or used, so an enabled federation refuses to start.
+  const secretsKey = secretsKeyFromEnv(env);
   return {
     enabled: true,
     actor,
+    secretsKey,
     peers,
     archiveUrl,
     ...(registry ? { registry } : {}),

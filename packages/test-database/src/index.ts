@@ -81,6 +81,31 @@ export async function createTestRole(database: TestDatabase): Promise<TestRole> 
 }
 
 /**
+ * A secrets key (`OPENCONDITIONS_SECRETS_KEY`) for the services' test
+ * environments: 64 hexadecimal characters, as an operator generates with
+ * `openssl rand -hex 32`. It seals only throwaway test data.
+ */
+export const TEST_SECRETS_KEY = "5ec7e75ec7e75ec7e75ec7e75ec7e75ec7e75ec7e75ec7e75ec7e75ec7e75ec7";
+
+/**
+ * The rows of `conditions.<table>` as `pg_dump` writes them: the text output
+ * of `COPY … TO STDOUT`, bytea columns in hex. A test searches it for a
+ * secret, in clear and as hex, to show a backup does not hold it.
+ */
+export async function dumpTable(sql: postgres.Sql, table: string): Promise<string> {
+  const chunks: Buffer[] = [];
+  const stream = await sql.unsafe(`COPY "conditions"."${table}" TO STDOUT`).readable();
+  for await (const chunk of stream) chunks.push(Buffer.from(chunk as Uint8Array));
+  return Buffer.concat(chunks).toString("utf8");
+}
+
+/** Whether `dump` holds `secret`, in clear or as the hex `pg_dump` writes bytea in. */
+export function dumpHolds(dump: string, secret: Uint8Array | string): boolean {
+  const bytes = typeof secret === "string" ? Buffer.from(secret, "utf8") : Buffer.from(secret);
+  return dump.includes(bytes.toString("utf8")) || dump.includes(bytes.toString("hex"));
+}
+
+/**
  * The roles the custom migration grants to by name: the one OpenMapX's
  * traffic tile function runs as, which cannot log in, and the contributions
  * service's login.

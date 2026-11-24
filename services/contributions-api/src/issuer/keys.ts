@@ -3,14 +3,22 @@
  * (RFC 9578, token type 0x0002) via @cloudflare/privacypass-ts.
  *
  * Keys live in conditions.issuer_key (an operator-secret table): the private
- * key as PKCS#8, the public key as WebCrypto SPKI. Clients receive the
- * RSASSA-PSS-OID form of the public key (what `Client.createTokenRequest`
- * expects); its SHA-256 is the RFC 9578 token key id. Rotation = a new row
- * with an overlapping [not_before, not_after) window — redemption accepts any
- * key valid at redemption time. Key MATERIAL is never logged.
+ * key as PKCS#8, sealed with the instance's secrets key, the public key as
+ * WebCrypto SPKI. Clients receive the RSASSA-PSS-OID form of the public key
+ * (what `Client.createTokenRequest` expects); its SHA-256 is the RFC 9578
+ * token key id. Rotation = a new row with an overlapping [not_before,
+ * not_after) window — redemption accepts any key valid at redemption time.
+ * Key MATERIAL is never logged.
  */
 
 import { publicVerif } from "@cloudflare/privacypass-ts";
+import {
+  assertStoredSecretsOpen,
+  type SecretPlace,
+  type SecretsKey,
+  type SecretTable,
+  storedSecret,
+} from "@openconditions/core/server";
 import type postgres from "postgres";
 
 const { BLIND_RSA, BlindRSAMode, Issuer, getPublicKeyBytes } = publicVerif;
@@ -21,10 +29,23 @@ export const DEFAULT_ISSUER_NAME = "contributions.openconditions.org";
 /** Issuer key validity window written at generation time. */
 export const ISSUER_KEY_VALIDITY_DAYS = 90;
 
-export interface ActiveIssuerKey {
+/** The issuer keys' table and the secret it stores sealed. */
+export const ISSUER_KEY_SECRETS: SecretTable = {
+  table: "issuer_key",
+  rowKey: "key_id",
+  columns: ["private_key"],
+};
+
+const privateKeyPlace = (keyId: string): SecretPlace => ({
+  table: ISSUER_KEY_SECRETS.table,
+  column: "private_key",
+  row: keyId,
+});
+
+/** An issuer key's public half, which redemption and the published key list need. */
+export interface IssuerPublicKey {
   /** SHA-256 hex of the published (RSASSA-PSS SPKI) public key bytes. */
   keyId: string;
-  issuer: InstanceType<typeof Issuer>;
   publicKey: CryptoKey;
   /** Public key bytes in the form clients blind against. */
   publicKeyBytes: Uint8Array;
@@ -36,10 +57,14 @@ export interface ActiveIssuerKey {
   notAfter: Date;
 }
 
+/** An issuer key that signs: its public half and the Issuer holding its private key. */
+export interface ActiveIssuerKey extends IssuerPublicKey {
+  issuer: InstanceType<typeof Issuer>;
+}
+
 interface IssuerKeyRow {
   key_id: string;
   public_key: Buffer;
-  private_key: Buffer;
   not_before: Date;
   not_after: Date;
 }
@@ -123,6 +148,7 @@ async function generatePair(): Promise<CryptoKeyPair> {
  */
 export async function generateIssuerKey(
   sql: postgres.Sql,
+  secrets: SecretsKey,
   nowIso: string,
   options: GenerateIssuerKeyOptions = {},
 ): Promise<{ keyId: string }> {
@@ -170,62 +196,110 @@ export async function generateIssuerKey(
       await globalThis.crypto.subtle.exportKey("spki", pair.publicKey),
     );
 
+    const sealed = secrets.seal(privatePkcs8, privateKeyPlace(keyId));
+    privatePkcs8.fill(0);
     await tx`
-      INSERT INTO conditions.issuer_key (key_id, public_key, private_key, not_before, not_after)
-      VALUES (${keyId}, ${Buffer.from(publicSpki)}, ${Buffer.from(privatePkcs8)},
-              ${notBefore}, ${notAfter})
+      INSERT INTO conditions.issuer_key
+        (key_id, public_key, private_key_ciphertext, private_key_iv, private_key_tag,
+         not_before, not_after)
+      VALUES (${keyId}, ${Buffer.from(publicSpki)}, ${Buffer.from(sealed.ciphertext)},
+              ${Buffer.from(sealed.iv)}, ${Buffer.from(sealed.tag)}, ${notBefore}, ${notAfter})
       ON CONFLICT (key_id) DO NOTHING
     `;
     return { keyId };
   });
 }
 
+async function publicKeyOf(row: IssuerKeyRow): Promise<IssuerPublicKey> {
+  const publicKey = await globalThis.crypto.subtle.importKey(
+    "spki",
+    new Uint8Array(row.public_key),
+    BLIND_RSA.rsaParams,
+    true,
+    ["verify"],
+  );
+  const publicKeyBytes = await getPublicKeyBytes(publicKey);
+  const tokenKeyId = await sha256(publicKeyBytes);
+  return {
+    keyId: row.key_id,
+    publicKey,
+    publicKeyBytes,
+    tokenKeyId,
+    truncatedTokenKeyId: tokenKeyId[tokenKeyId.length - 1]!,
+    notBefore: row.not_before,
+    notAfter: row.not_after,
+  };
+}
+
 /**
- * Loads every issuer key valid at `nowIso` (newest first) and rehydrates the
- * WebCrypto handles + privacypass-ts Issuer for each.
+ * The public half of every issuer key valid at `nowIso` (newest first): what
+ * redemption verifies against and the published key list serves. Reads no
+ * private key.
+ */
+export async function loadIssuerPublicKeys(
+  sql: postgres.Sql,
+  nowIso: string,
+): Promise<IssuerPublicKey[]> {
+  const now = new Date(nowIso);
+  const rows = await sql<IssuerKeyRow[]>`
+    SELECT key_id, public_key, not_before, not_after
+    FROM conditions.issuer_key
+    WHERE not_before <= ${now} AND not_after > ${now}
+    ORDER BY not_before DESC
+  `;
+  return Promise.all(rows.map(publicKeyOf));
+}
+
+/**
+ * Loads every issuer key valid at `nowIso` (newest first), opens its private
+ * key with `secrets` and rehydrates the WebCrypto handles + privacypass-ts
+ * Issuer for each.
  */
 export async function loadActiveIssuerKeys(
-  sql: postgres.Sql,
+  sql: postgres.Sql | postgres.TransactionSql,
+  secrets: SecretsKey,
   nowIso: string,
   issuerName: string,
 ): Promise<ActiveIssuerKey[]> {
   const now = new Date(nowIso);
-  const rows = await sql<IssuerKeyRow[]>`
-    SELECT key_id, public_key, private_key, not_before, not_after
+  const rows = await sql<(IssuerKeyRow & postgres.Row)[]>`
+    SELECT key_id, public_key, private_key_ciphertext, private_key_iv, private_key_tag,
+           not_before, not_after
     FROM conditions.issuer_key
     WHERE not_before <= ${now} AND not_after > ${now}
     ORDER BY not_before DESC
   `;
   return Promise.all(
     rows.map(async (row) => {
+      const place = privateKeyPlace(row.key_id);
+      const sealed = storedSecret(row, place);
+      if (sealed === null)
+        throw new Error(`conditions.issuer_key ${row.key_id} has no private key`);
+      const pkcs8 = secrets.open(sealed, place);
       const privateKey = await globalThis.crypto.subtle.importKey(
         "pkcs8",
-        new Uint8Array(row.private_key),
+        new Uint8Array(pkcs8),
         BLIND_RSA.rsaParams,
         true,
         ["sign"],
       );
-      const publicKey = await globalThis.crypto.subtle.importKey(
-        "spki",
-        new Uint8Array(row.public_key),
-        BLIND_RSA.rsaParams,
-        true,
-        ["verify"],
-      );
-      const publicKeyBytes = await getPublicKeyBytes(publicKey);
-      const tokenKeyId = await sha256(publicKeyBytes);
+      pkcs8.fill(0);
+      const key = await publicKeyOf(row);
       return {
-        keyId: row.key_id,
-        issuer: new Issuer(BlindRSAMode.PSS, issuerName, privateKey, publicKey),
-        publicKey,
-        publicKeyBytes,
-        tokenKeyId,
-        truncatedTokenKeyId: tokenKeyId[tokenKeyId.length - 1]!,
-        notBefore: row.not_before,
-        notAfter: row.not_after,
+        ...key,
+        issuer: new Issuer(BlindRSAMode.PSS, issuerName, privateKey, key.publicKey),
       };
     }),
   );
+}
+
+/**
+ * Opens every stored issuer private key under `secrets`, expired ones too,
+ * so a key that is not the one they were sealed with stops the start with a
+ * "wrong key" error naming the key id.
+ */
+export function assertIssuerKeysOpen(sql: postgres.Sql, secrets: SecretsKey): Promise<void> {
+  return assertStoredSecretsOpen(sql, secrets, ISSUER_KEY_SECRETS);
 }
 
 /**
@@ -234,11 +308,12 @@ export async function loadActiveIssuerKeys(
  */
 export async function ensureIssuerKeys(
   sql: postgres.Sql,
+  secrets: SecretsKey,
   nowIso: string,
   issuerName: string,
 ): Promise<ActiveIssuerKey[]> {
-  const existing = await loadActiveIssuerKeys(sql, nowIso, issuerName);
+  const existing = await loadActiveIssuerKeys(sql, secrets, nowIso, issuerName);
   if (existing.length > 0) return existing;
-  await generateIssuerKey(sql, nowIso);
-  return loadActiveIssuerKeys(sql, nowIso, issuerName);
+  await generateIssuerKey(sql, secrets, nowIso);
+  return loadActiveIssuerKeys(sql, secrets, nowIso, issuerName);
 }

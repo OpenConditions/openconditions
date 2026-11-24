@@ -4,7 +4,8 @@
  * Keys live in conditions.federation_instance_key: the raw 32-byte public key,
  * the private key as PKCS#8, and the publicKeyMultibase served in the Actor
  * document. The private key is an operator secret — persisted to the operator
- * database only, never served, never logged, never federated. Unlike
+ * database only, sealed with the instance's secrets key, never served, never
+ * logged, never federated. Unlike
  * contrib-core's device-bound reporter keys, instance private keys are
  * generated extractable BY DESIGN: they must round-trip through the database
  * across restarts.
@@ -21,8 +22,28 @@
  * is endorsed by the last one all the same: no key but the first is one a
  * peer has no way to trust.
  */
+import {
+  assertStoredSecretsOpen,
+  type SecretPlace,
+  type SecretsKey,
+  type SecretTable,
+  storedSecret,
+} from "@openconditions/core/server";
 import type postgres from "postgres";
 import { multibaseFromRawEd25519, rawEd25519FromMultibase } from "./multibase.js";
+
+/** The instance keys' table and the secret it stores sealed. */
+export const INSTANCE_KEY_SECRETS: SecretTable = {
+  table: "federation_instance_key",
+  rowKey: "key_id",
+  columns: ["private_key"],
+};
+
+const privateKeyPlace = (keyId: string): SecretPlace => ({
+  table: INSTANCE_KEY_SECRETS.table,
+  column: "private_key",
+  row: keyId,
+});
 
 /** Default instance key validity, in calendar months. */
 export const INSTANCE_KEY_VALIDITY_MONTHS = 6;
@@ -69,10 +90,12 @@ export interface InstanceKey {
   endorsement?: KeyEndorsement;
 }
 
-interface InstanceKeyRow {
+interface InstanceKeyRow extends postgres.Row {
   key_id: string;
   public_key: Buffer;
-  private_key: Buffer;
+  private_key_ciphertext: Buffer;
+  private_key_iv: Buffer;
+  private_key_tag: Buffer;
   multibase: string;
   not_before: Date;
   not_after: Date;
@@ -195,20 +218,24 @@ export async function generateInstanceKey(
 
 async function insertInstanceKey(
   sql: postgres.Sql | postgres.TransactionSql,
+  secrets: SecretsKey,
   key: InstanceKey,
   createdAt: string,
 ): Promise<void> {
   const privatePkcs8 = new Uint8Array(
     await globalThis.crypto.subtle.exportKey("pkcs8", key.privateKey),
   );
+  const sealed = secrets.seal(privatePkcs8, privateKeyPlace(key.keyId));
+  privatePkcs8.fill(0);
   const bytes = (base64url: string | undefined) =>
     base64url === undefined ? null : Buffer.from(base64url, "base64url");
   await sql`
     INSERT INTO conditions.federation_instance_key
-      (key_id, public_key, private_key, multibase, not_before, not_after, created_at,
-       endorsed_by, endorsement, endorsement_proof)
-    VALUES (${key.keyId}, ${Buffer.from(key.publicKeyRaw)}, ${Buffer.from(privatePkcs8)},
-            ${key.publicKeyMultibase}, ${key.notBefore}, ${key.notAfter}, ${new Date(createdAt)},
+      (key_id, public_key, private_key_ciphertext, private_key_iv, private_key_tag, multibase,
+       not_before, not_after, created_at, endorsed_by, endorsement, endorsement_proof)
+    VALUES (${key.keyId}, ${Buffer.from(key.publicKeyRaw)}, ${Buffer.from(sealed.ciphertext)},
+            ${Buffer.from(sealed.iv)}, ${Buffer.from(sealed.tag)}, ${key.publicKeyMultibase},
+            ${key.notBefore}, ${key.notAfter}, ${new Date(createdAt)},
             ${key.endorsement?.by ?? null}, ${bytes(key.endorsement?.signature)},
             ${bytes(key.endorsement?.proof)})
     ON CONFLICT (key_id) DO NOTHING
@@ -216,11 +243,12 @@ async function insertInstanceKey(
 }
 
 /**
- * Rehydrates a key row's WebCrypto handles. The stored multibase is
- * recomputed from the raw public key and must match — a mismatch means the
- * row was tampered with or corrupted, and is refused.
+ * Rehydrates a key row's WebCrypto handles, opening its private key with
+ * `secrets`. The stored multibase is recomputed from the raw public key and
+ * must match — a mismatch means the row was tampered with or corrupted, and
+ * is refused.
  */
-async function keyOfRow(row: InstanceKeyRow): Promise<InstanceKey> {
+async function keyOfRow(row: InstanceKeyRow, secrets: SecretsKey): Promise<InstanceKey> {
   const publicKeyRaw = new Uint8Array(row.public_key);
   const recomputed = multibaseFromRawEd25519(publicKeyRaw);
   if (recomputed !== row.multibase || row.key_id !== row.multibase) {
@@ -235,13 +263,20 @@ async function keyOfRow(row: InstanceKeyRow): Promise<InstanceKey> {
     true,
     ["verify"],
   );
+  const place = privateKeyPlace(row.key_id);
+  const sealed = storedSecret(row, place);
+  if (sealed === null) {
+    throw new Error(`federation_instance_key row ${row.key_id} has no private key`);
+  }
+  const pkcs8 = secrets.open(sealed, place);
   const privateKey = await globalThis.crypto.subtle.importKey(
     "pkcs8",
-    new Uint8Array(row.private_key) as BufferSource,
+    new Uint8Array(pkcs8) as BufferSource,
     ED25519,
     false,
     ["sign"],
   );
+  pkcs8.fill(0);
   return {
     keyId: row.key_id,
     publicKeyMultibase: row.multibase,
@@ -262,15 +297,17 @@ async function keyOfRow(row: InstanceKeyRow): Promise<InstanceKey> {
   };
 }
 
-const KEY_COLUMNS = `key_id, public_key, private_key, multibase, not_before, not_after,
-  endorsed_by, endorsement, endorsement_proof`;
+const KEY_COLUMNS = `key_id, public_key, private_key_ciphertext, private_key_iv,
+  private_key_tag, multibase, not_before, not_after, endorsed_by, endorsement, endorsement_proof`;
 
 /**
- * Loads every instance key valid at `now` (newest first). During a rotation
- * overlap this returns BOTH keys.
+ * Loads every instance key valid at `now` (newest first), opening the
+ * private keys with `secrets`. During a rotation overlap this returns BOTH
+ * keys.
  */
 export async function loadActiveKeys(
   sql: postgres.Sql | postgres.TransactionSql,
+  secrets: SecretsKey,
   now: string,
 ): Promise<InstanceKey[]> {
   const rows = await sql.unsafe<InstanceKeyRow[]>(
@@ -279,16 +316,28 @@ export async function loadActiveKeys(
       ORDER BY not_before DESC`,
     [new Date(now)],
   );
-  return Promise.all(rows.map(keyOfRow));
+  return Promise.all(rows.map((row) => keyOfRow(row, secrets)));
 }
 
 /** The newest key ever stored, valid or not; undefined before the first. */
-async function loadLatestKey(sql: postgres.TransactionSql): Promise<InstanceKey | undefined> {
+async function loadLatestKey(
+  sql: postgres.TransactionSql,
+  secrets: SecretsKey,
+): Promise<InstanceKey | undefined> {
   const [row] = await sql.unsafe<InstanceKeyRow[]>(
     `SELECT ${KEY_COLUMNS} FROM conditions.federation_instance_key
       ORDER BY not_before DESC LIMIT 1`,
   );
-  return row === undefined ? undefined : keyOfRow(row);
+  return row === undefined ? undefined : keyOfRow(row, secrets);
+}
+
+/**
+ * Opens every stored instance private key under `secrets`, expired ones
+ * too, so a key that is not the one they were sealed with stops the start
+ * with a "wrong key" error naming the key id.
+ */
+export function assertInstanceKeysOpen(sql: postgres.Sql, secrets: SecretsKey): Promise<void> {
+  return assertStoredSecretsOpen(sql, secrets, INSTANCE_KEY_SECRETS);
 }
 
 /**
@@ -304,24 +353,26 @@ export function signingKeyOf(active: readonly InstanceKey[], now: string): Insta
 /** The key this instance signs with now; undefined when none is valid. */
 export async function loadSigningKey(
   sql: postgres.Sql,
+  secrets: SecretsKey,
   now: string,
 ): Promise<InstanceKey | undefined> {
-  return signingKeyOf(await loadActiveKeys(sql, now), now);
+  return signingKeyOf(await loadActiveKeys(sql, secrets, now), now);
 }
 
 async function rotateIn(
   tx: postgres.TransactionSql,
+  secrets: SecretsKey,
   now: string,
   instanceId: string,
   validityMonths: number,
 ): Promise<InstanceKey> {
-  const latest = await loadLatestKey(tx);
+  const latest = await loadLatestKey(tx, secrets);
   const key = await generateInstanceKey(
     now,
     validityMonths,
     latest === undefined ? undefined : { key: latest, instanceId },
   );
-  await insertInstanceKey(tx, key, now);
+  await insertInstanceKey(tx, secrets, key, now);
   const at = new Date(now);
   const overlapEnd = new Date(at.getTime() + ROTATION_OVERLAP_DAYS * DAY_MS);
   await tx`
@@ -348,13 +399,14 @@ const lockKeys = (tx: postgres.TransactionSql) =>
  */
 export async function rotateInstanceKey(
   sql: postgres.Sql,
+  secrets: SecretsKey,
   now: string,
   instanceId: string,
   validityMonths = INSTANCE_KEY_VALIDITY_MONTHS,
 ): Promise<InstanceKey> {
   return sql.begin(async (tx) => {
     await lockKeys(tx);
-    return rotateIn(tx, now, instanceId, validityMonths);
+    return rotateIn(tx, secrets, now, instanceId, validityMonths);
   }) as Promise<InstanceKey>;
 }
 
@@ -370,26 +422,27 @@ export type KeyMaintenance =
  */
 export async function maintainInstanceKey(
   sql: postgres.Sql,
+  secrets: SecretsKey,
   now: string,
   instanceId: string,
 ): Promise<KeyMaintenance> {
   return sql.begin(async (tx) => {
     await lockKeys(tx);
-    const [newest] = await loadActiveKeys(tx, now);
+    const [newest] = await loadActiveKeys(tx, secrets, now);
     if (
       newest !== undefined &&
       newest.notAfter.getTime() - Date.parse(now) > KEY_ROTATION_LEAD_DAYS * DAY_MS
     ) {
       return { status: "current", expiresAt: newest.notAfter };
     }
-    if ((await loadLatestKey(tx)) === undefined) {
+    if ((await loadLatestKey(tx, secrets)) === undefined) {
       const key = await generateInstanceKey(now);
-      await insertInstanceKey(tx, key, now);
+      await insertInstanceKey(tx, secrets, key, now);
       return { status: "created", key };
     }
     return {
       status: "rotated",
-      key: await rotateIn(tx, now, instanceId, INSTANCE_KEY_VALIDITY_MONTHS),
+      key: await rotateIn(tx, secrets, now, instanceId, INSTANCE_KEY_VALIDITY_MONTHS),
     };
   }) as Promise<KeyMaintenance>;
 }

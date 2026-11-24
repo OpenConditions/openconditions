@@ -13,6 +13,7 @@
 import {
   ACTOR_WELL_KNOWN_PATH,
   anonymousRateKey,
+  assertInstanceKeysOpen,
   buildActorDocument,
   createInMemoryRateLimiter,
   FEDERATION_JSON,
@@ -159,20 +160,23 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
   }
 
   const actorConfig = settings.actor!;
+  const secretsKey = settings.secretsKey!;
   // The running registry, not the operator, says which schemas this instance accepts.
   const registry = productionRegistry();
   const advertisedSchemaVersions = schemaVersions(registry);
   const peers = options.peers ?? (await PeerBook.load(sql, settings.peers));
-  await maintainInstanceKey(sql, now(), actorConfig.instanceId);
+  // A key that cannot open the stored instance keys fails boot, naming the key.
+  await assertInstanceKeysOpen(sql, secretsKey);
+  await maintainInstanceKey(sql, secretsKey, now(), actorConfig.instanceId);
 
   /** The keys valid now, rotating first when none is (a process that
    *  outlived its keys): keys are read per request, so a rotation shows up
    *  without a restart. */
   async function activeKeys(): Promise<InstanceKey[]> {
-    const keys = await loadActiveKeys(sql, now());
+    const keys = await loadActiveKeys(sql, secretsKey, now());
     if (keys.length > 0) return keys;
-    await maintainInstanceKey(sql, now(), actorConfig.instanceId);
-    return loadActiveKeys(sql, now());
+    await maintainInstanceKey(sql, secretsKey, now(), actorConfig.instanceId);
+    return loadActiveKeys(sql, secretsKey, now());
   }
 
   /** The key this instance signs with now. */

@@ -72,8 +72,10 @@ export {
 } from "./journal.js";
 export type { Endorser, InstanceKey, KeyEndorsement, KeyMaintenance } from "./keys.js";
 export {
+  assertInstanceKeysOpen,
   endorsementMessage,
   generateInstanceKey,
+  INSTANCE_KEY_SECRETS,
   INSTANCE_KEY_VALIDITY_MONTHS,
   KEY_PUBLICATION_LEAD_DAYS,
   KEY_ROTATION_LEAD_DAYS,

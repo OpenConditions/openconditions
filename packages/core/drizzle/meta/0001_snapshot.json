@@ -1,6 +1,6 @@
 {
-  "id": "2b25854a-b2bc-43ae-bc2f-2b5b8f5cf9a5",
-  "prevId": "3d537dde-b9e2-4b7e-95dc-3f41b8db6566",
+  "id": "5fe6e96a-3afc-4980-a62e-4839de7f6199",
+  "prevId": "dd8f544b-c179-4606-8ae0-df8082e9c292",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -3766,8 +3766,20 @@
           "primaryKey": false,
           "notNull": true
         },
-        "private_key": {
-          "name": "private_key",
+        "private_key_ciphertext": {
+          "name": "private_key_ciphertext",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "private_key_iv": {
+          "name": "private_key_iv",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "private_key_tag": {
+          "name": "private_key_tag",
           "type": "bytea",
           "primaryKey": false,
           "notNull": true
@@ -3820,7 +3832,12 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "federation_instance_key_private_key_check": {
+          "name": "federation_instance_key_private_key_check",
+          "value": "(\"private_key_ciphertext\" IS NULL) = (\"private_key_iv\" IS NULL) AND (\"private_key_iv\" IS NULL) = (\"private_key_tag\" IS NULL) AND octet_length(\"private_key_iv\") = 12 AND octet_length(\"private_key_tag\") = 16"
+        }
+      },
       "isRLSEnabled": false
     },
     "conditions.federation_journal": {
@@ -4682,8 +4699,20 @@
           "primaryKey": false,
           "notNull": true
         },
-        "private_key": {
-          "name": "private_key",
+        "private_key_ciphertext": {
+          "name": "private_key_ciphertext",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "private_key_iv": {
+          "name": "private_key_iv",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "private_key_tag": {
+          "name": "private_key_tag",
           "type": "bytea",
           "primaryKey": false,
           "notNull": true
@@ -4706,7 +4735,12 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "issuer_key_private_key_check": {
+          "name": "issuer_key_private_key_check",
+          "value": "(\"private_key_ciphertext\" IS NULL) = (\"private_key_iv\" IS NULL) AND (\"private_key_iv\" IS NULL) = (\"private_key_tag\" IS NULL) AND octet_length(\"private_key_iv\") = 12 AND octet_length(\"private_key_tag\") = 16"
+        }
+      },
       "isRLSEnabled": false
     },
     "conditions.nsw_rfs_clock": {
@@ -6506,9 +6540,21 @@
           "primaryKey": true,
           "notNull": true
         },
-        "refresh_token": {
-          "name": "refresh_token",
-          "type": "text",
+        "refresh_token_ciphertext": {
+          "name": "refresh_token_ciphertext",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "refresh_token_iv": {
+          "name": "refresh_token_iv",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "refresh_token_tag": {
+          "name": "refresh_token_tag",
+          "type": "bytea",
           "primaryKey": false,
           "notNull": true
         },
@@ -6518,9 +6564,21 @@
           "primaryKey": false,
           "notNull": true
         },
-        "access_token": {
-          "name": "access_token",
-          "type": "text",
+        "access_token_ciphertext": {
+          "name": "access_token_ciphertext",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "access_token_iv": {
+          "name": "access_token_iv",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "access_token_tag": {
+          "name": "access_token_tag",
+          "type": "bytea",
           "primaryKey": false,
           "notNull": false
         },
@@ -6561,7 +6619,16 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "oauth_grant_refresh_token_check": {
+          "name": "oauth_grant_refresh_token_check",
+          "value": "(\"refresh_token_ciphertext\" IS NULL) = (\"refresh_token_iv\" IS NULL) AND (\"refresh_token_iv\" IS NULL) = (\"refresh_token_tag\" IS NULL) AND octet_length(\"refresh_token_iv\") = 12 AND octet_length(\"refresh_token_tag\") = 16"
+        },
+        "oauth_grant_access_token_check": {
+          "name": "oauth_grant_access_token_check",
+          "value": "(\"access_token_ciphertext\" IS NULL) = (\"access_token_iv\" IS NULL) AND (\"access_token_iv\" IS NULL) = (\"access_token_tag\" IS NULL) AND octet_length(\"access_token_iv\") = 12 AND octet_length(\"access_token_tag\") = 16"
+        }
+      },
       "isRLSEnabled": false
     },
     "conditions.source": {

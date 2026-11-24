@@ -66,6 +66,12 @@
         "default": "",
         "x-openmapx-secret": false
       },
+      "OPENCONDITIONS_SECRETS_KEY": {
+        "type": "string",
+        "title": "Secrets key",
+        "description": "Required when enabled. The key the instance's federation private keys are encrypted with in the database: 64 hexadecimal characters. Enter the same value as in the ingest service: every OpenConditions service of this instance must hold the same key. Keep it in your recovery set and never in a database backup: without it a new instance key must be made, which changes this instance's federation identity and has every peer pin it again. Enabled, the service refuses to start without it, or with a key that cannot decrypt the stored instance keys.",
+        "x-openmapx-secret": true
+      },
       "OPENCONDITIONS_INSTANCE_ID": {
         "type": "string",
         "title": "Instance id",

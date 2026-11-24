@@ -120,7 +120,11 @@ describe("gen-credentials-lib", () => {
 
   it("emits the service's own secrets as vault fields without a default", () => {
     const props = configSchemaPropertiesFor(ofFeeds([]));
-    for (const key of ["DATABASE_URL", "OPENCONDITIONS_OPERATOR_TOKEN"]) {
+    for (const key of [
+      "DATABASE_URL",
+      "OPENCONDITIONS_SECRETS_KEY",
+      "OPENCONDITIONS_OPERATOR_TOKEN",
+    ]) {
       expect(props[key]).toMatchObject({ type: "string", "x-openmapx-secret": true });
       expect(props[key]).not.toHaveProperty("default");
     }

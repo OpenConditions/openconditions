@@ -456,14 +456,17 @@ CREATE TABLE "conditions"."federation_blocklist" (
 CREATE TABLE "conditions"."federation_instance_key" (
 	"key_id" text PRIMARY KEY NOT NULL,
 	"public_key" "bytea" NOT NULL,
-	"private_key" "bytea" NOT NULL,
+	"private_key_ciphertext" "bytea" NOT NULL,
+	"private_key_iv" "bytea" NOT NULL,
+	"private_key_tag" "bytea" NOT NULL,
 	"multibase" text NOT NULL,
 	"not_before" timestamp with time zone NOT NULL,
 	"not_after" timestamp with time zone NOT NULL,
 	"created_at" timestamp with time zone NOT NULL,
 	"endorsed_by" text,
 	"endorsement" "bytea",
-	"endorsement_proof" "bytea"
+	"endorsement_proof" "bytea",
+	CONSTRAINT "federation_instance_key_private_key_check" CHECK (("private_key_ciphertext" IS NULL) = ("private_key_iv" IS NULL) AND ("private_key_iv" IS NULL) = ("private_key_tag" IS NULL) AND octet_length("private_key_iv") = 12 AND octet_length("private_key_tag") = 16)
 );
 --> statement-breakpoint
 CREATE TABLE "conditions"."federation_journal" (
@@ -593,9 +596,12 @@ CREATE TABLE "conditions"."geonet_coverage" (
 CREATE TABLE "conditions"."issuer_key" (
 	"key_id" text PRIMARY KEY NOT NULL,
 	"public_key" "bytea" NOT NULL,
-	"private_key" "bytea" NOT NULL,
+	"private_key_ciphertext" "bytea" NOT NULL,
+	"private_key_iv" "bytea" NOT NULL,
+	"private_key_tag" "bytea" NOT NULL,
 	"not_before" timestamp with time zone NOT NULL,
-	"not_after" timestamp with time zone NOT NULL
+	"not_after" timestamp with time zone NOT NULL,
+	CONSTRAINT "issuer_key_private_key_check" CHECK (("private_key_ciphertext" IS NULL) = ("private_key_iv" IS NULL) AND ("private_key_iv" IS NULL) = ("private_key_tag" IS NULL) AND octet_length("private_key_iv") = 12 AND octet_length("private_key_tag") = 16)
 );
 --> statement-breakpoint
 CREATE TABLE "conditions"."nsw_rfs_clock" (
@@ -869,14 +875,20 @@ CREATE TABLE "conditions"."token_quota" (
 --> statement-breakpoint
 CREATE TABLE "conditions"."oauth_grant" (
 	"grant_key" text PRIMARY KEY NOT NULL,
-	"refresh_token" text NOT NULL,
+	"refresh_token_ciphertext" "bytea" NOT NULL,
+	"refresh_token_iv" "bytea" NOT NULL,
+	"refresh_token_tag" "bytea" NOT NULL,
 	"refresh_issued_at" timestamp with time zone NOT NULL,
-	"access_token" text,
+	"access_token_ciphertext" "bytea",
+	"access_token_iv" "bytea",
+	"access_token_tag" "bytea",
 	"access_expires_at" timestamp with time zone,
 	"rejected_at" timestamp with time zone,
 	"last_error" text,
 	"last_error_at" timestamp with time zone,
-	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "oauth_grant_refresh_token_check" CHECK (("refresh_token_ciphertext" IS NULL) = ("refresh_token_iv" IS NULL) AND ("refresh_token_iv" IS NULL) = ("refresh_token_tag" IS NULL) AND octet_length("refresh_token_iv") = 12 AND octet_length("refresh_token_tag") = 16),
+	CONSTRAINT "oauth_grant_access_token_check" CHECK (("access_token_ciphertext" IS NULL) = ("access_token_iv" IS NULL) AND ("access_token_iv" IS NULL) = ("access_token_tag" IS NULL) AND octet_length("access_token_iv") = 12 AND octet_length("access_token_tag") = 16)
 );
 --> statement-breakpoint
 CREATE TABLE "conditions"."source" (

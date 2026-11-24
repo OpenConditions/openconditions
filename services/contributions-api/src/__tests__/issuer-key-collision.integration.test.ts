@@ -1,6 +1,11 @@
 import { publicVerif } from "@cloudflare/privacypass-ts";
 import { generateReporterKey } from "@openconditions/contrib-core";
-import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
+import { SecretsKey } from "@openconditions/core/server";
+import {
+  createTestDatabase,
+  TEST_SECRETS_KEY,
+  type TestDatabase,
+} from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { enrollReporter } from "../attester/enroll.js";
@@ -17,6 +22,7 @@ import { TokenVerifier } from "../issuer/verify.js";
 const { BlindRSAMode, Client, Issuer, Origin, TokenResponse, getPublicKeyBytes } = publicVerif;
 
 const NOW = "2026-07-12T08:00:00.000Z";
+const secrets = SecretsKey.parse(TEST_SECRETS_KEY);
 const GRANT_SECRET = new TextEncoder().encode("issuer-key-collision-test-secret");
 
 const noopLog = { info: () => {}, warn: () => {}, error: () => {} };
@@ -158,8 +164,8 @@ function barrieredGenerator(sequence: KeyPair[], barrier: () => Promise<void>) {
 
 describe("truncated-key-id reserved-byte derivation", () => {
   it("the last hex byte of key_id equals loadActiveIssuerKeys' truncatedTokenKeyId", async () => {
-    const { keyId } = await generateIssuerKey(sql, NOW);
-    const keys = await loadActiveIssuerKeys(sql, NOW, DEFAULT_ISSUER_NAME);
+    const { keyId } = await generateIssuerKey(sql, secrets, NOW);
+    const keys = await loadActiveIssuerKeys(sql, secrets, NOW, DEFAULT_ISSUER_NAME);
     const key = keys.find((k) => k.keyId === keyId)!;
     expect(parseInt(keyId.slice(-2), 16)).toBe(key.truncatedTokenKeyId);
   }, 60_000);
@@ -175,12 +181,12 @@ describe("generateIssuerKey truncated-id collision avoidance", () => {
 
     // Seed one active key in the window; it inserts cleanly (no collision yet).
     const seed = scriptedGenerator([k1!]);
-    await generateIssuerKey(sql, NOW, { ...window, generateKeyPair: seed.generate });
+    await generateIssuerKey(sql, secrets, NOW, { ...window, generateKeyPair: seed.generate });
     expect(seed.state.calls).toBe(1);
 
     // The next candidate collides (same keypair/byte) and MUST be regenerated.
     const colliding = scriptedGenerator([k1!, k2!]);
-    const created = await generateIssuerKey(sql, NOW, {
+    const created = await generateIssuerKey(sql, secrets, NOW, {
       ...window,
       generateKeyPair: colliding.generate,
     });
@@ -206,12 +212,12 @@ describe("generateIssuerKey truncated-id collision avoidance", () => {
     };
     const [k1] = await distinctKeyPairs(1);
     const seed = scriptedGenerator([k1!]);
-    await generateIssuerKey(sql, NOW, { ...window, generateKeyPair: seed.generate });
+    await generateIssuerKey(sql, secrets, NOW, { ...window, generateKeyPair: seed.generate });
 
     // Every candidate collides with the seeded key; bounded retries then throw.
     const stuck = scriptedGenerator([k1!]);
     await expect(
-      generateIssuerKey(sql, NOW, {
+      generateIssuerKey(sql, secrets, NOW, {
         ...window,
         generateKeyPair: stuck.generate,
         maxKeyGenAttempts: 3,
@@ -227,7 +233,7 @@ describe("generateIssuerKey truncated-id collision avoidance", () => {
     };
     const [k1] = await distinctKeyPairs(1);
     const seed = scriptedGenerator([k1!]);
-    await generateIssuerKey(sql, NOW, { ...past, generateKeyPair: seed.generate });
+    await generateIssuerKey(sql, secrets, NOW, { ...past, generateKeyPair: seed.generate });
 
     // A disjoint future window sees no reserved bytes from the past key.
     const disjoint = await overlappingTruncatedKeyIds(
@@ -275,11 +281,13 @@ describe("generateIssuerKey concurrent generation is serialized", () => {
     }
 
     const results = await Promise.all(
-      generators.map((generate) => generateIssuerKey(sql, NOW, { generateKeyPair: generate })),
+      generators.map((generate) =>
+        generateIssuerKey(sql, secrets, NOW, { generateKeyPair: generate }),
+      ),
     );
     expect(results).toHaveLength(N);
 
-    const keys = await loadActiveIssuerKeys(sql, NOW, DEFAULT_ISSUER_NAME);
+    const keys = await loadActiveIssuerKeys(sql, secrets, NOW, DEFAULT_ISSUER_NAME);
     expect(keys).toHaveLength(N);
     // The whole point: every overlapping stored key has a DISTINCT truncated byte,
     // so issuance can never be ambiguous. Without the advisory lock the three
@@ -291,13 +299,13 @@ describe("generateIssuerKey concurrent generation is serialized", () => {
 describe("overlapping keys with distinct bytes issue + redeem correctly", () => {
   it("a token blinded against the OLDER of two overlapping keys still issues and redeems", async () => {
     await sql`TRUNCATE conditions.issuer_key`;
-    const older = await generateIssuerKey(sql, NOW, {
+    const older = await generateIssuerKey(sql, secrets, NOW, {
       notBefore: "2026-05-01T00:00:00.000Z",
       notAfter: "2026-08-01T00:00:00.000Z",
     });
-    await generateIssuerKey(sql, NOW);
+    await generateIssuerKey(sql, secrets, NOW);
 
-    const keys = await loadActiveIssuerKeys(sql, NOW, DEFAULT_ISSUER_NAME);
+    const keys = await loadActiveIssuerKeys(sql, secrets, NOW, DEFAULT_ISSUER_NAME);
     expect(keys).toHaveLength(2);
     // The generation-time invariant: no two overlapping keys share a truncated byte.
     expect(new Set(keys.map((k) => k.truncatedTokenKeyId)).size).toBe(2);
@@ -319,6 +327,7 @@ describe("overlapping keys with distinct bytes issue + redeem correctly", () => 
     const request = await client.createTokenRequest(challenge, olderKey.publicKeyBytes);
     const result = await issueToken(sql, reporter.keyId, "2026-07-12", request.serialize(), ctx, {
       log: noopLog,
+      secrets,
       now: NOW,
     });
     expect(result.issued).toBe(true);

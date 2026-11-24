@@ -488,6 +488,9 @@ importers:
 
   packages/federation:
     dependencies:
+      '@openconditions/core':
+        specifier: workspace:*
+        version: link:../core
       '@openconditions/ingest-framework':
         specifier: workspace:*
         version: link:../ingest-framework
@@ -516,9 +519,6 @@ importers:
         specifier: 2.9.1
         version: 2.9.1
     devDependencies:
-      '@openconditions/core':
-        specifier: workspace:*
-        version: link:../core
       '@openconditions/model-registry':
         specifier: workspace:*
         version: link:../model-registry
@@ -1039,6 +1039,9 @@ importers:
       '@openconditions/contributions-api':
         specifier: workspace:*
         version: link:../../services/contributions-api
+      '@openconditions/core':
+        specifier: workspace:*
+        version: link:../core
       '@openconditions/test-database':
         specifier: workspace:*
         version: link:../test-database
@@ -2487,10 +2490,6 @@ packages:
   '@tufjs/canonical-json@2.0.0':
     resolution: {integrity: sha512-yVtV8zsdo8qFHe+/3kw81dSLyF7D576A5cCFCi4X7B39tWT7SekaEFUnvnWJHz+9qO7qJTah1JbrDjWKqFtdWA==}
     engines: {node: ^16.14.0 || >=18.0.0}
-
-  '@tufjs/models@5.0.2':
-    resolution: {integrity: sha512-YzKuFwBcH+m4/YIN0magcH5AjgYVnNFUGhP14vCs+Ckanqz86dDn6K0anjjb730Iu6SSqjzXQCo3FzVqYyT+wg==}
-    engines: {node: ^22.22.2 || ^24.15.0 || >=26.0.0}
 
   '@tufjs/models@5.0.3':
     resolution: {integrity: sha512-rNNqM2QoZoGLhUxMp0RK4fIFRhQz9viRHph6N3qA4+Hpa8linMhZv0VdQ+tDaNRzbWPiE2YAikU0orDk2X4DvA==}
@@ -4982,11 +4981,6 @@ snapshots:
   '@simple-libs/stream-utils@2.0.0': {}
 
   '@tufjs/canonical-json@2.0.0': {}
-
-  '@tufjs/models@5.0.2':
-    dependencies:
-      '@tufjs/canonical-json': 2.0.0
-      minimatch: 11.0.3
 
   '@tufjs/models@5.0.3':
     dependencies:

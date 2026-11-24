@@ -6,7 +6,11 @@ import {
   type SubClaimType,
   signSubClaim,
 } from "@openconditions/contrib-core";
-import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
+import {
+  createTestDatabase,
+  TEST_SECRETS_KEY,
+  type TestDatabase,
+} from "@openconditions/test-database";
 import type { FastifyInstance } from "fastify";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
@@ -26,6 +30,7 @@ const GRANT_SECRET_VALUE = "reviewer-route-test-grant-secret";
 const REVIEWER_TOKEN = "reviewer-route-test-operator-token";
 const ENV = {
   OPENCONDITIONS_GRANT_SECRET: GRANT_SECRET_VALUE,
+  OPENCONDITIONS_SECRETS_KEY: TEST_SECRETS_KEY,
   OPENCONDITIONS_REVIEWER_TOKEN: REVIEWER_TOKEN,
   OPENCONDITIONS_INSTANCE_ID: INSTANCE,
 };
@@ -320,6 +325,7 @@ describe("reviewer auth — operator bearer token", () => {
         env: {
           NODE_ENV: "production",
           OPENCONDITIONS_GRANT_SECRET: GRANT_SECRET_VALUE,
+          OPENCONDITIONS_SECRETS_KEY: TEST_SECRETS_KEY,
           OPENCONDITIONS_INSTANCE_ID: INSTANCE,
         },
         logger: false,

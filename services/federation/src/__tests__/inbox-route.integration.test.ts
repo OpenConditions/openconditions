@@ -10,7 +10,11 @@ import {
   unblockPeer,
 } from "@openconditions/federation";
 import { schemaVersions } from "@openconditions/model";
-import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
+import {
+  createTestDatabase,
+  TEST_SECRETS_KEY,
+  type TestDatabase,
+} from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { build } from "../server.js";
@@ -80,6 +84,7 @@ beforeAll(async () => {
 
   enabledEnv = {
     OPENCONDITIONS_FEDERATION_ENABLED: "true",
+    OPENCONDITIONS_SECRETS_KEY: TEST_SECRETS_KEY,
     OPENCONDITIONS_INSTANCE_ID: ACTOR_CONFIG.instanceId,
     OPENCONDITIONS_FEDERATION_ACTOR: JSON.stringify(ACTOR_CONFIG),
     OPENCONDITIONS_FEDERATION_PEERS: JSON.stringify([

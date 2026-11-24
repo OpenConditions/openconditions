@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { join } from "node:path";
+import type { SecretsKey } from "@openconditions/core/server";
 import {
   type Catalog,
   type CatalogFeed,
@@ -295,6 +296,8 @@ export interface SchedulerOptions {
    * leave their binding work queued for the primary's next drain.
    */
   primary: boolean;
+  /** The key the OAuth2 grants' tokens are sealed with in the database. */
+  secretsKey: SecretsKey;
   /** Tracks the feed polls and the binding queue's drain, so shutdown waits for them. */
   inFlight?: Pick<InFlight, "track">;
 }
@@ -324,7 +327,7 @@ export function startScheduler(
   // And one child process that parses them, so the event loop stays free meanwhile.
   const parseProcess = createParseProcess();
   // One holder of the OAuth2 grants, so the feeds of one account share its access token.
-  const grants = createOAuthGrants(sql);
+  const grants = createOAuthGrants(sql, opts.secretsKey);
   const bindingDrain = opts.primary
     ? createBindingDrain(
         () => defaultDrainBindingQueue(sql, { now: () => new Date().toISOString() }),

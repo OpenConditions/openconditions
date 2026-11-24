@@ -1,4 +1,5 @@
 import { generateInstanceKey, type PeerRecord } from "@openconditions/federation";
+import { TEST_SECRETS_KEY } from "@openconditions/test-database";
 import { describe, expect, it } from "vitest";
 import { resolveFederationSettings } from "../config.js";
 import { PeerBook } from "../peer-book.js";
@@ -54,6 +55,7 @@ describe("the peers a registry sync found", () => {
 describe("the registry settings", () => {
   const enabled = {
     OPENCONDITIONS_FEDERATION_ENABLED: "true",
+    OPENCONDITIONS_SECRETS_KEY: TEST_SECRETS_KEY,
     OPENCONDITIONS_INSTANCE_ID: "me.example.org",
     OPENCONDITIONS_FEDERATION_ACTOR: JSON.stringify({
       instanceId: "me.example.org",
