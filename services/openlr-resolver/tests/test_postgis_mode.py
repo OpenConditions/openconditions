@@ -92,7 +92,7 @@ def test_optional_unavailable_database_skips(tmp_path, mode, block):
     result = run_pytest(tmp_path, mode=mode, block=block)
     assert result.returncode == 0, result.stdout + result.stderr
     cases = ET.parse(tmp_path / "results.xml").findall(".//testcase")
-    assert len(cases) == 4
+    assert len(cases) == 5
     assert all(case.find("skipped") is not None for case in cases)
 
 
@@ -141,7 +141,7 @@ def test_required_database_import_failure_is_not_a_skip(tmp_path):
         result = run_pytest(tmp_path, block="psycopg_pool", docker_host=host)
     assert result.returncode != 0, result.stdout + result.stderr
     assert "deliberately unavailable dependency: psycopg_pool" in result.stdout + result.stderr
-    assert "4 errors" in result.stdout
+    assert "5 errors" in result.stdout
     assert not any(method == "POST" for method, _ in requests)
 
 

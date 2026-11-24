@@ -35,7 +35,7 @@ def _bearing_deg(a, b) -> float:
 
 
 @pytest.fixture(scope="module")
-def pg_reader(postgis_required, record_testsuite_property):
+def pg_url(postgis_required):
     unavailable = pytest.fail if postgis_required else pytest.skip
     context = "OPENLR_POSTGIS_TESTS=required" if postgis_required else "optional PostGIS tests"
     try:
@@ -54,28 +54,100 @@ def pg_reader(postgis_required, record_testsuite_property):
         if client is not None:
             client.close()
 
+    # Import the database dependencies before a container starts, so a missing one fails
+    # without starting it.
+    import app.maps.postgis  # noqa: F401
+    import psycopg_pool  # noqa: F401
+
+    with PostgresContainer("postgis/postgis:16-3.4", driver=None) as pg:
+        yield pg.get_connection_url()
+
+
+@pytest.fixture(scope="module")
+def pg_reader(pg_url, record_testsuite_property):
     from app.maps.postgis import PostgisMapReader
     from psycopg_pool import ConnectionPool
     from scripts.build_graph import build_graph, load_into_postgis
 
-    with PostgresContainer("postgis/postgis:16-3.4", driver=None) as pg:
-        url = pg.get_connection_url()
-        graph = build_graph(str(FIXTURE))
-        nodes, edges = load_into_postgis(graph, url)
-        assert nodes > 0 and edges > 0
+    graph = build_graph(str(FIXTURE))
+    nodes, edges = load_into_postgis(graph, pg_url)
+    assert nodes > 0 and edges > 0
 
-        pool = ConnectionPool(url, min_size=1, max_size=3, open=True)
-        try:
-            with pool.connection() as conn:
-                version = int(conn.execute("SHOW server_version_num").fetchone()[0])
-                assert version // 10000 == 16, f"Expected PostgreSQL 16, got {version}"
-                record_testsuite_property("postgis_server_version_num", version)
-                record_testsuite_property("postgis_version", conn.execute(
-                    "SELECT PostGIS_Version()"
-                ).fetchone()[0])
-            yield PostgisMapReader(pool)
-        finally:
-            pool.close()
+    pool = ConnectionPool(pg_url, min_size=1, max_size=3, open=True)
+    try:
+        with pool.connection() as conn:
+            version = int(conn.execute("SHOW server_version_num").fetchone()[0])
+            assert version // 10000 == 16, f"Expected PostgreSQL 16, got {version}"
+            record_testsuite_property("postgis_server_version_num", version)
+            record_testsuite_property("postgis_version", conn.execute(
+                "SELECT PostGIS_Version()"
+            ).fetchone()[0])
+        yield PostgisMapReader(pool)
+    finally:
+        pool.close()
+
+
+def test_graph_builds_and_reads_with_only_the_documented_rights(pg_url) -> None:
+    # A database laid out as under OpenMapX: PostGIS in `extensions`, an operator-created
+    # `openlr` schema owned by the build role, which holds no CREATE on the database, and
+    # a read role with USAGE on the schema and SELECT through default privileges.
+    import psycopg
+    from psycopg.conninfo import make_conninfo
+    from psycopg_pool import ConnectionPool
+
+    from app.maps.postgis import PostgisMapReader
+    from scripts.build_graph import build_graph, load_into_postgis
+
+    database = "openlr_rights"
+    with psycopg.connect(pg_url, autocommit=True) as conn:
+        conn.execute(f"CREATE DATABASE {database} TEMPLATE template0")
+        conn.execute("CREATE ROLE openlr_build LOGIN PASSWORD 'openlr_build'")
+        conn.execute("CREATE ROLE openlr_read LOGIN PASSWORD 'openlr_read'")
+    admin_url = make_conninfo(pg_url, dbname=database)
+    with psycopg.connect(admin_url, autocommit=True) as conn:
+        conn.execute("CREATE SCHEMA extensions")
+        conn.execute("GRANT USAGE ON SCHEMA extensions TO PUBLIC")
+        conn.execute("CREATE EXTENSION postgis SCHEMA extensions")
+        for role in ("openlr_build", "openlr_read"):
+            conn.execute(
+                f"ALTER ROLE {role} IN DATABASE {database} SET search_path = openlr, extensions"
+            )
+        conn.execute("CREATE SCHEMA openlr AUTHORIZATION openlr_build")
+        conn.execute("GRANT USAGE ON SCHEMA openlr TO openlr_read")
+        conn.execute(
+            "ALTER DEFAULT PRIVILEGES FOR ROLE openlr_build IN SCHEMA openlr "
+            "GRANT SELECT ON TABLES TO openlr_read"
+        )
+        assert conn.execute(
+            f"SELECT has_database_privilege('openlr_build', '{database}', 'CREATE')"
+        ).fetchone() == (False,)
+
+    build_url = make_conninfo(admin_url, user="openlr_build", password="openlr_build")
+    read_url = make_conninfo(admin_url, user="openlr_read", password="openlr_read")
+    graph = build_graph(str(FIXTURE))
+    # A rebuild drops and creates the tables again; the reader keeps its access.
+    for _ in range(2):
+        assert load_into_postgis(graph, build_url) == (5, 5)
+
+    with psycopg.connect(admin_url) as conn:
+        assert conn.execute("SELECT to_regnamespace('conditions')").fetchone() == (None,)
+        owners = conn.execute(
+            "SELECT tablename, tableowner FROM pg_tables WHERE schemaname = 'openlr' ORDER BY 1"
+        ).fetchall()
+        assert owners == [("osm_lines", "openlr_build"), ("osm_nodes", "openlr_build")]
+
+    pool = ConnectionPool(read_url, min_size=1, max_size=1, open=True)
+    try:
+        reader = PostgisMapReader(pool)
+        assert reader.get_linecount() == 5
+        assert reader.get_nodecount() == 5
+        (node,) = reader.find_nodes_close_to(Coordinates(*NODE_A), 50)
+        assert (node.coordinates.lon, node.coordinates.lat) == pytest.approx(NODE_A)
+        with pool.connection() as conn:
+            with pytest.raises(psycopg.errors.InsufficientPrivilege):
+                conn.execute("DELETE FROM openlr.osm_lines")
+    finally:
+        pool.close()
 
 
 def test_postgis_reader_loads_graph(pg_reader) -> None:
@@ -129,22 +201,22 @@ def test_proximity_uses_geography_indexes_without_changing_results(pg_reader) ->
     with pg_reader._pool.connection() as conn:
         with conn.transaction(force_rollback=True):
             conn.execute("""
-                INSERT INTO conditions.osm_nodes
+                INSERT INTO openlr.osm_nodes
                 SELECT 100000+i, ST_SetSRID(ST_MakePoint(
                     8+(i%200)*0.001, 50+(i/200)*0.001),4326)
                 FROM generate_series(1,20000) i
             """)
             conn.execute("""
-                INSERT INTO conditions.osm_lines
+                INSERT INTO openlr.osm_lines
                     (line_id,way_id,start_node,end_node,frc,fow,oneway,geom)
                 SELECT node_id,1,node_id,node_id+1,3,3,true,
                     ST_MakeLine(geom,ST_Translate(geom,0.0005,0))
-                FROM conditions.osm_nodes WHERE node_id > 100000
+                FROM openlr.osm_nodes WHERE node_id > 100000
             """)
             for table, ident in [("osm_nodes", "node_id"), ("osm_lines", "line_id")]:
-                conn.execute(f"ANALYZE conditions.{table}")
+                conn.execute(f"ANALYZE openlr.{table}")
                 query = (
-                    f"SELECT {ident} FROM conditions.{table} WHERE "
+                    f"SELECT {ident} FROM openlr.{table} WHERE "
                     "ST_DWithin(geom::geography, "
                     "ST_SetSRID(ST_MakePoint(8.1,50.05),4326)::geography,100)"
                 )

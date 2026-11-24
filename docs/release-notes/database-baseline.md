@@ -20,6 +20,8 @@ Compatibility: The resulting schema differs from the one the earlier migrations 
 - Indexes: three indexes that a primary key serves or nothing reads are gone, the crowd evidence index keys on the evidence state alone, and `feature` and `offer` have indexes for the records sweep.
 - Storage: `observation`, `observation_latest` and `observation_rollup_hourly` store their fixed-width columns first.
 
+The OpenLR resolver's graph build no longer writes to `conditions`: it creates `osm_nodes` and `osm_lines` in its own schema `openlr`, owned by the role that builds the graph, and the resolver reads them there. A graph built into `conditions` by an earlier build is not read; build it again. The resolver's [README](../../services/openlr-resolver/README.md#database-roles) lists the rights its two roles need.
+
 The traffic tile function `conditions.segment_flow(integer, integer, integer, json)` is unchanged. Data fixes that the earlier migrations applied to existing rows are not part of the baseline, since a new database has no rows to fix.
 
 Caveats: The earlier migration history is preserved in Git up to commit `09e880bd`. See [database migrations](../database-migrations.md) for how schema changes are made from now on.
