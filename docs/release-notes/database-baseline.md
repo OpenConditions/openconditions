@@ -10,6 +10,16 @@ At every start the ingest service grants OpenMapX's tile role `openmapx_tiles_ow
 
 Crowd reporters are kept for 12 months after their last enrollment and entitlement end: the ingest service's records sweep then deletes a reporter with its votes, refusals and token quotas, and its evidence stays without its key. Deleting a reporter, by the sweep or by hand, also removes its key from its crowd readings, situations, revisions and federation journal entries. Ended token quotas, spent tokens a day past their issuer key's validity and federation erasure facts past their 30 days are deleted as well. The reporter table no longer has the unused columns `osm_uid`, `email_lookup_hmac` and `flagged_count`, and votes no longer have `subject_component_key`.
 
-Compatibility: The resulting schema equals the one the earlier migrations produced, apart from the physical column order of some tables, the encrypted secret columns with the `secrets_key_check` table, and the crowd changes above. The traffic tile function `conditions.segment_flow(integer, integer, integer, json)` is unchanged. Data fixes that the earlier migrations applied to existing rows are not part of the baseline, since a new database has no rows to fix.
+Compatibility: The resulting schema differs from the one the earlier migrations produced in these ways:
+
+- Secrets: OAuth tokens and the issuer and federation private keys are stored encrypted, checked against the `secrets_key_check` table.
+- Crowd data: the dropped columns and the retention above.
+- Names: every constraint and index is named after its table and columns (`<table>_pkey`, `<table>_<columns>_key`, `<table>_<column>_fkey`, `<table>_<columns>_idx`, `<table>_<what>_check`).
+- Ids and types: the five `bigserial` ids are identity columns, with the same sequence names; `jma_budget.day` is a `date`; `segment_observation.confidence` is `confidence_score`; `smn_cap_message.retrieval` has no default.
+- Checks: closed value sets are checked (level of service, segment speed confidence, binding status and direction, subscription status, erasure reason), and so is the GeoNet coverage window.
+- Indexes: three indexes that a primary key serves or nothing reads are gone, the crowd evidence index keys on the evidence state alone, and `feature` and `offer` have indexes for the records sweep.
+- Storage: `observation`, `observation_latest` and `observation_rollup_hourly` store their fixed-width columns first.
+
+The traffic tile function `conditions.segment_flow(integer, integer, integer, json)` is unchanged. Data fixes that the earlier migrations applied to existing rows are not part of the baseline, since a new database has no rows to fix.
 
 Caveats: The earlier migration history is preserved in Git up to commit `09e880bd`. See [database migrations](../database-migrations.md) for how schema changes are made from now on.
