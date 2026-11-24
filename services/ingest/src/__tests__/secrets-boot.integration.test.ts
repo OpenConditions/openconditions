@@ -24,8 +24,28 @@ afterAll(async () => {
 }, 30_000);
 
 beforeEach(async () => {
-  await db.sql`TRUNCATE conditions.secrets_key_check, conditions.oauth_grant`;
+  await db.sql`TRUNCATE conditions.secrets_key_check, conditions.oauth_grant,
+    conditions.issuer_key, conditions.federation_instance_key`;
 });
+
+/** Stores a private key sealed with `key` in `table`, as its service does. */
+async function storePrivateKey(
+  table: "issuer_key" | "federation_instance_key",
+  key: SecretsKey,
+): Promise<void> {
+  const sealed = key.seal("private key", { table, column: "private_key", row: "k1" });
+  const row = {
+    key_id: "k1",
+    public_key: Buffer.from("public key"),
+    private_key_ciphertext: Buffer.from(sealed.ciphertext),
+    private_key_iv: Buffer.from(sealed.iv),
+    private_key_tag: Buffer.from(sealed.tag),
+    not_before: new Date(),
+    not_after: new Date(Date.now() + 86_400_000),
+    ...(table === "federation_instance_key" ? { multibase: "z", created_at: new Date() } : {}),
+  };
+  await db.sql`INSERT INTO ${db.sql(`conditions.${table}`)} ${db.sql(row)}`;
+}
 
 describe("the ingest service's start", () => {
   it("refuses a missing or malformed key before touching the database", () => {
@@ -72,4 +92,18 @@ describe("the ingest service's start", () => {
     expect(await db.sql`SELECT id FROM conditions.secrets_key_check`).toEqual([]);
     await expect(checkIngestSecrets(db.sql, key)).resolves.toBeUndefined();
   });
+
+  it.each(["issuer_key", "federation_instance_key"] as const)(
+    "refuses a key that cannot open a stored %s, sealing no check row",
+    async (table) => {
+      const key = SecretsKey.parse(TEST_SECRETS_KEY);
+      await storePrivateKey(table, key);
+      // The check row is gone, as after a hand delete: the stored key still refuses another key.
+      await expect(checkIngestSecrets(db.sql, SecretsKey.parse("c3".repeat(32)))).rejects.toThrow(
+        new RegExp(`^wrong key: .*conditions\\.${table}\\.private_key of the row k1`),
+      );
+      expect(await db.sql`SELECT id FROM conditions.secrets_key_check`).toEqual([]);
+      await expect(checkIngestSecrets(db.sql, key)).resolves.toBeUndefined();
+    },
+  );
 });

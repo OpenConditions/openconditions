@@ -24,20 +24,15 @@
  */
 import {
   assertStoredSecretsOpen,
+  INSTANCE_KEY_SECRETS,
   type SecretPlace,
   type SecretsKey,
-  type SecretTable,
   storedSecret,
 } from "@openconditions/core/server";
 import type postgres from "postgres";
 import { multibaseFromRawEd25519, rawEd25519FromMultibase } from "./multibase.js";
 
-/** The instance keys' table and the secret it stores sealed. */
-export const INSTANCE_KEY_SECRETS: SecretTable = {
-  table: "federation_instance_key",
-  rowKey: "key_id",
-  columns: ["private_key"],
-};
+export { INSTANCE_KEY_SECRETS };
 
 const privateKeyPlace = (keyId: string): SecretPlace => ({
   table: INSTANCE_KEY_SECRETS.table,

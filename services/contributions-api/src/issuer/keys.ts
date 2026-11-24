@@ -14,9 +14,9 @@
 import { publicVerif } from "@cloudflare/privacypass-ts";
 import {
   assertStoredSecretsOpen,
+  ISSUER_KEY_SECRETS,
   type SecretPlace,
   type SecretsKey,
-  type SecretTable,
   storedSecret,
 } from "@openconditions/core/server";
 import type postgres from "postgres";
@@ -28,13 +28,6 @@ export const DEFAULT_ISSUER_NAME = "contributions.openconditions.org";
 
 /** Issuer key validity window written at generation time. */
 export const ISSUER_KEY_VALIDITY_DAYS = 90;
-
-/** The issuer keys' table and the secret it stores sealed. */
-export const ISSUER_KEY_SECRETS: SecretTable = {
-  table: "issuer_key",
-  rowKey: "key_id",
-  columns: ["private_key"],
-};
 
 const privateKeyPlace = (keyId: string): SecretPlace => ({
   table: ISSUER_KEY_SECRETS.table,

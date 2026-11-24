@@ -26,6 +26,28 @@ export interface SecretTable {
 }
 
 /**
+ * The contributions service's issuer keys' table and the secret it stores
+ * sealed. It is defined here because the ingest service, which owns the
+ * table, also opens these keys at start.
+ */
+export const ISSUER_KEY_SECRETS: SecretTable = {
+  table: "issuer_key",
+  rowKey: "key_id",
+  columns: ["private_key"],
+};
+
+/**
+ * The federation service's instance keys' table and the secret it stores
+ * sealed. It is defined here because the ingest service, which owns the
+ * table, also opens these keys at start.
+ */
+export const INSTANCE_KEY_SECRETS: SecretTable = {
+  table: "federation_instance_key",
+  rowKey: "key_id",
+  columns: ["private_key"],
+};
+
+/**
  * Opens every secret stored in `spec.table` under `key` and discards the
  * plaintext. A service calls it at start, so a key that is not the one the
  * secrets were sealed with stops the boot with a "wrong key" error naming the
