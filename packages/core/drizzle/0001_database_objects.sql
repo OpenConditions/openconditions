@@ -597,7 +597,8 @@ BEGIN
   -- latest readings also run the federation capture triggers, which read the
   -- subscriptions and journal into the outbox. Crowd readings keep no history
   -- (every crowd-reported property keeps its latest reading only), and crowd
-  -- records carry no relations.
+  -- records carry no relations. The ids of the rows it inserts are identity
+  -- columns, whose defaults need no grant on their sequences.
   IF EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'openconditions_contributions') THEN
     GRANT USAGE ON SCHEMA "conditions" TO openconditions_contributions;
     GRANT SELECT ON "conditions"."__drizzle_migrations", "conditions"."source",
@@ -617,9 +618,6 @@ BEGIN
       "conditions"."situation", "conditions"."binding_queue" TO openconditions_contributions;
     GRANT SELECT, INSERT, UPDATE, DELETE ON "conditions"."block_list",
       "conditions"."observation_latest" TO openconditions_contributions;
-    GRANT USAGE ON SEQUENCE "conditions"."report_evidence_id_seq",
-      "conditions"."report_refusal_id_seq", "conditions"."observation_latest_series_id_seq",
-      "conditions"."federation_outbox_seq_seq" TO openconditions_contributions;
   END IF;
 END;
 $$;

@@ -59,11 +59,9 @@ const TILE_GRANTS = [
 
 /** What contributions-api's queries use; its flows test runs them with only these. */
 const CONTRIBUTIONS_GRANTS = [
+  // No grant on a sequence: an identity column's default takes its next
+  // value with the INSERT privilege on the table alone.
   "schema conditions USAGE",
-  "sequence federation_outbox_seq_seq USAGE",
-  "sequence observation_latest_series_id_seq USAGE",
-  "sequence report_evidence_id_seq USAGE",
-  "sequence report_refusal_id_seq USAGE",
   ...[
     "__drizzle_migrations",
     "feature",
