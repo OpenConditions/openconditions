@@ -51,7 +51,7 @@ export async function smnMessages(
   const at = Date.parse(now);
   const rows = await sql<
     { identifier: string; body: Buffer; retrieval: unknown; retain_until: Date }[]
-  >`SELECT identifier, body, retrieval, retain_until FROM conditions.smn_cap_message WHERE source_id=${feed.id} AND retain_until > ${now}::timestamptz ORDER BY identifier LIMIT 4097`;
+  >`SELECT identifier, body, retrieval, retain_until FROM conditions.smn_cap_message WHERE source_id=${feed.id} AND retain_until > ${now}::timestamptz ORDER BY identifier, variant LIMIT 4097`;
   const decision = await sql<
     { version: string }[]
   >`SELECT xmin::text AS version FROM conditions.smn_cap_decision WHERE source_id=${feed.id}`;
@@ -130,7 +130,7 @@ export async function checkSmnWindow(
 ): Promise<void> {
   const rows = await tx<
     { identifier: string; body: Buffer; retain_until: Date; retrieval: unknown }[]
-  >`SELECT identifier, body, retain_until, retrieval FROM conditions.smn_cap_message WHERE source_id=${sourceId} AND retain_until > ${now}::timestamptz ORDER BY identifier`;
+  >`SELECT identifier, body, retain_until, retrieval FROM conditions.smn_cap_message WHERE source_id=${sourceId} AND retain_until > ${now}::timestamptz ORDER BY identifier, variant`;
   const decision = await tx<
     { version: string }[]
   >`SELECT xmin::text AS version FROM conditions.smn_cap_decision WHERE source_id=${sourceId}`;

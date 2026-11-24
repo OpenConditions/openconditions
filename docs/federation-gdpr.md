@@ -57,7 +57,8 @@ The erasure reason is `rights_revoked`. Two concrete mechanisms back the
   recipient that applies the peer's `rights_revoked` delete. While the fact is
   live, the inbox admits no delivery of that canonical id — including one that
   arrives _after_ the erasure through a late page or a backfill. The fact is the
-  deletion record, never the erased content.
+  deletion record, never the erased content, and the records sweep deletes it
+  once its 30 days have passed.
 - **A journal removal.** The `federation_outbox` journal is otherwise
   append-only, but a `rights_revoked` tombstone removes the record's earlier
   create and update entries, so a peer replaying an old cursor can no longer

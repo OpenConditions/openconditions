@@ -1,1 +1,0 @@
-ALTER TABLE "conditions"."source_poll_attempt" ADD COLUMN "payload_hashes" text[];

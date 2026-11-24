@@ -23,7 +23,7 @@ describe("segment_observation + segment_speed schema", () => {
         "segment_id",
         "source",
         "source_tier",
-        "confidence",
+        "confidence_score",
         "sample_count",
         "observed_at",
         "expires_at",
@@ -43,10 +43,11 @@ describe("segment_observation + segment_speed schema", () => {
 
     const idx =
       await sql`SELECT indexname FROM pg_indexes WHERE schemaname='conditions' AND tablename='segment_observation'`;
-    expect(idx.map((i) => i.indexname)).toContain("idx_segment_observation_segment");
+    // The primary key leads with segment_id, so it serves reads by segment.
+    expect(idx).toHaveLength(1);
   }, 30_000);
 
-  it("creates segment_speed with the fused/propagated surface columns and the LOS index", async () => {
+  it("creates segment_speed with the fused/propagated surface columns", async () => {
     const cols = await sql`SELECT column_name FROM information_schema.columns
       WHERE table_schema='conditions' AND table_name='segment_speed'`;
     expect(cols.map((c) => c.column_name)).toEqual(
@@ -67,7 +68,8 @@ describe("segment_observation + segment_speed schema", () => {
 
     const idx =
       await sql`SELECT indexname FROM pg_indexes WHERE schemaname='conditions' AND tablename='segment_speed'`;
-    expect(idx.map((i) => i.indexname)).toContain("idx_segment_speed_los");
+    // Nothing reads segment speeds by level of service.
+    expect(idx.map((i) => i.indexname)).toEqual(["segment_speed_pkey"]);
   }, 30_000);
 
   it("round-trips a segment_observation row feeding a segment_speed row (contributing text[])", async () => {
@@ -80,7 +82,7 @@ describe("segment_observation + segment_speed schema", () => {
 
     await sql`
       INSERT INTO conditions.segment_observation
-        (segment_id, source, source_tier, current_kph, free_flow_kph, speed_ratio, los, confidence, sample_count, observed_at, expires_at)
+        (segment_id, source, source_tier, current_kph, free_flow_kph, speed_ratio, los, confidence_score, sample_count, observed_at, expires_at)
       VALUES ('999:f', 'fi', 'sensor', 80.0, 100.0, 0.8, 'heavy', 0.9, NULL, now(), now() + interval '10 minutes')`;
 
     const obs = await sql<{ segment_id: string; source: string }[]>`

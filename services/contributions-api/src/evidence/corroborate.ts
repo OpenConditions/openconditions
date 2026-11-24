@@ -176,10 +176,15 @@ export async function applyCorroboration(
     const actor = actorOf(merged.record);
     const landedAt = (merged.record["freshness"] as { fetchedAt: string }).fetchedAt;
 
+    // The merged report's record still names its reporter after the
+    // reporter was deleted; the evidence then credits no key, like the
+    // reporter's other evidence.
     await tx`
       INSERT INTO conditions.report_evidence
         (record_class, record_id, evidence_kind, actor_key_id, source_id, occurred_at, details)
-      SELECT 'situation', ${survivor.id}, 'confirm', ${actor.keyId ?? null}, ${actor.sourceId},
+      SELECT 'situation', ${survivor.id}, 'confirm',
+             (SELECT key_id FROM conditions.reporter WHERE key_id = ${actor.keyId ?? null}),
+             ${actor.sourceId},
              ${landedAt}, ${tx.json({ via: "phenomenon-match", merged: merged.id })}
       WHERE NOT EXISTS (
         SELECT 1 FROM conditions.report_evidence

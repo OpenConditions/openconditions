@@ -61,7 +61,7 @@ beforeAll(async () => {
     VALUES ('1:f',1,'f',ST_GeomFromText('LINESTRING(5.1 52.1,5.11 52.1)',4326),'motorway','A',1000,5,100,${NOW}),
     ('2:f',2,'f',ST_GeomFromText('LINESTRING(5.11 52.1,5.12 52.1)',4326),'motorway','A',1000,5,120,${NOW})`;
   await sql`INSERT INTO conditions.segment_observation
-    (segment_id,source,source_tier,current_kph,free_flow_kph,speed_ratio,los,confidence,observed_at)
+    (segment_id,source,source_tier,current_kph,free_flow_kph,speed_ratio,los,confidence_score,observed_at)
     VALUES ('1:f','child-a','authoritative',20,100,0.2,'queuing',1,${NOW}),
     ('1:f','sensor-b','sensor',80,100,0.8,'heavy',1,${NOW}),
     ('1:f','los-c','authoritative',NULL,NULL,NULL,'blocked',1,${NOW}),
@@ -120,7 +120,7 @@ it("fallback LOS follows the speed snapshot and an unknown crowd source keeps it
   expect(row!.field_sources.los).toEqual(["parent-a"]);
   expect(row!.field_sources.confidence).toEqual(["parent-a"]);
   await sql`INSERT INTO conditions.segment_observation
-    (segment_id,source,source_tier,current_kph,free_flow_kph,speed_ratio,los,confidence,observed_at)
+    (segment_id,source,source_tier,current_kph,free_flow_kph,speed_ratio,los,confidence_score,observed_at)
     VALUES ('2:f','crowd','crowd',60,120,0.5,'heavy',1,${NOW})`;
   await captureWrittenScalars("2:f", "crowd");
   await fuseSegmentSpeed(sql, () => NOW);
@@ -372,7 +372,7 @@ it("does not invent precise lineage for a legacy raw non-sensor observation duri
     VALUES ('9:f',9,'f',ST_GeomFromText('LINESTRING(5.2 52.1,5.21 52.1)',4326),'motorway','legacy',1000,5,100,${NOW}),
     ('10:f',10,'f',ST_GeomFromText('LINESTRING(5.21 52.1,5.22 52.1)',4326),'motorway','legacy',1000,5,120,${NOW})`;
   await sql`INSERT INTO conditions.segment_observation
-    (segment_id,source,source_tier,current_kph,free_flow_kph,speed_ratio,los,confidence,observed_at)
+    (segment_id,source,source_tier,current_kph,free_flow_kph,speed_ratio,los,confidence_score,observed_at)
     VALUES ('9:f','child-a','authoritative',40,100,0.4,'queuing',1,${NOW})`;
   await fuseSegmentSpeed(sql, () => NOW);
   const [measured] =

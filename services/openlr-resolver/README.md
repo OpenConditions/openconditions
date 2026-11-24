@@ -90,18 +90,20 @@ Returns `200 { "status": "ok" }`.
 
 ## The road graph
 
-Matching runs against a graph in two PostGIS tables (`DATABASE_URL` selects the
-database, same convention as the ingest service):
+Matching runs against a graph in two PostGIS tables in the schema `openlr` (`DATABASE_URL` selects the database, same convention as the ingest service):
 
-- `conditions.osm_nodes(node_id BIGINT PK, geom geometry(Point,4326))`
-- `conditions.osm_lines(line_id BIGSERIAL PK, way_id BIGINT, start_node BIGINT,
-  end_node BIGINT, frc SMALLINT, fow SMALLINT, oneway BOOLEAN,
-  geom geometry(LineString,4326))`
+- `openlr.osm_nodes(node_id BIGINT PK, geom geometry(Point,4326))`
+- `openlr.osm_lines(line_id BIGINT identity PK, way_id BIGINT, start_node BIGINT, end_node BIGINT, frc SMALLINT, fow SMALLINT, oneway BOOLEAN, geom geometry(LineString,4326))`
 
-Each `osm_lines` row is one **directed** edge. A one-way OSM way yields one
-edge; a bidirectional way yields a forward and a reversed edge, so travel
-direction is always explicit (OpenLR matching is direction-sensitive). Both
-tables get a GiST index on `geom`.
+Each `osm_lines` row is one **directed** edge. A one-way OSM way yields one edge; a bidirectional way yields a forward and a reversed edge, so travel direction is always explicit (OpenLR matching is direction-sensitive). Both tables get a GiST index on `geom::geography`, and `osm_lines` an index on each of `start_node` and `end_node`.
+
+### Database roles
+
+The graph never lives in `conditions`, which belongs to the ingest service and its migrations. No deployment, OpenMapX's included, runs the resolver today, so no role is created for it. When one does, the graph build and the service connect as their own roles, never as the ingest service's or the superuser:
+
+- The build role owns `openlr`. Every build drops and creates the two tables again, which only their owner may do. The build creates the schema when it is missing, which takes `CREATE` on the database; without that right the operator creates the schema for it, with `CREATE SCHEMA openlr AUTHORIZATION <build role>`, and the build uses it as it is.
+- The service's role reads the graph and writes nothing. It needs `USAGE` on `openlr` and `SELECT` on both tables. A build replaces the tables, which drops their grants, so grant the reads as default privileges of the build role: `ALTER DEFAULT PRIVILEGES FOR ROLE <build role> IN SCHEMA openlr GRANT SELECT ON TABLES TO <service role>`.
+- The code qualifies the table names with `openlr` but not PostGIS's types and functions, and sets no search path. Where PostGIS is installed in its own schema, as in OpenMapX's database (`extensions`), set both roles' search path to `openlr, extensions` with `ALTER ROLE … SET search_path`.
 
 ### OSM → FRC/FOW mapping
 

@@ -4,7 +4,7 @@ import { createTestDatabase } from "@openconditions/test-database";
 import postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { ensureObservationPartitions, retentionClasses } from "../observation-partitions.js";
-import { type SweepOptions, sweepRecords } from "../sweep.js";
+import { REPORTER_RETENTION_MONTHS, type SweepOptions, sweepRecords } from "../sweep.js";
 import { writeRecord } from "../write-record.js";
 import { writeSnapshot } from "../write-records.js";
 import { FETCHED_AT, firePixel, observationDraft, situationDraft } from "./drafts.js";
@@ -33,8 +33,16 @@ afterAll(async () => {
 
 beforeEach(async () => {
   await sql`TRUNCATE conditions.situation, conditions.observation_latest,
-    conditions.source_status CASCADE`;
+    conditions.source_status, conditions.reporter, conditions.report_evidence,
+    conditions.spent_token, conditions.federation_tombstone CASCADE`;
 });
+
+/** A reporter last enrolled at `at`, its entitlement ending `entitledFor` later. */
+async function reporterActive(key: string, at: string, entitledFor = "1 day") {
+  await sql`INSERT INTO conditions.reporter (key_id, pub_jwk, reputation_alpha, reputation_beta,
+      entitlement_expires_at, created_at, last_active_at)
+    VALUES (${key}, '{}'::jsonb, 1, 1, ${at}::timestamptz + ${entitledFor}::interval, ${at}, ${at})`;
+}
 
 /** The source polled successfully at `at`. */
 async function polled(source: string, at: string) {
@@ -163,6 +171,10 @@ describe("sweepRecords", () => {
       dropped: 0,
       crowdExpired: 0,
       transient: 0,
+      reporters: 0,
+      tokenQuotas: 0,
+      spentTokens: 0,
+      federationTombstones: 0,
       busy: 0,
     });
   });
@@ -315,6 +327,7 @@ describe("sweepRecords", () => {
       { ...write, complete: true },
     );
     const id = "oc:situation:nl-ndw-events:voted";
+    await reporterActive("k", LATER);
     await sql`INSERT INTO conditions.report_evidence
         (record_class, record_id, evidence_kind, actor_key_id, occurred_at)
       VALUES ('situation', ${id}, 'confirm', 'k', now())`;
@@ -399,5 +412,157 @@ describe("sweepRecords", () => {
       poll.release();
       await maintenance.end();
     }
+  });
+});
+
+describe("sweepRecords retention", () => {
+  const keys = async () =>
+    (await sql<{ key_id: string }[]>`SELECT key_id FROM conditions.reporter ORDER BY key_id`).map(
+      (r) => r.key_id,
+    );
+
+  it(`deletes a reporter once its activity and entitlement are both ${REPORTER_RETENTION_MONTHS} months old`, async () => {
+    // LATER is 2026-10-01T12:00Z, so the cutoff is 2025-10-01T12:00Z.
+    await reporterActive("stale", "2025-09-01T00:00:00Z");
+    await reporterActive("entitled-since", "2025-09-01T00:00:00Z", "2 months");
+    await reporterActive("active-since", "2026-09-01T00:00:00Z", "-20 months");
+    await reporterActive("at-cutoff", "2025-10-01T12:00:00Z", "0 days");
+    await reporterActive("recent", "2026-09-30T00:00:00Z");
+    expect(await sweep(LATER)).toMatchObject({ reporters: 1, busy: 0 });
+    expect(await keys()).toEqual(["active-since", "at-cutoff", "entitled-since", "recent"]);
+  });
+
+  it("takes a deleted reporter's votes, refusals and quotas, and keeps its evidence keyless", async () => {
+    await reporterActive("stale", "2025-09-01T00:00:00Z");
+    await reporterActive("recent", "2026-09-30T00:00:00Z");
+    for (const key of ["stale", "recent"]) {
+      await sql`INSERT INTO conditions.sub_claim
+          (id, subject_class, subject_id, claim_type, key_id, signature, created_at)
+        VALUES (${`s-${key}`}, 'situation', 'subj', 'confirm', ${key}, 'sig', now())`;
+      await sql`INSERT INTO conditions.report_refusal (actor_key_id, cell, occurred_at)
+        VALUES (${key}, 'cell', now())`;
+      await sql`INSERT INTO conditions.token_quota (key_id, epoch, issued)
+        VALUES (${key}, '2026-10-01', 1)`;
+      await sql`INSERT INTO conditions.report_evidence
+          (record_class, record_id, evidence_kind, actor_key_id, occurred_at)
+        VALUES ('situation', 'subj', 'confirm', ${key}, now())`;
+    }
+    expect(await sweep(LATER)).toMatchObject({ reporters: 1, tokenQuotas: 0 });
+    expect(await sql`SELECT key_id FROM conditions.sub_claim`).toEqual([{ key_id: "recent" }]);
+    expect(await sql`SELECT actor_key_id FROM conditions.report_refusal`).toEqual([
+      { actor_key_id: "recent" },
+    ]);
+    expect(await sql`SELECT key_id FROM conditions.token_quota`).toEqual([{ key_id: "recent" }]);
+    expect(
+      await sql`SELECT actor_key_id FROM conditions.report_evidence
+        ORDER BY actor_key_id NULLS FIRST`,
+    ).toEqual([{ actor_key_id: null }, { actor_key_id: "recent" }]);
+  });
+
+  it("deletes the token quotas of an ended UTC day and keeps today's and other epochs", async () => {
+    await reporterActive("recent", "2026-09-30T00:00:00Z");
+    for (const epoch of ["2026-09-29", "2026-09-30", "2026-10-01", "epoch-42"]) {
+      await sql`INSERT INTO conditions.token_quota (key_id, epoch, issued)
+        VALUES ('recent', ${epoch}, 1)`;
+    }
+    // Still 2026-09-30 in UTC-10, already 2026-10-01 in UTC: the epoch is a UTC day.
+    expect(await sweep("2026-09-30T20:00:00-10:00")).toMatchObject({ tokenQuotas: 2 });
+    expect(
+      (await sql<{ epoch: string }[]>`SELECT epoch FROM conditions.token_quota ORDER BY epoch`).map(
+        (r) => r.epoch,
+      ),
+    ).toEqual(["2026-10-01", "epoch-42"]);
+  });
+
+  it("deletes spent tokens a day past their expiry and erasure facts past theirs", async () => {
+    // A day's margin: a contributions service whose clock runs behind would
+    // still redeem a token whose row went at its expiry.
+    await sql`INSERT INTO conditions.spent_token (token_hash, purpose, spent_at, expires_at)
+      VALUES ('gone', 'report:-:2026-09-01', '2026-09-01T00:00:00Z', '2026-09-30T11:59:59Z'),
+             ('kept', 'report:-:2026-09-01', '2026-09-01T00:00:00Z', '2026-09-30T12:00:00Z')`;
+    await sql`INSERT INTO conditions.federation_tombstone
+        (canonical_id, peer_instance_id, reason, tombstoned_at, expires_at)
+      VALUES ('gone', '', 'rights_revoked', '2026-08-01T00:00:00Z', '2026-08-31T00:00:00Z'),
+             ('gone', 'peer.example', 'rights_revoked', '2026-08-01T00:00:00Z', '2026-08-31T00:00:00Z'),
+             ('kept', '', 'rights_revoked', '2026-09-30T00:00:00Z', '2026-10-30T00:00:00Z')`;
+    expect(await sweep(LATER)).toMatchObject({ spentTokens: 1, federationTombstones: 2 });
+    expect(await sql`SELECT token_hash FROM conditions.spent_token`).toEqual([
+      { token_hash: "kept" },
+    ]);
+    expect(await sql`SELECT canonical_id FROM conditions.federation_tombstone`).toEqual([
+      { canonical_id: "kept" },
+    ]);
+  });
+
+  it("deletes in batches until nothing is left", async () => {
+    await sql`INSERT INTO conditions.spent_token (token_hash, purpose, spent_at, expires_at)
+      SELECT 'expired-' || n, 'report:-:2026-09-01', '2026-09-01T00:00:00Z',
+             '2026-09-02T00:00:00Z'
+      FROM generate_series(1, 1201) n`;
+    expect(await sweep(LATER)).toMatchObject({ spentTokens: 1201 });
+    expect(await sql`SELECT 1 FROM conditions.spent_token`).toHaveLength(0);
+  });
+
+  it("leaves a reporter another transaction holds to the next sweep", async () => {
+    await reporterActive("held", "2025-09-01T00:00:00Z");
+    await reporterActive("stale", "2025-08-01T00:00:00Z");
+    const enrolment = await sql.reserve();
+    try {
+      await enrolment`BEGIN`;
+      await enrolment`SELECT 1 FROM conditions.reporter WHERE key_id = 'held' FOR UPDATE`;
+      expect(await sweep(LATER)).toMatchObject({ reporters: 1, busy: 0 });
+      expect(await keys()).toEqual(["held"]);
+    } finally {
+      await enrolment`ROLLBACK`;
+      enrolment.release();
+    }
+    expect(await sweep(LATER)).toMatchObject({ reporters: 1 });
+    expect(await keys()).toEqual([]);
+  });
+
+  it("waits for a landing holding the crowd's lock before deleting reporters", async () => {
+    await reporterActive("stale", "2025-09-01T00:00:00Z");
+    const landing = await sql.reserve();
+    try {
+      await landing`BEGIN`;
+      await landing`SELECT pg_advisory_xact_lock(hashtext('crowd'))`;
+      const swept = sweep(LATER);
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      expect(await keys()).toEqual(["stale"]);
+      await landing`COMMIT`;
+      expect(await swept).toMatchObject({ reporters: 1, busy: 0 });
+      expect(await keys()).toEqual([]);
+    } finally {
+      await landing`ROLLBACK`;
+      landing.release();
+    }
+  });
+
+  it("leaves the reporters to the next sweep while a landing holds the crowd's lock past lock_timeout", async () => {
+    await reporterActive("stale", "2025-09-01T00:00:00Z");
+    const maintenance = postgres(db.url, {
+      max: 1,
+      onnotice: () => {},
+      connection: { lock_timeout: 200 },
+    });
+    const landing = await sql.reserve();
+    try {
+      await landing`BEGIN`;
+      await landing`SELECT pg_advisory_xact_lock(hashtext('crowd'))`;
+      const busy = await sweepRecords(maintenance, {
+        ...write,
+        now: LATER,
+        maxAgeSec: 3600,
+        historyDays: 90,
+      });
+      expect(busy).toMatchObject({ reporters: 0 });
+      expect(busy.busy).toBeGreaterThanOrEqual(1);
+      expect(await keys()).toEqual(["stale"]);
+    } finally {
+      await landing`ROLLBACK`;
+      landing.release();
+      await maintenance.end();
+    }
+    expect(await sweep(LATER)).toMatchObject({ reporters: 1 });
   });
 });

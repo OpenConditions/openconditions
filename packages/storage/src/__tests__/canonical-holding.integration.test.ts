@@ -109,7 +109,7 @@ describe("clusters holding a large set of features", () => {
     const statement = statements.find((s) => s.query.includes("feature_canonical"))!;
     for (const mode of ["force_custom_plan", "force_generic_plan"] as const) {
       const nodes = await planOf(statement, mode);
-      expect(nodes.some((n) => n["Index Name"] === "idx_feature_canonical_members")).toBe(true);
+      expect(nodes.some((n) => n["Index Name"] === "feature_canonical_member_ids_idx")).toBe(true);
       expect(memberScans(nodes)).toEqual([]);
       expect(clusterScans(nodes)).toEqual([]);
     }
@@ -134,7 +134,7 @@ describe("clusters holding a large set of features", () => {
 
   test("go into the member index directly, so a lookup never scans a pending list", async () => {
     const [index] = await db.sql<{ options: string[] | null }[]>`
-      SELECT reloptions AS options FROM pg_class WHERE relname = 'idx_feature_canonical_members'`;
+      SELECT reloptions AS options FROM pg_class WHERE relname = 'feature_canonical_member_ids_idx'`;
     expect(index?.options).toContain("fastupdate=off");
   });
 });

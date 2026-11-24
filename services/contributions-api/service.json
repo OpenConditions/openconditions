@@ -49,6 +49,12 @@
         "description": "Required. PostgreSQL/PostGIS connection URL of the shared OpenMapX database for this service's own role, e.g. postgresql://openconditions_contributions:<password>@openmapx-postgis:5432/openmapx. Never use the PostgreSQL superuser; create the role as OpenMapX's community extensions guide describes. The service refuses to start without it.",
         "x-openmapx-secret": true
       },
+      "OPENCONDITIONS_SECRETS_KEY": {
+        "type": "string",
+        "title": "Secrets key",
+        "description": "Required. Copy the value of openconditions-ingest's Secrets key; never generate a new one. The token issuer's private keys are encrypted with it, and the service refuses to start with a key other than the one the ingest service holds, or one that cannot decrypt the stored issuer keys. It is not recoverable from the OpenConditions tables: the copy in your recovery set is the ingest service's.",
+        "x-openmapx-secret": true
+      },
       "OPENCONDITIONS_GRANT_SECRET": {
         "type": "string",
         "title": "Reporting grant secret",
@@ -65,6 +71,13 @@
         "type": "string",
         "title": "Instance id",
         "description": "This instance's stable id, the namespace of the crowd records it lands and its crowd's credit: lower-case letters, digits, dots and dashes, e.g. maps.example.org. Set it to the same value as the ingest service's. Empty: local.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "OPENCONDITIONS_SCHEMA_WAIT_TIMEOUT_MS": {
+        "type": "string",
+        "title": "Schema wait timeout (ms)",
+        "description": "The ingest service migrates the database; this service waits at start until the schema is at its version or newer, and stops with what it expected and found after this long. Empty: 300000.",
         "default": "",
         "x-openmapx-secret": false
       },

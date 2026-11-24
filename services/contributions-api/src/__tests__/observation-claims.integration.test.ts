@@ -8,15 +8,26 @@ import {
   signReport,
   signSubClaim,
 } from "@openconditions/contrib-core";
-import { buildRegistry, crowdLocalId, observationId } from "@openconditions/model";
+import {
+  admitRecord,
+  buildRegistry,
+  crowdLocalId,
+  observationId,
+  schemaVersions,
+} from "@openconditions/model";
 import { productionModules } from "@openconditions/model-registry";
 import {
   ensureObservationPartitions,
   retentionClasses,
+  sweepRecords,
   syncSources,
   writeSnapshot,
 } from "@openconditions/storage";
-import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
+import {
+  createTestDatabase,
+  TEST_SECRETS_KEY,
+  type TestDatabase,
+} from "@openconditions/test-database";
 import type { FastifyInstance } from "fastify";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -24,7 +35,7 @@ import { checkReportRate } from "../abuse/rate.js";
 import { createReportingGrant } from "../attester/grant.js";
 import { sweepCrossValidateObservations } from "../evidence/crossValidateSweep.js";
 import { build } from "../server.js";
-import { enrolledKey, INSTANCE } from "./crowd-fixtures.integration.js";
+import { enrolledKey, INSTANCE, landAs, situationClaim } from "./crowd-fixtures.integration.js";
 
 type Rec = Record<string, unknown>;
 
@@ -39,6 +50,7 @@ const GRANT_SECRET_VALUE = "observation-claims-test-secret";
 const GRANT_SECRET = new TextEncoder().encode(GRANT_SECRET_VALUE);
 const ENV = {
   OPENCONDITIONS_GRANT_SECRET: GRANT_SECRET_VALUE,
+  OPENCONDITIONS_SECRETS_KEY: TEST_SECRETS_KEY,
   OPENCONDITIONS_INSTANCE_ID: INSTANCE,
 };
 const MODEL_TESTS = path.resolve(
@@ -1165,4 +1177,156 @@ describe("crowd readings and the federation", () => {
        WHERE record_class = 'observation' AND snapshot #>> '{provenance,sourceId}' = 'crowd'`;
     expect(n).toBe(0);
   });
+});
+
+describe("a deleted reporter's key", () => {
+  const liveSubject = { featureId: live.feature["id"] as string, componentKey: "262397002" };
+  const registerSubject = {
+    featureId: register.feature["id"] as string,
+    componentKey: (register.feature["components"] as { key: string }[])[0]!.key,
+  };
+  let situations = 0;
+
+  beforeAll(async () => {
+    clock.now = "2026-10-02T09:00:00.000Z";
+    // A peer subscribed to every class, so crowd situations are journalled.
+    await sql`INSERT INTO conditions.federation_subscription (id, peer_id, created_at, updated_at)
+      VALUES ('strip-sub', 'peer.example.net', now(), now())`;
+  });
+
+  afterAll(async () => {
+    await sql`DELETE FROM conditions.federation_subscription WHERE id = 'strip-sub'`;
+  });
+
+  /** A crowd reading of `subject` and a crowd situation, both by `key`. */
+  async function reportsBy(
+    key: ReporterKey,
+    grant: string,
+    subject: Rec,
+    reportedAt: string,
+  ): Promise<{ reading: string; situation: string }> {
+    const res = await post(
+      await signReport(registry, claimOf({ subject, reportedAt }), key),
+      grant,
+    );
+    expect(res.statusCode).toBe(200);
+    const landed = await landAs(
+      sql,
+      key,
+      situationClaim({
+        geometry: { type: "Point", coordinates: [8.41 + 0.01 * ++situations, 49.01] },
+        reportedAt,
+        nonce: nextNonce(),
+      }),
+      clock.now,
+    );
+    return {
+      reading: (res.json() as { record: { id: string } }).record.id,
+      situation: landed.record.id,
+    };
+  }
+
+  /** How many rows of each table that can hold a reporter's key name `key`. */
+  async function rowsNaming(key: string) {
+    const like = `%${key}%`;
+    const [row] = await sql<
+      { readings: number; situations: number; revisions: number; journal: number }[]
+    >`
+      SELECT
+        (SELECT count(*)::int FROM conditions.observation_latest
+          WHERE reading::text LIKE ${like} OR template::text LIKE ${like}) AS readings,
+        (SELECT count(*)::int FROM conditions.situation WHERE record::text LIKE ${like})
+          AS situations,
+        (SELECT count(*)::int FROM conditions.situation_revision WHERE snapshot::text LIKE ${like})
+          AS revisions,
+        (SELECT count(*)::int FROM conditions.federation_outbox WHERE snapshot::text LIKE ${like})
+          AS journal`;
+    return row!;
+  }
+
+  const readingOf = async (id: string) => {
+    const [row] = await sql<{ reading: Rec; record: Rec }[]>`
+      SELECT reading, conditions.observation_record(template, reading) AS record
+        FROM conditions.observation_latest WHERE crowd_record_id = ${id}`;
+    return row!;
+  };
+  const situationOf = async (id: string) => {
+    const [row] = await sql<{ record: Rec }[]>`
+      SELECT record FROM conditions.situation WHERE id = ${id}`;
+    return row!.record;
+  };
+  const withoutReporter = (value: Rec): Rec => {
+    const { reporter: _reporter, ...provenance } = value["provenance"] as Rec;
+    return { ...value, provenance };
+  };
+
+  /** Deletes `gone` by `erase` and checks its key went and `kept`'s stayed. */
+  async function expectStripped(
+    gone: ReporterKey,
+    kept: ReporterKey,
+    landed: { reading: string; situation: string },
+    erase: () => Promise<void>,
+  ) {
+    const everywhere = { readings: 1, situations: 1, revisions: 1, journal: 1 };
+    for (const [table, n] of Object.entries(await rowsNaming(gone.keyId))) {
+      expect(n, table).toBeGreaterThanOrEqual(everywhere[table as keyof typeof everywhere]);
+    }
+    const readingBefore = await readingOf(landed.reading);
+    const situationBefore = await situationOf(landed.situation);
+    const keptBefore = await rowsNaming(kept.keyId);
+
+    await erase();
+
+    expect(await rowsNaming(gone.keyId)).toEqual({
+      readings: 0,
+      situations: 0,
+      revisions: 0,
+      journal: 0,
+    });
+    expect(await rowsNaming(kept.keyId)).toEqual(keptBefore);
+    // Only the reporter went: the reading and the situation are otherwise
+    // unchanged, read back whole and are still records the model accepts.
+    const reading = await readingOf(landed.reading);
+    expect(reading.reading).toEqual(withoutReporter(readingBefore.reading));
+    expect(reading.record).toEqual(withoutReporter(readingBefore.record));
+    const situation = await situationOf(landed.situation);
+    expect(situation).toEqual(withoutReporter(situationBefore));
+    const versions = schemaVersions(registry);
+    expect(admitRecord(registry, versions, reading.record)).toMatchObject({ admitted: true });
+    expect(admitRecord(registry, versions, situation)).toMatchObject({ admitted: true });
+  }
+
+  it("is removed from what it reported when the reporter row is deleted by hand", async () => {
+    const [gone, kept] = [await reporter(), await reporter()];
+    const landed = await reportsBy(gone.key, gone.grant, liveSubject, "2026-10-02T08:58:00.000Z");
+    await reportsBy(kept.key, kept.grant, registerSubject, "2026-10-02T08:58:00.000Z");
+
+    await expectStripped(gone.key, kept.key, landed, async () => {
+      await sql`DELETE FROM conditions.reporter WHERE key_id = ${gone.key.keyId}`;
+    });
+  }, 60_000);
+
+  it("is removed from what it reported when the sweep deletes an inactive reporter", async () => {
+    const [gone, kept] = [await reporter(), await reporter()];
+    const landed = await reportsBy(gone.key, gone.grant, liveSubject, "2026-10-02T08:59:00.000Z");
+    await reportsBy(kept.key, kept.grant, registerSubject, "2026-10-02T08:59:00.000Z");
+    await sql`UPDATE conditions.reporter
+      SET last_active_at = '2025-09-01T00:00:00Z', entitlement_expires_at = '2025-09-02T00:00:00Z'
+      WHERE key_id = ${gone.key.keyId}`;
+    // The feeds count as polling, so the sweep ends none of their records.
+    await sql`INSERT INTO conditions.source_status (source, last_success_at, freshness_window_sec)
+      VALUES ('de-bw-mobidata-charging', ${clock.now}, 900), ('es-minetur-fuel', ${clock.now}, 900)
+      ON CONFLICT (source) DO UPDATE SET last_success_at = EXCLUDED.last_success_at`;
+
+    await expectStripped(gone.key, kept.key, landed, async () => {
+      const counts = await sweepRecords(sql, {
+        registry,
+        instanceId: INSTANCE,
+        now: clock.now,
+        maxAgeSec: 3600,
+        historyDays: 7,
+      });
+      expect(counts).toMatchObject({ reporters: 1, busy: 0 });
+    });
+  }, 60_000);
 });

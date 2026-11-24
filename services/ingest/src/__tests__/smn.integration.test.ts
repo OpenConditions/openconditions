@@ -192,7 +192,7 @@ it("retains both hazards, exact durable bytes and validators after a malformed s
   const live = () =>
     db.sql`SELECT id, record FROM conditions.situation WHERE source_id=${source.id} AND tombstoned_at IS NULL ORDER BY id`;
   const durable = () =>
-    db.sql`SELECT identifier, body FROM conditions.smn_cap_message WHERE source_id=${source.id} ORDER BY identifier`;
+    db.sql`SELECT identifier, body FROM conditions.smn_cap_message WHERE source_id=${source.id} ORDER BY identifier, variant`;
   expect((await tick()).error).toBeUndefined();
   expect(parser.running).toBe(true);
   const before = await live();

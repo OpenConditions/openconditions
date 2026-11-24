@@ -68,6 +68,12 @@
         "description": "Required. PostgreSQL/PostGIS connection URL of the shared OpenMapX database for a dedicated role, e.g. postgresql://openconditions_ingest:<password>@openmapx-postgis:5432/openmapx. Never use the PostgreSQL superuser; create the role as OpenMapX's community extensions guide describes. The service refuses to start without it.",
         "x-openmapx-secret": true
       },
+      "OPENCONDITIONS_SECRETS_KEY": {
+        "type": "string",
+        "title": "Secrets key",
+        "description": "Required. Copy the value of openconditions-ingest's Secrets key; never generate a new one. The OAuth grant tokens this process refreshes are encrypted with it, and it refuses to start with any other key. It is not recoverable from the OpenConditions tables: the copy in your recovery set is the ingest service's.",
+        "x-openmapx-secret": true
+      },
       "OPENCONDITIONS_OPERATOR_TOKEN": {
         "type": "string",
         "title": "Operator token",

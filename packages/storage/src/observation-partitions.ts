@@ -14,6 +14,24 @@ export function retentionDaysOf(entry: Pick<PropertyEntry, "retention">): number
   return entry.retention?.rawDays ?? 0;
 }
 
+/**
+ * Deletes every reading of whole series that are gone, in every retention
+ * class: a reading stays in the class it was written under, so a series
+ * whose class changed, or whose property keeps no history any more, may hold
+ * readings in several, and those of the keep-everything class would never be
+ * dropped. The primary key leads with the series, so each partition is one
+ * index probe. Returns the rows deleted.
+ */
+export async function deleteSeriesHistory(
+  sql: postgres.Sql | postgres.TransactionSql,
+  seriesIds: readonly string[],
+): Promise<number> {
+  if (seriesIds.length === 0) return 0;
+  const result = await sql`
+    DELETE FROM conditions.observation WHERE series_id = ANY(${seriesIds}::bigint[])`;
+  return result.count;
+}
+
 /** Every retention class the registry's properties use, ascending. */
 export function retentionClasses(registry: Registry): number[] {
   const classes = new Set<number>();

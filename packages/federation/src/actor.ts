@@ -15,7 +15,7 @@
  * its subscriptions accept. The operator configures only the protocol
  * versions it offers and the convergence bound it promises.
  */
-import type { InstanceKey, KeyEndorsement } from "./keys.js";
+import type { KeyEndorsement, PublicInstanceKey } from "./keys.js";
 import { RECORD_FILTER_KEYS } from "./record-filter.js";
 import { DELIVERY_MODES } from "./subscriptions.js";
 
@@ -135,7 +135,7 @@ function normalizeBaseUrl(baseUrl: string): string {
  */
 export function buildActorDocument(
   cfg: ActorConfig,
-  activeKeys: InstanceKey[],
+  activeKeys: readonly PublicInstanceKey[],
   schemaVersions: readonly string[],
 ): ActorDocument {
   if (activeKeys.length === 0) {

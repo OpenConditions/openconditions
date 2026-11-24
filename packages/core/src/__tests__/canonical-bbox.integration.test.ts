@@ -78,7 +78,7 @@ describe("canonical view in a box", () => {
     const nodes = nodesOf(plans![0]!.Plan);
     // A cluster found by member reads the member index; a member test as a
     // join filter walks every cluster of the view for each boxed feature.
-    expect(nodes.some((n) => n["Index Name"] === "idx_feature_canonical_members")).toBe(true);
+    expect(nodes.some((n) => n["Index Name"] === "feature_canonical_member_ids_idx")).toBe(true);
     expect(nodes.filter((n) => String(n["Join Filter"] ?? "").includes("member_ids"))).toEqual([]);
   });
 });

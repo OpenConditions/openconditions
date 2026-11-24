@@ -1,12 +1,19 @@
 /**
- * Boot entry for the federation service: applies migrations, opens the
- * shared postgres pool, builds the Fastify app, and listens. Tests import
- * build() from server.ts instead of running this file.
+ * Boot entry for the federation service: takes the single-process lock, opens
+ * the shared postgres pool, waits until the ingest service has migrated the
+ * database to this build's schema version, builds the Fastify app, and
+ * listens. Tests import build() from server.ts instead of running this file.
  */
 
-import { assertStoredCodesRegistered, runMigrations } from "@openconditions/core/server";
+import {
+  assertStoredCodesRegistered,
+  schemaWaitTimeoutMs,
+  waitForSchemaVersion,
+  waitForSecretsKeyCheck,
+} from "@openconditions/core/server";
 import {
   advanceJournalSeenXid,
+  assertInstanceKeysOpen,
   createInMemoryRateLimiter,
   ensureJournalEpoch,
   expireSubscriptions,
@@ -83,9 +90,23 @@ const EXPIRY_CYCLE_MS = 60 * 60 * 1000;
 
 async function boot() {
   const url = requireCredential(process.env, "DATABASE_URL");
-  console.info("[federation-api] applying database migrations…");
-  await runMigrations(url);
-  console.info("[federation-api] migrations applied");
+  // A malformed timeout, and with federation enabled a missing or malformed
+  // secrets key or actor, fails boot before the database is read.
+  const schemaWaitMs = schemaWaitTimeoutMs(process.env, "OPENCONDITIONS_SCHEMA_WAIT_TIMEOUT_MS");
+  const settings = resolveFederationSettings(process.env);
+  if (settings.enabled) {
+    // The actor says which protocol versions it speaks; peers negotiate on
+    // what it says, so one that leaves out the version this build speaks is
+    // worth a warning, though not a failed boot.
+    const { protocolVersion, protocolVersions } = settings.actor!.capabilities;
+    const offered = new Set([protocolVersion, ...(protocolVersions ?? [])]);
+    if (!offered.has(FEDERATION_PROTOCOL_VERSION)) {
+      console.warn(
+        `[federation-api] the actor offers protocol ${[...offered].join(", ")}, ` +
+          `not ${FEDERATION_PROTOCOL_VERSION}, the version this build speaks`,
+      );
+    }
+  }
 
   let waiting = false;
   const lock = await holdProcessLock(url, {
@@ -113,21 +134,16 @@ async function boot() {
       idle_in_transaction_session_timeout: 60_000,
     },
   });
+  // The ingest service migrates; this service only reads the version it reached.
+  await waitForSchemaVersion(sql, {
+    timeoutMs: schemaWaitMs,
+    onWait: (found, expected) =>
+      console.info(
+        `[federation-api] waiting for the ingest service to migrate the database to ${expected.tag}: ${found}`,
+      ),
+  });
+  console.info("[federation-api] database schema is at this build's version");
   await assertStoredCodesRegistered(sql, productionRegistry(), { sourceFormats: false });
-  const settings = resolveFederationSettings(process.env);
-  if (settings.enabled) {
-    // The actor says which protocol versions it speaks; peers negotiate on
-    // what it says, so one that leaves out the version this build speaks is
-    // worth a warning, though not a failed boot.
-    const { protocolVersion, protocolVersions } = settings.actor!.capabilities;
-    const offered = new Set([protocolVersion, ...(protocolVersions ?? [])]);
-    if (!offered.has(FEDERATION_PROTOCOL_VERSION)) {
-      console.warn(
-        `[federation-api] the actor offers protocol ${[...offered].join(", ")}, ` +
-          `not ${FEDERATION_PROTOCOL_VERSION}, the version this build speaks`,
-      );
-    }
-  }
 
   // The journal must belong to the database's current history before anything
   // reads or seeds it: after a restore, a timeline change or the operator's
@@ -174,10 +190,20 @@ async function boot() {
   // key created or rotated at boot is logged as on the timer.
   let keyTimer: NodeJS.Timeout | undefined;
   if (settings.enabled) {
+    // The ingest service seals the key check right after migrating; a key
+    // other than the ingest service's stops the boot before an instance key
+    // is sealed, and so does one that cannot open the stored instance keys.
+    await waitForSecretsKeyCheck(sql, settings.secretsKey, {
+      timeoutMs: schemaWaitMs,
+      onWait: () =>
+        console.info("[federation-api] waiting for the ingest service to seal the key check"),
+    });
+    await assertInstanceKeysOpen(sql, settings.secretsKey);
     const maintainKey = async () => {
       try {
         const kept = await maintainInstanceKey(
           sql,
+          settings.secretsKey,
           new Date().toISOString(),
           settings.actor!.instanceId,
         );
@@ -231,7 +257,7 @@ async function boot() {
       if (cycleRunning) return;
       cycleRunning = true;
       try {
-        const signingKey = await loadSigningKey(sql, new Date().toISOString());
+        const signingKey = await loadSigningKey(sql, settings.secretsKey, new Date().toISOString());
         if (!signingKey) return;
         const pushed = await runWebhookDeliveryCycle(sql, {
           signingKey,
@@ -590,7 +616,7 @@ async function boot() {
       pullRunning = true;
       let again = false;
       try {
-        const signingKey = await loadSigningKey(sql, new Date().toISOString());
+        const signingKey = await loadSigningKey(sql, settings.secretsKey, new Date().toISOString());
         if (!signingKey) return;
         for (const peer of peers.all()) {
           if (peer.pull === undefined) continue;

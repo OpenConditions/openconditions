@@ -10,9 +10,11 @@
  * Exported as build() so tests can fastify.inject; only main.ts listens.
  */
 
+import { verifySecretsKeyCheck } from "@openconditions/core/server";
 import {
   ACTOR_WELL_KNOWN_PATH,
   anonymousRateKey,
+  assertInstanceKeysOpen,
   buildActorDocument,
   createInMemoryRateLimiter,
   FEDERATION_JSON,
@@ -20,12 +22,14 @@ import {
   InMemoryNonceStore,
   type InstanceKey,
   loadActiveKeys,
+  loadActivePublicKeys,
   type MtlsContext,
   maintainInstanceKey,
   OUTBOX_DEFAULT_LIMIT,
   OUTBOX_MAX_LIMIT,
   outboxEtag,
   PEERS_WELL_KNOWN_PATH,
+  type PublicInstanceKey,
   type RateLimiter,
   readJournalLag,
   recordPeerFailure,
@@ -158,21 +162,40 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     return app;
   }
 
-  const actorConfig = settings.actor!;
+  const actorConfig = settings.actor;
+  const secretsKey = settings.secretsKey;
   // The running registry, not the operator, says which schemas this instance accepts.
   const registry = productionRegistry();
   const advertisedSchemaVersions = schemaVersions(registry);
   const peers = options.peers ?? (await PeerBook.load(sql, settings.peers));
-  await maintainInstanceKey(sql, now(), actorConfig.instanceId);
+  // A key other than the one the ingest service sealed the check row with
+  // stops the boot, and so does one that cannot open the stored instance
+  // keys, naming the key. An absent row is let through on purpose: the only
+  // callers are main.ts, which has already waited for the row with
+  // waitForSecretsKeyCheck, and tests that build the server on a database no
+  // ingest service started on. The package is private and declares no entry
+  // point, so no other path reaches it without that wait.
+  await verifySecretsKeyCheck(sql, secretsKey);
+  await assertInstanceKeysOpen(sql, secretsKey);
+  await maintainInstanceKey(sql, secretsKey, now(), actorConfig.instanceId);
 
   /** The keys valid now, rotating first when none is (a process that
    *  outlived its keys): keys are read per request, so a rotation shows up
    *  without a restart. */
   async function activeKeys(): Promise<InstanceKey[]> {
-    const keys = await loadActiveKeys(sql, now());
+    const keys = await loadActiveKeys(sql, secretsKey, now());
     if (keys.length > 0) return keys;
-    await maintainInstanceKey(sql, now(), actorConfig.instanceId);
-    return loadActiveKeys(sql, now());
+    await maintainInstanceKey(sql, secretsKey, now(), actorConfig.instanceId);
+    return loadActiveKeys(sql, secretsKey, now());
+  }
+
+  /** The public half of the keys valid now, for the actor document: no
+   *  private key is opened for a public read. Rotates first when none is. */
+  async function activePublicKeys(): Promise<PublicInstanceKey[]> {
+    const keys = await loadActivePublicKeys(sql, now());
+    if (keys.length > 0) return keys;
+    await maintainInstanceKey(sql, secretsKey, now(), actorConfig.instanceId);
+    return loadActivePublicKeys(sql, now());
   }
 
   /** The key this instance signs with now. */
@@ -188,7 +211,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
   });
 
   app.get(ACTOR_WELL_KNOWN_PATH, async (_req, reply) => {
-    const doc = buildActorDocument(actorConfig, await activeKeys(), advertisedSchemaVersions);
+    const doc = buildActorDocument(actorConfig, await activePublicKeys(), advertisedSchemaVersions);
     return reply.type(FEDERATION_JSON).send(JSON.stringify(doc));
   });
 

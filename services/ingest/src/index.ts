@@ -24,6 +24,7 @@ import { registerPublishRoutes } from "./publish-routes.js";
 import { RateLimiter, registerRateLimit } from "./rate-limit.js";
 import { maintainPartitionsAtBoot, startRecordJobs } from "./record-jobs.js";
 import { startScheduler } from "./scheduler.js";
+import { checkIngestSecrets, readIngestSecretsKey } from "./secrets-boot.js";
 import { type BackgroundJob, InFlight, onceShutdown } from "./shutdown.js";
 import { catalogueSources } from "./sources.js";
 import { createTrustProxy } from "./trust-proxy.js";
@@ -41,11 +42,17 @@ async function boot() {
   const role = ingestRoleFromEnv();
   // A malformed operator token fails boot before anything else runs.
   const operatorToken = role === "primary" ? operatorTokenFromEnv() : undefined;
+  // The OAuth2 grants' tokens are sealed with it: a missing or malformed key
+  // fails boot, and so, after the migrations, does one that is not the key
+  // the check row, the stored grants and the stored private keys were sealed
+  // with.
+  const secretsKey = readIngestSecretsKey(process.env);
   const crowd = resolveCrowdCredit(process.env, resolveInstanceId());
   console.info(`[ingest] instance id ${resolveInstanceId()}, role ${role}`);
   console.info("[ingest] applying database migrations…");
   await runMigrations(DATABASE_URL);
   console.info("[ingest] migrations applied");
+  await checkIngestSecrets(sql, secretsKey);
   const model = productionRegistry();
   const catalog = await loadIngestCatalog();
   const plan = planIngest(catalog);
@@ -99,6 +106,7 @@ async function boot() {
   const stopScheduler = startScheduler(sql, maintenanceSql, statusStore, catalog, {
     feeds: plan.feeds,
     primary,
+    secretsKey,
     inFlight,
   });
   const stopRecordJobs = startRecordJobs(sql, maintenanceSql, {

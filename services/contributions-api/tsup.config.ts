@@ -4,10 +4,11 @@ import { defineConfig } from "tsup";
 
 // @openconditions/core is inlined into this bundle (noExternal), so its
 // drizzle-kit migrations folder no longer travels with it. The main.ts entry
-// runMigrations() at boot and reads those files at runtime, so copy them next
-// to the bundle entry (dist/drizzle); core resolves `./drizzle` there. Lives
-// inside dist/ so it rides the turbo `dist/**` output cache and the Docker
-// `COPY dist`.
+// migrates nothing, but waitForSchemaVersion() reads the journal at boot for
+// the version this build expects, so copy the folder next to the bundle entry
+// (dist/drizzle), the same layout as the ingest image; core resolves
+// `./drizzle` there. Lives inside dist/ so it rides the turbo `dist/**` output
+// cache and the Docker `COPY dist`.
 const coreDrizzle = fileURLToPath(new URL("../../packages/core/drizzle", import.meta.url));
 const bundledDrizzle = fileURLToPath(new URL("./dist/drizzle", import.meta.url));
 

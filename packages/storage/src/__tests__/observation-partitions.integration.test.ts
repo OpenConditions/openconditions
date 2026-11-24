@@ -11,6 +11,7 @@ import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   analyzeClosedObservationPartitions,
+  deleteSeriesHistory,
   dropExpiredObservationPartitions,
   ensureObservationPartitions,
   maintainObservationPartitions,
@@ -383,4 +384,28 @@ describe("partition maintenance by two services at once", () => {
       await own.close();
     }
   }, 120_000);
+});
+
+describe("deleting whole series", () => {
+  it("deletes every reading of each series, in every class, and nothing else", async () => {
+    await ensureObservationPartitions(sql, { classes: retentionClasses(registry), now: NOW });
+    const start = NOW.toISOString();
+    // 7101 changed class twice, its readings in three classes, one of them
+    // keep-everything; 7103's property keeps no history any more.
+    await sql`
+      INSERT INTO conditions.observation (series_id, retention_days, phenomenon_start,
+        fetched_at, recorded_at, temporality, aggregation, value_num)
+      VALUES (7101, 3, ${start}, now(), now(), 'live', 'mean', 1),
+             (7101, 3, ${start}::timestamptz + interval '1 minute', now(), now(), 'live', 'mean', 2),
+             (7101, 5, ${start}, now(), now(), 'live', 'mean', 3),
+             (7101, 0, ${start}, now(), now(), 'live', 'mean', 4),
+             (7103, 2, ${start}, now(), now(), 'live', 'mean', 5),
+             (7102, 3, ${start}, now(), now(), 'live', 'mean', 6)`;
+    expect(await deleteSeriesHistory(sql, ["7101", "7103"])).toBe(5);
+    expect(
+      await sql`SELECT series_id::int AS series, retention_days AS days
+        FROM conditions.observation WHERE series_id IN (7101, 7102, 7103) ORDER BY 1, 2`,
+    ).toEqual([{ series: 7102, days: 3 }]);
+    expect(await deleteSeriesHistory(sql, [])).toBe(0);
+  });
 });

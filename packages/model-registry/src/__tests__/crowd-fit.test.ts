@@ -45,6 +45,7 @@ const fitFormats: RegistryModule = {
   ],
 };
 const registry = buildRegistry([...productionModules, fitFormats]);
+const productionRegistry = buildRegistry(productionModules);
 const INSTANCE = "oc.example.org";
 const KEY = "GlQczzclqGJy6D0X9dNq8pSYKRfkCqszpEp5g3ZGlwY";
 const OTHER_KEY = "8nR0Y3oQ2kX7cS1wV5bT9uZ4aE6dF0gH2jK4lM6nP8q";
@@ -183,6 +184,18 @@ describe("what drivers report", () => {
     expect(life("roadworks", "works")).toBe(604800);
     expect(life("restriction", "dimension")).toBeUndefined();
     expect(life("alert", "wind")).toBeUndefined();
+  });
+
+  it("keeps no history of a crowd-reported property, so no reporter key reaches it", () => {
+    // A crowd reading names its reporter in its provenance, and a history row
+    // keeps that provenance. Deleting a reporter strips its key from the
+    // latest readings only, so a crowd property that kept history would keep
+    // the key in the history partitions.
+    const crowd = productionRegistry.properties().filter((p) => p.crowd !== undefined);
+    expect(crowd.length).toBeGreaterThan(0);
+    for (const property of crowd) {
+      expect(property.retention?.latestOnly, property.code).toBe(true);
+    }
   });
 
   it("refuses a transit disruption: the transit domain is not registered", () => {

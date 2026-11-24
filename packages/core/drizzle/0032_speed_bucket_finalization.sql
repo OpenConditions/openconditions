@@ -1,1 +1,0 @@
-ALTER TABLE "conditions"."sensor_speed_hourly" ADD COLUMN "finalized" boolean DEFAULT false NOT NULL;

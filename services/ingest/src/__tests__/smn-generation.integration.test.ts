@@ -268,7 +268,7 @@ for (const order of [
     const rows = () =>
       db.sql`SELECT id, record FROM conditions.situation WHERE source_id=${feed.id} AND tombstoned_at IS NULL ORDER BY id`;
     const durable = () =>
-      db.sql`SELECT identifier, body, retain_until FROM conditions.smn_cap_message WHERE source_id=${feed.id} ORDER BY identifier`;
+      db.sql`SELECT identifier, body, retain_until FROM conditions.smn_cap_message WHERE source_id=${feed.id} ORDER BY identifier, variant`;
     registerScope(app, "test-operator-token-351-collision");
     registerApiRoutes(app, db.sql, { registry, now: () => new Date(at), catalog: REPO_CATALOG });
     try {
@@ -359,35 +359,6 @@ for (const order of [
   });
 }
 
-it("upgrades the existing one-ID durable table without changing its original bytes or retention claim", async () => {
-  const db = await createTestDatabase();
-  try {
-    await db.sql`DROP TABLE conditions.smn_cap_decision`;
-    await db.sql`DROP TABLE conditions.smn_cap_message`;
-    const migrations = new URL("../../../../packages/core/drizzle/", import.meta.url);
-    await db.sql.unsafe(readFileSync(new URL("0094_smn_cap_message.sql", migrations), "utf8"));
-    const original = readFileSync(new URL("ar-000.xml", dir));
-    const alert = readCapXml(original, true);
-    await db.sql`INSERT INTO conditions.smn_cap_message(source_id,identifier,body,retain_until) VALUES ('legacy',${alert.identifier},${original},'2026-11-15T23:13:22Z')`;
-    const migration = readFileSync(new URL("0095_glorious_adam_destine.sql", migrations), "utf8");
-    for (const statement of migration.split("--> statement-breakpoint"))
-      await db.sql.unsafe(statement);
-    const rows =
-      await db.sql`SELECT identifier,variant,body,retrieval,retain_until FROM conditions.smn_cap_message`;
-    expect(rows).toHaveLength(1);
-    expect(rows[0]!.identifier).toBe(alert.identifier);
-    expect(rows[0]!.body).toEqual(original);
-    expect(rows[0]!.retrieval).toEqual({ legacy: true });
-    expect(rows[0]!.retain_until.toISOString()).toBe("2026-11-15T23:13:22.000Z");
-    expect(rows[0]!.variant).toBe(createHash("sha256").update(original).digest("hex"));
-    const sibling = readFileSync(new URL("ar-011.xml", dir));
-    await db.sql`INSERT INTO conditions.smn_cap_message(source_id,identifier,body,retain_until) VALUES ('legacy',${alert.identifier},${sibling},'2026-11-15T23:13:22Z')`;
-    expect(await db.sql`SELECT body FROM conditions.smn_cap_message`).toHaveLength(2);
-  } finally {
-    await db.close();
-  }
-});
-
 it("bounds variants by count and combined original/provenance bytes before publication", async () => {
   const db = await createTestDatabase();
   try {
@@ -400,7 +371,7 @@ it("bounds variants by count and combined original/provenance bytes before publi
     await expect(smnMessages(db.sql, feed, variants, at)).rejects.toThrow("budget exceeded");
     expect(await db.sql`SELECT body FROM conditions.smn_cap_message`).toHaveLength(0);
     const oversized = Buffer.alloc(32 * 1024 * 1024 + 1, 32);
-    await db.sql`INSERT INTO conditions.smn_cap_message(source_id,identifier,body,retain_until) VALUES (${feed.id},'synthetic-budget',${oversized},'2026-11-15T23:13:22Z')`;
+    await db.sql`INSERT INTO conditions.smn_cap_message(source_id,identifier,body,retrieval,retain_until) VALUES (${feed.id},'synthetic-budget',${oversized},${db.sql.json({ source: feed.id })},'2026-11-15T23:13:22Z')`;
     await expect(smnMessages(db.sql, feed, [], at)).rejects.toThrow("budget exceeded");
   } finally {
     await db.close();

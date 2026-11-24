@@ -1,1 +1,0 @@
-ALTER TABLE "conditions"."federation_subscription" ADD COLUMN "expires_at" timestamp with time zone DEFAULT now() + interval '30 days' NOT NULL;

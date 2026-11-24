@@ -308,6 +308,7 @@ these not being right:
 | `OPENCONDITIONS_FEDERATION_ACTOR`       | The actor config (inline JSON or a path): `instanceId`, `baseUrl` (the public origin peers reach the service at), operator, coverage, licence, tier, and the capabilities the operator states: `protocolVersion` (optionally `protocolVersions`) and `convergenceBound`. The schema versions, wire format, delivery modes and filter keys are advertised from the running build, and configuring them, `maxEventRate` or an actor-wide `mtlsRequired` fails the boot. |
 | `OPENCONDITIONS_FEDERATION_PEERS`       | The peers config (inline JSON array or a path): one record per peer with its `instanceId`, `actorUrl`, `trustTier` and `pinnedKeys` (§3), and none naming this instance.                                                                                                                                                                                                                                                                                              |
 | `OPENCONDITIONS_FEDERATION_ARCHIVE_URL` | Where peers fetch the static archive (default `<baseUrl>/archive`, which the operator serves; see [archive.md](./archive.md)).                                                                                                                                                                                                                                                                                                                                        |
+| `OPENCONDITIONS_SECRETS_KEY`            | The key the instance's private keys are encrypted with, or `…_SECRETS_KEY_FILE` naming a file that holds it: a copy of the ingest service's key, never a newly generated one (see [secrets encrypted at rest](../README.md#secrets-encrypted-at-rest)). The service waits for the ingest service's key check at start. Missing, malformed, different from the ingest service's, or unable to decrypt a stored instance key, it fails the boot.                        |
 
 Optional:
 
@@ -322,6 +323,7 @@ Optional:
 | `OPENCONDITIONS_FEDERATION_TRUSTED_PROXIES`    | Comma-separated addresses or subnets (`10.0.0.2`, `172.18.0.0/16`) of the reverse proxies in front of the service. Only from them are `X-Forwarded-For` and the client certificate header believed (see _Mutual TLS_ below).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | `OPENCONDITIONS_EGRESS_ALLOWED_HOSTS`          | Comma-separated host names the service may reach although they resolve to private addresses: a peer, archive, inbox or registry on the same private network. Every other private, loopback or link-local address is refused.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | `OPENCONDITIONS_FETCH_TIMEOUT_MS`              | How long a request to a peer may take (default 60000). A peer's archive files have an hour each.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `OPENCONDITIONS_SCHEMA_WAIT_TIMEOUT_MS`        | How long the service waits at start until the ingest service has migrated the database to this build's schema version or a later one (default 300000). The federation service applies no migrations; after the timeout it stops and names the version it expected and what it found.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `OPENCONDITIONS_MAX_REDIRECTS`                 | How many redirects a request to a peer follows (default 5); each hop is checked as the first.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 
 A peer record with `subscribe` makes this instance a subscriber of that peer:
@@ -394,18 +396,7 @@ A peer's readings land in the observation history, whose partitions the ingest s
 
 ### Keys and rotation
 
-The service creates its Ed25519 instance key on first boot and keeps it in
-the database. A key is valid for six months; 30 days before it expires the
-service rotates it: the old key endorses the new one (both sign that the new
-key is this instance's next), and the actor document serves both, with the
-endorsement, until the old one expires. The new key signs only once it has
-been served for a week, so every peer has read it. A peer trusts a served key
-that a key it pins, or learned this way, endorsed, and keeps it
-(`conditions.federation_peer_key`): operators pin each other once, and the
-pins carry through every rotation. A learned key is trusted only while the pin
-it leads back to stays configured, so removing a pin revokes what it led to.
-A peer that does not read the actor document for longer than a key lives (six
-months) has to be pinned again. A key pinned for two peers fails the boot.
+The service creates its Ed25519 instance key on first boot and keeps it in the database, its private half encrypted with `OPENCONDITIONS_SECRETS_KEY`. Without that key the stored instance keys cannot be used: a lost key means a new instance key, a new federation identity, and every peer pinning this instance again. A key is valid for six months; 30 days before it expires the service rotates it: the old key endorses the new one (both sign that the new key is this instance's next), and the actor document serves both, with the endorsement, until the old one expires. The new key signs only once it has been served for a week, so every peer has read it. A peer trusts a served key that a key it pins, or learned this way, endorsed, and keeps it (`conditions.federation_peer_key`): operators pin each other once, and the pins carry through every rotation. A learned key is trusted only while the pin it leads back to stays configured, so removing a pin revokes what it led to. A peer that does not read the actor document for longer than a key lives (six months) has to be pinned again. A key pinned for two peers fails the boot.
 
 ### One process
 
@@ -525,7 +516,10 @@ services:
       OPENCONDITIONS_FEDERATION_ACTOR: /config/actor.json
       OPENCONDITIONS_FEDERATION_PEERS: /config/peers.json
       OPENCONDITIONS_FEDERATION_REGISTRY_CACHE: /data/registry
+      # A copy of openconditions-ingest's Secrets key, never a new one.
+      OPENCONDITIONS_SECRETS_KEY_FILE: /run/secrets/openconditions-secrets-key
       TMPDIR: /data
+    secrets: [openconditions-secrets-key]
     volumes:
       - ./federation:/config:ro
       - openconditions-federation-data:/data
@@ -543,11 +537,17 @@ networks:
   openmapx:
     external: true
 
+secrets:
+  openconditions-secrets-key:
+    file: ./federation-secrets/secrets-key
+
 volumes:
   openmapx-openconditions-ingest-data:
     external: true
   openconditions-federation-data:
 ```
+
+The file `federation-secrets/secrets-key` holds the same value that was entered as the Secrets key of `openconditions-ingest` in OpenMapX's admin services panel, taken from the recovery set. It must be readable by the container's user, and it stays out of the `federation` config folder and out of backups. The service refuses to start with any other key; see [secrets encrypted at rest](../README.md#secrets-encrypted-at-rest).
 
 and the public reverse proxy routes the paths, for example with Caddy:
 

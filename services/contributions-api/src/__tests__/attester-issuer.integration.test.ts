@@ -1,6 +1,14 @@
+import { createHash } from "node:crypto";
 import { publicVerif, type Token } from "@cloudflare/privacypass-ts";
 import { generateReporterKey, type ReporterKey } from "@openconditions/contrib-core";
-import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
+import { SecretsKey, sealSecretsKeyCheck, storedSecret } from "@openconditions/core/server";
+import {
+  createTestDatabase,
+  dumpHolds,
+  dumpTable,
+  TEST_SECRETS_KEY,
+  type TestDatabase,
+} from "@openconditions/test-database";
 import type { FastifyInstance } from "fastify";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -9,7 +17,12 @@ import { verifyReportingGrant } from "../attester/grant.js";
 import type { DeviceProof } from "../attester/policy.js";
 import { type PublicContext, publicContextString, redemptionContext } from "../issuer/context.js";
 import { issueToken } from "../issuer/issue.js";
-import { DEFAULT_ISSUER_NAME, generateIssuerKey, loadActiveIssuerKeys } from "../issuer/keys.js";
+import {
+  assertIssuerKeysOpen,
+  DEFAULT_ISSUER_NAME,
+  generateIssuerKey,
+  loadActiveIssuerKeys,
+} from "../issuer/keys.js";
 import { TokenVerifier } from "../issuer/verify.js";
 import { build } from "../server.js";
 
@@ -18,6 +31,7 @@ const { BlindRSAMode, Client, Origin, TokenResponse } = publicVerif;
 const NOW = "2026-07-12T08:00:00.000Z";
 const GRANT_SECRET_VALUE = "attester-issuer-test-secret";
 const GRANT_SECRET = new TextEncoder().encode(GRANT_SECRET_VALUE);
+const secrets = SecretsKey.parse(TEST_SECRETS_KEY);
 
 const noopLog = {
   info: () => {},
@@ -39,6 +53,14 @@ afterAll(async () => {
 
 function proofFor(key: ReporterKey, overrides: Partial<DeviceProof> = {}): DeviceProof {
   return { keyId: key.keyId, ...overrides };
+}
+
+/** When the spent row of `tokenBytes` expires. */
+async function spentExpiry(tokenBytes: Uint8Array): Promise<string | undefined> {
+  const hash = createHash("sha256").update(tokenBytes).digest("hex");
+  const [row] = await sql<{ expires_at: Date }[]>`
+    SELECT expires_at FROM conditions.spent_token WHERE token_hash = ${hash}`;
+  return row?.expires_at.toISOString();
 }
 
 async function enroll(key: ReporterKey, now = NOW) {
@@ -230,7 +252,7 @@ describe("enrollReporter", () => {
   it("a verifier-CONFIRMED osmAuth grants the 0.1 bump", async () => {
     const key = await generateReporterKey();
     const confirming = {
-      verify: async () => ({ verified: true, osmUid: "12345" }),
+      verify: async () => ({ verified: true }),
     };
     const entitlement = await enrollReporter(
       sql,
@@ -335,7 +357,7 @@ async function mintDirect(
   ctx: PublicContext,
   opts: { pickKeyId?: string } = {},
 ): Promise<MintedToken> {
-  const keys = await loadActiveIssuerKeys(sql, NOW, DEFAULT_ISSUER_NAME);
+  const keys = await loadActiveIssuerKeys(sql, secrets, NOW, DEFAULT_ISSUER_NAME);
   const issuerKey =
     opts.pickKeyId === undefined ? keys[0]! : keys.find((k) => k.keyId === opts.pickKeyId)!;
   const client = new Client(BlindRSAMode.PSS);
@@ -344,6 +366,7 @@ async function mintDirect(
   const request = await client.createTokenRequest(challenge, issuerKey.publicKeyBytes);
   const result = await issueToken(sql, keyId, epoch, request.serialize(), ctx, {
     log: noopLog,
+    secrets,
     now: NOW,
   });
   if (!result.issued) throw new Error(`issuance refused: ${result.reason}`);
@@ -353,8 +376,8 @@ async function mintDirect(
 
 describe("issuer keys", () => {
   it("bootstraps a keypair on first use and reloads it as valid", async () => {
-    const created = await generateIssuerKey(sql, NOW);
-    const keys = await loadActiveIssuerKeys(sql, NOW, DEFAULT_ISSUER_NAME);
+    const created = await generateIssuerKey(sql, secrets, NOW);
+    const keys = await loadActiveIssuerKeys(sql, secrets, NOW, DEFAULT_ISSUER_NAME);
     expect(keys.length).toBeGreaterThanOrEqual(1);
     const found = keys.find((k) => k.keyId === created.keyId);
     expect(found).toBeDefined();
@@ -363,12 +386,61 @@ describe("issuer keys", () => {
   }, 60_000);
 
   it("excludes keys outside their validity window", async () => {
-    const expired = await generateIssuerKey(sql, NOW, {
+    const expired = await generateIssuerKey(sql, secrets, NOW, {
       notBefore: "2026-01-01T00:00:00.000Z",
       notAfter: "2026-04-01T00:00:00.000Z",
     });
-    const keys = await loadActiveIssuerKeys(sql, NOW, DEFAULT_ISSUER_NAME);
+    const keys = await loadActiveIssuerKeys(sql, secrets, NOW, DEFAULT_ISSUER_NAME);
     expect(keys.find((k) => k.keyId === expired.keyId)).toBeUndefined();
+  }, 60_000);
+
+  it("stores the private key sealed: a dump of the table does not hold it", async () => {
+    const [row] = await sql`SELECT * FROM conditions.issuer_key LIMIT 1`;
+    const place = { table: "issuer_key", column: "private_key", row: row!["key_id"] as string };
+    const pkcs8 = secrets.open(storedSecret(row!, place)!, place);
+    // The opened value is the key's PKCS#8 form, which the dump must not hold.
+    await expect(
+      globalThis.crypto.subtle.importKey(
+        "pkcs8",
+        new Uint8Array(pkcs8),
+        publicVerif.BLIND_RSA.rsaParams,
+        false,
+        ["sign"],
+      ),
+    ).resolves.toBeDefined();
+    expect(dumpHolds(await dumpTable(sql, "issuer_key"), pkcs8)).toBe(false);
+    expect(row!["private_key_iv"]).toHaveLength(12);
+    expect(row!["private_key_tag"]).toHaveLength(16);
+  }, 60_000);
+
+  it("refuses a key that cannot open the stored private keys, naming the key id", async () => {
+    await expect(assertIssuerKeysOpen(sql, secrets)).resolves.toBeUndefined();
+    const wrong = SecretsKey.parse("e1".repeat(32));
+    await expect(assertIssuerKeysOpen(sql, wrong)).rejects.toThrow(
+      /^wrong key: OPENCONDITIONS_SECRETS_KEY cannot decrypt conditions\.issuer_key\.private_key of the row [0-9a-f]{64}/,
+    );
+  }, 60_000);
+
+  it("does not open a private key copied into another key's row", async () => {
+    const [a] = await loadActiveIssuerKeys(sql, secrets, NOW, DEFAULT_ISSUER_NAME);
+    const b = await generateIssuerKey(sql, secrets, NOW);
+    const rollBack = new Error("roll the copy back");
+    await expect(
+      sql.begin(async (tx) => {
+        await tx`
+          UPDATE conditions.issuer_key AS b SET
+            private_key_ciphertext = a.private_key_ciphertext,
+            private_key_iv = a.private_key_iv,
+            private_key_tag = a.private_key_tag
+          FROM conditions.issuer_key AS a
+          WHERE a.key_id = ${a!.keyId} AND b.key_id = ${b.keyId}`;
+        await expect(loadActiveIssuerKeys(tx, secrets, NOW, DEFAULT_ISSUER_NAME)).rejects.toThrow(
+          `cannot decrypt conditions.issuer_key.private_key of the row ${b.keyId}`,
+        );
+        throw rollBack;
+      }),
+    ).rejects.toBe(rollBack);
+    await expect(assertIssuerKeysOpen(sql, secrets)).resolves.toBeUndefined();
   }, 60_000);
 });
 
@@ -405,6 +477,8 @@ describe("issuance + redemption round-trip (real privacypass-ts client)", () => 
     await expect(
       verifier.verify(sql, garbage, { purpose: "report", epoch: "x" }, NOW),
     ).resolves.toBe(false);
+    // It can never redeem, so its spent row may go at once.
+    expect(await spentExpiry(garbage)).toBe(NOW);
   }, 30_000);
 
   it("refuses issuance for a reporter blocked after the grant was minted", async () => {
@@ -423,7 +497,7 @@ describe("quota under concurrency", () => {
     await enroll(key);
     const epoch = "conc-2026-07-12";
     const ctx: PublicContext = { purpose: "report", epoch };
-    const keys = await loadActiveIssuerKeys(sql, NOW, DEFAULT_ISSUER_NAME);
+    const keys = await loadActiveIssuerKeys(sql, secrets, NOW, DEFAULT_ISSUER_NAME);
     const issuerKey = keys[0]!;
     const origin = new Origin(BlindRSAMode.PSS);
     const challenge = origin.createTokenChallenge(
@@ -441,7 +515,7 @@ describe("quota under concurrency", () => {
 
     const results = await Promise.all(
       requests.map((bytes) =>
-        issueToken(sql, key.keyId, epoch, bytes, ctx, { log: noopLog, now: NOW }),
+        issueToken(sql, key.keyId, epoch, bytes, ctx, { log: noopLog, secrets, now: NOW }),
       ),
     );
     const succeeded = results.filter((r) => r.issued);
@@ -461,11 +535,11 @@ describe("quota under concurrency", () => {
 
 describe("issuer key rotation", () => {
   it("a token blinded against an old-but-still-valid key verifies within the overlap", async () => {
-    const old = await generateIssuerKey(sql, NOW, {
+    const old = await generateIssuerKey(sql, secrets, NOW, {
       notBefore: "2026-05-01T00:00:00.000Z",
       notAfter: "2026-08-01T00:00:00.000Z",
     });
-    await generateIssuerKey(sql, NOW);
+    await generateIssuerKey(sql, secrets, NOW);
 
     const key = await generateReporterKey();
     await enroll(key);
@@ -476,15 +550,63 @@ describe("issuer key rotation", () => {
 
     const verifier = new TokenVerifier({ issuerName: DEFAULT_ISSUER_NAME, log: noopLog });
     await expect(verifier.verify(sql, tokenBytes, ctx, NOW)).resolves.toBe(true);
+    // The spent row lives as long as the key the token was issued under.
+    expect(await spentExpiry(tokenBytes)).toBe("2026-08-01T00:00:00.000Z");
   }, 120_000);
 });
 
 describe("build() fail-closed", () => {
   it("throws in production when OPENCONDITIONS_GRANT_SECRET is unset", async () => {
-    await expect(build({ sql, env: { NODE_ENV: "production" } })).rejects.toThrow(
-      /OPENCONDITIONS_GRANT_SECRET/,
-    );
+    await expect(
+      build({
+        sql,
+        env: { NODE_ENV: "production", OPENCONDITIONS_SECRETS_KEY: TEST_SECRETS_KEY },
+      }),
+    ).rejects.toThrow(/OPENCONDITIONS_GRANT_SECRET/);
   }, 30_000);
+
+  it("throws without a secrets key, or with one that is no key", async () => {
+    const env = { OPENCONDITIONS_GRANT_SECRET: GRANT_SECRET_VALUE };
+    await expect(build({ sql, env, logger: false })).rejects.toThrow(
+      /OPENCONDITIONS_SECRETS_KEY is required: set OPENCONDITIONS_SECRETS_KEY_FILE/,
+    );
+    await expect(
+      build({ sql, env: { ...env, OPENCONDITIONS_SECRETS_KEY: "0".repeat(63) }, logger: false }),
+    ).rejects.toThrow(/OPENCONDITIONS_SECRETS_KEY must be 64 hexadecimal characters/);
+  }, 30_000);
+
+  it("throws with a key that cannot open the stored issuer keys", async () => {
+    await expect(
+      build({
+        sql,
+        env: {
+          OPENCONDITIONS_GRANT_SECRET: GRANT_SECRET_VALUE,
+          OPENCONDITIONS_SECRETS_KEY: "f0".repeat(32),
+        },
+        logger: false,
+      }),
+    ).rejects.toThrow(/^wrong key: .*conditions\.issuer_key\.private_key of the row /);
+  }, 30_000);
+
+  it("throws with a key other than the one the ingest service sealed the key check with", async () => {
+    const env = { OPENCONDITIONS_GRANT_SECRET: GRANT_SECRET_VALUE };
+    await sealSecretsKeyCheck(sql, secrets);
+    try {
+      const matching = await build({
+        sql,
+        env: { ...env, OPENCONDITIONS_SECRETS_KEY: TEST_SECRETS_KEY },
+        logger: false,
+      });
+      await matching.close();
+      await expect(
+        build({ sql, env: { ...env, OPENCONDITIONS_SECRETS_KEY: "0e".repeat(32) }, logger: false }),
+      ).rejects.toThrow(
+        /OPENCONDITIONS_SECRETS_KEY differs from the key the ingest service sealed/,
+      );
+    } finally {
+      await sql`TRUNCATE conditions.secrets_key_check`;
+    }
+  }, 60_000);
 });
 
 interface CapturedLine {
@@ -519,7 +641,10 @@ describe("HTTP surface + end-to-end flow with log separation", () => {
     capture = captureLogger();
     app = await build({
       sql,
-      env: { OPENCONDITIONS_GRANT_SECRET: GRANT_SECRET_VALUE },
+      env: {
+        OPENCONDITIONS_GRANT_SECRET: GRANT_SECRET_VALUE,
+        OPENCONDITIONS_SECRETS_KEY: TEST_SECRETS_KEY,
+      },
       logger: capture.logger,
       // Pin the clock so the SERVER-derived report epoch is a fixed UTC day.
       now: () => NOW,

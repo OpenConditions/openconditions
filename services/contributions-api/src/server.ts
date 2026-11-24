@@ -18,7 +18,11 @@ import {
   verifySubClaim,
 } from "@openconditions/contrib-core";
 import { type GeoJsonGeometry, reliabilityLowerBound } from "@openconditions/core";
-import { resolveInstanceId } from "@openconditions/core/server";
+import {
+  resolveInstanceId,
+  secretsKeyFromEnv,
+  verifySecretsKeyCheck,
+} from "@openconditions/core/server";
 import { resolveCrowdCredit } from "@openconditions/ingest-framework";
 import { type LandingContext, RECORD_CLASSES, type Registry } from "@openconditions/model";
 import { productionRegistry } from "@openconditions/model-registry";
@@ -40,7 +44,12 @@ import { crossValidateAgainstFeeds } from "./evidence/crossValidate.js";
 import { crossValidateObservation } from "./evidence/crossValidateObservation.js";
 import { type PublicContext, reportEpoch } from "./issuer/context.js";
 import { issueToken } from "./issuer/issue.js";
-import { DEFAULT_ISSUER_NAME, ensureIssuerKeys, loadActiveIssuerKeys } from "./issuer/keys.js";
+import {
+  assertIssuerKeysOpen,
+  DEFAULT_ISSUER_NAME,
+  ensureIssuerKeys,
+  loadIssuerPublicKeys,
+} from "./issuer/keys.js";
 import { TokenVerifier } from "./issuer/verify.js";
 import { ClaimRefusedError, GeometryInvalidError, landReport } from "./landing/land.js";
 import { ConflictingReportError, landObservationReport } from "./landing/observation.js";
@@ -194,6 +203,9 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
   const attestationVerifier = options.attestationVerifier ?? UNVERIFIED_ATTESTATION;
   const osmAuthVerifier = options.osmAuthVerifier ?? UNVERIFIED_OSM_AUTH;
   const issuerName = env["OPENCONDITIONS_ISSUER_NAME"] || DEFAULT_ISSUER_NAME;
+  // The issuer keys' private halves are sealed with it: a missing or malformed
+  // key fails boot, and so does one that cannot open the stored keys.
+  const secretsKey = secretsKeyFromEnv(env);
   // Validated before anything starts, so a misspelt licence or link aborts the boot.
   const instanceId = resolveInstanceId(env);
   const crowd = resolveCrowdCredit(env, instanceId);
@@ -212,7 +224,16 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
   const reviewerToken = resolveReviewerToken(env, (msg) => attesterLog.warn(msg));
   const requireReviewer = makeRequireReviewer(reviewerToken);
 
-  await ensureIssuerKeys(sql, now(), issuerName);
+  // A key other than the one the ingest service sealed the check row with
+  // stops the boot; then every stored issuer key must open. An absent row is
+  // let through on purpose: the only callers are main.ts, which has already
+  // waited for the row with waitForSecretsKeyCheck, and tests that build the
+  // server on a database no ingest service started on. None of the package's
+  // entry points exposes this function, so no other path reaches it without
+  // that wait.
+  await verifySecretsKeyCheck(sql, secretsKey);
+  await assertIssuerKeysOpen(sql, secretsKey);
+  await ensureIssuerKeys(sql, secretsKey, now(), issuerName);
 
   const verifier = new TokenVerifier({ issuerName, log: originLog });
   app.decorate("tokenVerifier", verifier);
@@ -305,6 +326,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     const result = await issueToken(sql, keyId, epoch, blindedRequestBytes, publicContext, {
       log: issuerLog,
       issuerName,
+      secrets: secretsKey,
       now: nowIso,
     });
     if (!result.issued) {
@@ -826,7 +848,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
   );
 
   app.get("/contrib/issuer-keys", async (_req, reply) => {
-    const keys = await loadActiveIssuerKeys(sql, now(), issuerName);
+    const keys = await loadIssuerPublicKeys(sql, now());
     return reply.send({
       issuer: issuerName,
       keys: keys.map((k) => ({

@@ -66,10 +66,23 @@
         "default": "",
         "x-openmapx-secret": false
       },
+      "OPENCONDITIONS_SECRETS_KEY": {
+        "type": "string",
+        "title": "Secrets key",
+        "description": "Required when enabled. Copy the value of openconditions-ingest's Secrets key; never generate a new one. The instance's federation private keys are encrypted with it; without it a new instance key must be made, which changes this instance's federation identity and has every peer pin it again. Enabled, the service refuses to start with a key other than the one the ingest service holds, or one that cannot decrypt the stored instance keys. It is not recoverable from the OpenConditions tables: the copy in your recovery set is the ingest service's.",
+        "x-openmapx-secret": true
+      },
       "OPENCONDITIONS_INSTANCE_ID": {
         "type": "string",
         "title": "Instance id",
         "description": "This instance's stable id, the same value as the ingest and contributions services': the actor's instanceId must equal it, or the service refuses to start. Empty: local.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "OPENCONDITIONS_SCHEMA_WAIT_TIMEOUT_MS": {
+        "type": "string",
+        "title": "Schema wait timeout (ms)",
+        "description": "The ingest service migrates the database; this service waits at start until the schema is at its version or newer, and stops with what it expected and found after this long. Empty: 300000.",
         "default": "",
         "x-openmapx-secret": false
       },

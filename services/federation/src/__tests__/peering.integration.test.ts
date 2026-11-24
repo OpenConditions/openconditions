@@ -4,7 +4,7 @@
  * outbox to B's inbox, and B lands what A publishes, the liveness of A's
  * sources included. Requests travel between the two apps in process.
  */
-import { runMigrations } from "@openconditions/core/server";
+import { runMigrations, SecretsKey } from "@openconditions/core/server";
 import {
   createInMemoryRateLimiter,
   InMemoryNonceStore,
@@ -22,6 +22,7 @@ import {
   tombstoneRecords,
   writeSnapshot,
 } from "@openconditions/storage";
+import { TEST_SECRETS_KEY } from "@openconditions/test-database";
 import {
   assertPostgisProfile,
   POSTGIS_IMAGES,
@@ -38,6 +39,7 @@ import { pullPeer } from "../puller.js";
 import { build } from "../server.js";
 import { registry } from "./record-fixtures.js";
 
+const secrets = SecretsKey.parse(TEST_SECRETS_KEY);
 const A = "a.example.org";
 const B = "b.example.org";
 /** Pushed only A's priority entries, and pulling A for the rest. */
@@ -195,21 +197,23 @@ beforeAll(async () => {
   sqlC = postgres(`${server}/c`, { max: 4, onnotice: () => {} });
 
   const now = new Date().toISOString();
-  await maintainInstanceKey(sqlA, now, A);
-  await maintainInstanceKey(sqlB, now, B);
-  await maintainInstanceKey(sqlC, now, C);
-  [keyA] = (await loadActiveKeys(sqlA, now)) as [InstanceKey];
-  const [keyB] = (await loadActiveKeys(sqlB, now)) as [InstanceKey];
-  [keyC] = (await loadActiveKeys(sqlC, now)) as [InstanceKey];
+  await maintainInstanceKey(sqlA, secrets, now, A);
+  await maintainInstanceKey(sqlB, secrets, now, B);
+  await maintainInstanceKey(sqlC, secrets, now, C);
+  [keyA] = (await loadActiveKeys(sqlA, secrets, now)) as [InstanceKey];
+  const [keyB] = (await loadActiveKeys(sqlB, secrets, now)) as [InstanceKey];
+  [keyC] = (await loadActiveKeys(sqlC, secrets, now)) as [InstanceKey];
 
   const envA = {
     OPENCONDITIONS_FEDERATION_ENABLED: "true",
+    OPENCONDITIONS_SECRETS_KEY: TEST_SECRETS_KEY,
     OPENCONDITIONS_INSTANCE_ID: A,
     OPENCONDITIONS_FEDERATION_ACTOR: JSON.stringify(actor(A)),
     OPENCONDITIONS_FEDERATION_PEERS: JSON.stringify([peer(B, keyB), peer(C, keyC)]),
   };
   envC = {
     OPENCONDITIONS_FEDERATION_ENABLED: "true",
+    OPENCONDITIONS_SECRETS_KEY: TEST_SECRETS_KEY,
     OPENCONDITIONS_INSTANCE_ID: C,
     OPENCONDITIONS_FEDERATION_ACTOR: JSON.stringify(actor(C)),
     OPENCONDITIONS_FEDERATION_PEERS: JSON.stringify([
@@ -224,6 +228,7 @@ beforeAll(async () => {
   appC = await build({ sql: sqlC, env: envC, logger: false, peers: peersC });
   const envB = {
     OPENCONDITIONS_FEDERATION_ENABLED: "true",
+    OPENCONDITIONS_SECRETS_KEY: TEST_SECRETS_KEY,
     OPENCONDITIONS_INSTANCE_ID: B,
     OPENCONDITIONS_FEDERATION_ACTOR: JSON.stringify(actor(B)),
     OPENCONDITIONS_FEDERATION_PEERS: JSON.stringify([peer(A, keyA, { subscribe: SUBSCRIBE })]),
@@ -596,7 +601,7 @@ describe("a peer that pulls a backlog while it is pushed to", () => {
 describe("a peer that rotates its key", () => {
   it("is followed by its pins: the key it rotated to verifies once its peers read it", async () => {
     const now = new Date().toISOString();
-    const rotated = await rotateInstanceKey(sqlA, now, A);
+    const rotated = await rotateInstanceKey(sqlA, secrets, now, A);
     expect(rotated.endorsement?.by).toBe(keyA.keyId);
     // Push a new entry under the new key before B has read A's actor document.
     await writeSnapshot(

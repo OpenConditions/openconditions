@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { bigint, check, jsonb, primaryKey, text } from "drizzle-orm/pg-core";
+import { bigint, check, date, jsonb, primaryKey, text } from "drizzle-orm/pg-core";
 import { conditionsSchema } from "./columns.js";
 
 /** Shared by all JMA sources and workers using one explicitly identified egress IP. */
@@ -7,13 +7,13 @@ export const jmaBudget = conditionsSchema.table(
   "jma_budget",
   {
     egress: text("egress").notNull(),
-    day: text("day").notNull(),
+    day: date("day", { mode: "string" }).notNull(),
     used: bigint("used", { mode: "number" }).notNull().default(0),
     reserved: bigint("reserved", { mode: "number" }).notNull().default(0),
   },
   (t) => [
-    primaryKey({ columns: [t.egress, t.day] }),
-    check("jma_budget_nonnegative", sql`${t.used} >= 0 AND ${t.reserved} >= 0`),
+    primaryKey({ name: "jma_budget_pkey", columns: [t.egress, t.day] }),
+    check("jma_budget_nonnegative_check", sql`${t.used} >= 0 AND ${t.reserved} >= 0`),
   ],
 );
 

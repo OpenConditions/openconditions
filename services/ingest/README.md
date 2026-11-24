@@ -84,18 +84,9 @@ and of the workspace packages it depends on: read as `env["X"]` or
 or written as an `OPENCONDITIONS_*` or `*_CRON` name. A name built at run time
 escapes it.
 
-- **Secrets** (`x-openmapx-secret`): `DATABASE_URL`, `OPENCONDITIONS_OPERATOR_TOKEN`
-  and the feed credentials. The operator sets each once in the admin services
-  panel (`openconditions-ingest`, Credentials). OpenMapX mounts it as a file and
-  sets `<KEY>_FILE` to its path; the service reads `<KEY>`, else the file
-  `<KEY>_FILE` names. A secret has no default. A `DATABASE_URL_FILE` or
-  `OPENCONDITIONS_OPERATOR_TOKEN_FILE` that is set but unreadable or empty
-  stops the service at boot, naming the file and the cause.
-  - `DATABASE_URL` is required: the service refuses to start without it. On the
-    shared OpenMapX database it connects as the service's own role, for example
-    `postgresql://openconditions_ingest:<password>@openmapx-postgis:5432/openmapx`.
-    Never use the PostgreSQL superuser: create the role as OpenMapX's community
-    extensions guide describes.
+- **Secrets** (`x-openmapx-secret`): `DATABASE_URL`, `OPENCONDITIONS_SECRETS_KEY`, `OPENCONDITIONS_OPERATOR_TOKEN` and the feed credentials. The operator sets each once in the admin services panel (`openconditions-ingest`, Credentials). OpenMapX mounts it as a file and sets `<KEY>_FILE` to its path; the service reads `<KEY>`, else the file `<KEY>_FILE` names. A secret has no default. A `DATABASE_URL_FILE` or `OPENCONDITIONS_OPERATOR_TOKEN_FILE` that is set but unreadable or empty stops the service at boot, naming the file and the cause.
+  - `DATABASE_URL` is required: the service refuses to start without it. On the shared OpenMapX database it connects as the service's own role, for example `postgresql://openconditions_ingest:<password>@openmapx-postgis:5432/openmapx`. Never use the PostgreSQL superuser: create the role as OpenMapX's community extensions guide describes.
+  - `OPENCONDITIONS_SECRETS_KEY` is required: the OAuth2 grants' tokens are encrypted with it in the OpenConditions tables. It is 64 hexadecimal characters; generate it here, once, with `openssl rand -hex 32`, and copy the same value into the Credentials of every other OpenConditions service, the heavy-feeds process's too. After migrating, the service seals a check value with it in `conditions.secrets_key_check`, which the other services verify their copy against. The service refuses to start without it, with a malformed one, or with one that cannot decrypt a stored grant or the check value. It is not recoverable from the OpenConditions tables, and OpenMapX's vault keeps it encrypted with OpenMapX's own secrets key: keep both keys in your recovery set; see [secrets encrypted at rest](../../README.md#secrets-encrypted-at-rest).
   - `OPENCONDITIONS_OPERATOR_TOKEN` must equal OpenMapX's own
     `OPENCONDITIONS_OPERATOR_TOKEN` (its `.env`), which its `api` and
     `data-manager` services send as their bearer token; the two are set separately.
@@ -263,11 +254,7 @@ lists, and connects a community service to its database only when its
 OpenMapX names `openconditions-ingest-heavy` there, enable it, with the list
 `nl-ndw-flow,nl-ndw-charging`:
 
-1. On `openconditions-ingest-heavy`, set `DATABASE_URL`, the instance id and
-   any credential its feeds need to the primary's values, and
-   `OPENCONDITIONS_INGEST_FEEDS` to the list
-   (`SERVICE_OPENCONDITIONS_INGEST_HEAVY_OPENCONDITIONS_INGEST_FEEDS` in
-   OpenMapX's `.env`).
+1. On `openconditions-ingest-heavy`, set `DATABASE_URL` (the primary's role: this process migrates and grants as the primary does), the instance id, the Secrets key and any credential its feeds need to the primary's values, never a newly generated key, and `OPENCONDITIONS_INGEST_FEEDS` to the list (`SERVICE_OPENCONDITIONS_INGEST_HEAVY_OPENCONDITIONS_INGEST_FEEDS` in OpenMapX's `.env`).
 2. On `openconditions-ingest`, set `OPENCONDITIONS_INGEST_FEEDS_EXCLUDE` to the
    same list.
 3. `pnpm openmapx services enable openconditions-ingest-heavy`, then
@@ -434,12 +421,7 @@ egress guard refuses private addresses otherwise.
 
 ### OAuth2 logins
 
-A feed with `oauth2-authorization-code` auth (EUMETSAT's Sentinel-3 fires) reads
-an account the operator logs in once, not a key: its grant lives in
-`conditions.oauth_grant`, which the service renews itself (see
-[`feeds/README.md`](../../feeds/README.md#credentials)). The commands run
-against `DATABASE_URL` in the image as `node dist/feed-auth.js <command>`, in
-a checkout as `pnpm --filter @openconditions/ingest feed-auth <command>`:
+A feed with `oauth2-authorization-code` auth (EUMETSAT's Sentinel-3 fires) reads an account the operator logs in once, not a key: its grant lives in `conditions.oauth_grant`, which the service renews itself (see [`feeds/README.md`](../../feeds/README.md#credentials)). Its access and refresh tokens are stored encrypted with `OPENCONDITIONS_SECRETS_KEY`. The commands run against `DATABASE_URL` with that key, both read from the container's environment, in the image as `node dist/feed-auth.js <command>`, in a checkout as `pnpm --filter @openconditions/ingest feed-auth <command>`:
 
 - `login <grant>` prints the provider's login URL and asks for the
   authorization code the page shows after the login; paste it at once, as it

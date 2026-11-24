@@ -153,6 +153,16 @@ interface ServiceField {
 }
 
 /**
+ * The descriptions the heavy-feeds ingest manifest gives in place of the
+ * ingest service's: it holds the key the ingest service generated and never
+ * generates its own.
+ */
+export const FEEDS_PROCESS_DESCRIPTIONS: Readonly<Record<string, string>> = {
+  OPENCONDITIONS_SECRETS_KEY:
+    "Required. Copy the value of openconditions-ingest's Secrets key; never generate a new one. The OAuth grant tokens this process refreshes are encrypted with it, and it refuses to start with any other key. It is not recoverable from the OpenConditions tables: the copy in your recovery set is the ingest service's.",
+};
+
+/**
  * The ingest service's own configuration, hand-written here and written into
  * `service.json` beside the fields generated from the catalogue. Under
  * OpenMapX a community service's `container.environment` reaches the
@@ -172,6 +182,12 @@ export const SERVICE_FIELDS: Readonly<Record<string, ServiceField>> = {
     title: "Database URL",
     description:
       "Required. PostgreSQL/PostGIS connection URL of the shared OpenMapX database for a dedicated role, e.g. postgresql://openconditions_ingest:<password>@openmapx-postgis:5432/openmapx. Never use the PostgreSQL superuser; create the role as OpenMapX's community extensions guide describes. The service refuses to start without it.",
+    secret: true,
+  },
+  OPENCONDITIONS_SECRETS_KEY: {
+    title: "Secrets key",
+    description:
+      "Required. The key the OAuth grant tokens and the instance's private keys are encrypted with in the OpenConditions tables: 64 hexadecimal characters. Generate it here, once, with openssl rand -hex 32, then copy this same value into the Secrets key of every other OpenConditions service of this instance (the heavy-feeds ingest, contributions API and federation); each refuses to start with another key. It is not recoverable from the OpenConditions tables: keep a copy in your recovery set. Under OpenMapX this vault stores it encrypted with OpenMapX's own secrets key, so a database backup protects it only while that key stays out of the backup, and both keys belong in the recovery set. Losing it means logging in to every OAuth grant again and making new issuer and federation keys, which changes the federation identity. The service refuses to start without it, or with a key that cannot decrypt what is stored.",
     secret: true,
   },
   OPENCONDITIONS_OPERATOR_TOKEN: {

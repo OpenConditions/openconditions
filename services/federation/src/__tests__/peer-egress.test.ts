@@ -6,12 +6,14 @@ import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { TLSSocket } from "node:tls";
+import { TEST_SECRETS_KEY } from "@openconditions/test-database";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { resolveFederationSettings } from "../config.js";
 import { peerFetch } from "../peer-egress.js";
 
 const enabled = {
   OPENCONDITIONS_FEDERATION_ENABLED: "true",
+  OPENCONDITIONS_SECRETS_KEY: TEST_SECRETS_KEY,
   OPENCONDITIONS_INSTANCE_ID: "me.example.org",
   OPENCONDITIONS_FEDERATION_ACTOR: JSON.stringify({
     instanceId: "me.example.org",

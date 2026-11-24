@@ -43,10 +43,10 @@ describe("segment_profile schema", () => {
     expect(pk.map((r) => r.column_name)).toEqual(["segment_id", "dow", "tod_hour"]);
   }, 30_000);
 
-  it("has the idx_segment_profile_segment index on segment_id", async () => {
+  it("reads by segment through the primary key alone", async () => {
     const idx =
       await sql`SELECT indexname FROM pg_indexes WHERE schemaname='conditions' AND tablename='segment_profile'`;
-    expect(idx.map((i) => i.indexname)).toContain("idx_segment_profile_segment");
+    expect(idx).toHaveLength(1);
   }, 30_000);
 
   it("round-trips a segment_profile row", async () => {

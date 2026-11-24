@@ -1,3 +1,4 @@
+import type { BindingStatus } from "@openconditions/core";
 import type postgres from "postgres";
 
 type Sql = postgres.Sql;
@@ -10,7 +11,6 @@ export interface BindingMetrics {
   unattempted: number;
   obsolete: number;
   unattemptedOrObsolete: number;
-  unknownStatus: number;
   exact: number;
   likely: number;
   ambiguous: number;
@@ -38,8 +38,15 @@ export interface BindingReasonCount {
 /** Reads per-source binding metrics, keyed by the situation's source id. */
 export type BindingMetricsReader = () => Promise<Map<string, BindingMetrics>>;
 
-/** Maps the stored `record_binding.status` values onto the reported keys. */
-const STATUS_KEYS: Record<string, keyof Omit<BindingMetrics, "attempted" | "reasons">> = {
+/**
+ * Maps the stored `record_binding.status` values of a current binding onto
+ * the reported keys. Its CHECK keeps the column to `BindingStatus`, and this
+ * map has to name every status but `obsolete`, which is never current.
+ */
+const STATUS_KEYS: Record<
+  Exclude<BindingStatus, "obsolete">,
+  keyof Omit<BindingMetrics, "attempted" | "reasons">
+> = {
   exact: "exact",
   likely: "likely",
   ambiguous: "ambiguous",
@@ -56,7 +63,6 @@ function emptyMetrics(): BindingMetrics {
     unattempted: 0,
     obsolete: 0,
     unattemptedOrObsolete: 0,
-    unknownStatus: 0,
     exact: 0,
     likely: 0,
     ambiguous: 0,
@@ -69,16 +75,14 @@ function emptyMetrics(): BindingMetrics {
 
 /**
  * Per-source binding outcome counts, cached for `ttlMs` so a status poll costs
- * at most two GROUP BYs per refresh window. An unrecognised status still counts
- * toward `attempted` — the total must stay truthful even if the resolver grows
- * an outcome this reader does not know about yet.
+ * at most two GROUP BYs per refresh window.
  */
 export function createBindingMetricsReader(sql: Sql, ttlMs = 60_000): BindingMetricsReader {
   let cache: { at: number; value: Map<string, BindingMetrics> } | null = null;
   return async () => {
     if (cache && Date.now() - cache.at < ttlMs) return cache.value;
     const rows = await sql<
-      { source: string; status: string | null; binding_current: boolean; n: number }[]
+      { source: string; status: BindingStatus | null; binding_current: boolean; n: number }[]
     >`
       SELECT s.source_id AS source, b.status,
         CASE WHEN b.status IS NULL OR b.status = 'obsolete' THEN false
@@ -109,9 +113,7 @@ export function createBindingMetricsReader(sql: Sql, ttlMs = 60_000): BindingMet
           metrics.unattemptedOrObsolete += row.n;
         } else {
           metrics.attemptedCurrent += row.n;
-          const key = STATUS_KEYS[row.status];
-          if (key) metrics[key] += row.n;
-          else metrics.unknownStatus += row.n;
+          metrics[STATUS_KEYS[row.status]] += row.n;
         }
       }
       value.set(row.source, metrics);

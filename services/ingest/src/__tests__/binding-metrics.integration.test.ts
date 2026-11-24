@@ -86,7 +86,6 @@ describe("binding metrics on GET /feeds/status", () => {
         unattempted: 0,
         obsolete: 0,
         unattemptedOrObsolete: 0,
-        unknownStatus: 0,
         exact: 1,
         likely: 0,
         ambiguous: 0,
@@ -121,7 +120,6 @@ describe("binding metrics on GET /feeds/status", () => {
         unattempted: 0,
         obsolete: 0,
         unattemptedOrObsolete: 0,
-        unknownStatus: 0,
         exact: 1,
         likely: 0,
         ambiguous: 0,
@@ -141,7 +139,6 @@ describe("binding metrics on GET /feeds/status", () => {
       unattempted: 0,
       obsolete: 0,
       unattemptedOrObsolete: 0,
-      unknownStatus: 0,
       exact: 1,
       likely: 1,
       ambiguous: 0,
@@ -150,31 +147,6 @@ describe("binding metrics on GET /feeds/status", () => {
       notApplicable: 0,
       reasons: [],
     });
-  });
-
-  it("counts an unknown status toward attempted without inventing a key", async () => {
-    await insertSituation("weird", "de-autobahn-events");
-    await insertBinding("de-autobahn-events", "weird", "something_new");
-    const reader = createBindingMetricsReader(sql, 0);
-    const metrics = await reader();
-    expect(metrics.get("de-autobahn-events")).toEqual({
-      activeEvents: 4,
-      attempted: 4,
-      attemptedCurrent: 4,
-      unattempted: 0,
-      obsolete: 0,
-      unattemptedOrObsolete: 0,
-      unknownStatus: 1,
-      exact: 1,
-      likely: 1,
-      ambiguous: 0,
-      unresolved: 1,
-      noCoverage: 0,
-      notApplicable: 0,
-      reasons: [],
-    });
-    await sql`UPDATE conditions.situation SET tombstoned_at = now(), tombstone_reason = 'withdrawn'
-      WHERE id = ${id("de-autobahn-events", "weird")}`;
   });
 
   it("counts obsolete bindings outside attemptedCurrent", async () => {

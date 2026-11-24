@@ -10,7 +10,11 @@ import {
 } from "@openconditions/contrib-core";
 import { crowdLocalId } from "@openconditions/model";
 import { tombstoneRecords } from "@openconditions/storage";
-import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
+import {
+  createTestDatabase,
+  TEST_SECRETS_KEY,
+  type TestDatabase,
+} from "@openconditions/test-database";
 import type { FastifyInstance } from "fastify";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
@@ -42,6 +46,7 @@ beforeAll(async () => {
     sql,
     env: {
       OPENCONDITIONS_GRANT_SECRET: GRANT_SECRET_VALUE,
+      OPENCONDITIONS_SECRETS_KEY: TEST_SECRETS_KEY,
       OPENCONDITIONS_INSTANCE_ID: INSTANCE,
     },
     logger: false,
@@ -319,18 +324,16 @@ describe("POST /contrib/reports/situation/:id/confirm — idempotency", () => {
         id: string;
         subject_class: string;
         subject_id: string;
-        subject_component_key: string;
         signature: string;
       }[]
     >`
-      SELECT id, subject_class, subject_id, subject_component_key, signature
+      SELECT id, subject_class, subject_id, signature
       FROM conditions.sub_claim WHERE key_id = ${keyB.keyId}`;
     expect(rows).toEqual([
       {
         id: crowdLocalId(keyB.keyId, nonce),
         subject_class: "situation",
         subject_id: id,
-        subject_component_key: "",
         signature: sub.signature,
       },
     ]);

@@ -1,4 +1,6 @@
+import { SecretsKey } from "@openconditions/core/server";
 import { tombstoneRecords } from "@openconditions/storage";
+import { TEST_SECRETS_KEY } from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { InMemoryNonceStore, verifyMessage } from "../http-signature.js";
@@ -160,8 +162,9 @@ async function webhookSubFromNow(opts: {
 beforeAll(async () => {
   db = await startDatabase();
   sql = db.sql;
-  await maintainInstanceKey(sql, NOW, "oc-test");
-  [signingKey] = await loadActiveKeys(sql, NOW);
+  const secrets = SecretsKey.parse(TEST_SECRETS_KEY);
+  await maintainInstanceKey(sql, secrets, NOW, "oc-test");
+  [signingKey] = await loadActiveKeys(sql, secrets, NOW);
 }, 120_000);
 
 afterAll(async () => {

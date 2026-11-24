@@ -62,25 +62,25 @@ describe("class tables", () => {
 
   it("reject values the kernel does not define", async () => {
     await expect(insertFeature("bad1", { temporality: "historic" })).rejects.toThrow(
-      /feature_temporality_enum/,
+      /feature_temporality_check/,
     );
     await expect(insertFeature("bad2", { privacy_class: "unknown" })).rejects.toThrow(
-      /feature_privacy_class_enum/,
+      /feature_privacy_class_check/,
     );
     await expect(insertFeature("bad3", { lifecycle: "closed" })).rejects.toThrow(
-      /feature_lifecycle_enum/,
+      /feature_lifecycle_check/,
     );
     await expect(
       insertFeature("bad4", {
         tombstone_reason: "deleted_by_source",
         tombstoned_at: "2026-10-01T00:00:00Z",
       }),
-    ).rejects.toThrow(/feature_tombstone_reason_enum/);
+    ).rejects.toThrow(/feature_tombstone_reason_check/);
   });
 
   it("require a tombstone to carry both its reason and its time", async () => {
     await expect(insertFeature("half", { tombstone_reason: "withdrawn" })).rejects.toThrow(
-      /feature_tombstone_complete/,
+      /feature_tombstone_check/,
     );
   });
 
@@ -116,7 +116,7 @@ describe("class tables", () => {
       ]);
       await expect(sql`INSERT INTO conditions.feature_component (feature_id, key, kind, details, content_hash)
         VALUES ('pair-a', 'same', 'sensor_channel', '{}'::jsonb, 'duplicate')`).rejects.toThrow(
-        /feature_component_feature_id_key_pk/,
+        /feature_component_pkey/,
       );
     } finally {
       await sql`DELETE FROM conditions.feature WHERE id IN ('pair-a', 'pair-b')`;
@@ -127,6 +127,6 @@ describe("class tables", () => {
     await expect(
       sql`INSERT INTO conditions.feature_link (a_id, b_id, method, confidence, status, decided_at)
           VALUES ('b', 'a', 'manual', 1, 'accepted', now())`,
-    ).rejects.toThrow(/feature_link_ordered/);
+    ).rejects.toThrow(/feature_link_order_check/);
   });
 });

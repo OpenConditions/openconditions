@@ -41,7 +41,7 @@ describe("kernel-closed CHECK constraints", () => {
       insertRecord("feature", "oc:feature:nl-ndw-flow:bad", "measurement_site", {
         privacyClass: "bogus",
       }),
-    ).rejects.toThrow(/feature_privacy_class_enum/);
+    ).rejects.toThrow(/feature_privacy_class_check/);
     await sql`DELETE FROM conditions.feature`;
   }, 60_000);
 });

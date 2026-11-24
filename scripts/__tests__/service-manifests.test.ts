@@ -3,6 +3,7 @@ import { describe, expect, test } from "vitest";
 
 interface Property {
   default?: unknown;
+  description?: string;
   "x-openmapx-secret"?: boolean;
 }
 
@@ -169,11 +170,24 @@ describe("service manifests on OpenMapX's config model", () => {
     for (const key of secrets(m)) expect(properties(m)[key]?.default, key).toBeUndefined();
   });
 
-  test("ingest: the database URL and the operator token are vault secrets", () => {
+  test("ingest: the database URL, the secrets key and the operator token are vault secrets", () => {
     expect(secrets(manifest("ingest"))).toEqual(
-      expect.arrayContaining(["DATABASE_URL", "OPENCONDITIONS_OPERATOR_TOKEN"]),
+      expect.arrayContaining([
+        "DATABASE_URL",
+        "OPENCONDITIONS_SECRETS_KEY",
+        "OPENCONDITIONS_OPERATOR_TOKEN",
+      ]),
     );
   });
+
+  test.each(["ingest", "contributions-api", "federation"])(
+    "%s: the secrets key that encrypts its stored secrets is a vault secret",
+    (dir) => {
+      expect(properties(manifest(dir))["OPENCONDITIONS_SECRETS_KEY"]).toMatchObject({
+        "x-openmapx-secret": true,
+      });
+    },
+  );
 
   /**
    * What a shared package reads on a path the service never takes. The
@@ -280,7 +294,16 @@ describe("service manifests on OpenMapX's config model", () => {
       service: "openconditions-ingest",
       condition: "service_healthy",
     });
-    expect(m.configSchema).toEqual(ingest.configSchema);
+    // The same fields, but the secrets key is copied from the ingest service, never generated.
+    const { OPENCONDITIONS_SECRETS_KEY: heavyKey, ...heavyRest } = properties(m);
+    const { OPENCONDITIONS_SECRETS_KEY: ingestKey, ...ingestRest } = properties(ingest);
+    expect(heavyRest).toEqual(ingestRest);
+    expect({ ...heavyKey, description: undefined }).toEqual({
+      ...ingestKey,
+      description: undefined,
+    });
+    expect(heavyKey?.description).toMatch(/^Required\. Copy the value of openconditions-ingest's/);
+    expect(heavyKey?.description).not.toContain("openssl rand");
     expect(
       defaults(m, ["OPENCONDITIONS_INGEST_FEEDS", "OPENCONDITIONS_INGEST_FEEDS_EXCLUDE"]),
     ).toEqual({ OPENCONDITIONS_INGEST_FEEDS: "", OPENCONDITIONS_INGEST_FEEDS_EXCLUDE: "" });
@@ -316,16 +339,18 @@ describe("service manifests on OpenMapX's config model", () => {
     }
   });
 
-  test("contributions-api: its database URL, grant secret and reviewer token are vault secrets", () => {
+  test("contributions-api: its database URL, secrets key, grant secret and reviewer token are vault secrets", () => {
     const m = manifest("contributions-api");
     expect(m.container.environment).toEqual({ PORT: "4200", HOST: "0.0.0.0" });
     expect(secrets(m).sort()).toEqual([
       "DATABASE_URL",
       "OPENCONDITIONS_GRANT_SECRET",
       "OPENCONDITIONS_REVIEWER_TOKEN",
+      "OPENCONDITIONS_SECRETS_KEY",
     ]);
     const expected = {
       OPENCONDITIONS_INSTANCE_ID: "",
+      OPENCONDITIONS_SCHEMA_WAIT_TIMEOUT_MS: "",
       OPENCONDITIONS_ISSUER_NAME: "",
       OPENCONDITIONS_CROSS_VALIDATE_SWEEP: "",
       OPENCONDITIONS_CROWD_LICENSE: "",
@@ -335,7 +360,7 @@ describe("service manifests on OpenMapX's config model", () => {
     expect(defaults(m, Object.keys(expected))).toEqual(expected);
   });
 
-  test("federation: off by default, its database URL and client certificate key the only secrets", () => {
+  test("federation: off by default, its database URL, secrets key and client certificate key the only secrets", () => {
     const m = manifest("federation");
     // Its registry cache and a peer's archive files while they land live on its volume.
     expect(m.container.environment).toEqual({
@@ -344,8 +369,13 @@ describe("service manifests on OpenMapX's config model", () => {
       OPENCONDITIONS_FEDERATION_REGISTRY_CACHE: "/data/registry",
       TMPDIR: "/data",
     });
-    expect(secrets(m)).toEqual(["DATABASE_URL", "OPENCONDITIONS_FEDERATION_CLIENT_KEY"]);
+    expect(secrets(m)).toEqual([
+      "DATABASE_URL",
+      "OPENCONDITIONS_SECRETS_KEY",
+      "OPENCONDITIONS_FEDERATION_CLIENT_KEY",
+    ]);
     expect(properties(m)["OPENCONDITIONS_FEDERATION_ENABLED"]?.default).toBe("");
+    expect(properties(m)["OPENCONDITIONS_SCHEMA_WAIT_TIMEOUT_MS"]?.default).toBe("");
   });
 
   test("federation: not in the extension, which would start it on every install unreachable", () => {

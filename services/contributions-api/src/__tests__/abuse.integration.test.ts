@@ -1,7 +1,11 @@
 import { readFileSync } from "node:fs";
 import { generateReporterKey, type ReporterKey } from "@openconditions/contrib-core";
 import { crowdLocalId } from "@openconditions/model";
-import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
+import {
+  createTestDatabase,
+  TEST_SECRETS_KEY,
+  type TestDatabase,
+} from "@openconditions/test-database";
 import type { FastifyInstance } from "fastify";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -26,6 +30,7 @@ beforeAll(async () => {
     sql,
     env: {
       OPENCONDITIONS_GRANT_SECRET: GRANT_SECRET_VALUE,
+      OPENCONDITIONS_SECRETS_KEY: TEST_SECRETS_KEY,
       OPENCONDITIONS_INSTANCE_ID: INSTANCE,
     },
     logger: false,
@@ -376,6 +381,12 @@ describe("co-reporting monitoring view", () => {
     kind: "report" | "confirm" | "negate",
     occurredAt: string,
   ): Promise<void> {
+    // Evidence names a key only of an enrolled reporter.
+    await sql`
+      INSERT INTO conditions.reporter (key_id, pub_jwk, reputation_alpha, reputation_beta,
+        entitlement_expires_at, created_at, last_active_at)
+      VALUES (${keyId}, '{}'::jsonb, 1, 1, ${occurredAt}, ${occurredAt}, ${occurredAt})
+      ON CONFLICT (key_id) DO NOTHING`;
     await sql`
       INSERT INTO conditions.report_evidence
         (record_class, record_id, evidence_kind, actor_key_id, occurred_at, details)

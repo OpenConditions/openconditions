@@ -1,18 +1,12 @@
-import {
-  EVIDENCE_STATES,
-  enumCheckSql,
-  FUZZINESS,
-  PRIVACY_CLASSES,
-  RECORD_CLASSES,
-} from "@openconditions/model";
+import { enumCheckSql, RECORD_CLASSES, TOMBSTONE_REASONS } from "@openconditions/model";
 import { sql } from "drizzle-orm";
 import {
   bigint,
-  bigserial,
   boolean,
   check,
   date,
   doublePrecision,
+  foreignKey,
   index,
   integer,
   jsonb,
@@ -21,11 +15,23 @@ import {
   smallint,
   text,
   timestamp,
-  unique,
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
-import { bytea, conditionsSchema, geometry, geometryPoint, xid8 } from "./columns.js";
+import { bytea, conditionsSchema, geometry, sealedSecretCheck, xid8 } from "./columns.js";
+
+/** A segment's level of service, worst last but `unknown`. */
+export const SEGMENT_LOS = [
+  "free_flow",
+  "heavy",
+  "queuing",
+  "stationary",
+  "blocked",
+  "unknown",
+] as const;
+
+/** How a segment speed was obtained: measured on the segment, or propagated from a neighbour. */
+export const SEGMENT_SPEED_CONFIDENCES = ["measured", "estimated"] as const;
 
 /**
  * One row per feed source, updated on every poll cycle (including a 304/
@@ -88,8 +94,8 @@ export const sourceShrink = conditionsSchema.table(
     held: integer("held").notNull(),
   },
   (t) => [
-    primaryKey({ columns: [t.sourceId, t.scope] }),
-    check("source_shrink_scope_enum", sql`${t.scope} IN ('series','records')`),
+    primaryKey({ name: "source_shrink_pkey", columns: [t.sourceId, t.scope] }),
+    check("source_shrink_scope_check", sql`${t.scope} IN ('series','records')`),
   ],
 );
 
@@ -98,7 +104,7 @@ export const sourceShrink = conditionsSchema.table(
 export const sourcePollAttempt = conditionsSchema.table(
   "source_poll_attempt",
   {
-    id: bigserial("id", { mode: "number" }).primaryKey(),
+    id: bigint("id", { mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),
     source: text("source").notNull(),
     attemptedAt: timestamp("attempted_at", { withTimezone: true }).notNull(),
     /** Null while the poll is still running: its id is the fetch id its raw payloads are filed under. */
@@ -120,8 +126,8 @@ export const sourcePollAttempt = conditionsSchema.table(
     payloadHashes: text("payload_hashes").array(),
   },
   (t) => [
-    index("idx_source_poll_attempt_source_time").on(t.source, t.attemptedAt),
-    index("idx_source_poll_attempt_time").on(t.attemptedAt, t.id),
+    index("source_poll_attempt_source_attempted_at_idx").on(t.source, t.attemptedAt),
+    index("source_poll_attempt_attempted_at_id_idx").on(t.attemptedAt, t.id),
   ],
 );
 
@@ -149,8 +155,15 @@ export const sensorBaseline = conditionsSchema.table(
     computedAt: timestamp("computed_at", { withTimezone: true }).notNull(),
   },
   (t) => [
-    primaryKey({ columns: [t.subjectKey, t.dowBucket, t.todBucket, t.method] }),
-    index("idx_sensor_baseline_source_bucket").on(t.source, t.dowBucket, t.todBucket),
+    primaryKey({
+      name: "sensor_baseline_pkey",
+      columns: [t.subjectKey, t.dowBucket, t.todBucket, t.method],
+    }),
+    index("sensor_baseline_source_dow_bucket_tod_bucket_idx").on(
+      t.source,
+      t.dowBucket,
+      t.todBucket,
+    ),
   ],
 );
 
@@ -175,9 +188,9 @@ export const osmRoad = conditionsSchema.table(
     importedAt: timestamp("imported_at", { withTimezone: true }).notNull(),
   },
   (t) => [
-    index("idx_osm_road_geom").using("gist", t.geom),
-    index("idx_osm_road_highway").on(t.highway),
-    index("idx_osm_road_ref").on(t.ref),
+    index("osm_road_geom_idx").using("gist", t.geom),
+    index("osm_road_highway_idx").on(t.highway),
+    index("osm_road_ref_idx").on(t.ref),
   ],
 );
 
@@ -201,9 +214,9 @@ export const roadSegment = conditionsSchema.table(
     computedAt: timestamp("computed_at", { withTimezone: true }).notNull(),
   },
   (t) => [
-    index("idx_road_segment_geom").using("gist", t.geom),
-    index("idx_road_segment_way").on(t.wayId),
-    index("idx_road_segment_minzoom").on(t.minZoom),
+    index("road_segment_geom_idx").using("gist", t.geom),
+    index("road_segment_way_id_idx").on(t.wayId),
+    index("road_segment_min_zoom_idx").on(t.minZoom),
   ],
 );
 
@@ -221,7 +234,7 @@ export const sensorSegment = conditionsSchema.table(
     bearingDeg: doublePrecision("bearing_deg"),
     matchedAt: timestamp("matched_at", { withTimezone: true }).notNull(),
   },
-  (t) => [index("idx_sensor_segment_segment").on(t.segmentId)],
+  (t) => [index("sensor_segment_segment_id_idx").on(t.segmentId)],
 );
 
 /** Singleton identity and provenance of the segment spine currently active. */
@@ -237,7 +250,7 @@ export const roadGraphState = conditionsSchema.table(
     importedAt: timestamp("imported_at", { withTimezone: true }).notNull(),
     activatedAt: timestamp("activated_at", { withTimezone: true }).notNull(),
   },
-  (t) => [check("road_graph_state_singleton", sql`${t.singleton} IS TRUE`)],
+  (t) => [check("road_graph_state_singleton_check", sql`${t.singleton} IS TRUE`)],
 );
 
 /** Current reviewed public licence policy, refreshed atomically with the source catalogue. */
@@ -263,7 +276,8 @@ export const segmentObservation = conditionsSchema.table(
     freeFlowKph: doublePrecision("free_flow_kph"),
     speedRatio: doublePrecision("speed_ratio"),
     los: text("los").notNull(),
-    confidence: doublePrecision("confidence").notNull(),
+    /** How far the source trusts its own reading, 0 to 1. */
+    confidenceScore: doublePrecision("confidence_score").notNull(),
     sampleCount: integer("sample_count"),
     /** Selected native identities and captured display receipts; rights stay in contributing. */
     nativeFieldSources: jsonb("native_field_sources"),
@@ -276,8 +290,8 @@ export const segmentObservation = conditionsSchema.table(
     expiresAt: timestamp("expires_at", { withTimezone: true }),
   },
   (t) => [
-    primaryKey({ columns: [t.segmentId, t.source] }),
-    index("idx_segment_observation_segment").on(t.segmentId),
+    primaryKey({ name: "segment_observation_pkey", columns: [t.segmentId, t.source] }),
+    check("segment_observation_los_check", sql.raw(enumCheckSql("los", SEGMENT_LOS))),
   ],
 );
 
@@ -302,10 +316,7 @@ export const segmentProfile = conditionsSchema.table(
     contributing: text("contributing").array().notNull().default(sql`'{}'::text[]`),
     computedAt: timestamp("computed_at", { withTimezone: true }).notNull(),
   },
-  (t) => [
-    primaryKey({ columns: [t.segmentId, t.dow, t.todHour] }),
-    index("idx_segment_profile_segment").on(t.segmentId),
-  ],
+  (t) => [primaryKey({ name: "segment_profile_pkey", columns: [t.segmentId, t.dow, t.todHour] })],
 );
 
 /**
@@ -336,7 +347,13 @@ export const segmentSpeed = conditionsSchema.table(
     observedAt: timestamp("observed_at", { withTimezone: true }),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },
-  (t) => [index("idx_segment_speed_los").on(t.los)],
+  () => [
+    check("segment_speed_los_check", sql.raw(enumCheckSql("los", SEGMENT_LOS))),
+    check(
+      "segment_speed_confidence_check",
+      sql.raw(enumCheckSql("confidence", SEGMENT_SPEED_CONFIDENCES)),
+    ),
+  ],
 );
 
 /**
@@ -344,19 +361,19 @@ export const segmentSpeed = conditionsSchema.table(
  * its P-256 public key. Carries the Beta reliability posterior
  * (`reputation_alpha`/`reputation_beta`) trained only by externally resolved
  * outcomes, participation counters, and the entitlement window that gates
- * whether the key may still submit.
+ * whether the key may still submit. Enrollment refreshes `last_active_at` and
+ * `entitlement_expires_at`; the records sweep deletes a reporter once both are
+ * more than twelve months old, and the delete takes the reporter's votes,
+ * refusals and token quotas with it and clears it from the evidence ledger.
  */
 export const reporter = conditionsSchema.table(
   "reporter",
   {
     keyId: text("key_id").primaryKey(),
     pubJwk: jsonb("pub_jwk").notNull(),
-    osmUid: text("osm_uid"),
-    emailLookupHmac: text("email_lookup_hmac"),
     reputationAlpha: doublePrecision("reputation_alpha").notNull(),
     reputationBeta: doublePrecision("reputation_beta").notNull(),
     corroboratedCount: integer("corroborated_count").notNull().default(0),
-    flaggedCount: integer("flagged_count").notNull().default(0),
     trustSignal: doublePrecision("trust_signal"),
     entitlementExpiresAt: timestamp("entitlement_expires_at", { withTimezone: true }).notNull(),
     status: text("status").notNull().default("active"),
@@ -364,15 +381,17 @@ export const reporter = conditionsSchema.table(
     lastActiveAt: timestamp("last_active_at", { withTimezone: true }).notNull(),
   },
   (t) => [
-    check("reporter_reputation_alpha_positive", sql`${t.reputationAlpha} > 0`),
-    check("reporter_reputation_beta_positive", sql`${t.reputationBeta} > 0`),
-    check("reporter_status_enum", sql`${t.status} IN ('active','blocked')`),
+    index("reporter_last_active_at_idx").on(t.lastActiveAt),
+    check("reporter_reputation_alpha_check", sql`${t.reputationAlpha} > 0`),
+    check("reporter_reputation_beta_check", sql`${t.reputationBeta} > 0`),
+    check("reporter_status_check", sql`${t.status} IN ('active','blocked')`),
   ],
 );
 
 /**
  * Per-(key, epoch) count of anti-abuse tokens already issued — the rate-limit
- * ledger for a reporter's submission entitlement.
+ * ledger for a reporter's submission entitlement. The records sweep deletes a
+ * row once its epoch (a UTC day) has ended.
  */
 export const tokenQuota = conditionsSchema.table(
   "token_quota",
@@ -381,7 +400,14 @@ export const tokenQuota = conditionsSchema.table(
     epoch: text("epoch").notNull(),
     issued: integer("issued").notNull().default(0),
   },
-  (t) => [primaryKey({ columns: [t.keyId, t.epoch] })],
+  (t) => [
+    primaryKey({ name: "token_quota_pkey", columns: [t.keyId, t.epoch] }),
+    foreignKey({
+      name: "token_quota_key_id_fkey",
+      columns: [t.keyId],
+      foreignColumns: [reporter.keyId],
+    }).onDelete("cascade"),
+  ],
 );
 
 /**
@@ -390,8 +416,9 @@ export const tokenQuota = conditionsSchema.table(
  * token carries a random 32-byte nonce, so the hash is unique per token).
  * Redemption INSERTs here FIRST and treats a primary-key violation as
  * already-spent — fail closed. `purpose` records the domain-separated public
- * context the token was redeemed under; `spent_at` feeds a later retention
- * sweep.
+ * context the token was redeemed under. `expires_at` is the token's own
+ * expiry, the end of its issuer key's validity: no token redeems after it, so
+ * the records sweep deletes the row then.
  */
 export const spentToken = conditionsSchema.table(
   "spent_token",
@@ -399,8 +426,9 @@ export const spentToken = conditionsSchema.table(
     tokenHash: text("token_hash").primaryKey(),
     purpose: text("purpose").notNull(),
     spentAt: timestamp("spent_at", { withTimezone: true }).notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
   },
-  (t) => [index("idx_spent_token_spent_at").on(t.spentAt)],
+  (t) => [index("spent_token_expires_at_idx").on(t.expiresAt)],
 );
 
 /**
@@ -436,7 +464,7 @@ export const blockList = conditionsSchema.table("block_list", {
  * snapshot), at most one per source per ten minutes and only while a
  * subscription asks for them, so a peer keeps the source's unchanged readings
  * current (`journalSourceLiveness`). `seq`
- * (bigserial) is the strictly monotonic peer cursor; entries are never
+ * (an identity column) is the strictly monotonic peer cursor; entries are never
  * updated by the application, except that an erasure scrubs the earlier
  * snapshots of the erased record.
  *
@@ -452,7 +480,9 @@ export const blockList = conditionsSchema.table("block_list", {
 export const federationOutbox = conditionsSchema.table(
   "federation_outbox",
   {
-    seq: bigserial("seq", { mode: "number" }).primaryKey(),
+    // By default, not always: a new journal epoch copies carried entries
+    // back with the seq they had.
+    seq: bigint("seq", { mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),
     operation: text("operation").notNull(),
     recordClass: text("record_class").notNull(),
     recordId: text("record_id").notNull(),
@@ -468,23 +498,23 @@ export const federationOutbox = conditionsSchema.table(
     txid: xid8("txid").notNull().default(sql`pg_current_xact_id()`),
   },
   (t) => [
-    index("idx_federation_outbox_record").on(t.recordClass, t.recordId, t.seq),
+    index("federation_outbox_record_class_record_id_seq_idx").on(t.recordClass, t.recordId, t.seq),
     // The composite peer cursor's covering index: WHERE/ORDER BY are (txid, seq).
-    index("idx_federation_outbox_cursor").on(t.txid, t.seq),
+    index("federation_outbox_txid_seq_idx").on(t.txid, t.seq),
     // The daily retention prune deletes on `created_at < floor`; this btree
     // keeps that a range scan instead of a full seq-scan as the journal grows.
-    index("idx_federation_outbox_created_at").on(t.createdAt),
+    index("federation_outbox_created_at_idx").on(t.createdAt),
     check(
-      "federation_outbox_operation_enum",
+      "federation_outbox_operation_check",
       sql`${t.operation} IN ('create','update','delete','liveness')`,
     ),
     check(
-      "federation_outbox_record_class_enum",
+      "federation_outbox_record_class_check",
       sql.raw(enumCheckSql("record_class", RECORD_CLASSES)),
     ),
     // A change carries its record, a delete its reason and nothing else.
     check(
-      "federation_outbox_delete_shape",
+      "federation_outbox_delete_shape_check",
       sql`(${t.operation} = 'delete') = (${t.snapshot} IS NULL AND ${t.tombstoneReason} IS NOT NULL)`,
     ),
   ],
@@ -516,7 +546,7 @@ export const federationJournal = conditionsSchema.table(
     databaseOid: bigint("database_oid", { mode: "number" }),
     systemIdentifier: bigint("system_identifier", { mode: "bigint" }),
   },
-  (t) => [check("federation_journal_single_row", sql`${t.singleton}`)],
+  (t) => [check("federation_journal_singleton_check", sql`${t.singleton}`)],
 );
 
 /**
@@ -528,8 +558,9 @@ export const federationJournal = conditionsSchema.table(
  * still records the fact. A peer's erasure (`peer_instance_id` that peer)
  * refuses only that peer's deliveries, so no peer can block another's
  * records; this instance's own (`peer_instance_id` empty) refuses every
- * peer's. `expires_at` is the 30-day retention of the deletion fact. The ROW
- * is the deletion fact — never the erased content.
+ * peer's. `expires_at` is the 30-day retention of the deletion fact, and the
+ * records sweep deletes the row once it passes. The ROW is the deletion fact —
+ * never the erased content.
  */
 export const federationTombstone = conditionsSchema.table(
   "federation_tombstone",
@@ -540,7 +571,11 @@ export const federationTombstone = conditionsSchema.table(
     tombstonedAt: timestamp("tombstoned_at", { withTimezone: true }).notNull().defaultNow(),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
   },
-  (t) => [primaryKey({ columns: [t.canonicalId, t.peerInstanceId] })],
+  (t) => [
+    primaryKey({ name: "federation_tombstone_pkey", columns: [t.canonicalId, t.peerInstanceId] }),
+    index("federation_tombstone_expires_at_idx").on(t.expiresAt),
+    check("federation_tombstone_reason_check", sql.raw(enumCheckSql("reason", TOMBSTONE_REASONS))),
+  ],
 );
 
 /**
@@ -573,7 +608,9 @@ export const federationSourceReceipt = conditionsSchema.table(
      */
     cadenceSec: integer("cadence_sec"),
   },
-  (t) => [primaryKey({ columns: [t.peerInstanceId, t.sourceId] })],
+  (t) => [
+    primaryKey({ name: "federation_source_receipt_pkey", columns: [t.peerInstanceId, t.sourceId] }),
+  ],
 );
 
 /**
@@ -595,8 +632,8 @@ export const federationLapsedCopy = conditionsSchema.table(
     lapsedAt: timestamp("lapsed_at", { withTimezone: true }).notNull(),
   },
   (t) => [
-    primaryKey({ columns: [t.recordClass, t.recordId] }),
-    index("idx_federation_lapsed_copy_source").on(t.peerInstanceId, t.sourceId),
+    primaryKey({ name: "federation_lapsed_copy_pkey", columns: [t.recordClass, t.recordId] }),
+    index("federation_lapsed_copy_peer_instance_id_source_id_idx").on(t.peerInstanceId, t.sourceId),
   ],
 );
 
@@ -649,8 +686,8 @@ export const onDemandFetch = conditionsSchema.table(
     claimedUntil: timestamp("claimed_until", { withTimezone: true }),
   },
   (t) => [
-    primaryKey({ columns: [t.sourceId, t.cell] }),
-    check("on_demand_fetch_status_enum", sql`${t.status} IN ('pending','fresh','failed')`),
+    primaryKey({ name: "on_demand_fetch_pkey", columns: [t.sourceId, t.cell] }),
+    check("on_demand_fetch_status_check", sql`${t.status} IN ('pending','fresh','failed')`),
   ],
 );
 
@@ -668,23 +705,53 @@ export const onDemandQuota = conditionsSchema.table("on_demand_quota", {
 });
 
 /**
- * This instance's rotating token-issuer keypairs, each valid across a
- * [not_before, not_after) window.
+ * One row: a fixed text sealed with the instance's secrets key, which the
+ * ingest service writes once. Every other service that holds the key opens
+ * it at start and refuses to start when it does not open, so a service given
+ * another key than the ingest service's never seals anything with it.
  */
-export const issuerKey = conditionsSchema.table("issuer_key", {
-  keyId: text("key_id").primaryKey(),
-  publicKey: bytea("public_key").notNull(),
-  privateKey: bytea("private_key").notNull(),
-  notBefore: timestamp("not_before", { withTimezone: true }).notNull(),
-  notAfter: timestamp("not_after", { withTimezone: true }).notNull(),
-});
+export const secretsKeyCheck = conditionsSchema.table(
+  "secrets_key_check",
+  {
+    id: smallint("id").primaryKey().default(1),
+    valueCiphertext: bytea("value_ciphertext").notNull(),
+    valueIv: bytea("value_iv").notNull(),
+    valueTag: bytea("value_tag").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    check("secrets_key_check_id_check", sql`${t.id} = 1`),
+    check("secrets_key_check_value_check", sealedSecretCheck("value")),
+  ],
+);
+
+/**
+ * This instance's rotating token-issuer keypairs, each valid across a
+ * [not_before, not_after) window. The private key (PKCS#8) is stored sealed
+ * with the instance's secrets key (AES-256-GCM, bound to the key id).
+ */
+export const issuerKey = conditionsSchema.table(
+  "issuer_key",
+  {
+    keyId: text("key_id").primaryKey(),
+    publicKey: bytea("public_key").notNull(),
+    privateKeyCiphertext: bytea("private_key_ciphertext").notNull(),
+    privateKeyIv: bytea("private_key_iv").notNull(),
+    privateKeyTag: bytea("private_key_tag").notNull(),
+    notBefore: timestamp("not_before", { withTimezone: true }).notNull(),
+    notAfter: timestamp("not_after", { withTimezone: true }).notNull(),
+  },
+  () => [check("issuer_key_private_key_check", sealedSecretCheck("private_key"))],
+);
 
 /**
  * This instance's rotating federation Ed25519 signing keys. `key_id` and
  * `multibase` are both the key's publicKeyMultibase ("z6Mk…" — served in the
  * Actor document and exchanged out-of-band as the bilateral pin fingerprint);
  * `public_key` is the raw 32-byte Ed25519 key and `private_key` its PKCS#8
- * form — an operator secret that is never served, logged, or federated.
+ * form — an operator secret that is never served, logged, or federated, and
+ * stored sealed with the instance's secrets key (AES-256-GCM, bound to the
+ * key id).
  * Rotation keeps the old and new key's [not_before, not_after) windows
  * overlapping (≥30 days) so peers keep verifying while the new key propagates.
  * Every key but the first is endorsed by the key before it: `endorsed_by` is
@@ -692,18 +759,24 @@ export const issuerKey = conditionsSchema.table("issuer_key", {
  * Ed25519 signature that the new key is this instance's next, which a peer
  * that trusts the old key checks before it trusts the new.
  */
-export const federationInstanceKey = conditionsSchema.table("federation_instance_key", {
-  keyId: text("key_id").primaryKey(),
-  publicKey: bytea("public_key").notNull(),
-  privateKey: bytea("private_key").notNull(),
-  multibase: text("multibase").notNull(),
-  notBefore: timestamp("not_before", { withTimezone: true }).notNull(),
-  notAfter: timestamp("not_after", { withTimezone: true }).notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
-  endorsedBy: text("endorsed_by"),
-  endorsement: bytea("endorsement"),
-  endorsementProof: bytea("endorsement_proof"),
-});
+export const federationInstanceKey = conditionsSchema.table(
+  "federation_instance_key",
+  {
+    keyId: text("key_id").primaryKey(),
+    publicKey: bytea("public_key").notNull(),
+    privateKeyCiphertext: bytea("private_key_ciphertext").notNull(),
+    privateKeyIv: bytea("private_key_iv").notNull(),
+    privateKeyTag: bytea("private_key_tag").notNull(),
+    multibase: text("multibase").notNull(),
+    notBefore: timestamp("not_before", { withTimezone: true }).notNull(),
+    notAfter: timestamp("not_after", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    endorsedBy: text("endorsed_by"),
+    endorsement: bytea("endorsement"),
+    endorsementProof: bytea("endorsement_proof"),
+  },
+  () => [check("federation_instance_key_private_key_check", sealedSecretCheck("private_key"))],
+);
 
 /**
  * The keys of a pinned peer this instance trusts beyond its configured pins:
@@ -721,7 +794,7 @@ export const federationPeerKey = conditionsSchema.table(
     anchor: text("anchor").notNull(),
     learnedAt: timestamp("learned_at", { withTimezone: true }).notNull(),
   },
-  (t) => [primaryKey({ columns: [t.peerInstanceId, t.keyId] })],
+  (t) => [primaryKey({ name: "federation_peer_key_pkey", columns: [t.peerInstanceId, t.keyId] })],
 );
 
 /**
@@ -867,16 +940,17 @@ export const federationSubscription = conditionsSchema.table(
       .default(sql`now() + interval '30 days'`),
   },
   (t) => [
-    index("idx_federation_subscription_peer").on(t.peerId),
+    index("federation_subscription_peer_id_idx").on(t.peerId),
     // A peer holds one pull subscription and one webhook per inbox, which it
     // patches to what it wants; a second would push or journal twice.
-    uniqueIndex("uq_federation_subscription_target")
+    uniqueIndex("federation_subscription_target_key")
       .on(t.peerId, t.deliveryMode, sql`coalesce(${t.inboxUrl}, '')`)
       .where(sql`${t.deliveryMode} <> 'sse'`),
     check(
-      "federation_subscription_delivery_mode_enum",
+      "federation_subscription_delivery_mode_check",
       sql`${t.deliveryMode} IN ('pull','webhook','sse')`,
     ),
+    check("federation_subscription_status_check", sql`${t.status} IN ('active','push_disabled')`),
   ],
 );
 
@@ -892,16 +966,26 @@ export const observationRevision = conditionsSchema.table(
     signature: text("signature").notNull(),
     suppressed: boolean("suppressed").notNull(),
   },
-  (t) => [primaryKey({ columns: [t.sourceId, t.featureId, t.property] })],
+  (t) => [
+    primaryKey({
+      name: "observation_revision_pkey",
+      columns: [t.sourceId, t.featureId, t.property],
+    }),
+  ],
 );
 
 /** Last wholly accepted GeoNet acquisition; publication shares its transaction. */
-export const geonetCoverage = conditionsSchema.table("geonet_coverage", {
-  revisions: jsonb("revisions").notNull().default({}),
-  sourceId: text("source_id").primaryKey(),
-  coveredFrom: timestamp("covered_from", { withTimezone: true }).notNull(),
-  coveredUntil: timestamp("covered_until", { withTimezone: true }).notNull(),
-});
+export const geonetCoverage = conditionsSchema.table(
+  "geonet_coverage",
+  {
+    revisions: jsonb("revisions").notNull().default({}),
+    sourceId: text("source_id").primaryKey(),
+    coveredFrom: timestamp("covered_from", { withTimezone: true }).notNull(),
+    coveredUntil: timestamp("covered_until", { withTimezone: true }).notNull(),
+  },
+  // A coverage window ends after it starts.
+  (t) => [check("geonet_coverage_order_check", sql`${t.coveredFrom} < ${t.coveredUntil}`)],
+);
 
 /** Durable CAP message window for SMN's rolling indexes, committed with publication. */
 export const smnCapMessage = conditionsSchema.table(
@@ -910,11 +994,11 @@ export const smnCapMessage = conditionsSchema.table(
     sourceId: text("source_id").notNull(),
     identifier: text("identifier").notNull(),
     variant: text("variant").generatedAlwaysAs(sql`encode(sha256(body), 'hex')`).notNull(),
-    retrieval: jsonb("retrieval").notNull().default(sql`'{"legacy":true}'::jsonb`),
+    retrieval: jsonb("retrieval").notNull(),
     body: bytea("body").notNull(),
     retainUntil: timestamp("retain_until", { withTimezone: true }).notNull(),
   },
-  (t) => [primaryKey({ columns: [t.sourceId, t.variant] })],
+  (t) => [primaryKey({ name: "smn_cap_message_pkey", columns: [t.sourceId, t.variant] })],
 );
 
 /** The bounded latest SMN projection decision, committed with originals and public records. */
@@ -938,5 +1022,5 @@ export const nswRfsClock = conditionsSchema.table(
     content: text("content").notNull(),
     expiry: text("expiry").notNull(),
   },
-  (t) => [primaryKey({ columns: [t.sourceId, t.incidentId] })],
+  (t) => [primaryKey({ name: "nsw_rfs_clock_pkey", columns: [t.sourceId, t.incidentId] })],
 );

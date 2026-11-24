@@ -1,2 +1,0 @@
-ALTER TABLE "conditions"."situation" DROP CONSTRAINT "situation_severity_enum";--> statement-breakpoint
-ALTER TABLE "conditions"."situation" ADD CONSTRAINT "situation_severity_enum" CHECK ("severity" IN ('none', 'minor', 'moderate', 'major', 'critical', 'unknown'));

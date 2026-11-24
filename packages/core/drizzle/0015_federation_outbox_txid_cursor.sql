@@ -1,2 +1,0 @@
-ALTER TABLE "conditions"."federation_outbox" ADD COLUMN "txid" "xid8" DEFAULT pg_current_xact_id() NOT NULL;--> statement-breakpoint
-CREATE INDEX "idx_federation_outbox_cursor" ON "conditions"."federation_outbox" USING btree ("txid","seq");

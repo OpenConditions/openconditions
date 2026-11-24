@@ -27,7 +27,7 @@ const LATER = "2026-10-01T10:01:05.000Z";
 const INSTANCE = "test.local";
 const PROFILE = process.env["OC_TEST_POSTGIS_PROFILE"] ?? "pg16";
 const RUN_BENCHMARK = process.env["OC_RUN_EXTERNAL_ID_BENCHMARK"] === "1";
-const GENERATED_INDEX = "idx_feature_external_ids_generated_probe";
+const GENERATED_INDEX = "feature_external_ids_idx_generated_probe";
 const BENEFIT_BUDGET = {
   expiryMedianWalReductionAtLeast: 0.2,
   expiryHotRatio: "demonstrably increased",
@@ -115,7 +115,7 @@ function sealed(draft: Rec, now = NOW, revision = 1): Rec {
 const otherIndexes = () => sql`SELECT c.relname, c.reloptions, pg_get_indexdef(c.oid) AS definition
   FROM pg_index i JOIN pg_class c ON c.oid=i.indexrelid
   WHERE i.indrelid='conditions.feature'::regclass
-    AND c.relname NOT IN ('idx_feature_external_ids',${GENERATED_INDEX}) ORDER BY c.relname`;
+    AND c.relname NOT IN ('feature_external_ids_idx',${GENERATED_INDEX}) ORDER BY c.relname`;
 
 /** DDL and index removal live only inside this disposable representation experiment. */
 async function prepare(mode: Mode) {
@@ -125,7 +125,7 @@ async function prepare(mode: Mode) {
       GENERATED ALWAYS AS (record -> 'externalIds') STORED`);
     await sql.unsafe(`CREATE INDEX ${GENERATED_INDEX} ON conditions.feature
       USING gin (external_ids jsonb_path_ops) WITH (fastupdate=off)`);
-    await sql.unsafe(`DROP INDEX conditions.idx_feature_external_ids`);
+    await sql.unsafe(`DROP INDEX conditions.feature_external_ids_idx`);
   }
   expect(
     (await sql`SELECT reloptions FROM pg_class WHERE oid='conditions.feature'::regclass`)[0]?.[
@@ -133,7 +133,7 @@ async function prepare(mode: Mode) {
     ],
   ).toEqual(originalReloptions);
   const [index] = await sql`SELECT reloptions FROM pg_class
-    WHERE relname=${mode === "generated" ? GENERATED_INDEX : "idx_feature_external_ids"}`;
+    WHERE relname=${mode === "generated" ? GENERATED_INDEX : "feature_external_ids_idx"}`;
   expect(index?.["reloptions"]).toContain("fastupdate=off");
   expect(await otherIndexes()).toEqual(originalOtherIndexes);
   const columns = await columnLayout();

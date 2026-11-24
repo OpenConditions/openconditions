@@ -110,7 +110,7 @@ services/            deployable services (AGPL-3.0)
   openlr-resolver/   Python/FastAPI OpenLR → geometry map-matcher (dormant)
 ```
 
-The ingest service owns and migrates the `conditions` schema itself, idempotently, on boot.
+The ingest service owns and migrates the `conditions` schema itself, idempotently, on boot. The contributions and federation services apply no migrations: they wait at boot until the schema reaches their version (see [database migrations](docs/database-migrations.md#who-migrates)).
 
 Instances federate their records with each other: the [federation onboarding guide](docs/federation-onboarding.md) covers running and peering an instance, and the [federation wire protocol](docs/federation-protocol.md) specifies what instances exchange.
 
@@ -122,11 +122,15 @@ Requires Node 24+ and pnpm 11+ (and a reachable PostGIS).
 pnpm install
 pnpm build
 
+# Once: the secrets key, kept in a file Git ignores and reused on every start.
+[ -f .secrets-key ] || (umask 077 && openssl rand -hex 32 > .secrets-key)
+
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/openconditions \
+OPENCONDITIONS_SECRETS_KEY_FILE="$PWD/.secrets-key" \
   pnpm --filter @openconditions/ingest dev
 ```
 
-The service applies its migrations, starts polling the enabled feeds, and serves on `:4100`.
+The service applies its migrations, starts polling the enabled feeds, and serves on `:4100`. Keep `.secrets-key`: a start with another key refuses to read what the first one stored (see [secrets encrypted at rest](#secrets-encrypted-at-rest)).
 
 ### Public API
 
@@ -185,15 +189,7 @@ their occupancy), the charging domain (charging sites, charge-point status and t
 webcam layer and its stills) and the hazards domain (the weather alert, wildfire, earthquake and natural event
 overlays).
 
-OpenMapX passes a community service's `container.environment` to the container verbatim, so the services'
-configuration is `configSchema` fields: set the database URL (and the contributions API's grant secret and
-reviewer token) once as secrets in the admin services panel. Until they are set, both services stop at boot
-and their containers restart in a loop; once they are, apply the change and the services start. Set any
-setting there, or as `SERVICE_OPENCONDITIONS_INGEST_<KEY>` in OpenMapX's `.env`. Settings kept in OpenMapX's
-`.env` are applied with `pnpm openmapx services start openconditions-ingest` (which resets every setting saved
-only in the admin form, so keep all of them in one place). Settings saved in the form are applied with
-**Save & Apply**. See
-[services/ingest/README.md](services/ingest/README.md#configuration-under-openmapx).
+OpenMapX passes a community service's `container.environment` to the container verbatim, so the services' configuration is `configSchema` fields: set the database URL, the secrets key (the same value in every OpenConditions service, see [secrets encrypted at rest](#secrets-encrypted-at-rest)) and the contributions API's grant secret and reviewer token once as secrets in the admin services panel. Until they are set, both services stop at boot and their containers restart in a loop; once they are, apply the change and the services start. Set any setting there, or as `SERVICE_OPENCONDITIONS_INGEST_<KEY>` in OpenMapX's `.env`. Settings kept in OpenMapX's `.env` are applied with `pnpm openmapx services start openconditions-ingest` (which resets every setting saved only in the admin form, so keep all of them in one place). Settings saved in the form are applied with **Save & Apply**. See [services/ingest/README.md](services/ingest/README.md#configuration-under-openmapx).
 
 See OpenMapX's _Building an external extension_ guide for the full flow. OpenMapX's built-in OpenConditions
 integration reads roads situations, routing evidence, fuel features, parking sites, charging sites, cameras and
@@ -202,6 +198,25 @@ charging layer, the webcam layer and the hazard overlays. A request carrying `Au
 <OPENCONDITIONS_OPERATOR_TOKEN>` reads in the operator scope, which withholds nothing; without it a read is
 public-scope. Reads with a bbox fetch stale on-demand feeds first, waiting at most
 `OPENCONDITIONS_ON_DEMAND_DEADLINE_MS` (default 3000). See [services/ingest/README.md](services/ingest/README.md).
+
+## Secrets encrypted at rest
+
+OpenConditions keeps three kinds of secret in its tables: the OAuth grants of feeds that need an account login (the access and refresh tokens, for example EUMETSAT's), the contributions API's token-issuer private keys, and the federation service's instance private keys. They are stored encrypted with AES-256-GCM under one key, `OPENCONDITIONS_SECRETS_KEY`. The OpenConditions tables never hold that key. Each value is bound to its table, column and row, so a value copied to another row does not decrypt. A dump of the OpenConditions tables therefore holds none of these secrets in clear.
+
+The key is 64 hexadecimal characters; surrounding whitespace is ignored. Generate it once, for the ingest service, with `openssl rand -hex 32`. Every other OpenConditions service of the instance that reads these secrets gets a copy of that same value, never a newly generated one: the heavy-feeds ingest process, the contributions API and, when federation is enabled, the federation service. The ingest service's feed-auth command reads the ingest container's key. After migrating, the ingest service seals a fixed check value with its key in `conditions.secrets_key_check`, once. On a fresh install, whichever ingest process starts first, the ingest service or the heavy-feeds ingest process, seals its key, so start the ingest service first, or make sure every service holds the same key before the first start. Every other service waits for that row at start and refuses to start when its key does not open it, with an error saying that its key differs from the one the ingest service sealed. A service that needs the key also refuses to start without it or with a value that is not a key. At start each service decrypts every secret it keeps. A key that cannot decrypt one stops the start with a "wrong key" error that names the table and row, never the key or the value.
+
+Where the key lives depends on how OpenConditions runs:
+
+- **Standalone**, the key lives only where the operator puts it: a file named by `OPENCONDITIONS_SECRETS_KEY_FILE` (or the variable `OPENCONDITIONS_SECRETS_KEY` itself), and the operator's recovery set. A database backup holds only the encrypted secrets and is of no use for them without the key, as long as the key file stays out of the backup.
+- **Under OpenMapX**, each service's credentials in the admin services panel are separate, so the key is entered once per service: generated for `openconditions-ingest` and copied into the others. OpenMapX mounts it as a file and sets `OPENCONDITIONS_SECRETS_KEY_FILE`. A service that runs from its own compose file beside the extension, such as the federation service or a heavy-feeds ingest process started that way, has no entry in that panel: give it the copy as a mounted file and point `OPENCONDITIONS_SECRETS_KEY_FILE` at it, as the [federation guide's compose example](docs/federation-onboarding.md#deploying-it) does. OpenMapX's credential vault stores the key in OpenMapX's own table `public.service_secret`, in the same database, encrypted with OpenMapX's secrets key (the file `infra/docker/secrets/secrets-key` its render generates). A full database backup therefore holds the OpenConditions key, encrypted, next to the secrets it protects. Such a backup is safe for these secrets only while OpenMapX's secrets key file stays out of it, which is how OpenMapX keeps that file: out of backups, in the recovery set.
+
+Both keys belong in your recovery set: the OpenConditions secrets key and, under OpenMapX, OpenMapX's secrets key. There is no tool to re-encrypt the secrets under a new key, so a lost key and a compromised key both mean starting over:
+
+1. Generate a new key and enter it in every OpenConditions service (under OpenMapX, in each service's credentials).
+2. Delete the rows of `conditions.secrets_key_check`, `conditions.oauth_grant`, `conditions.issuer_key` and `conditions.federation_instance_key`, then start the services; the ingest service seals the check row with the new key.
+3. Log in to every OAuth grant again with the ingest container's feed-auth command (`node dist/feed-auth.js login <grant>`).
+
+The consequences go beyond the logins. The contributions API makes new issuer keys, and crowd tokens issued under the deleted keys no longer redeem. The federation service makes a new instance key, which changes this instance's federation identity: peers that pinned the old key no longer trust this instance until they pin the new one. A database backup taken before the restart brings back rows the new key cannot open, so a service started on such a restore stops with "wrong key" until the old key is back or the steps above are repeated.
 
 ## Crowd reporting
 

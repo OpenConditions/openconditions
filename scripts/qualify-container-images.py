@@ -98,12 +98,13 @@ def write_json(path, value):
         stream.write("\n")
 
 
-def command(args, *, cwd=None, log=None, check=True, timeout=120):
+def command(args, *, cwd=None, log=None, check=True, timeout=120, stdin=None):
     if args[0] == "git":
         args = ["git", "--no-replace-objects", *args[1:]]
     result = subprocess.run(
         args,
         cwd=cwd,
+        input=stdin,
         text=True,
         stdout=log or subprocess.PIPE,
         stderr=subprocess.STDOUT if log else subprocess.PIPE,
@@ -549,6 +550,67 @@ print(json.dumps({'graphCounts':counts,'match':x,'invalidReferenceStatus':400,'g
 """
 
 
+# The ingest service's key check, sealed with only what the contributions-api
+# image ships (its core code is bundled, not importable). It is a second copy
+# of the sealed format: AES-256-GCM, a 12-byte IV, a 16-byte tag and the
+# place as additional data. The service verifies the row with its own code at
+# start, so a copy that drifts leaves it unhealthy and fails qualification.
+SEAL_SECRETS_KEY_CHECK = """
+import { createCipheriv, randomBytes } from "node:crypto";
+import postgres from "postgres";
+const key = Buffer.from(process.env.OPENCONDITIONS_SECRETS_KEY, "hex");
+if (key.length !== 32) throw new Error("the secrets key is not 32 bytes");
+const iv = randomBytes(12);
+const cipher = createCipheriv("aes-256-gcm", key, iv, { authTagLength: 16 });
+cipher.setAAD(Buffer.from(JSON.stringify(["conditions", "secrets_key_check", "value", "1"]), "utf8"));
+const ciphertext = Buffer.concat([
+  cipher.update("openconditions secrets key check", "utf8"),
+  cipher.final(),
+]);
+const tag = cipher.getAuthTag();
+const sql = postgres(process.env.DATABASE_URL, { max: 1 });
+try {
+  await sql`
+    INSERT INTO conditions.secrets_key_check (id, value_ciphertext, value_iv, value_tag)
+    VALUES (1, ${ciphertext}, ${iv}, ${tag})
+    ON CONFLICT (id) DO NOTHING`;
+} finally {
+  await sql.end();
+}
+"""
+
+
+def ingest_migration_script(source):
+    """The source's migrations, recorded in conditions.__drizzle_migrations as the
+    ingest service's migrator records them (the file's SHA-256 and its journal `when`).
+    The contributions and federation services apply no migrations: they wait at boot
+    until that history reaches their build's latest journal entry."""
+    folder = source / "packages/core/drizzle"
+    journal = decode((folder / "meta/_journal.json").read_bytes())
+    parts = [
+        "CREATE EXTENSION IF NOT EXISTS postgis;",
+        "CREATE SCHEMA IF NOT EXISTS conditions;",
+        "CREATE TABLE IF NOT EXISTS conditions.__drizzle_migrations "
+        "(id SERIAL PRIMARY KEY, hash text NOT NULL, created_at bigint);",
+    ]
+    for entry in journal["entries"]:
+        tag, when = entry["tag"], entry["when"]
+        if not re.fullmatch(r"[0-9]{4}_[a-z0-9_]+", tag) or type(when) is not int:
+            fail("unexpected migrations journal entry")
+        body = (folder / f"{tag}.sql").read_bytes().decode("utf-8")
+        # drizzle runs each breakpoint chunk as its own query, so a chunk may
+        # end without a semicolon; psql reads one script, which needs it.
+        for chunk in body.split("--> statement-breakpoint"):
+            statement = chunk.strip()
+            if statement:
+                parts.append(statement if statement.endswith(";") else f"{statement}\n;")
+        parts.append(
+            "INSERT INTO conditions.__drizzle_migrations (hash, created_at) "
+            f"VALUES ('{hashlib.sha256(body.encode()).hexdigest()}', {when});"
+        )
+    return "\n".join(parts) + "\n"
+
+
 def runtime_smoke(image, identity, source, output, *, exercise=None):
     label = uuid.uuid4().hex
     network, db, app = [f"oc-image-{label}{suffix}" for suffix in ("", "-db", "-app")]
@@ -627,7 +689,7 @@ def runtime_smoke(image, identity, source, output, *, exercise=None):
                 POSTGIS,
             ]
         )
-        sql = [
+        psql = [
             "docker",
             "exec",
             "-e",
@@ -640,8 +702,8 @@ def runtime_smoke(image, identity, source, output, *, exercise=None):
             "fixture",
             "-d",
             "fixture",
-            "-Atqc",
         ]
+        sql = [*psql, "-Atqc"]
         deadline = time.monotonic() + 120
         while command([*sql, "select 1"], check=False).returncode:
             if time.monotonic() > deadline:
@@ -653,6 +715,21 @@ def runtime_smoke(image, identity, source, output, *, exercise=None):
         if not re.fullmatch(r"16[0-9]{4}\|3\.[0-9.]+", physical):
             fail("unexpected physical PostGIS version")
         record["physicalPostGIS"] = physical
+        if image in ("contributions-api", "federation"):
+            command(
+                [
+                    *psql[:2],
+                    "-i",
+                    *psql[2:],
+                    "-v",
+                    "ON_ERROR_STOP=1",
+                    "--single-transaction",
+                    "-q",
+                    "-f",
+                    "-",
+                ],
+                stdin=ingest_migration_script(source),
+            )
         env = {
             "DATABASE_URL": f"postgresql://fixture:fixture@{db}:5432/fixture",
             "HOST": "0.0.0.0",
@@ -661,7 +738,35 @@ def runtime_smoke(image, identity, source, output, *, exercise=None):
             "OPENCONDITIONS_FEEDS_REMOTE_ENABLED": "false",
             "OPENCONDITIONS_GRANT_SECRET": uuid.uuid4().hex + uuid.uuid4().hex,
             "OPENCONDITIONS_REVIEWER_TOKEN": uuid.uuid4().hex + uuid.uuid4().hex,
+            "OPENCONDITIONS_SECRETS_KEY": uuid.uuid4().hex + uuid.uuid4().hex,
         }
+        if image == "contributions-api":
+            # The ingest service seals the secrets key check after migrating,
+            # and this service waits for it; seal it as ingest does, inside
+            # the image, before the service starts.
+            command(
+                [
+                    "docker",
+                    "run",
+                    "--rm",
+                    "--label",
+                    f"openconditions.qualification={label}",
+                    "--network",
+                    network,
+                    "--platform",
+                    PLATFORM,
+                    "-e",
+                    f"DATABASE_URL={env['DATABASE_URL']}",
+                    "-e",
+                    f"OPENCONDITIONS_SECRETS_KEY={env['OPENCONDITIONS_SECRETS_KEY']}",
+                    "--entrypoint",
+                    "node",
+                    loaded,
+                    "--input-type=module",
+                    "-e",
+                    SEAL_SECRETS_KEY_CHECK,
+                ]
+            )
         args = [
             "docker",
             "run",
@@ -729,7 +834,7 @@ def runtime_smoke(image, identity, source, output, *, exercise=None):
                 ).stdout.strip()
             )
             if tables < 10:
-                fail("bundled migrations were not applied")
+                fail("migrations were not applied")
             record["checks"]["migratedTables"] = tables
             if image == "ingest":
                 record["checks"]["osmiumVersion"] = command(

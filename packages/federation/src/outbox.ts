@@ -16,7 +16,7 @@
  * successfully (`journalSourceLiveness`); only a subscriber that asks for
  * them is served these, and none of a source now restricted.
  *
- * WHY A COMPOSITE CURSOR (the gap-free ordering authority). `seq` (bigserial)
+ * WHY A COMPOSITE CURSOR (the gap-free ordering authority). `seq` (identity)
  * advances PER ROW, but `txid` (`pg_current_xact_id()`) is assigned at a
  * transaction's FIRST write and shared by all its rows. So an earlier-txid
  * multi-row write can hold HIGHER interleaved seqs than a later-txid concurrent
@@ -55,7 +55,7 @@ export type OutboxOperation = "create" | "update" | "delete";
 /**
  * The composite journal cursor. `txid` is the row's creating transaction id
  * (`xid8`, kept as a decimal string — it is 64-bit and monotonic but not a
- * safe JS integer over a long-lived DB); `seq` is the per-row bigserial. The
+ * safe JS integer over a long-lived DB); `seq` is the per-row identity. The
  * ordering authority is `(txid, seq)` ascending.
  */
 export interface OutboxCursor {

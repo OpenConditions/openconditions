@@ -445,3 +445,62 @@ describe("reader scope", () => {
     expect(await listed("operator")).toContain(twin["id"]);
   });
 });
+
+describe("a series' history", () => {
+  test("is read while inside the property's current retention, whatever class holds it", async () => {
+    const [series] = await sql<{ series_id: string; retention_days: number }[]>`
+      SELECT series_id::text AS series_id, retention_days FROM conditions.observation_latest
+       WHERE subject_key = ${`feature:${station["id"]}#e5`} AND property = 'fuel.price'
+         AND source_id = ${PUBLIC}`;
+    expect(series?.retention_days).not.toBeNull();
+    const { series_id: id, retention_days: own } = series!;
+    // The property's retention has since changed to one day, as a registry
+    // update would change it; the history was written under other classes.
+    const oneDay = new Proxy(registry, {
+      get(target, key) {
+        if (key === "property") {
+          return (code: string) => {
+            const entry = target.property(code);
+            return code === "fuel.price" && entry ? { ...entry, retention: { rawDays: 1 } } : entry;
+          };
+        }
+        const value = Reflect.get(target, key, target);
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    });
+    const classes = retentionClasses(registry);
+    const other = classes.find((days) => days !== own)!;
+    const longest = classes.includes(0) ? 0 : Math.max(...classes);
+    const reading = (days: number, start: string, price: number) => sql`
+      INSERT INTO conditions.observation (series_id, retention_days, phenomenon_start,
+        fetched_at, recorded_at, temporality, aggregation, value_money)
+      VALUES (${id}::bigint, ${days}, ${start}, ${NOW}, ${NOW}, 'live', 'none', ${price})`;
+    // Inside the day, though written under a class the series no longer has.
+    await reading(other, "2026-09-22T11:05:00.000Z", 1.5);
+    // Two days old: still stored in a longer class's partition, past the day.
+    await reading(longest, "2026-09-20T12:05:00.000Z", 9.5);
+    try {
+      const read = await readSeries(
+        runner,
+        oneDay,
+        {
+          scope: "operator",
+          subjectKey: `feature:${station["id"]}#e5`,
+          property: "fuel.price",
+          sourceId: PUBLIC,
+        },
+        { from: new Date("2026-09-19T12:00:00.000Z"), to: new Date(LATER), now: AT, limit: 50 },
+      );
+      expect(read).toMatchObject({ status: "found", resolution: "raw" });
+      const prices = (read as { records: Rec[] }).records.map((r) =>
+        Number((r["result"] as { amount: string }).amount),
+      );
+      expect(prices).toContain(1.5);
+      expect(prices).not.toContain(9.5);
+    } finally {
+      await sql`DELETE FROM conditions.observation
+        WHERE series_id = ${id}::bigint AND phenomenon_start IN
+          ('2026-09-22T11:05:00.000Z', '2026-09-20T12:05:00.000Z')`;
+    }
+  });
+});

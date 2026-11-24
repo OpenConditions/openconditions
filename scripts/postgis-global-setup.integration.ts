@@ -1,6 +1,7 @@
 import { runMigrations } from "@openconditions/core/server";
 import {
   assertPostgisProfile,
+  createGranteeRoles,
   POSTGIS_IMAGES,
   postgisProfile,
 } from "@openconditions/test-database";
@@ -28,6 +29,9 @@ export default async function setup(project: TestProject): Promise<() => Promise
         containerId: container.getId(),
       });
       await runMigrations(`${server}/${TEMPLATE}`);
+      // The roles the migration grants to exist from here on, so a clone of
+      // the template is a database migrated before they were created.
+      await createGranteeRoles(adminUrl);
       // Cloning needs the template free of sessions; refusing them keeps it so.
       await admin.unsafe(
         `ALTER DATABASE "${TEMPLATE}" WITH IS_TEMPLATE true ALLOW_CONNECTIONS false`,

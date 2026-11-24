@@ -28,7 +28,7 @@ export async function storedRegistryCodes(sql: postgres.Sql): Promise<HeldCodes>
 }
 
 /**
- * The boot check every service runs after migrating: fail when the database
+ * The boot check every service runs once the schema is migrated: fail when the database
  * holds a code the running registry does not register, instead of serving or
  * federating rows no schema describes. The caller passes the assembled
  * production registry (core never imports it).

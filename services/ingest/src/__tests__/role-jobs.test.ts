@@ -1,5 +1,7 @@
+import { SecretsKey } from "@openconditions/core/server";
 import { productionRegistry } from "@openconditions/model-registry";
 import * as storage from "@openconditions/storage";
+import { TEST_SECRETS_KEY } from "@openconditions/test-database";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FeedStatusStore } from "../feed-status.js";
 import { rebindOnBoot } from "../pipeline/rebind.js";
@@ -87,6 +89,7 @@ describe("the scheduler", () => {
     startScheduler(sql, maintenanceSql, new FeedStatusStore(), REPO_CATALOG, {
       feeds: [],
       primary,
+      secretsKey: SecretsKey.parse(TEST_SECRETS_KEY),
     });
 
   it("runs the segment refresh, poll-history pruning and boot rebind on the primary", async () => {

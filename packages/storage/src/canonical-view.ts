@@ -31,6 +31,7 @@ import {
   lockKeys,
   refreshFused,
 } from "./fused-rows.js";
+import { deleteSeriesHistory } from "./observation-partitions.js";
 import { pause, RECORDS_PER_TURN } from "./pause.js";
 import { seriesRowOf } from "./write-observations.js";
 
@@ -523,9 +524,10 @@ export async function rekeyCrowdSeries(
   }
   if (drop.length > 0) {
     const records = await tx<{ id: string }[]>`
-      DELETE FROM conditions.observation_latest WHERE series_id = ANY(${drop}::bigint[])
+      DELETE FROM conditions.observation_latest
+       WHERE series_id = ANY(${drop}::bigint[])
       RETURNING crowd_record_id AS id`;
-    await tx`DELETE FROM conditions.observation WHERE series_id = ANY(${drop}::bigint[])`;
+    await deleteSeriesHistory(tx, drop);
     const ids = records.map((r) => r.id);
     await tx`
       DELETE FROM conditions.report_evidence
