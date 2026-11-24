@@ -52,7 +52,7 @@
       "OPENCONDITIONS_SECRETS_KEY": {
         "type": "string",
         "title": "Secrets key",
-        "description": "Required. The key the token issuer's private keys are encrypted with in the database: 64 hexadecimal characters; generate one with openssl rand -hex 32. Enter the same value as in the ingest service: every OpenConditions service of this instance must hold the same key. Keep it in your recovery set and never in a database backup: without it new issuer keys must be made. The service refuses to start without it, or with a key that cannot decrypt the stored issuer keys.",
+        "description": "Required. Copy the value of openconditions-ingest's Secrets key; never generate a new one. The token issuer's private keys are encrypted with it, and the service refuses to start with a key other than the one the ingest service holds, or one that cannot decrypt the stored issuer keys. It is not recoverable from the OpenConditions tables: the copy in your recovery set is the ingest service's.",
         "x-openmapx-secret": true
       },
       "OPENCONDITIONS_GRANT_SECRET": {

@@ -709,6 +709,16 @@ CREATE TABLE "conditions"."road_segment" (
 	"computed_at" timestamp with time zone NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "conditions"."secrets_key_check" (
+	"id" smallint PRIMARY KEY DEFAULT 1 NOT NULL,
+	"value_ciphertext" "bytea" NOT NULL,
+	"value_iv" "bytea" NOT NULL,
+	"value_tag" "bytea" NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "secrets_key_check_id_check" CHECK ("conditions"."secrets_key_check"."id" = 1),
+	CONSTRAINT "secrets_key_check_value_check" CHECK (("value_ciphertext" IS NULL) = ("value_iv" IS NULL) AND ("value_iv" IS NULL) = ("value_tag" IS NULL) AND octet_length("value_iv") = 12 AND octet_length("value_tag") = 16)
+);
+--> statement-breakpoint
 CREATE TABLE "conditions"."segment_observation" (
 	"segment_id" text NOT NULL,
 	"source" text NOT NULL,

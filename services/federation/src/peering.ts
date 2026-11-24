@@ -41,7 +41,8 @@ export async function refreshPeers(
   peers: PeerBook,
   opts: { fetchImpl: typeof fetch; now: string },
 ): Promise<PeerUpkeep[]> {
-  const actor = settings.actor!;
+  if (!settings.enabled) return [];
+  const actor = settings.actor;
   const local = actorCapabilities(actor.capabilities, schemaVersions(productionRegistry()));
   const inboxUrl = `${actor.baseUrl.replace(/\/$/, "")}/peer/inbox`;
   const results: PeerUpkeep[] = [];
@@ -54,7 +55,7 @@ export async function refreshPeers(
     }).catch((err: unknown) => ({ ok: false as const, reason: String(err) }));
     const result: PeerUpkeep = { peer: peer.instanceId, capabilities };
     if (peer.subscribe !== undefined || peer.pull !== undefined) {
-      const signingKey = await loadSigningKey(sql, settings.secretsKey!, opts.now);
+      const signingKey = await loadSigningKey(sql, settings.secretsKey, opts.now);
       const keep = async (
         want: Parameters<typeof ensurePeerSubscription>[1],
       ): Promise<EnsureSubscriptionOutcome> => {

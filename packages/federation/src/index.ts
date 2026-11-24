@@ -70,7 +70,13 @@ export {
   readFenceHolder,
   readJournalLag,
 } from "./journal.js";
-export type { Endorser, InstanceKey, KeyEndorsement, KeyMaintenance } from "./keys.js";
+export type {
+  Endorser,
+  InstanceKey,
+  KeyEndorsement,
+  KeyMaintenance,
+  PublicInstanceKey,
+} from "./keys.js";
 export {
   assertInstanceKeysOpen,
   endorsementMessage,
@@ -80,6 +86,7 @@ export {
   KEY_PUBLICATION_LEAD_DAYS,
   KEY_ROTATION_LEAD_DAYS,
   loadActiveKeys,
+  loadActivePublicKeys,
   loadSigningKey,
   maintainInstanceKey,
   ROTATION_OVERLAP_DAYS,

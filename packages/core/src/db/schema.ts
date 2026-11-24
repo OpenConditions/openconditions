@@ -675,6 +675,27 @@ export const onDemandQuota = conditionsSchema.table("on_demand_quota", {
 });
 
 /**
+ * One row: a fixed text sealed with the instance's secrets key, which the
+ * ingest service writes once. Every other service that holds the key opens
+ * it at start and refuses to start when it does not open, so a service given
+ * another key than the ingest service's never seals anything with it.
+ */
+export const secretsKeyCheck = conditionsSchema.table(
+  "secrets_key_check",
+  {
+    id: smallint("id").primaryKey().default(1),
+    valueCiphertext: bytea("value_ciphertext").notNull(),
+    valueIv: bytea("value_iv").notNull(),
+    valueTag: bytea("value_tag").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    check("secrets_key_check_id_check", sql`${t.id} = 1`),
+    check("secrets_key_check_value_check", sealedSecretCheck("value")),
+  ],
+);
+
+/**
  * This instance's rotating token-issuer keypairs, each valid across a
  * [not_before, not_after) window. The private key (PKCS#8) is stored sealed
  * with the instance's secrets key (AES-256-GCM, bound to the key id).

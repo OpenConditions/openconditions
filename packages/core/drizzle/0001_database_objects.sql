@@ -544,24 +544,24 @@ BEGIN
   END IF;
   -- The contributions service's own role gets what its queries use. It reads
   -- the migration history to wait for the schema version, and the stored
-  -- codes at start. It keeps the crowd's reporters, block list, reports,
-  -- votes and evidence, the issuer's keys and the tokens it issues and
-  -- redeems. A report lands as a situation, with its effects, revision and
-  -- graph binding, or as a latest reading of a feed's feature; its evidence
-  -- refreshes the fused readings, and a cross-check reads the feeds' readings
-  -- and their history. Its writes to situations and latest readings also run
-  -- the federation capture triggers, which read the subscriptions and journal
-  -- into the outbox. Crowd readings keep no history (every crowd-reported
-  -- property keeps its latest reading only), and crowd records carry no
-  -- relations.
+  -- codes and the secrets key check at start. It keeps the crowd's
+  -- reporters, block list, reports, votes and evidence, the issuer's keys and
+  -- the tokens it issues and redeems. A report lands as a situation, with its
+  -- effects, revision and graph binding, or as a latest reading of a feed's
+  -- feature; its evidence refreshes the fused readings, and a cross-check
+  -- reads the feeds' readings and their history. Its writes to situations and
+  -- latest readings also run the federation capture triggers, which read the
+  -- subscriptions and journal into the outbox. Crowd readings keep no history
+  -- (every crowd-reported property keeps its latest reading only), and crowd
+  -- records carry no relations.
   IF EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'openconditions_contributions') THEN
     GRANT USAGE ON SCHEMA "conditions" TO openconditions_contributions;
     GRANT SELECT ON "conditions"."__drizzle_migrations", "conditions"."source",
       "conditions"."feature", "conditions"."feature_component", "conditions"."offer",
       "conditions"."feature_canonical", "conditions"."observation",
       "conditions"."observation_rollup_progress", "conditions"."source_status",
-      "conditions"."source_poll_attempt", "conditions"."federation_subscription"
-      TO openconditions_contributions;
+      "conditions"."source_poll_attempt", "conditions"."federation_subscription",
+      "conditions"."secrets_key_check" TO openconditions_contributions;
     GRANT INSERT ON "conditions"."situation_revision" TO openconditions_contributions;
     GRANT SELECT, INSERT ON "conditions"."issuer_key", "conditions"."spent_token",
       "conditions"."report_evidence", "conditions"."sub_claim", "conditions"."contributor_receipt",

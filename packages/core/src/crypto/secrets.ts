@@ -1,5 +1,5 @@
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { type CredentialEnv, readCredential } from "../credentials.js";
 
 /**
  * The variable that holds the key every OpenConditions service encrypts its
@@ -134,23 +134,13 @@ export class SecretsKey {
  * file yields nothing, or the value is not a key, so a service that stores
  * secrets refuses to start without one.
  */
-export function secretsKeyFromEnv(env: Record<string, string | undefined>): SecretsKey {
-  const fileVariable = `${SECRETS_KEY_VARIABLE}_FILE`;
-  const direct = env[SECRETS_KEY_VARIABLE]?.trim();
-  if (direct) return SecretsKey.parse(direct);
-  const path = env[fileVariable]?.trim();
-  if (!path) {
+export function secretsKeyFromEnv(env: CredentialEnv): SecretsKey {
+  const read = readCredential(env, SECRETS_KEY_VARIABLE);
+  if ("failure" in read) throw new SecretsKeyError(read.failure);
+  if ("unset" in read) {
     throw new SecretsKeyError(
-      `${SECRETS_KEY_VARIABLE} is required: set ${fileVariable} to a file holding it (64 hexadecimal characters; generate one with \`openssl rand -hex 32\`). Every OpenConditions service of an instance uses the same key.`,
+      `${SECRETS_KEY_VARIABLE} is required: set ${SECRETS_KEY_VARIABLE}_FILE to a file holding it (64 hexadecimal characters). Every OpenConditions service of an instance uses the key the ingest service holds; only the ingest service's is generated, with \`openssl rand -hex 32\`.`,
     );
   }
-  let contents: string;
-  try {
-    contents = readFileSync(path, "utf8").trim();
-  } catch (error) {
-    const code = (error as NodeJS.ErrnoException).code ?? String(error);
-    throw new SecretsKeyError(`${fileVariable} (${path}) could not be read: ${code}`);
-  }
-  if (!contents) throw new SecretsKeyError(`${fileVariable} (${path}) is empty`);
-  return SecretsKey.parse(contents);
+  return SecretsKey.parse(read.value);
 }

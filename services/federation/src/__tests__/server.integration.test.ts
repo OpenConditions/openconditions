@@ -1,3 +1,4 @@
+import { SecretsKey, sealSecretsKeyCheck } from "@openconditions/core/server";
 import { type ActorDocument, verifyActorAgainstPin } from "@openconditions/federation";
 import {
   createTestDatabase,
@@ -191,6 +192,37 @@ describe("federation enabled", () => {
     await expect(build({ sql, env: wrong, logger: false, now: () => NOW })).rejects.toThrow(
       `wrong key: OPENCONDITIONS_SECRETS_KEY cannot decrypt conditions.federation_instance_key.private_key of the row ${keyId}`,
     );
+  }, 30_000);
+
+  it("fails the boot closed with a key other than the one the ingest service sealed the key check with", async () => {
+    await sealSecretsKeyCheck(sql, SecretsKey.parse(TEST_SECRETS_KEY));
+    try {
+      const app = await build({ sql, env: ENABLED_ENV, logger: false, now: () => NOW });
+      await app.close();
+      const other = { ...ENABLED_ENV, OPENCONDITIONS_SECRETS_KEY: "1d".repeat(32) };
+      await expect(build({ sql, env: other, logger: false, now: () => NOW })).rejects.toThrow(
+        /OPENCONDITIONS_SECRETS_KEY differs from the key the ingest service sealed/,
+      );
+    } finally {
+      await sql`TRUNCATE conditions.secrets_key_check`;
+    }
+  }, 30_000);
+
+  it("serves the actor document from the public keys alone", async () => {
+    const app = await build({ sql, env: ENABLED_ENV, logger: false, now: () => NOW });
+    try {
+      // Sealed private keys that no longer open: the public read still answers.
+      await sql`UPDATE conditions.federation_instance_key SET private_key_tag = ${Buffer.alloc(16)}`;
+      const res = await app.inject({
+        method: "GET",
+        url: "/.well-known/openconditions/actor.json",
+      });
+      expect(res.statusCode).toBe(200);
+      expect((res.json() as ActorDocument).publicKey.length).toBeGreaterThan(0);
+    } finally {
+      await app.close();
+      await sql`DELETE FROM conditions.federation_instance_key`;
+    }
   }, 30_000);
 
   it("never serves private key material", async () => {

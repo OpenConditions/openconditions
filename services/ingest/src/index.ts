@@ -2,7 +2,6 @@ import {
   assertStoredCodesRegistered,
   resolveInstanceId,
   runMigrations,
-  secretsKeyFromEnv,
 } from "@openconditions/core/server";
 import { resolveCrowdCredit } from "@openconditions/ingest-framework";
 import { productionRegistry } from "@openconditions/model-registry";
@@ -19,13 +18,13 @@ import { FeedStatusStore } from "./feed-status.js";
 import { startFusedRefresh } from "./fused-refresh.js";
 import { ingestRoleFromEnv, planIngest } from "./ingest-role.js";
 import { startMemTelemetry } from "./mem.js";
-import { assertGrantsOpen } from "./oauth-grants.js";
 import { onDemandDeadlineMsFromEnv } from "./on-demand/read-through.js";
 import { closeAbandonedPollAttempts } from "./pipeline/source-status.js";
 import { registerPublishRoutes } from "./publish-routes.js";
 import { RateLimiter, registerRateLimit } from "./rate-limit.js";
 import { maintainPartitionsAtBoot, startRecordJobs } from "./record-jobs.js";
 import { startScheduler } from "./scheduler.js";
+import { checkIngestSecrets, readIngestSecretsKey } from "./secrets-boot.js";
 import { type BackgroundJob, InFlight, onceShutdown } from "./shutdown.js";
 import { catalogueSources } from "./sources.js";
 import { createTrustProxy } from "./trust-proxy.js";
@@ -44,14 +43,15 @@ async function boot() {
   // A malformed operator token fails boot before anything else runs.
   const operatorToken = role === "primary" ? operatorTokenFromEnv() : undefined;
   // The OAuth2 grants' tokens are sealed with it: a missing or malformed key
-  // fails boot, and so, after the migrations, does one that cannot open them.
-  const secretsKey = secretsKeyFromEnv(process.env);
+  // fails boot, and so, after the migrations, does one that is not the key
+  // the check row and the stored grants were sealed with.
+  const secretsKey = readIngestSecretsKey(process.env);
   const crowd = resolveCrowdCredit(process.env, resolveInstanceId());
   console.info(`[ingest] instance id ${resolveInstanceId()}, role ${role}`);
   console.info("[ingest] applying database migrations…");
   await runMigrations(DATABASE_URL);
   console.info("[ingest] migrations applied");
-  await assertGrantsOpen(sql, secretsKey);
+  await checkIngestSecrets(sql, secretsKey);
   const model = productionRegistry();
   const catalog = await loadIngestCatalog();
   const plan = planIngest(catalog);

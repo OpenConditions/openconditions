@@ -550,6 +550,18 @@ print(json.dumps({'graphCounts':counts,'match':x,'invalidReferenceStatus':400,'g
 """
 
 
+SEAL_SECRETS_KEY_CHECK = """
+import postgres from "postgres";
+import { SecretsKey, sealSecretsKeyCheck } from "@openconditions/core/server";
+const sql = postgres(process.env.DATABASE_URL, { max: 1 });
+try {
+  await sealSecretsKeyCheck(sql, SecretsKey.parse(process.env.OPENCONDITIONS_SECRETS_KEY));
+} finally {
+  await sql.end();
+}
+"""
+
+
 def ingest_migration_script(source):
     """The source's migrations, recorded in conditions.__drizzle_migrations as the
     ingest service's migrator records them (the file's SHA-256 and its journal `when`).
@@ -710,6 +722,33 @@ def runtime_smoke(image, identity, source, output, *, exercise=None):
             "OPENCONDITIONS_REVIEWER_TOKEN": uuid.uuid4().hex + uuid.uuid4().hex,
             "OPENCONDITIONS_SECRETS_KEY": uuid.uuid4().hex + uuid.uuid4().hex,
         }
+        if image == "contributions-api":
+            # The ingest service seals the secrets key check after migrating,
+            # and this service waits for it; seal it as ingest does, with the
+            # image's own code, before the service starts.
+            command(
+                [
+                    "docker",
+                    "run",
+                    "--rm",
+                    "--label",
+                    f"openconditions.qualification={label}",
+                    "--network",
+                    network,
+                    "--platform",
+                    PLATFORM,
+                    "-e",
+                    f"DATABASE_URL={env['DATABASE_URL']}",
+                    "-e",
+                    f"OPENCONDITIONS_SECRETS_KEY={env['OPENCONDITIONS_SECRETS_KEY']}",
+                    "--entrypoint",
+                    "node",
+                    loaded,
+                    "--input-type=module",
+                    "-e",
+                    SEAL_SECRETS_KEY_CHECK,
+                ]
+            )
         args = [
             "docker",
             "run",

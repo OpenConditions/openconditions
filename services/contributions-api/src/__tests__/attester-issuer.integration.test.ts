@@ -1,6 +1,6 @@
 import { publicVerif, type Token } from "@cloudflare/privacypass-ts";
 import { generateReporterKey, type ReporterKey } from "@openconditions/contrib-core";
-import { SecretsKey, storedSecret } from "@openconditions/core/server";
+import { SecretsKey, sealSecretsKeyCheck, storedSecret } from "@openconditions/core/server";
 import {
   createTestDatabase,
   dumpHolds,
@@ -574,6 +574,26 @@ describe("build() fail-closed", () => {
       }),
     ).rejects.toThrow(/^wrong key: .*conditions\.issuer_key\.private_key of the row /);
   }, 30_000);
+
+  it("throws with a key other than the one the ingest service sealed the key check with", async () => {
+    const env = { OPENCONDITIONS_GRANT_SECRET: GRANT_SECRET_VALUE };
+    await sealSecretsKeyCheck(sql, secrets);
+    try {
+      const matching = await build({
+        sql,
+        env: { ...env, OPENCONDITIONS_SECRETS_KEY: TEST_SECRETS_KEY },
+        logger: false,
+      });
+      await matching.close();
+      await expect(
+        build({ sql, env: { ...env, OPENCONDITIONS_SECRETS_KEY: "0e".repeat(32) }, logger: false }),
+      ).rejects.toThrow(
+        /OPENCONDITIONS_SECRETS_KEY differs from the key the ingest service sealed/,
+      );
+    } finally {
+      await sql`TRUNCATE conditions.secrets_key_check`;
+    }
+  }, 60_000);
 });
 
 interface CapturedLine {

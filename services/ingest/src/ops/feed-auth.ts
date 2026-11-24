@@ -1,6 +1,6 @@
 import { createInterface } from "node:readline/promises";
 import { Writable } from "node:stream";
-import { secretsKeyFromEnv } from "@openconditions/core/server";
+import { secretsKeyFromEnv, verifySecretsKeyCheck } from "@openconditions/core/server";
 import {
   authorizationUrl,
   type CatalogFeed,
@@ -225,6 +225,9 @@ async function main(): Promise<void> {
   const secretsKey = secretsKeyFromEnv(process.env);
   const sql = postgres(requireCredential(process.env, "DATABASE_URL"), { max: 1 });
   try {
+    // A key other than the one the ingest service sealed the check row with
+    // stops here, before a login is stored under it.
+    await verifySecretsKeyCheck(sql, secretsKey);
     const catalog = await loadIngestCatalog();
     process.exitCode = await runFeedAuthCommand(process.argv.slice(2), {
       feeds: [...catalog.feeds, ...catalog.disabled],

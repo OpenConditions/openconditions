@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readCredential, strictCredential } from "@openconditions/core/server";
 import type { CatalogFeed, CredentialField, FeedDefinition } from "./types.js";
 
 /** Where credentials are read from: `process.env` or a test's stand-in. */
@@ -69,35 +69,7 @@ export function resolveCredential(env: Env, name: string): string | undefined {
   return "value" in read ? read.value : undefined;
 }
 
-type CredentialRead = { value: string } | { unset: true } | { failure: string };
-
-/** The env var, else the file `<NAME>_FILE` names, or why that file yielded nothing. */
-function readCredential(env: Env, name: string): CredentialRead {
-  const direct = env[name]?.trim();
-  if (direct) return { value: direct };
-  const filePath = env[`${name}_FILE`]?.trim();
-  if (!filePath) return { unset: true };
-  let contents: string;
-  try {
-    contents = readFileSync(filePath, "utf8").trim();
-  } catch (error) {
-    const code = (error as NodeJS.ErrnoException).code ?? String(error);
-    return { failure: `${name}_FILE (${filePath}) could not be read: ${code}` };
-  }
-  return contents ? { value: contents } : { failure: `${name}_FILE (${filePath}) is empty` };
-}
-
-/**
- * A service secret read like a credential, but strictly: undefined only when
- * neither `<NAME>` nor `<NAME>_FILE` is set. A `<NAME>_FILE` that is set but
- * unreadable or empty throws naming the path and the cause, so a secret the
- * operator did configure never silently counts as absent.
- */
-export function strictCredential(env: Env, name: string): string | undefined {
-  const read = readCredential(env, name);
-  if ("failure" in read) throw new Error(read.failure);
-  return "value" in read ? read.value : undefined;
-}
+export { strictCredential };
 
 /**
  * A secret the service cannot start without (`DATABASE_URL`), read like a

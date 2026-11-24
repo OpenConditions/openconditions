@@ -161,6 +161,16 @@ interface ServiceField {
  * An empty default renders the variable empty, which every reader takes as
  * its built-in default.
  */
+/**
+ * The descriptions the heavy-feeds ingest manifest gives in place of the
+ * ingest service's: it holds the key the ingest service generated and never
+ * generates its own.
+ */
+export const FEEDS_PROCESS_DESCRIPTIONS: Readonly<Record<string, string>> = {
+  OPENCONDITIONS_SECRETS_KEY:
+    "Required. Copy the value of openconditions-ingest's Secrets key; never generate a new one. The OAuth grant tokens this process refreshes are encrypted with it, and it refuses to start with any other key. It is not recoverable from the OpenConditions tables: the copy in your recovery set is the ingest service's.",
+};
+
 export const SERVICE_FIELDS: Readonly<Record<string, ServiceField>> = {
   PUN_COORDINATION_DIR: {
     title: "PUN persistent client coordination directory",
@@ -177,7 +187,7 @@ export const SERVICE_FIELDS: Readonly<Record<string, ServiceField>> = {
   OPENCONDITIONS_SECRETS_KEY: {
     title: "Secrets key",
     description:
-      "Required. The key the OAuth grant tokens and the instance's private keys are encrypted with in the database: 64 hexadecimal characters; generate one with openssl rand -hex 32. Every OpenConditions service of this instance (ingest, the heavy-feeds ingest, contributions API and federation) must hold the same key, so enter the same value in each. Keep it in your recovery set and never in a database backup: without it the stored OAuth grants must be logged in again and new issuer and federation keys made, which changes the federation identity. The service refuses to start without it, or with a key that cannot decrypt what is stored.",
+      "Required. The key the OAuth grant tokens and the instance's private keys are encrypted with in the OpenConditions tables: 64 hexadecimal characters. Generate it here, once, with openssl rand -hex 32, then copy this same value into the Secrets key of every other OpenConditions service of this instance (the heavy-feeds ingest, contributions API and federation); each refuses to start with another key. It is not recoverable from the OpenConditions tables: keep a copy in your recovery set. Under OpenMapX this vault stores it encrypted with OpenMapX's own secrets key, so a database backup protects it only while that key stays out of the backup, and both keys belong in the recovery set. Losing it means logging in to every OAuth grant again and making new issuer and federation keys, which changes the federation identity. The service refuses to start without it, or with a key that cannot decrypt what is stored.",
     secret: true,
   },
   OPENCONDITIONS_OPERATOR_TOKEN: {

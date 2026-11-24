@@ -73,6 +73,7 @@ const CONTRIBUTIONS_GRANTS = [
     "observation",
     "observation_rollup_progress",
     "offer",
+    "secrets_key_check",
     "source",
     "source_poll_attempt",
     "source_status",

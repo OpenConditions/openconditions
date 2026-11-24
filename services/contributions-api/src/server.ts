@@ -18,7 +18,11 @@ import {
   verifySubClaim,
 } from "@openconditions/contrib-core";
 import { type GeoJsonGeometry, reliabilityLowerBound } from "@openconditions/core";
-import { resolveInstanceId, secretsKeyFromEnv } from "@openconditions/core/server";
+import {
+  resolveInstanceId,
+  secretsKeyFromEnv,
+  verifySecretsKeyCheck,
+} from "@openconditions/core/server";
 import { resolveCrowdCredit } from "@openconditions/ingest-framework";
 import { type LandingContext, RECORD_CLASSES, type Registry } from "@openconditions/model";
 import { productionRegistry } from "@openconditions/model-registry";
@@ -220,6 +224,10 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
   const reviewerToken = resolveReviewerToken(env, (msg) => attesterLog.warn(msg));
   const requireReviewer = makeRequireReviewer(reviewerToken);
 
+  // A key other than the one the ingest service sealed the check row with
+  // stops the boot (main.ts waits for that row first); then every stored
+  // issuer key must open.
+  await verifySecretsKeyCheck(sql, secretsKey);
   await assertIssuerKeysOpen(sql, secretsKey);
   await ensureIssuerKeys(sql, secretsKey, now(), issuerName);
 

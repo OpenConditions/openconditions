@@ -1,6 +1,6 @@
 {
-  "id": "5fe6e96a-3afc-4980-a62e-4839de7f6199",
-  "prevId": "dd8f544b-c179-4606-8ae0-df8082e9c292",
+  "id": "d03116e5-189d-4164-8678-879690ad38a5",
+  "prevId": "8c41a7af-dcab-4f25-bbaf-b18f5dee71a5",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -5425,6 +5425,60 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "conditions.secrets_key_check": {
+      "name": "secrets_key_check",
+      "schema": "conditions",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "smallint",
+          "primaryKey": true,
+          "notNull": true,
+          "default": 1
+        },
+        "value_ciphertext": {
+          "name": "value_ciphertext",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value_iv": {
+          "name": "value_iv",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value_tag": {
+          "name": "value_tag",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "secrets_key_check_id_check": {
+          "name": "secrets_key_check_id_check",
+          "value": "\"conditions\".\"secrets_key_check\".\"id\" = 1"
+        },
+        "secrets_key_check_value_check": {
+          "name": "secrets_key_check_value_check",
+          "value": "(\"value_ciphertext\" IS NULL) = (\"value_iv\" IS NULL) AND (\"value_iv\" IS NULL) = (\"value_tag\" IS NULL) AND octet_length(\"value_iv\") = 12 AND octet_length(\"value_tag\") = 16"
+        }
+      },
       "isRLSEnabled": false
     },
     "conditions.segment_observation": {

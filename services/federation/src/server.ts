@@ -10,6 +10,7 @@
  * Exported as build() so tests can fastify.inject; only main.ts listens.
  */
 
+import { verifySecretsKeyCheck } from "@openconditions/core/server";
 import {
   ACTOR_WELL_KNOWN_PATH,
   anonymousRateKey,
@@ -21,12 +22,14 @@ import {
   InMemoryNonceStore,
   type InstanceKey,
   loadActiveKeys,
+  loadActivePublicKeys,
   type MtlsContext,
   maintainInstanceKey,
   OUTBOX_DEFAULT_LIMIT,
   OUTBOX_MAX_LIMIT,
   outboxEtag,
   PEERS_WELL_KNOWN_PATH,
+  type PublicInstanceKey,
   type RateLimiter,
   readJournalLag,
   recordPeerFailure,
@@ -159,13 +162,16 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     return app;
   }
 
-  const actorConfig = settings.actor!;
-  const secretsKey = settings.secretsKey!;
+  const actorConfig = settings.actor;
+  const secretsKey = settings.secretsKey;
   // The running registry, not the operator, says which schemas this instance accepts.
   const registry = productionRegistry();
   const advertisedSchemaVersions = schemaVersions(registry);
   const peers = options.peers ?? (await PeerBook.load(sql, settings.peers));
-  // A key that cannot open the stored instance keys fails boot, naming the key.
+  // A key other than the one the ingest service sealed the check row with
+  // stops the boot (main.ts waits for that row first), and so does one that
+  // cannot open the stored instance keys, naming the key.
+  await verifySecretsKeyCheck(sql, secretsKey);
   await assertInstanceKeysOpen(sql, secretsKey);
   await maintainInstanceKey(sql, secretsKey, now(), actorConfig.instanceId);
 
@@ -177,6 +183,15 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     if (keys.length > 0) return keys;
     await maintainInstanceKey(sql, secretsKey, now(), actorConfig.instanceId);
     return loadActiveKeys(sql, secretsKey, now());
+  }
+
+  /** The public half of the keys valid now, for the actor document: no
+   *  private key is opened for a public read. Rotates first when none is. */
+  async function activePublicKeys(): Promise<PublicInstanceKey[]> {
+    const keys = await loadActivePublicKeys(sql, now());
+    if (keys.length > 0) return keys;
+    await maintainInstanceKey(sql, secretsKey, now(), actorConfig.instanceId);
+    return loadActivePublicKeys(sql, now());
   }
 
   /** The key this instance signs with now. */
@@ -192,7 +207,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
   });
 
   app.get(ACTOR_WELL_KNOWN_PATH, async (_req, reply) => {
-    const doc = buildActorDocument(actorConfig, await activeKeys(), advertisedSchemaVersions);
+    const doc = buildActorDocument(actorConfig, await activePublicKeys(), advertisedSchemaVersions);
     return reply.type(FEDERATION_JSON).send(JSON.stringify(doc));
   });
 

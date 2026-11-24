@@ -293,7 +293,16 @@ describe("service manifests on OpenMapX's config model", () => {
       service: "openconditions-ingest",
       condition: "service_healthy",
     });
-    expect(m.configSchema).toEqual(ingest.configSchema);
+    // The same fields, but the secrets key is copied from the ingest service, never generated.
+    const { OPENCONDITIONS_SECRETS_KEY: heavyKey, ...heavyRest } = properties(m);
+    const { OPENCONDITIONS_SECRETS_KEY: ingestKey, ...ingestRest } = properties(ingest);
+    expect(heavyRest).toEqual(ingestRest);
+    expect({ ...heavyKey, description: undefined }).toEqual({
+      ...ingestKey,
+      description: undefined,
+    });
+    expect(heavyKey?.description).toMatch(/^Required\. Copy the value of openconditions-ingest's/);
+    expect(heavyKey?.description).not.toContain("openssl rand");
     expect(
       defaults(m, ["OPENCONDITIONS_INGEST_FEEDS", "OPENCONDITIONS_INGEST_FEEDS_EXCLUDE"]),
     ).toEqual({ OPENCONDITIONS_INGEST_FEEDS: "", OPENCONDITIONS_INGEST_FEEDS_EXCLUDE: "" });

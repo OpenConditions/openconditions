@@ -7,6 +7,7 @@ import {
   configSchemaPropertiesFor,
   credentialsDocFor,
   envExampleFor,
+  FEEDS_PROCESS_DESCRIPTIONS,
 } from "./lib/gen-credentials-lib.js";
 
 export interface GenPaths {
@@ -30,8 +31,17 @@ interface ServiceJson {
  * a config field: OpenMapX resolves the field into the environment (or mounts
  * it as a secret file), and a hand-written entry would only hide that.
  */
-function nextServiceJson(svc: ServiceJson, catalog: CredentialCatalog): string {
+function nextServiceJson(
+  svc: ServiceJson,
+  catalog: CredentialCatalog,
+  descriptions: Readonly<Record<string, string>> = {},
+): string {
   const properties = configSchemaPropertiesFor(catalog);
+  for (const [key, description] of Object.entries(descriptions)) {
+    const field = properties[key] as Record<string, unknown> | undefined;
+    if (field === undefined) throw new Error(`no config field ${key} to describe`);
+    properties[key] = { ...field, description };
+  }
   for (const key of Object.keys(svc.container?.environment ?? {})) {
     if (properties[key] !== undefined) {
       throw new Error(
@@ -61,10 +71,11 @@ const DEFAULT_ENV_PREAMBLE = `# OpenConditions ingest — environment configurat
 # PostgreSQL/PostGIS connection (REQUIRED — the service refuses to start without it)
 DATABASE_URL=postgres://openconditions:openconditions@localhost:5432/openconditions
 
-# Secrets key (REQUIRED): 64 hex characters, from \`openssl rand -hex 32\`. The
-# OAuth2 grants' tokens are encrypted with it in the database; every
-# OpenConditions service of the instance uses the same key. Keep it out of
-# database backups. OPENCONDITIONS_SECRETS_KEY_FILE may name a file holding it.
+# Secrets key (REQUIRED): 64 hex characters, from \`openssl rand -hex 32\`, made
+# once. The OAuth2 grants' tokens are encrypted with it; every other
+# OpenConditions service of the instance gets a copy of this same key. Keep it in
+# your recovery set and out of database backups.
+# OPENCONDITIONS_SECRETS_KEY_FILE may name a file holding it instead.
 OPENCONDITIONS_SECRETS_KEY=
 
 # HTTP server (optional; defaults shown)
@@ -176,7 +187,10 @@ export function applyOrCheck(
   ];
   if (paths.feedsServiceJson) {
     const feeds = JSON.parse(readFileSync(paths.feedsServiceJson, "utf8")) as ServiceJson;
-    targets.push([paths.feedsServiceJson, nextServiceJson(feeds, catalog)]);
+    targets.push([
+      paths.feedsServiceJson,
+      nextServiceJson(feeds, catalog, FEEDS_PROCESS_DESCRIPTIONS),
+    ]);
   }
   const drift: string[] = [];
   for (const [file, next] of targets) {

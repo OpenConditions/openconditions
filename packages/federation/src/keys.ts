@@ -72,36 +72,43 @@ export interface KeyEndorsement {
   proof: string;
 }
 
-/** A federated instance signing identity. */
-export interface InstanceKey {
+/** An instance key's public half: what the actor document serves. */
+export interface PublicInstanceKey {
   /** Stable id — the publicKeyMultibase itself (self-describing multikey). */
   keyId: string;
   /** Multikey/did:key form ("z6Mk…") served in the Actor document. */
   publicKeyMultibase: string;
   /** Raw 32-byte Ed25519 public key. */
   publicKeyRaw: Uint8Array;
-  /** Ed25519 verify handle. */
-  publicKey: CryptoKey;
-  /** Ed25519 sign handle. NEVER served, logged, or federated. */
-  privateKey: CryptoKey;
   notBefore: Date;
   notAfter: Date;
   /** Absent only for an instance's first key. */
   endorsement?: KeyEndorsement;
 }
 
-interface InstanceKeyRow extends postgres.Row {
+/** A federated instance signing identity. */
+export interface InstanceKey extends PublicInstanceKey {
+  /** Ed25519 verify handle. */
+  publicKey: CryptoKey;
+  /** Ed25519 sign handle. NEVER served, logged, or federated. */
+  privateKey: CryptoKey;
+}
+
+interface PublicKeyRow extends postgres.Row {
   key_id: string;
   public_key: Buffer;
-  private_key_ciphertext: Buffer;
-  private_key_iv: Buffer;
-  private_key_tag: Buffer;
   multibase: string;
   not_before: Date;
   not_after: Date;
   endorsed_by: string | null;
   endorsement: Buffer | null;
   endorsement_proof: Buffer | null;
+}
+
+interface InstanceKeyRow extends PublicKeyRow {
+  private_key_ciphertext: Buffer;
+  private_key_iv: Buffer;
+  private_key_tag: Buffer;
 }
 
 /** Calendar-month addition in UTC (JS Date end-of-month overflow semantics). */
@@ -243,12 +250,11 @@ async function insertInstanceKey(
 }
 
 /**
- * Rehydrates a key row's WebCrypto handles, opening its private key with
- * `secrets`. The stored multibase is recomputed from the raw public key and
- * must match — a mismatch means the row was tampered with or corrupted, and
- * is refused.
+ * A key row's public half. The stored multibase is recomputed from the raw
+ * public key and must match — a mismatch means the row was tampered with or
+ * corrupted, and is refused.
  */
-async function keyOfRow(row: InstanceKeyRow, secrets: SecretsKey): Promise<InstanceKey> {
+function publicKeyOfRow(row: PublicKeyRow): PublicInstanceKey {
   const publicKeyRaw = new Uint8Array(row.public_key);
   const recomputed = multibaseFromRawEd25519(publicKeyRaw);
   if (recomputed !== row.multibase || row.key_id !== row.multibase) {
@@ -256,6 +262,31 @@ async function keyOfRow(row: InstanceKeyRow, secrets: SecretsKey): Promise<Insta
       `federation_instance_key row ${row.key_id} is inconsistent with its public key bytes`,
     );
   }
+  return {
+    keyId: row.key_id,
+    publicKeyMultibase: row.multibase,
+    publicKeyRaw,
+    notBefore: row.not_before,
+    notAfter: row.not_after,
+    ...(row.endorsed_by !== null && row.endorsement !== null && row.endorsement_proof !== null
+      ? {
+          endorsement: {
+            by: row.endorsed_by,
+            signature: Buffer.from(row.endorsement).toString("base64url"),
+            proof: Buffer.from(row.endorsement_proof).toString("base64url"),
+          },
+        }
+      : {}),
+  };
+}
+
+/**
+ * Rehydrates a key row's WebCrypto handles, opening its private key with
+ * `secrets`, after {@link publicKeyOfRow}'s consistency check.
+ */
+async function keyOfRow(row: InstanceKeyRow, secrets: SecretsKey): Promise<InstanceKey> {
+  const pub = publicKeyOfRow(row);
+  const publicKeyRaw = pub.publicKeyRaw;
   const publicKey = await globalThis.crypto.subtle.importKey(
     "raw",
     publicKeyRaw as BufferSource,
@@ -277,28 +308,30 @@ async function keyOfRow(row: InstanceKeyRow, secrets: SecretsKey): Promise<Insta
     ["sign"],
   );
   pkcs8.fill(0);
-  return {
-    keyId: row.key_id,
-    publicKeyMultibase: row.multibase,
-    publicKeyRaw,
-    publicKey,
-    privateKey,
-    notBefore: row.not_before,
-    notAfter: row.not_after,
-    ...(row.endorsed_by !== null && row.endorsement !== null && row.endorsement_proof !== null
-      ? {
-          endorsement: {
-            by: row.endorsed_by,
-            signature: Buffer.from(row.endorsement).toString("base64url"),
-            proof: Buffer.from(row.endorsement_proof).toString("base64url"),
-          },
-        }
-      : {}),
-  };
+  return { ...pub, publicKey, privateKey };
 }
 
-const KEY_COLUMNS = `key_id, public_key, private_key_ciphertext, private_key_iv,
-  private_key_tag, multibase, not_before, not_after, endorsed_by, endorsement, endorsement_proof`;
+const PUBLIC_KEY_COLUMNS = `key_id, public_key, multibase, not_before, not_after, endorsed_by,
+  endorsement, endorsement_proof`;
+
+const KEY_COLUMNS = `${PUBLIC_KEY_COLUMNS}, private_key_ciphertext, private_key_iv, private_key_tag`;
+
+/**
+ * The public half of every instance key valid at `now` (newest first), for
+ * the actor document: reads and opens no private key.
+ */
+export async function loadActivePublicKeys(
+  sql: postgres.Sql | postgres.TransactionSql,
+  now: string,
+): Promise<PublicInstanceKey[]> {
+  const rows = await sql.unsafe<PublicKeyRow[]>(
+    `SELECT ${PUBLIC_KEY_COLUMNS} FROM conditions.federation_instance_key
+      WHERE not_before <= $1 AND not_after > $1
+      ORDER BY not_before DESC`,
+    [new Date(now)],
+  );
+  return rows.map(publicKeyOfRow);
+}
 
 /**
  * Loads every instance key valid at `now` (newest first), opening the

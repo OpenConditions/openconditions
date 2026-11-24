@@ -17,17 +17,32 @@ import {
   parseActorConfig,
 } from "@openconditions/federation";
 
-export interface FederationSettings {
-  enabled: boolean;
-  /** Present iff enabled. */
-  actor?: ActorConfig;
-  /** The key the instance keys' private halves are sealed with. Present iff enabled. */
-  secretsKey?: SecretsKey;
+/** The settings of a federation that is off: no identity, no key, no peers. */
+export interface DisabledFederationSettings {
+  enabled: false;
+  peers: PeerRecord[];
+  actor?: undefined;
+  secretsKey?: undefined;
+  archiveUrl?: undefined;
+  registry?: undefined;
+  clientCertHeader?: undefined;
+  trustedProxies?: undefined;
+  clientCertificate?: undefined;
+}
+
+/** The operator's federation settings; narrowing on `enabled` gives the enabled ones. */
+export type FederationSettings = DisabledFederationSettings | EnabledFederationSettings;
+
+export interface EnabledFederationSettings {
+  enabled: true;
+  actor: ActorConfig;
+  /** The key the instance keys' private halves are sealed with. */
+  secretsKey: SecretsKey;
   /** This instance's declared peers (public metadata; empty by default). */
   peers: PeerRecord[];
-  /** The static GeoParquet archive URL peers fetch for beyond-window backfill.
-   *  Present iff enabled; defaults to `${baseUrl}/archive`. */
-  archiveUrl?: string;
+  /** The static GeoParquet archive URL peers fetch for beyond-window backfill;
+   *  defaults to `${baseUrl}/archive`. */
+  archiveUrl: string;
   /** The registry peers are discovered in, when one is configured. */
   registry?: RegistrySettings;
   /**

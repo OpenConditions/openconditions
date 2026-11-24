@@ -6,7 +6,9 @@
 // schema, imports `runMigrations` from here, and the other services
 // `waitForSchemaVersion`. Mirrors the
 // `@openmapx/core` vs `@openmapx/core/server` split.
+export * from "./credentials.js";
 export * from "./crypto/secrets.js";
+export * from "./crypto/secrets-key-check.js";
 export * from "./crypto/stored-secrets.js";
 export * from "./db/index.js";
 export * from "./instance.js";
