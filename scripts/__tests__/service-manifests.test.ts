@@ -389,3 +389,71 @@ describe("service manifests on OpenMapX's config model", () => {
     expect(extension.services.map((s) => s.service)).not.toContain(manifest("federation").id);
   });
 });
+
+describe("OpenMapX's community manifest rules", () => {
+  const extension = JSON.parse(readFileSync(new URL("extension.json", repo), "utf8")) as Record<
+    string,
+    unknown
+  > & { services: { service: string }[] };
+  const ID = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+  const SEMVER =
+    /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
+  const all = (): [string, Record<string, unknown>][] => [
+    ["extension.json", extension],
+    ...manifests.map(
+      ([dir, m]) =>
+        [`services/${dir}/service.json`, m as unknown as Record<string, unknown>] as [
+          string,
+          Record<string, unknown>,
+        ],
+    ),
+  ];
+
+  test.each(all())("%s declares platform 1.0, a semver version and a valid id", (_path, m) => {
+    expect(m["platform"]).toBe("1.0");
+    expect(m["version"]).toMatch(SEMVER);
+    expect(m["id"]).toMatch(ID);
+    expect((m["id"] as string).length).toBeLessThanOrEqual(48);
+  });
+
+  test.each(manifests)("services/%s/service.json is labelled community", (_dir, m) => {
+    expect((m as unknown as { quality: string }).quality).toBe("community");
+  });
+
+  test.each(manifests)(
+    "services/%s/service.json names its capabilities and data types under the openconditions vendor",
+    (_dir, m) => {
+      const raw = m as unknown as {
+        provides?: (string | { capability: string })[];
+        produces?: { type: string }[];
+        consumes?: { type: string }[];
+      };
+      const names = [
+        ...(raw.provides ?? []).map((p) => (typeof p === "string" ? p : p.capability)),
+        ...(raw.produces ?? []).map((p) => p.type),
+        ...(raw.consumes ?? []).map((c) => c.type),
+      ];
+      for (const name of names) expect(name).toMatch(/^openconditions\/[a-z0-9]+(-[a-z0-9]+)*$/);
+    },
+  );
+
+  test("the extension's licence is the licence of every service it installs", () => {
+    for (const { service } of extension.services) {
+      const found = manifests.find(([, m]) => m.id === service);
+      expect(found, service).toBeDefined();
+      expect((found![1] as unknown as { license: string }).license).toBe(extension["license"]);
+    }
+    expect(extension["license"]).toBe("AGPL-3.0-or-later");
+  });
+
+  test.each(manifests)(
+    // OpenMapX checks `required` against the saved non-secret values, which
+    // never hold a secret, and every service's configuration in one
+    // generation, so a required field would block configuring the platform.
+    // Each service refuses to start without what it needs instead, and says so.
+    "services/%s/service.json lists no configSchema required fields",
+    (_dir, m) => {
+      expect(m.configSchema?.required).toBeUndefined();
+    },
+  );
+});
