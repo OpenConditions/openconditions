@@ -72,15 +72,7 @@ pnpm check:packed-packages # actual tarball / external ESM, CJS and strict TS co
 pnpm verify:full # all Node checks above, including the packed consumer
 ```
 
-`verify:full` includes lint/import boundaries, workspace and script types, generated credentials,
-the migrations drift gate, model artifacts, feed schemas, feed lint, the full Node suite and the packed-package consumer. The latter uses the pinned pnpm CLI and may fetch pinned consumer tools/type dependencies from npm; it retains the actual tarball identity and consumer lock in its receipt. See the [OCPI qualification instructions](packages/ocpi/README.md#qualify-a-tarball-without-publishing) for supplied immutable bytes. It needs Docker/PostGIS for database
-tests. For the same OpenLR cross-check as CI, install the hash-pinned
-`packages/openlr/python/requirements.txt` into your Python environment, put it on `PATH` and set
-`OPENLR_CROSSCHECK=required`. This command does not run the separate resolver checks, independent
-interop, dependency audits or container qualification below, or prove live provider/deployment behavior. For a docs-only change,
-use scoped Prettier checks; for Node behavior, run focused tests while iterating and `verify:full` before
-review. Resolver, wire-format/federation and dependency changes also need their corresponding checks
-below. CI retains every applicable gate on every PR.
+`verify:full` includes lint/import boundaries, workspace and script types, generated credentials, the migrations drift gate, model artifacts, feed schemas, feed lint, the full Node suite and the packed-package consumer. The latter uses the pinned pnpm CLI and may fetch pinned consumer tools/type dependencies from npm; it retains the actual tarball identity and consumer lock in its receipt. See the [OCPI qualification instructions](packages/ocpi/README.md#qualify-a-tarball-without-publishing) for supplied immutable bytes. It needs Docker/PostGIS for database tests. For the same OpenLR cross-check as CI, install the hash-pinned `packages/openlr/python/requirements.txt` into your Python environment, put it on `PATH` and set `OPENLR_CROSSCHECK=required`. This command does not run the separate resolver checks, independent interop, dependency audits or container qualification below, or prove live provider/deployment behavior. For a docs-only change, use scoped Prettier checks; for Node behavior, run focused tests while iterating and `verify:full` before review. Resolver, wire-format/federation and dependency changes also need their corresponding checks below. CI retains every applicable gate on every PR.
 
 Model artifact drift is checked once in CI and `verify:full`, by
 `scripts/__tests__/model-artifacts.test.ts` during `pnpm test`. That command builds the workspace

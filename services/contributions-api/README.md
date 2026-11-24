@@ -73,21 +73,6 @@ operator's erasure (see `docs/federation-gdpr.md`).
 | `OPENCONDITIONS_ALLOW_POLICE_CATEGORY`  | `true` lets crowd reports of police presence land.                                              | off                                |
 | `OPENCONDITIONS_SCHEMA_WAIT_TIMEOUT_MS` | How long the service waits at start for the schema version, in milliseconds.                    | 300000                             |
 
-Each of the four secrets may instead be a file named by `<KEY>_FILE`. The secrets key is a copy of the ingest service's, never a newly generated one: after the schema version the service waits for the ingest service's key check (`conditions.secrets_key_check`) and refuses to start when its key does not open it; see [Secrets encrypted at rest](../../README.md#secrets-encrypted-at-rest). Under
-OpenMapX the service is a community service whose `container.environment`
-reaches the container verbatim, so `service.json` declares these as
-`configSchema` fields. The secrets are vault secrets the operator sets once in
-the admin services panel (`openconditions-contributions-api`, Credentials);
-OpenMapX mounts each as a file and sets `<KEY>_FILE`. On the shared OpenMapX
-database `DATABASE_URL` connects as this service's own role, for example
-`postgresql://openconditions_contributions:<password>@openmapx-postgis:5432/openmapx`.
-Never use the PostgreSQL superuser: create the role as OpenMapX's community
-extensions guide describes. The
-settings are set in the same panel, or as
-`SERVICE_OPENCONDITIONS_CONTRIBUTIONS_API_<KEY>` in OpenMapX's `.env`.
-Settings kept in OpenMapX's `.env` are applied with
-`pnpm openmapx services start openconditions-contributions-api` (which resets
-every setting saved only in the admin form, so keep all of them in one place).
-Settings saved in the form are applied with **Save & Apply**.
+Each of the four secrets may instead be a file named by `<KEY>_FILE`. The secrets key is a copy of the ingest service's, never a newly generated one: after the schema version the service waits for the ingest service's key check (`conditions.secrets_key_check`) and refuses to start when its key does not open it; see [Secrets encrypted at rest](../../README.md#secrets-encrypted-at-rest). Under OpenMapX the service is a community service whose `container.environment` reaches the container verbatim, so `service.json` declares these as `configSchema` fields. The secrets are vault secrets the operator sets once in the admin services panel (`openconditions-contributions-api`, Credentials); OpenMapX mounts each as a file and sets `<KEY>_FILE`. On the shared OpenMapX database `DATABASE_URL` connects as this service's own role, for example `postgresql://openconditions_contributions:<password>@openmapx-postgis:5432/openmapx`. Never use the PostgreSQL superuser: create the role as OpenMapX's community extensions guide describes. The settings are set in the same panel, or as `SERVICE_OPENCONDITIONS_CONTRIBUTIONS_API_<KEY>` in OpenMapX's `.env`. Settings kept in OpenMapX's `.env` are applied with `pnpm openmapx services start openconditions-contributions-api` (which resets every setting saved only in the admin form, so keep all of them in one place). Settings saved in the form are applied with **Save & Apply**.
 
 The service applies no migrations. The ingest service migrates the `conditions` schema; at start this service waits until `conditions.__drizzle_migrations` records the latest migration this build ships, or a later one, polling every two seconds. After `OPENCONDITIONS_SCHEMA_WAIT_TIMEOUT_MS` it stops and names the version it expected and what it found. Its role needs no DDL rights. After every migrate the ingest service grants `openconditions_contributions` the read of that table and exactly the privileges the service's queries use. Create the role before the ingest service first starts; one created later gets its grants when the ingest service restarts. See [database roles and grants](../../docs/database-migrations.md#database-roles-and-grants).
