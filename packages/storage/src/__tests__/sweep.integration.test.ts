@@ -474,10 +474,12 @@ describe("sweepRecords retention", () => {
     ).toEqual(["2026-10-01", "epoch-42"]);
   });
 
-  it("deletes spent tokens and erasure facts past their expiry", async () => {
+  it("deletes spent tokens a day past their expiry and erasure facts past theirs", async () => {
+    // A day's margin: a contributions service whose clock runs behind would
+    // still redeem a token whose row went at its expiry.
     await sql`INSERT INTO conditions.spent_token (token_hash, purpose, spent_at, expires_at)
-      VALUES ('gone', 'report:-:2026-09-01', '2026-09-01T00:00:00Z', '2026-10-01T11:59:59Z'),
-             ('kept', 'report:-:2026-09-01', '2026-09-01T00:00:00Z', '2026-10-01T12:00:00Z')`;
+      VALUES ('gone', 'report:-:2026-09-01', '2026-09-01T00:00:00Z', '2026-09-30T11:59:59Z'),
+             ('kept', 'report:-:2026-09-01', '2026-09-01T00:00:00Z', '2026-09-30T12:00:00Z')`;
     await sql`INSERT INTO conditions.federation_tombstone
         (canonical_id, peer_instance_id, reason, tombstoned_at, expires_at)
       VALUES ('gone', '', 'rights_revoked', '2026-08-01T00:00:00Z', '2026-08-31T00:00:00Z'),
@@ -510,11 +512,57 @@ describe("sweepRecords retention", () => {
       await enrolment`SELECT 1 FROM conditions.reporter WHERE key_id = 'held' FOR UPDATE`;
       expect(await sweep(LATER)).toMatchObject({ reporters: 1, busy: 0 });
       expect(await keys()).toEqual(["held"]);
-      await enrolment`ROLLBACK`;
     } finally {
+      await enrolment`ROLLBACK`;
       enrolment.release();
     }
     expect(await sweep(LATER)).toMatchObject({ reporters: 1 });
     expect(await keys()).toEqual([]);
+  });
+
+  it("waits for a landing holding the crowd's lock before deleting reporters", async () => {
+    await reporterActive("stale", "2025-09-01T00:00:00Z");
+    const landing = await sql.reserve();
+    try {
+      await landing`BEGIN`;
+      await landing`SELECT pg_advisory_xact_lock(hashtext('crowd'))`;
+      const swept = sweep(LATER);
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      expect(await keys()).toEqual(["stale"]);
+      await landing`COMMIT`;
+      expect(await swept).toMatchObject({ reporters: 1, busy: 0 });
+      expect(await keys()).toEqual([]);
+    } finally {
+      await landing`ROLLBACK`;
+      landing.release();
+    }
+  });
+
+  it("leaves the reporters to the next sweep while a landing holds the crowd's lock past lock_timeout", async () => {
+    await reporterActive("stale", "2025-09-01T00:00:00Z");
+    const maintenance = postgres(db.url, {
+      max: 1,
+      onnotice: () => {},
+      connection: { lock_timeout: 200 },
+    });
+    const landing = await sql.reserve();
+    try {
+      await landing`BEGIN`;
+      await landing`SELECT pg_advisory_xact_lock(hashtext('crowd'))`;
+      const busy = await sweepRecords(maintenance, {
+        ...write,
+        now: LATER,
+        maxAgeSec: 3600,
+        historyDays: 90,
+      });
+      expect(busy).toMatchObject({ reporters: 0 });
+      expect(busy.busy).toBeGreaterThanOrEqual(1);
+      expect(await keys()).toEqual(["stale"]);
+    } finally {
+      await landing`ROLLBACK`;
+      landing.release();
+      await maintenance.end();
+    }
+    expect(await sweep(LATER)).toMatchObject({ reporters: 1 });
   });
 });

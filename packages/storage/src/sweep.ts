@@ -75,6 +75,9 @@ export const REPORTER_RETENTION_MONTHS = 12;
  */
 const RETENTION_BATCH = 500;
 
+/** How long a spent token is kept past its expiry, for clocks that disagree. */
+const SPENT_TOKEN_MARGIN = "1 day";
+
 const CLASSES: readonly RevisionedClass[] = ["situation", "feature", "offer"];
 
 /** A live, bulk record whose own expiry has passed. ($1 = now) */
@@ -125,8 +128,10 @@ const ORPHANED = `r.tombstoned_at IS NULL AND r.instance_id = $2 AND r.origin IN
  *    expired erasure facts.
  * A feature that ends or goes leaves the canonical view with it. A declared validity end is never a reason: a source that still publishes
  * an ended record keeps it, and reads filter by time. Every tombstone and
- * delete is chosen and written under its source's advisory lock, like any
- * other write, so a poll or a confirmation in between is never undone.
+ * delete of a record is chosen and written under its source's advisory lock,
+ * like any other write, so a poll or a confirmation in between is never
+ * undone; the crowd and federation bookkeeping uses row locks instead (see
+ * {@link sweepRetention}).
  */
 export async function sweepRecords(sql: postgres.Sql, opts: SweepOptions): Promise<SweepCounts> {
   const counts: SweepCounts = {
@@ -259,13 +264,17 @@ export async function sweepRecords(sql: postgres.Sql, opts: SweepOptions): Promi
  * Deletes crowd and federation bookkeeping past its retention:
  *  - a reporter whose `last_active_at` and `entitlement_expires_at` both lie
  *    more than {@link REPORTER_RETENTION_MONTHS} before `now`. Both columns
- *    are NOT NULL, so neither stands for "unknown"; the delete takes the
- *    reporter's votes, refusals and token quotas with it and clears its key
- *    from the evidence it gave (the foreign keys' actions). Its block-list
- *    entry stays, so the key enrolls blocked again;
+ *    are NOT NULL, so neither stands for "unknown"; the delete strips the
+ *    reporter's key from what it reported (its trigger), takes its votes,
+ *    refusals and token quotas with it and clears its key from the evidence
+ *    it gave (the foreign keys' actions). Its block-list entry stays, so the
+ *    key enrolls blocked again;
  *  - a token quota row whose epoch, a UTC day, has ended. An epoch of
  *    another form is left alone; it goes with its reporter;
- *  - a spent-token row past `expires_at`, its token's own expiry;
+ *  - a spent-token row a day past `expires_at`, its token's own expiry: the
+ *    day covers a contributions service whose clock runs behind this one,
+ *    which would still redeem the token until its own clock passes the
+ *    expiry;
  *  - a federation erasure fact past `expires_at`.
  * Each runs in batches of {@link RETENTION_BATCH} rows, skipping rows another
  * transaction holds (the next sweep takes them); a batch that meets a lock
@@ -291,7 +300,7 @@ async function sweepRetention(
     busy,
     "spent_token",
     ["token_hash"],
-    `expires_at < $1`,
+    `expires_at < $1::timestamptz - interval '${SPENT_TOKEN_MARGIN}'`,
     [now],
   );
   const tokenQuotas = await deleteInBatches(
@@ -303,16 +312,52 @@ async function sweepRetention(
       AND epoch COLLATE "C" < to_char($1::timestamptz AT TIME ZONE 'UTC', 'YYYY-MM-DD')`,
     [now],
   );
-  const reporters = await deleteInBatches(
-    sql,
-    busy,
-    "reporter",
-    ["key_id"],
-    `last_active_at < $1::timestamptz - make_interval(months => $2)
-      AND entitlement_expires_at < $1::timestamptz - make_interval(months => $2)`,
-    [now, REPORTER_RETENTION_MONTHS],
-  );
+  const reporters = await deleteInactiveReporters(sql, busy, now);
   return { reporters, tokenQuotas, spentTokens, federationTombstones };
+}
+
+/**
+ * Deletes the reporters inactive past {@link REPORTER_RETENTION_MONTHS},
+ * {@link RETENTION_BATCH} per transaction. Each takes the crowd's lock first,
+ * then the reporter rows it can lock without waiting, then deletes them: the
+ * order every landing takes them in (the crowd's lock, then the reporter row
+ * its evidence references), so the two never deadlock, and a landing holding
+ * the lock is never interleaved with the delete. The delete's trigger strips
+ * the reporters' keys from what they reported, and its foreign keys take
+ * their votes, refusals and quotas.
+ */
+async function deleteInactiveReporters(
+  sql: postgres.Sql,
+  busy: () => void,
+  now: string,
+): Promise<number> {
+  let n = 0;
+  for (;;) {
+    let taken: number;
+    try {
+      taken = (await sql.begin(async (tx) => {
+        await tx`SELECT pg_advisory_xact_lock(hashtext('crowd'))`;
+        const keys = (
+          await tx<{ key_id: string }[]>`
+            SELECT key_id FROM conditions.reporter
+             WHERE last_active_at < ${now}::timestamptz
+                     - make_interval(months => ${REPORTER_RETENTION_MONTHS})
+               AND entitlement_expires_at < ${now}::timestamptz
+                     - make_interval(months => ${REPORTER_RETENTION_MONTHS})
+             LIMIT ${RETENTION_BATCH} FOR UPDATE SKIP LOCKED`
+        ).map((r) => r.key_id);
+        if (keys.length === 0) return 0;
+        return (await tx`DELETE FROM conditions.reporter WHERE key_id = ANY(${keys})`).count;
+      })) as number;
+    } catch (err) {
+      if (!isLockTimeout(err)) throw err;
+      busy();
+      break;
+    }
+    n += taken;
+    if (taken < RETENTION_BATCH) return n;
+  }
+  return n;
 }
 
 /**
