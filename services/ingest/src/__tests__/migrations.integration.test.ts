@@ -124,7 +124,7 @@ it("observation_latest keeps its storage parameters", async () => {
   }
 });
 
-it("keeps a later deployed function when an older migrator starts again", async () => {
+it("a second migrate leaves a later deployed function in place", async () => {
   const db = await createTestDatabase();
   try {
     await db.sql`CREATE OR REPLACE FUNCTION conditions.segment_flow(z integer, x integer, y integer, query_params json)
