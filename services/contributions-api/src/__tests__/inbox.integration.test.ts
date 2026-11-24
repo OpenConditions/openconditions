@@ -700,7 +700,13 @@ describe("a peer's retractions", () => {
     const own = peerSituation("e-5");
     await ingestFederatedPage(sql, page(change(own, 1)), ctx());
     expect(
-      await eraseRecord(sql, registry, { class: "situation", id: own["id"] as string }, NOW),
+      await eraseRecord(
+        sql,
+        registry,
+        { class: "situation", id: own["id"] as string },
+        NOW,
+        INSTANCE,
+      ),
     ).toBe("erased");
     const other = "other.example.com";
     const theirs = sent(peerRecord(feedSituationDraft("e-5"), 4, undefined, other));

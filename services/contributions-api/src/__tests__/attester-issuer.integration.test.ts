@@ -1,7 +1,12 @@
 import { createHash } from "node:crypto";
 import { publicVerif, type Token } from "@cloudflare/privacypass-ts";
 import { generateReporterKey, type ReporterKey } from "@openconditions/contrib-core";
-import { SecretsKey, sealSecretsKeyCheck, storedSecret } from "@openconditions/core/server";
+import {
+  SecretsKey,
+  sealInstanceId,
+  sealSecretsKeyCheck,
+  storedSecret,
+} from "@openconditions/core/server";
 import {
   createTestDatabase,
   dumpHolds,
@@ -32,6 +37,7 @@ const NOW = "2026-07-12T08:00:00.000Z";
 const GRANT_SECRET_VALUE = "attester-issuer-test-secret";
 const GRANT_SECRET = new TextEncoder().encode(GRANT_SECRET_VALUE);
 const secrets = SecretsKey.parse(TEST_SECRETS_KEY);
+const INSTANCE_ID = "contrib.example.org";
 
 const noopLog = {
   info: () => {},
@@ -560,13 +566,38 @@ describe("build() fail-closed", () => {
     await expect(
       build({
         sql,
-        env: { NODE_ENV: "production", OPENCONDITIONS_SECRETS_KEY: TEST_SECRETS_KEY },
+        env: {
+          NODE_ENV: "production",
+          OPENCONDITIONS_SECRETS_KEY: TEST_SECRETS_KEY,
+          OPENCONDITIONS_INSTANCE_ID: INSTANCE_ID,
+        },
       }),
     ).rejects.toThrow(/OPENCONDITIONS_GRANT_SECRET/);
   }, 30_000);
 
+  it("throws without an instance id, and with one sealed for another instance", async () => {
+    const env = {
+      OPENCONDITIONS_GRANT_SECRET: GRANT_SECRET_VALUE,
+      OPENCONDITIONS_SECRETS_KEY: TEST_SECRETS_KEY,
+    };
+    await expect(build({ sql, env, logger: false })).rejects.toThrow(
+      /OPENCONDITIONS_INSTANCE_ID is required/,
+    );
+    await sealInstanceId(sql, "other.example.org");
+    try {
+      await expect(
+        build({ sql, env: { ...env, OPENCONDITIONS_INSTANCE_ID: INSTANCE_ID }, logger: false }),
+      ).rejects.toThrow(/differs from "other\.example\.org"/);
+    } finally {
+      await sql`TRUNCATE conditions.instance_identity`;
+    }
+  }, 30_000);
+
   it("throws without a secrets key, or with one that is no key", async () => {
-    const env = { OPENCONDITIONS_GRANT_SECRET: GRANT_SECRET_VALUE };
+    const env = {
+      OPENCONDITIONS_GRANT_SECRET: GRANT_SECRET_VALUE,
+      OPENCONDITIONS_INSTANCE_ID: INSTANCE_ID,
+    };
     await expect(build({ sql, env, logger: false })).rejects.toThrow(
       /OPENCONDITIONS_SECRETS_KEY is required: set OPENCONDITIONS_SECRETS_KEY_FILE/,
     );
@@ -582,6 +613,7 @@ describe("build() fail-closed", () => {
         env: {
           OPENCONDITIONS_GRANT_SECRET: GRANT_SECRET_VALUE,
           OPENCONDITIONS_SECRETS_KEY: "f0".repeat(32),
+          OPENCONDITIONS_INSTANCE_ID: INSTANCE_ID,
         },
         logger: false,
       }),
@@ -589,7 +621,10 @@ describe("build() fail-closed", () => {
   }, 30_000);
 
   it("throws with a key other than the one the ingest service sealed the key check with", async () => {
-    const env = { OPENCONDITIONS_GRANT_SECRET: GRANT_SECRET_VALUE };
+    const env = {
+      OPENCONDITIONS_GRANT_SECRET: GRANT_SECRET_VALUE,
+      OPENCONDITIONS_INSTANCE_ID: INSTANCE_ID,
+    };
     await sealSecretsKeyCheck(sql, secrets);
     try {
       const matching = await build({
@@ -644,6 +679,7 @@ describe("HTTP surface + end-to-end flow with log separation", () => {
       env: {
         OPENCONDITIONS_GRANT_SECRET: GRANT_SECRET_VALUE,
         OPENCONDITIONS_SECRETS_KEY: TEST_SECRETS_KEY,
+        OPENCONDITIONS_INSTANCE_ID: INSTANCE_ID,
       },
       logger: capture.logger,
       // Pin the clock so the SERVER-derived report epoch is a fixed UTC day.

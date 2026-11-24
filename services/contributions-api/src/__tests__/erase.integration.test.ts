@@ -110,7 +110,9 @@ describe("eraseRecord", () => {
     ]);
 
     expect(await history(id)).toEqual([1, 2]);
-    expect(await eraseRecord(sql, registry, { class: "situation", id }, ERASED_AT)).toBe("erased");
+    expect(await eraseRecord(sql, registry, { class: "situation", id }, ERASED_AT, INSTANCE)).toBe(
+      "erased",
+    );
 
     const row = await stored(id);
     expect(row.revision).toBe(3);
@@ -158,7 +160,7 @@ describe("eraseRecord", () => {
 
   it("changes nothing when the record is already erased", async () => {
     const id = "oc:situation:de-autobahn-events:E1";
-    expect(await eraseRecord(sql, registry, { class: "situation", id }, LATER)).toBe(
+    expect(await eraseRecord(sql, registry, { class: "situation", id }, LATER, INSTANCE)).toBe(
       "already erased",
     );
     const row = await stored(id);
@@ -183,7 +185,9 @@ describe("eraseRecord", () => {
       WHERE id = ${id}`;
     expect((await journal(id)).map((e) => e.operation)).toEqual(["create", "delete"]);
 
-    expect(await eraseRecord(sql, registry, { class: "situation", id }, ERASED_AT)).toBe("erased");
+    expect(await eraseRecord(sql, registry, { class: "situation", id }, ERASED_AT, INSTANCE)).toBe(
+      "erased",
+    );
     expect((await stored(id)).tombstone_reason).toBe(ERASURE_REASON);
     // The withdrawn delete stays (it carries no content); the erasure adds its own.
     expect(await journal(id)).toEqual([
@@ -194,7 +198,7 @@ describe("eraseRecord", () => {
 
   it("answers not found for a record this instance does not hold", async () => {
     const ref = { class: "situation" as const, id: "oc:situation:de-autobahn-events:missing" };
-    expect(await eraseRecord(sql, registry, ref, ERASED_AT)).toBe("not found");
+    expect(await eraseRecord(sql, registry, ref, ERASED_AT, INSTANCE)).toBe("not found");
     const [facts] = await sql<{ n: number }[]>`
       SELECT count(*)::int AS n FROM conditions.federation_tombstone`;
     expect(facts!.n).toBe(2);
@@ -205,7 +209,9 @@ describe("eraseRecord", () => {
     expect(await journal(id)).toHaveLength(1);
     await sql`DELETE FROM conditions.federation_subscription`;
 
-    expect(await eraseRecord(sql, registry, { class: "situation", id }, ERASED_AT)).toBe("erased");
+    expect(await eraseRecord(sql, registry, { class: "situation", id }, ERASED_AT, INSTANCE)).toBe(
+      "erased",
+    );
 
     // The outbox and backfill serve without a subscription, so the snapshot
     // must go and the retraction must reach peers that pulled it.
@@ -216,7 +222,9 @@ describe("eraseRecord", () => {
 
   it("journals no tombstone of a record never journalled while nobody subscribes", async () => {
     const id = await seedFeedSituation(sql, "E5", {}, T0);
-    expect(await eraseRecord(sql, registry, { class: "situation", id }, ERASED_AT)).toBe("erased");
+    expect(await eraseRecord(sql, registry, { class: "situation", id }, ERASED_AT, INSTANCE)).toBe(
+      "erased",
+    );
     expect(await journal(id)).toEqual([]);
   }, 30_000);
 
