@@ -37,7 +37,6 @@ const readSourceStatus: SourceStatusReader = async () =>
   ]);
 
 beforeAll(async () => {
-  vi.stubEnv("OPENCONDITIONS_INSTANCE_ID", "test.example.org");
   registerFeedStatusRoute(
     app,
     store,
@@ -49,10 +48,7 @@ beforeAll(async () => {
   await app.ready();
 });
 
-afterAll(async () => {
-  vi.unstubAllEnvs();
-  await app.close();
-});
+afterAll(() => app.close());
 
 describe("GET /feeds/status", () => {
   it("lists registered feeds with credential flags and run status", async () => {
@@ -127,7 +123,7 @@ describe("GET /feeds/status", () => {
       const res = await named.inject({ method: "GET", url: "/feeds/status" });
       expect(res.json()).toMatchObject({ instanceId: "conditions.example.org" });
     } finally {
-      vi.stubEnv("OPENCONDITIONS_INSTANCE_ID", "test.example.org");
+      vi.unstubAllEnvs();
       await named.close();
     }
   });

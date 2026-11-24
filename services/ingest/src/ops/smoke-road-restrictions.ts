@@ -17,7 +17,7 @@ import { isVehicleSpecific, situationEffects } from "@openconditions/model";
 import { fetch as undiciFetch } from "undici";
 import { domainOf, loadIngestCatalog } from "../domains.js";
 import { parseMainPayloads } from "../pipeline/parse.js";
-import { stampAttribution, writeModel } from "../pipeline/publish.js";
+import { defaultWriteRegistry, stampAttribution } from "../pipeline/publish.js";
 import { resolveOpenLr } from "../pipeline/resolve.js";
 import { type RestrictionTally, tallyRestrictions } from "../pipeline/restriction-tally.js";
 import { inspectSnapshotCompleteness } from "../pipeline/snapshot-inspection.js";
@@ -226,7 +226,8 @@ export async function runRestrictionSmoke(
   if (located.failed > 0) throw new Error("smoke location resolution failed");
   const situations = located.resolved.map((draft) => stampAttribution(draft, feed));
 
-  const { registry } = writeModel();
+  // Validation only: the smoke writes nothing, so it needs no instance id.
+  const registry = defaultWriteRegistry();
   for (const situation of situations) {
     const checked = registry.validateDraft(situation);
     if (!checked.ok) {

@@ -42,11 +42,19 @@ export interface WriteModel {
 
 let defaultRegistry: Registry | undefined;
 
-/** The production registry and this instance's id, unless the caller supplies its own. */
-export function writeModel(over: Partial<WriteModel> = {}): WriteModel {
+/** The production registry polls seal their records against, built once. */
+export function defaultWriteRegistry(): Registry {
   defaultRegistry ??= productionRegistry();
+  return defaultRegistry;
+}
+
+/**
+ * The production registry and this instance's id, unless the caller supplies
+ * its own. The id is the one the service validated at boot.
+ */
+export function writeModel(over: Partial<WriteModel> = {}): WriteModel {
   return {
-    registry: over.registry ?? defaultRegistry,
+    registry: over.registry ?? defaultWriteRegistry(),
     instanceId: over.instanceId ?? resolveInstanceId(),
   };
 }
