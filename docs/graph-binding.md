@@ -47,10 +47,7 @@ reaches the routing outputs.
 
 ## The tables
 
-All three live in the `conditions` schema, created by migrations
-`0042_record_bindings.sql` and `0044_record_binding_queue.sql`. Each is keyed by
-`(record_class, record_id, effect_id)`; `record_class` is `situation` for every
-row the binder writes, and `effect_id` is `''` for a record's own location.
+All three live in the `conditions` schema, created by the database migrations. Each is keyed by `(record_class, record_id, effect_id)`; `record_class` is `situation` for every row the binder writes, and `effect_id` is `''` for a record's own location.
 
 `conditions.record_binding` — one row per location the resolver attempted:
 

@@ -906,7 +906,7 @@ describe("readOutbox: the xmin fence (no permanent skip)", () => {
   it("holds the frontier below an in-flight transaction, then delivers with no skip", async () => {
     const base = await frontier();
 
-    // A slow transaction takes the LOWER seq (bigserial is assigned at INSERT,
+    // A slow transaction takes the LOWER seq (an identity is assigned at INSERT,
     // not COMMIT) and stays open while a fast one commits a HIGHER seq.
     const slow = await sql.reserve();
     let slowSeq: number;

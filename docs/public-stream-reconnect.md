@@ -264,7 +264,7 @@ Public SSE does not create a federation subscription. Therefore its current
 visible situations are not guaranteed to be present in that journal.
 
 [`outbox.ts`](../packages/federation/src/outbox.ts) correctly uses `(txid, seq)`
-ordering with an xmin fence rather than treating a bigserial maximum as a safe
+ordering with an xmin fence rather than treating an identity column's maximum as a safe
 commit frontier. That primitive is worth reusing in a future design, but a
 separately read snapshot is not automatically aligned with that frontier.
 Taking a snapshot and a maximum sequence can skip in-flight commits; replaying
