@@ -139,7 +139,7 @@ describe("waitForSchemaVersion", () => {
   it("fails clearly when the role may not read the history", async () => {
     const sql = await ungranted(await database());
     await expect(waitForSchemaVersion(sql, { timeoutMs: 300, pollMs: 100 })).rejects.toThrow(
-      /conditions\.__drizzle_migrations cannot be read by this role \(permission denied for schema conditions\); it needs USAGE on the schema conditions and SELECT on the table/,
+      /conditions\.__drizzle_migrations cannot be read by this role \(permission denied for schema conditions\); it needs USAGE on the schema conditions and SELECT on the table.*A role created after the ingest service last started gets its grants when the ingest service restarts: restart it, and check that this role exists/,
     );
   });
 

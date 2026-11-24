@@ -119,7 +119,12 @@ export async function waitForSchemaVersion(
         `the database schema did not reach this build's version within ${options.timeoutMs} ms: ` +
           `expected a migration in ${HISTORY} with when ${expected.when} (${expected.tag}) or later, ` +
           `but ${describe(found)}. The ingest service applies the migrations; check that it runs ` +
-          "this release or a newer one and that its migration succeeded",
+          "this release or a newer one and that its migration succeeded" +
+          (found.state === "unreadable"
+            ? ". A role created after the ingest service last started gets its grants when the " +
+              "ingest service restarts: restart it, and check that this role exists under the name " +
+              "the ingest service grants to"
+            : ""),
       );
     }
     const seen = describe(found);
