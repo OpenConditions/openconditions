@@ -18,6 +18,11 @@
       "types": "./dist/server.d.ts",
       "import": "./dist/server.js",
       "require": "./dist/server.cjs"
+    },
+    "./credentials": {
+      "types": "./dist/credentials.d.ts",
+      "import": "./dist/credentials.js",
+      "require": "./dist/credentials.cjs"
     }
   },
   "main": "./dist/index.cjs",

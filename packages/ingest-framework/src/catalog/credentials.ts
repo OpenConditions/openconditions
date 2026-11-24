@@ -1,4 +1,4 @@
-import { readCredential, strictCredential } from "@openconditions/core/server";
+import { readCredential, strictCredential } from "@openconditions/core/credentials";
 import type { CatalogFeed, CredentialField, FeedDefinition } from "./types.js";
 
 /** Where credentials are read from: `process.env` or a test's stand-in. */
