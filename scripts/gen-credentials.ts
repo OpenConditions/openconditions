@@ -78,6 +78,13 @@ DATABASE_URL=postgres://openconditions:openconditions@localhost:5432/openconditi
 # OPENCONDITIONS_SECRETS_KEY_FILE may name a file holding it instead.
 OPENCONDITIONS_SECRETS_KEY=
 
+# Instance id (REQUIRED): a lower-case DNS name, usually the instance's public
+# host name, e.g. maps.example.org. Set it once, before the first start, to the
+# same value on every OpenConditions service of the instance. The first ingest
+# start seals it in the database, and every service refuses another id; it is
+# part of every record id, so it never changes.
+OPENCONDITIONS_INSTANCE_ID=
+
 # HTTP server (optional; defaults shown)
 PORT=4100
 HOST=0.0.0.0
