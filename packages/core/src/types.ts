@@ -47,17 +47,20 @@ export type PrivacyClass =
   | "crowd_pseudonym";
 
 /** Outcome of binding an event to the directed segment spine (derived, never parser-supplied). */
-export type BindingStatus =
-  | "exact"
-  | "likely"
-  | "ambiguous"
-  | "unresolved"
-  | "no_coverage"
-  | "not_applicable"
-  | "obsolete";
+export const BINDING_STATUSES = [
+  "exact",
+  "likely",
+  "ambiguous",
+  "unresolved",
+  "no_coverage",
+  "not_applicable",
+  "obsolete",
+] as const;
+export type BindingStatus = (typeof BINDING_STATUSES)[number];
 
 /** Whether the resolver could decide the travel direction. `both` = bound in both directions of a bidirectional way. */
-export type DirectionMode = "single" | "both" | "unknown";
+export const DIRECTION_MODES = ["single", "both", "unknown"] as const;
+export type DirectionMode = (typeof DIRECTION_MODES)[number];
 
 /** One directed segment an event occupies, with the occupied fraction range along its geometry. */
 export interface SegmentSpan {

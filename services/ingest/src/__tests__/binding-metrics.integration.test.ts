@@ -152,26 +152,17 @@ describe("binding metrics on GET /feeds/status", () => {
     });
   });
 
-  it("counts an unknown status toward attempted without inventing a key", async () => {
+  it("stores no status outside the binding vocabulary", async () => {
     await insertSituation("weird", "de-autobahn-events");
-    await insertBinding("de-autobahn-events", "weird", "something_new");
-    const reader = createBindingMetricsReader(sql, 0);
-    const metrics = await reader();
-    expect(metrics.get("de-autobahn-events")).toEqual({
+    await expect(insertBinding("de-autobahn-events", "weird", "something_new")).rejects.toThrow(
+      /record_binding_status_check/,
+    );
+    const metrics = await createBindingMetricsReader(sql, 0)();
+    expect(metrics.get("de-autobahn-events")).toMatchObject({
       activeEvents: 4,
-      attempted: 4,
-      attemptedCurrent: 4,
-      unattempted: 0,
-      obsolete: 0,
-      unattemptedOrObsolete: 0,
-      unknownStatus: 1,
-      exact: 1,
-      likely: 1,
-      ambiguous: 0,
-      unresolved: 1,
-      noCoverage: 0,
-      notApplicable: 0,
-      reasons: [],
+      attempted: 3,
+      unattempted: 1,
+      unknownStatus: 0,
     });
     await sql`UPDATE conditions.situation SET tombstoned_at = now(), tombstone_reason = 'withdrawn'
       WHERE id = ${id("de-autobahn-events", "weird")}`;

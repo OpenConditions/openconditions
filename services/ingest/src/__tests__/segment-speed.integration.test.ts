@@ -101,7 +101,7 @@ async function seedObservation(
 ): Promise<void> {
   await sql`
     INSERT INTO conditions.segment_observation
-      (segment_id, source, source_tier, current_kph, free_flow_kph, speed_ratio, los, confidence, sample_count, observed_at, expires_at)
+      (segment_id, source, source_tier, current_kph, free_flow_kph, speed_ratio, los, confidence_score, sample_count, observed_at, expires_at)
     VALUES (${segmentId}, ${source}, ${sourceTier}, ${currentKph}, 100, ${currentKph / 100}, 'heavy', 0.9, 1,
       ${observedAt}, ${expiresAt})`;
 }

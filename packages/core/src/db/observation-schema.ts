@@ -2,7 +2,6 @@ import { ACCESS_MODES, EVIDENCE_STATES, enumCheckSql } from "@openconditions/mod
 import { sql } from "drizzle-orm";
 import {
   bigint,
-  bigserial,
   boolean,
   check,
   date,
@@ -61,7 +60,7 @@ export const contributorReceipt = conditionsSchema.table("contributor_receipt", 
 export const observationLatest = conditionsSchema.table(
   "observation_latest",
   {
-    seriesId: bigserial("series_id", { mode: "number" }).primaryKey(),
+    seriesId: bigint("series_id", { mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),
     subjectKey: text("subject_key").notNull(),
     property: text("property").notNull(),
     qualifierKey: text("qualifier_key").notNull().default(""),

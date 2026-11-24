@@ -371,7 +371,7 @@ it("bounds variants by count and combined original/provenance bytes before publi
     await expect(smnMessages(db.sql, feed, variants, at)).rejects.toThrow("budget exceeded");
     expect(await db.sql`SELECT body FROM conditions.smn_cap_message`).toHaveLength(0);
     const oversized = Buffer.alloc(32 * 1024 * 1024 + 1, 32);
-    await db.sql`INSERT INTO conditions.smn_cap_message(source_id,identifier,body,retain_until) VALUES (${feed.id},'synthetic-budget',${oversized},'2026-11-15T23:13:22Z')`;
+    await db.sql`INSERT INTO conditions.smn_cap_message(source_id,identifier,body,retrieval,retain_until) VALUES (${feed.id},'synthetic-budget',${oversized},${db.sql.json({ source: feed.id })},'2026-11-15T23:13:22Z')`;
     await expect(smnMessages(db.sql, feed, [], at)).rejects.toThrow("budget exceeded");
   } finally {
     await db.close();

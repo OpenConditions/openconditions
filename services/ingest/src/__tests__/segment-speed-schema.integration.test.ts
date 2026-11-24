@@ -23,7 +23,7 @@ describe("segment_observation + segment_speed schema", () => {
         "segment_id",
         "source",
         "source_tier",
-        "confidence",
+        "confidence_score",
         "sample_count",
         "observed_at",
         "expires_at",
@@ -82,7 +82,7 @@ describe("segment_observation + segment_speed schema", () => {
 
     await sql`
       INSERT INTO conditions.segment_observation
-        (segment_id, source, source_tier, current_kph, free_flow_kph, speed_ratio, los, confidence, sample_count, observed_at, expires_at)
+        (segment_id, source, source_tier, current_kph, free_flow_kph, speed_ratio, los, confidence_score, sample_count, observed_at, expires_at)
       VALUES ('999:f', 'fi', 'sensor', 80.0, 100.0, 0.8, 'heavy', 0.9, NULL, now(), now() + interval '10 minutes')`;
 
     const obs = await sql<{ segment_id: string; source: string }[]>`

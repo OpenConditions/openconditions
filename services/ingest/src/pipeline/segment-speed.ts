@@ -116,7 +116,7 @@ export async function writeSensorObservations(
       WHERE site.speed IS NOT NULL OR site.los <> 'unknown'
     )
     INSERT INTO conditions.segment_observation
-      (segment_id, source, source_tier, current_kph, free_flow_kph, speed_ratio, los, confidence, sample_count, observed_at, expires_at, native_field_sources, field_sources, field_contributors, field_lineage_complete, permission_licenses)
+      (segment_id, source, source_tier, current_kph, free_flow_kph, speed_ratio, los, confidence_score, sample_count, observed_at, expires_at, native_field_sources, field_sources, field_contributors, field_lineage_complete, permission_licenses)
     SELECT agg.segment_id, agg.source, 'sensor',
       agg.current_kph, agg.free_flow_kph, agg.speed_ratio,
       CASE
@@ -187,7 +187,7 @@ export async function writeSensorObservations(
     ) agg
     ON CONFLICT (segment_id, source) DO UPDATE SET
       current_kph=EXCLUDED.current_kph, free_flow_kph=EXCLUDED.free_flow_kph, speed_ratio=EXCLUDED.speed_ratio,
-      los=EXCLUDED.los, confidence=EXCLUDED.confidence, sample_count=EXCLUDED.sample_count,
+      los=EXCLUDED.los, confidence_score=EXCLUDED.confidence_score, sample_count=EXCLUDED.sample_count,
       observed_at=EXCLUDED.observed_at, expires_at=EXCLUDED.expires_at,
       native_field_sources=EXCLUDED.native_field_sources, field_lineage_complete=EXCLUDED.field_lineage_complete,
       field_contributors=EXCLUDED.field_contributors, field_sources=EXCLUDED.field_sources, permission_licenses=EXCLUDED.permission_licenses

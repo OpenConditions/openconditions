@@ -11,6 +11,7 @@ import {
   text,
   timestamp,
 } from "drizzle-orm/pg-core";
+import { BINDING_STATUSES, DIRECTION_MODES } from "../types.js";
 import { conditionsSchema } from "./columns.js";
 
 /**
@@ -45,6 +46,11 @@ export const recordBinding = conditionsSchema.table(
     check(
       "record_binding_record_class_enum",
       sql.raw(enumCheckSql("record_class", RECORD_CLASSES)),
+    ),
+    check("record_binding_status_check", sql.raw(enumCheckSql("status", BINDING_STATUSES))),
+    check(
+      "record_binding_direction_mode_check",
+      sql.raw(enumCheckSql("direction_mode", DIRECTION_MODES)),
     ),
     index("idx_record_binding_status").on(t.status),
   ],

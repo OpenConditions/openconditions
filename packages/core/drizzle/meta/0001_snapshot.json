@@ -1,6 +1,6 @@
 {
-  "id": "ee1ec12a-3460-48cd-9da2-82ab67e63cfd",
-  "prevId": "d7ab9ad9-1b9c-413e-bd86-28f231620a68",
+  "id": "bcbaa702-08fd-4a70-81c4-2defce62fabf",
+  "prevId": "fce49200-fc1d-446d-a4d4-aaab4faf4aff",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -219,6 +219,14 @@
         "record_binding_record_class_enum": {
           "name": "record_binding_record_class_enum",
           "value": "\"record_class\" IN ('feature', 'situation', 'observation', 'offer')"
+        },
+        "record_binding_status_check": {
+          "name": "record_binding_status_check",
+          "value": "\"status\" IN ('exact', 'likely', 'ambiguous', 'unresolved', 'no_coverage', 'not_applicable', 'obsolete')"
+        },
+        "record_binding_direction_mode_check": {
+          "name": "record_binding_direction_mode_check",
+          "value": "\"direction_mode\" IN ('single', 'both', 'unknown')"
         }
       },
       "isRLSEnabled": false
@@ -323,9 +331,20 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "bigserial",
+          "type": "bigint",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "name": "report_evidence_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "conditions",
+            "type": "byDefault"
+          }
         },
         "record_class": {
           "name": "record_class",
@@ -481,9 +500,20 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "bigserial",
+          "type": "bigint",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "name": "report_refusal_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "conditions",
+            "type": "byDefault"
+          }
         },
         "actor_key_id": {
           "name": "actor_key_id",
@@ -694,7 +724,7 @@
         },
         "day": {
           "name": "day",
-          "type": "text",
+          "type": "date",
           "primaryKey": false,
           "notNull": true
         },
@@ -834,9 +864,20 @@
       "columns": {
         "series_id": {
           "name": "series_id",
-          "type": "bigserial",
+          "type": "bigint",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "name": "observation_latest_series_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "conditions",
+            "type": "byDefault"
+          }
         },
         "subject_key": {
           "name": "subject_key",
@@ -4054,9 +4095,20 @@
       "columns": {
         "seq": {
           "name": "seq",
-          "type": "bigserial",
+          "type": "bigint",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "name": "federation_outbox_seq_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "conditions",
+            "type": "byDefault"
+          }
         },
         "operation": {
           "name": "operation",
@@ -4656,6 +4708,10 @@
         "federation_subscription_delivery_mode_enum": {
           "name": "federation_subscription_delivery_mode_enum",
           "value": "\"conditions\".\"federation_subscription\".\"delivery_mode\" IN ('pull','webhook','sse')"
+        },
+        "federation_subscription_status_check": {
+          "name": "federation_subscription_status_check",
+          "value": "\"conditions\".\"federation_subscription\".\"status\" IN ('active','push_disabled')"
         }
       },
       "isRLSEnabled": false
@@ -4726,7 +4782,12 @@
       },
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "federation_tombstone_reason_check": {
+          "name": "federation_tombstone_reason_check",
+          "value": "\"reason\" IN ('expired', 'withdrawn', 'superseded', 'cancelled', 'rights_revoked', 'rejected')"
+        }
+      },
       "isRLSEnabled": false
     },
     "conditions.geonet_coverage": {
@@ -5608,8 +5669,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "confidence": {
-          "name": "confidence",
+        "confidence_score": {
+          "name": "confidence_score",
           "type": "double precision",
           "primaryKey": false,
           "notNull": true
@@ -5676,7 +5737,12 @@
       },
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "segment_observation_los_check": {
+          "name": "segment_observation_los_check",
+          "value": "\"los\" IN ('free_flow', 'heavy', 'queuing', 'stationary', 'blocked', 'unknown')"
+        }
+      },
       "isRLSEnabled": false
     },
     "conditions.segment_profile": {
@@ -5870,7 +5936,16 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "segment_speed_los_check": {
+          "name": "segment_speed_los_check",
+          "value": "\"los\" IN ('free_flow', 'heavy', 'queuing', 'stationary', 'blocked', 'unknown')"
+        },
+        "segment_speed_confidence_check": {
+          "name": "segment_speed_confidence_check",
+          "value": "\"confidence\" IN ('measured', 'estimated')"
+        }
+      },
       "isRLSEnabled": false
     },
     "conditions.sensor_baseline": {
@@ -6123,8 +6198,7 @@
           "name": "retrieval",
           "type": "jsonb",
           "primaryKey": false,
-          "notNull": true,
-          "default": "'{\"legacy\":true}'::jsonb"
+          "notNull": true
         },
         "body": {
           "name": "body",
@@ -6161,9 +6235,20 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "bigserial",
+          "type": "bigint",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "name": "source_poll_attempt_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "conditions",
+            "type": "byDefault"
+          }
         },
         "source": {
           "name": "source",

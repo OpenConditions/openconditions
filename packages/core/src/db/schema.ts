@@ -1,14 +1,7 @@
-import {
-  EVIDENCE_STATES,
-  enumCheckSql,
-  FUZZINESS,
-  PRIVACY_CLASSES,
-  RECORD_CLASSES,
-} from "@openconditions/model";
+import { enumCheckSql, RECORD_CLASSES, TOMBSTONE_REASONS } from "@openconditions/model";
 import { sql } from "drizzle-orm";
 import {
   bigint,
-  bigserial,
   boolean,
   check,
   date,
@@ -22,18 +15,23 @@ import {
   smallint,
   text,
   timestamp,
-  unique,
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
-import {
-  bytea,
-  conditionsSchema,
-  geometry,
-  geometryPoint,
-  sealedSecretCheck,
-  xid8,
-} from "./columns.js";
+import { bytea, conditionsSchema, geometry, sealedSecretCheck, xid8 } from "./columns.js";
+
+/** A segment's level of service, worst last but `unknown`. */
+export const SEGMENT_LOS = [
+  "free_flow",
+  "heavy",
+  "queuing",
+  "stationary",
+  "blocked",
+  "unknown",
+] as const;
+
+/** How a segment speed was obtained: measured on the segment, or propagated from a neighbour. */
+export const SEGMENT_SPEED_CONFIDENCES = ["measured", "estimated"] as const;
 
 /**
  * One row per feed source, updated on every poll cycle (including a 304/
@@ -106,7 +104,7 @@ export const sourceShrink = conditionsSchema.table(
 export const sourcePollAttempt = conditionsSchema.table(
   "source_poll_attempt",
   {
-    id: bigserial("id", { mode: "number" }).primaryKey(),
+    id: bigint("id", { mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),
     source: text("source").notNull(),
     attemptedAt: timestamp("attempted_at", { withTimezone: true }).notNull(),
     /** Null while the poll is still running: its id is the fetch id its raw payloads are filed under. */
@@ -271,7 +269,8 @@ export const segmentObservation = conditionsSchema.table(
     freeFlowKph: doublePrecision("free_flow_kph"),
     speedRatio: doublePrecision("speed_ratio"),
     los: text("los").notNull(),
-    confidence: doublePrecision("confidence").notNull(),
+    /** How far the source trusts its own reading, 0 to 1. */
+    confidenceScore: doublePrecision("confidence_score").notNull(),
     sampleCount: integer("sample_count"),
     /** Selected native identities and captured display receipts; rights stay in contributing. */
     nativeFieldSources: jsonb("native_field_sources"),
@@ -283,7 +282,10 @@ export const segmentObservation = conditionsSchema.table(
     observedAt: timestamp("observed_at", { withTimezone: true }).notNull(),
     expiresAt: timestamp("expires_at", { withTimezone: true }),
   },
-  (t) => [primaryKey({ columns: [t.segmentId, t.source] })],
+  (t) => [
+    primaryKey({ columns: [t.segmentId, t.source] }),
+    check("segment_observation_los_check", sql.raw(enumCheckSql("los", SEGMENT_LOS))),
+  ],
 );
 
 /**
@@ -316,26 +318,36 @@ export const segmentProfile = conditionsSchema.table(
  * rows per segment, then propagating one hop into adjacent gap segments
  * along the same ref/highway.
  */
-export const segmentSpeed = conditionsSchema.table("segment_speed", {
-  segmentId: text("segment_id").primaryKey(),
-  currentKph: doublePrecision("current_kph"),
-  freeFlowKph: doublePrecision("free_flow_kph"),
-  speedRatio: doublePrecision("speed_ratio"),
-  los: text("los").notNull(),
-  confidence: text("confidence").notNull(),
-  sourceTier: text("source_tier"),
-  contributing: text("contributing").array(),
-  isEstimated: boolean("is_estimated").notNull().default(false),
-  /** Selected native identities and captured display receipts; rights stay in contributing. */
-  nativeFieldSources: jsonb("native_field_sources"),
-  fieldSources: jsonb("field_sources"),
-  fieldContributors: jsonb("field_contributors"),
-  fieldLineageComplete: jsonb("field_lineage_complete"),
-  /** Exact captured permission IDs; null means missing evidence and is never public. */
-  permissionLicenses: text("permission_licenses").array(),
-  observedAt: timestamp("observed_at", { withTimezone: true }),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
-});
+export const segmentSpeed = conditionsSchema.table(
+  "segment_speed",
+  {
+    segmentId: text("segment_id").primaryKey(),
+    currentKph: doublePrecision("current_kph"),
+    freeFlowKph: doublePrecision("free_flow_kph"),
+    speedRatio: doublePrecision("speed_ratio"),
+    los: text("los").notNull(),
+    confidence: text("confidence").notNull(),
+    sourceTier: text("source_tier"),
+    contributing: text("contributing").array(),
+    isEstimated: boolean("is_estimated").notNull().default(false),
+    /** Selected native identities and captured display receipts; rights stay in contributing. */
+    nativeFieldSources: jsonb("native_field_sources"),
+    fieldSources: jsonb("field_sources"),
+    fieldContributors: jsonb("field_contributors"),
+    fieldLineageComplete: jsonb("field_lineage_complete"),
+    /** Exact captured permission IDs; null means missing evidence and is never public. */
+    permissionLicenses: text("permission_licenses").array(),
+    observedAt: timestamp("observed_at", { withTimezone: true }),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+  },
+  () => [
+    check("segment_speed_los_check", sql.raw(enumCheckSql("los", SEGMENT_LOS))),
+    check(
+      "segment_speed_confidence_check",
+      sql.raw(enumCheckSql("confidence", SEGMENT_SPEED_CONFIDENCES)),
+    ),
+  ],
+);
 
 /**
  * One row per pseudonymous crowd reporter, keyed by the RFC 7638 thumbprint of
@@ -445,7 +457,7 @@ export const blockList = conditionsSchema.table("block_list", {
  * snapshot), at most one per source per ten minutes and only while a
  * subscription asks for them, so a peer keeps the source's unchanged readings
  * current (`journalSourceLiveness`). `seq`
- * (bigserial) is the strictly monotonic peer cursor; entries are never
+ * (an identity column) is the strictly monotonic peer cursor; entries are never
  * updated by the application, except that an erasure scrubs the earlier
  * snapshots of the erased record.
  *
@@ -461,7 +473,9 @@ export const blockList = conditionsSchema.table("block_list", {
 export const federationOutbox = conditionsSchema.table(
   "federation_outbox",
   {
-    seq: bigserial("seq", { mode: "number" }).primaryKey(),
+    // By default, not always: a new journal epoch copies carried entries
+    // back with the seq they had.
+    seq: bigint("seq", { mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),
     operation: text("operation").notNull(),
     recordClass: text("record_class").notNull(),
     recordId: text("record_id").notNull(),
@@ -553,6 +567,7 @@ export const federationTombstone = conditionsSchema.table(
   (t) => [
     primaryKey({ columns: [t.canonicalId, t.peerInstanceId] }),
     index("federation_tombstone_expires_at_idx").on(t.expiresAt),
+    check("federation_tombstone_reason_check", sql.raw(enumCheckSql("reason", TOMBSTONE_REASONS))),
   ],
 );
 
@@ -926,6 +941,7 @@ export const federationSubscription = conditionsSchema.table(
       "federation_subscription_delivery_mode_enum",
       sql`${t.deliveryMode} IN ('pull','webhook','sse')`,
     ),
+    check("federation_subscription_status_check", sql`${t.status} IN ('active','push_disabled')`),
   ],
 );
 
@@ -959,7 +975,7 @@ export const smnCapMessage = conditionsSchema.table(
     sourceId: text("source_id").notNull(),
     identifier: text("identifier").notNull(),
     variant: text("variant").generatedAlwaysAs(sql`encode(sha256(body), 'hex')`).notNull(),
-    retrieval: jsonb("retrieval").notNull().default(sql`'{"legacy":true}'::jsonb`),
+    retrieval: jsonb("retrieval").notNull(),
     body: bytea("body").notNull(),
     retainUntil: timestamp("retain_until", { withTimezone: true }).notNull(),
   },

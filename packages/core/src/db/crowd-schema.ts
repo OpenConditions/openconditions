@@ -1,7 +1,7 @@
 import { enumCheckSql, RECORD_CLASSES, SUB_CLAIM_TYPES } from "@openconditions/model";
 import { sql } from "drizzle-orm";
 import {
-  bigserial,
+  bigint,
   check,
   foreignKey,
   index,
@@ -71,7 +71,7 @@ export const subClaim = conditionsSchema.table(
 export const reportRefusal = conditionsSchema.table(
   "report_refusal",
   {
-    id: bigserial("id", { mode: "number" }).primaryKey(),
+    id: bigint("id", { mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),
     actorKeyId: text("actor_key_id").notNull(),
     cell: text("cell").notNull(),
     occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(),
@@ -100,7 +100,7 @@ export const reportRefusal = conditionsSchema.table(
 export const reportEvidence = conditionsSchema.table(
   "report_evidence",
   {
-    id: bigserial("id", { mode: "number" }).primaryKey(),
+    id: bigint("id", { mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),
     recordClass: text("record_class").notNull(),
     recordId: text("record_id").notNull(),
     componentKey: text("component_key").notNull().default(""),
