@@ -225,8 +225,12 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
   const requireReviewer = makeRequireReviewer(reviewerToken);
 
   // A key other than the one the ingest service sealed the check row with
-  // stops the boot (main.ts waits for that row first); then every stored
-  // issuer key must open.
+  // stops the boot; then every stored issuer key must open. An absent row is
+  // let through on purpose: the only callers are main.ts, which has already
+  // waited for the row with waitForSecretsKeyCheck, and tests that build the
+  // server on a database no ingest service started on. None of the package's
+  // entry points exposes this function, so no other path reaches it without
+  // that wait.
   await verifySecretsKeyCheck(sql, secretsKey);
   await assertIssuerKeysOpen(sql, secretsKey);
   await ensureIssuerKeys(sql, secretsKey, now(), issuerName);

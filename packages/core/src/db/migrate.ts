@@ -76,6 +76,17 @@ export async function runMigrations(connectionString: string): Promise<void> {
       migrationsSchema: MIGRATIONS_SCHEMA,
       migrationsTable: MIGRATIONS_TABLE,
     });
+    // The grants run after the migration has committed, in a statement of
+    // their own. Once an incremental migration adds a table a consumer uses,
+    // a consumer that starts in between can see the new version, pass its
+    // schema wait and get "permission denied" on the new table until this
+    // call lands a moment later. That is acceptable: the window lasts one
+    // function call under the migration lock, and a refused query fails one
+    // request, one sweep run or one start (which the restart policy repeats)
+    // rather than writing anything wrong; the next attempt succeeds. A
+    // migration that must close it re-creates conditions.grant_consumer_roles()
+    // with the new table and calls it in the same file, which the custom
+    // migration's statement-kind test must then allow.
     await grantConsumerRoles(client);
   } finally {
     try {

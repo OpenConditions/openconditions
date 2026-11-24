@@ -169,8 +169,12 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
   const advertisedSchemaVersions = schemaVersions(registry);
   const peers = options.peers ?? (await PeerBook.load(sql, settings.peers));
   // A key other than the one the ingest service sealed the check row with
-  // stops the boot (main.ts waits for that row first), and so does one that
-  // cannot open the stored instance keys, naming the key.
+  // stops the boot, and so does one that cannot open the stored instance
+  // keys, naming the key. An absent row is let through on purpose: the only
+  // callers are main.ts, which has already waited for the row with
+  // waitForSecretsKeyCheck, and tests that build the server on a database no
+  // ingest service started on. The package is private and declares no entry
+  // point, so no other path reaches it without that wait.
   await verifySecretsKeyCheck(sql, secretsKey);
   await assertInstanceKeysOpen(sql, secretsKey);
   await maintainInstanceKey(sql, secretsKey, now(), actorConfig.instanceId);
