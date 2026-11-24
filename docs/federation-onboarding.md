@@ -396,18 +396,7 @@ A peer's readings land in the observation history, whose partitions the ingest s
 
 ### Keys and rotation
 
-The service creates its Ed25519 instance key on first boot and keeps it in
-the database, its private half encrypted with `OPENCONDITIONS_SECRETS_KEY`. Without that key the stored instance keys cannot be used: a lost key means a new instance key, a new federation identity, and every peer pinning this instance again. A key is valid for six months; 30 days before it expires the
-service rotates it: the old key endorses the new one (both sign that the new
-key is this instance's next), and the actor document serves both, with the
-endorsement, until the old one expires. The new key signs only once it has
-been served for a week, so every peer has read it. A peer trusts a served key
-that a key it pins, or learned this way, endorsed, and keeps it
-(`conditions.federation_peer_key`): operators pin each other once, and the
-pins carry through every rotation. A learned key is trusted only while the pin
-it leads back to stays configured, so removing a pin revokes what it led to.
-A peer that does not read the actor document for longer than a key lives (six
-months) has to be pinned again. A key pinned for two peers fails the boot.
+The service creates its Ed25519 instance key on first boot and keeps it in the database, its private half encrypted with `OPENCONDITIONS_SECRETS_KEY`. Without that key the stored instance keys cannot be used: a lost key means a new instance key, a new federation identity, and every peer pinning this instance again. A key is valid for six months; 30 days before it expires the service rotates it: the old key endorses the new one (both sign that the new key is this instance's next), and the actor document serves both, with the endorsement, until the old one expires. The new key signs only once it has been served for a week, so every peer has read it. A peer trusts a served key that a key it pins, or learned this way, endorsed, and keeps it (`conditions.federation_peer_key`): operators pin each other once, and the pins carry through every rotation. A learned key is trusted only while the pin it leads back to stays configured, so removing a pin revokes what it led to. A peer that does not read the actor document for longer than a key lives (six months) has to be pinned again. A key pinned for two peers fails the boot.
 
 ### One process
 
@@ -527,7 +516,10 @@ services:
       OPENCONDITIONS_FEDERATION_ACTOR: /config/actor.json
       OPENCONDITIONS_FEDERATION_PEERS: /config/peers.json
       OPENCONDITIONS_FEDERATION_REGISTRY_CACHE: /data/registry
+      # A copy of openconditions-ingest's Secrets key, never a new one.
+      OPENCONDITIONS_SECRETS_KEY_FILE: /run/secrets/openconditions-secrets-key
       TMPDIR: /data
+    secrets: [openconditions-secrets-key]
     volumes:
       - ./federation:/config:ro
       - openconditions-federation-data:/data
@@ -545,11 +537,17 @@ networks:
   openmapx:
     external: true
 
+secrets:
+  openconditions-secrets-key:
+    file: ./federation-secrets/secrets-key
+
 volumes:
   openmapx-openconditions-ingest-data:
     external: true
   openconditions-federation-data:
 ```
+
+The file `federation-secrets/secrets-key` holds the same value that was entered as the Secrets key of `openconditions-ingest` in OpenMapX's admin services panel, taken from the recovery set. It must be readable by the container's user, and it stays out of the `federation` config folder and out of backups. The service refuses to start with any other key; see [secrets encrypted at rest](../README.md#secrets-encrypted-at-rest).
 
 and the public reverse proxy routes the paths, for example with Caddy:
 

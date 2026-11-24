@@ -189,16 +189,7 @@ their occupancy), the charging domain (charging sites, charge-point status and t
 webcam layer and its stills) and the hazards domain (the weather alert, wildfire, earthquake and natural event
 overlays).
 
-OpenMapX passes a community service's `container.environment` to the container verbatim, so the services'
-configuration is `configSchema` fields: set the database URL, the secrets key (the same value in every
-OpenConditions service, see [secrets encrypted at rest](#secrets-encrypted-at-rest)) and the contributions API's
-grant secret and reviewer token once as secrets in the admin services panel. Until they are set, both services stop at boot
-and their containers restart in a loop; once they are, apply the change and the services start. Set any
-setting there, or as `SERVICE_OPENCONDITIONS_INGEST_<KEY>` in OpenMapX's `.env`. Settings kept in OpenMapX's
-`.env` are applied with `pnpm openmapx services start openconditions-ingest` (which resets every setting saved
-only in the admin form, so keep all of them in one place). Settings saved in the form are applied with
-**Save & Apply**. See
-[services/ingest/README.md](services/ingest/README.md#configuration-under-openmapx).
+OpenMapX passes a community service's `container.environment` to the container verbatim, so the services' configuration is `configSchema` fields: set the database URL, the secrets key (the same value in every OpenConditions service, see [secrets encrypted at rest](#secrets-encrypted-at-rest)) and the contributions API's grant secret and reviewer token once as secrets in the admin services panel. Until they are set, both services stop at boot and their containers restart in a loop; once they are, apply the change and the services start. Set any setting there, or as `SERVICE_OPENCONDITIONS_INGEST_<KEY>` in OpenMapX's `.env`. Settings kept in OpenMapX's `.env` are applied with `pnpm openmapx services start openconditions-ingest` (which resets every setting saved only in the admin form, so keep all of them in one place). Settings saved in the form are applied with **Save & Apply**. See [services/ingest/README.md](services/ingest/README.md#configuration-under-openmapx).
 
 See OpenMapX's _Building an external extension_ guide for the full flow. OpenMapX's built-in OpenConditions
 integration reads roads situations, routing evidence, fuel features, parking sites, charging sites, cameras and
@@ -217,7 +208,7 @@ The key is 64 hexadecimal characters; surrounding whitespace is ignored. Generat
 Where the key lives depends on how OpenConditions runs:
 
 - **Standalone**, the key lives only where the operator puts it: a file named by `OPENCONDITIONS_SECRETS_KEY_FILE` (or the variable `OPENCONDITIONS_SECRETS_KEY` itself), and the operator's recovery set. A database backup holds only the encrypted secrets and is of no use for them without the key, as long as the key file stays out of the backup.
-- **Under OpenMapX**, each service's credentials in the admin services panel are separate, so the key is entered once per service: generated for `openconditions-ingest` and copied into the others. OpenMapX mounts it as a file and sets `OPENCONDITIONS_SECRETS_KEY_FILE`. OpenMapX's credential vault stores the key in OpenMapX's own table `public.service_secret`, in the same database, encrypted with OpenMapX's secrets key (the file `infra/docker/secrets/secrets-key` its render generates). A full database backup therefore holds the OpenConditions key, encrypted, next to the secrets it protects. Such a backup is safe for these secrets only while OpenMapX's secrets key file stays out of it, which is how OpenMapX keeps that file: out of backups, in the recovery set.
+- **Under OpenMapX**, each service's credentials in the admin services panel are separate, so the key is entered once per service: generated for `openconditions-ingest` and copied into the others. OpenMapX mounts it as a file and sets `OPENCONDITIONS_SECRETS_KEY_FILE`. A service that runs from its own compose file beside the extension, such as the federation service or a heavy-feeds ingest process started that way, has no entry in that panel: give it the copy as a mounted file and point `OPENCONDITIONS_SECRETS_KEY_FILE` at it, as the [federation guide's compose example](docs/federation-onboarding.md#deploying-it) does. OpenMapX's credential vault stores the key in OpenMapX's own table `public.service_secret`, in the same database, encrypted with OpenMapX's secrets key (the file `infra/docker/secrets/secrets-key` its render generates). A full database backup therefore holds the OpenConditions key, encrypted, next to the secrets it protects. Such a backup is safe for these secrets only while OpenMapX's secrets key file stays out of it, which is how OpenMapX keeps that file: out of backups, in the recovery set.
 
 Both keys belong in your recovery set: the OpenConditions secrets key and, under OpenMapX, OpenMapX's secrets key. There is no tool to re-encrypt the secrets under a new key, so a lost key and a compromised key both mean starting over:
 
