@@ -15,23 +15,20 @@ export function retentionDaysOf(entry: Pick<PropertyEntry, "retention">): number
 }
 
 /**
- * Deletes the history of whole series, each read from its own retention
- * class: a series' readings are stored in the partition of its
- * `retention_days`, so the delete prunes to those partitions. A series that
- * keeps no history (null) has none to delete; a reading stored under a class
- * the property no longer keeps goes with that partition. Returns the rows
- * deleted.
+ * Deletes every reading of whole series that are gone, in every retention
+ * class: a reading stays in the class it was written under, so a series
+ * whose class changed, or whose property keeps no history any more, may hold
+ * readings in several, and those of the keep-everything class would never be
+ * dropped. The primary key leads with the series, so each partition is one
+ * index probe. Returns the rows deleted.
  */
 export async function deleteSeriesHistory(
   sql: postgres.Sql | postgres.TransactionSql,
-  series: readonly { series_id: string; retention_days: number | null }[],
+  seriesIds: readonly string[],
 ): Promise<number> {
-  const kept = series.filter((s) => s.retention_days !== null);
-  if (kept.length === 0) return 0;
+  if (seriesIds.length === 0) return 0;
   const result = await sql`
-    DELETE FROM conditions.observation
-     WHERE series_id = ANY(${kept.map((s) => s.series_id)}::bigint[])
-       AND retention_days = ANY(${[...new Set(kept.map((s) => s.retention_days))]}::smallint[])`;
+    DELETE FROM conditions.observation WHERE series_id = ANY(${seriesIds}::bigint[])`;
   return result.count;
 }
 

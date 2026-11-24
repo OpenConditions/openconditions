@@ -387,30 +387,25 @@ describe("partition maintenance by two services at once", () => {
 });
 
 describe("deleting whole series", () => {
-  it("deletes each series' history in its retention class and nothing else", async () => {
+  it("deletes every reading of each series, in every class, and nothing else", async () => {
     await ensureObservationPartitions(sql, { classes: retentionClasses(registry), now: NOW });
     const start = NOW.toISOString();
+    // 7101 changed class twice, its readings in three classes, one of them
+    // keep-everything; 7103's property keeps no history any more.
     await sql`
       INSERT INTO conditions.observation (series_id, retention_days, phenomenon_start,
         fetched_at, recorded_at, temporality, aggregation, value_num)
       VALUES (7101, 3, ${start}, now(), now(), 'live', 'mean', 1),
              (7101, 3, ${start}::timestamptz + interval '1 minute', now(), now(), 'live', 'mean', 2),
              (7101, 5, ${start}, now(), now(), 'live', 'mean', 3),
-             (7102, 3, ${start}, now(), now(), 'live', 'mean', 4)`;
-    const deleted = await deleteSeriesHistory(sql, [
-      { series_id: "7101", retention_days: 3 },
-      { series_id: "7103", retention_days: null },
-    ]);
-    expect(deleted).toBe(2);
-    // A reading of another class went past the series' retention when the
-    // class changed; its own partition's retention drops it.
+             (7101, 0, ${start}, now(), now(), 'live', 'mean', 4),
+             (7103, 2, ${start}, now(), now(), 'live', 'mean', 5),
+             (7102, 3, ${start}, now(), now(), 'live', 'mean', 6)`;
+    expect(await deleteSeriesHistory(sql, ["7101", "7103"])).toBe(5);
     expect(
       await sql`SELECT series_id::int AS series, retention_days AS days
-        FROM conditions.observation WHERE series_id IN (7101, 7102) ORDER BY 1, 2`,
-    ).toEqual([
-      { series: 7101, days: 5 },
-      { series: 7102, days: 3 },
-    ]);
-    expect(await deleteSeriesHistory(sql, [{ series_id: "7104", retention_days: null }])).toBe(0);
+        FROM conditions.observation WHERE series_id IN (7101, 7102, 7103) ORDER BY 1, 2`,
+    ).toEqual([{ series: 7102, days: 3 }]);
+    expect(await deleteSeriesHistory(sql, [])).toBe(0);
   });
 });

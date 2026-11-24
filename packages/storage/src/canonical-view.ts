@@ -449,7 +449,7 @@ export async function rekeyCrowdSeries(
   for (const c of current) for (const m of c.memberIds) holding.set(m, c);
   const old = new Map(former.map((v) => [v.canonicalFeatureId, v]));
 
-  const drop: { series_id: string; retention_days: number | null }[] = [];
+  const drop: string[] = [];
   for (const s of series) {
     const was = old.get(s.feature_id)!;
     const rank = (featureId: string) => (featureId === was.survivorId ? 0 : 1);
@@ -475,7 +475,7 @@ export async function rekeyCrowdSeries(
       }
     }
     if (target === undefined) {
-      drop.push(s);
+      drop.push(s.series_id);
       continue;
     }
     if (target.canonicalFeatureId === s.feature_id && (componentKey ?? null) === s.component_key) {
@@ -495,7 +495,7 @@ export async function rekeyCrowdSeries(
          AND qualifier_key = ${key.qualifierKey} AND source_id = 'crowd'`;
     if (clash !== undefined) {
       // Rows are visited newest first, so the one already there is the later reading.
-      drop.push(s);
+      drop.push(s.series_id);
       continue;
     }
     const property = registry.property(key.property)!;
@@ -525,7 +525,7 @@ export async function rekeyCrowdSeries(
   if (drop.length > 0) {
     const records = await tx<{ id: string }[]>`
       DELETE FROM conditions.observation_latest
-       WHERE series_id = ANY(${drop.map((s) => s.series_id)}::bigint[])
+       WHERE series_id = ANY(${drop}::bigint[])
       RETURNING crowd_record_id AS id`;
     await deleteSeriesHistory(tx, drop);
     const ids = records.map((r) => r.id);
