@@ -44,7 +44,8 @@ async function boot() {
   const operatorToken = role === "primary" ? operatorTokenFromEnv() : undefined;
   // The OAuth2 grants' tokens are sealed with it: a missing or malformed key
   // fails boot, and so, after the migrations, does one that is not the key
-  // the check row and the stored grants were sealed with.
+  // the check row, the stored grants and the stored private keys were sealed
+  // with.
   const secretsKey = readIngestSecretsKey(process.env);
   const crowd = resolveCrowdCredit(process.env, resolveInstanceId());
   console.info(`[ingest] instance id ${resolveInstanceId()}, role ${role}`);
