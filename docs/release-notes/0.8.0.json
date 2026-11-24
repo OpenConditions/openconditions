@@ -1,0 +1,56 @@
+{
+  "imageSourceSha": "2605a28d431fc2465cc1d8f84567c38d98148b97",
+  "images": {
+    "contributions-api": {
+      "buildSourceSha": "2605a28d431fc2465cc1d8f84567c38d98148b97",
+      "digest": "sha256:ceee6a6569fad1c64aecbe5bd834e81a7a9fc6f306203c953c0db13c194305e3",
+      "platforms": [
+        "linux/amd64"
+      ],
+      "provenanceArtifactId": 14909196521,
+      "qualificationArtifactId": 14908431593,
+      "repository": "ghcr.io/openconditions/contributions-api",
+      "sbomArtifactId": 14908431593
+    },
+    "federation": {
+      "buildSourceSha": "2605a28d431fc2465cc1d8f84567c38d98148b97",
+      "digest": "sha256:6ec21a480a23f2ee9252053404fe05a89f4a9538f20083f15608bce817fd53fc",
+      "platforms": [
+        "linux/amd64"
+      ],
+      "provenanceArtifactId": 14909196521,
+      "qualificationArtifactId": 14907269532,
+      "repository": "ghcr.io/openconditions/federation",
+      "sbomArtifactId": 14907269532
+    },
+    "ingest": {
+      "buildSourceSha": "2605a28d431fc2465cc1d8f84567c38d98148b97",
+      "digest": "sha256:d5d69c5e64a17f87ea245ad840575cdcc92e5b55f7de4cd6885c5c4b9801db99",
+      "platforms": [
+        "linux/amd64"
+      ],
+      "provenanceArtifactId": 14909196521,
+      "qualificationArtifactId": 14909285126,
+      "repository": "ghcr.io/openconditions/ingest",
+      "sbomArtifactId": 14909285126
+    },
+    "openlr-resolver": {
+      "buildSourceSha": "2605a28d431fc2465cc1d8f84567c38d98148b97",
+      "digest": "sha256:9cd3d3fa338b9c565eb35138acdc77b607972fe4a109164036da4d93b883e0ec",
+      "platforms": [
+        "linux/amd64"
+      ],
+      "provenanceArtifactId": 14909196521,
+      "qualificationArtifactId": 14907864134,
+      "repository": "ghcr.io/openconditions/openlr-resolver",
+      "sbomArtifactId": 14907864134
+    }
+  },
+  "producer": {
+    "runAttempt": 1,
+    "runId": 45368884246,
+    "workflowFile": ".github/workflows/ci.yml"
+  },
+  "schemaVersion": 1,
+  "version": "0.8.0"
+}

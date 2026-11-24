@@ -1,7 +1,7 @@
 {
   "id": "openconditions-ingest",
   "name": "OpenConditions Ingest",
-  "version": "0.1.0",
+  "version": "0.8.0",
   "description": "Fetches open road-condition, fuel-price, parking and EV-charging feeds (NDW, Autobahn, Digitraffic, DriveBC, WZDx, Tankerkoenig, ParkAPI, BNetzA, OCPI and DATEX II charging publishers, and others), normalises them to the canonical model, and writes them to the shared PostGIS `conditions` schema for OpenMapX to read. Also serves public, rate-limited emitter feeds (GeoJSON, TraFF, DATEX II, GTFS-RT, JSON-LD, Valhalla exclusions, SSE).",
   "author": "OpenConditions",
   "license": "AGPL-3.0-or-later",
@@ -10,7 +10,7 @@
   "quality": "community-verified",
   "container": {
     "image": "ghcr.io/openconditions/ingest",
-    "tag": "latest",
+    "tag": "0.8.0",
     "expose": [
       4100
     ],
@@ -41,7 +41,8 @@
       "timeout": "5s",
       "retries": 5,
       "startPeriod": "30s"
-    }
+    },
+    "digest": "sha256:d5d69c5e64a17f87ea245ad840575cdcc92e5b55f7de4cd6885c5c4b9801db99"
   },
   "volumes": [
     {
