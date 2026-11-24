@@ -550,12 +550,30 @@ print(json.dumps({'graphCounts':counts,'match':x,'invalidReferenceStatus':400,'g
 """
 
 
+# The ingest service's key check, sealed with only what the contributions-api
+# image ships (its core code is bundled, not importable). It is a second copy
+# of the sealed format: AES-256-GCM, a 12-byte IV, a 16-byte tag and the
+# place as additional data. The service verifies the row with its own code at
+# start, so a copy that drifts leaves it unhealthy and fails qualification.
 SEAL_SECRETS_KEY_CHECK = """
+import { createCipheriv, randomBytes } from "node:crypto";
 import postgres from "postgres";
-import { SecretsKey, sealSecretsKeyCheck } from "@openconditions/core/server";
+const key = Buffer.from(process.env.OPENCONDITIONS_SECRETS_KEY, "hex");
+if (key.length !== 32) throw new Error("the secrets key is not 32 bytes");
+const iv = randomBytes(12);
+const cipher = createCipheriv("aes-256-gcm", key, iv, { authTagLength: 16 });
+cipher.setAAD(Buffer.from(JSON.stringify(["conditions", "secrets_key_check", "value", "1"]), "utf8"));
+const ciphertext = Buffer.concat([
+  cipher.update("openconditions secrets key check", "utf8"),
+  cipher.final(),
+]);
+const tag = cipher.getAuthTag();
 const sql = postgres(process.env.DATABASE_URL, { max: 1 });
 try {
-  await sealSecretsKeyCheck(sql, SecretsKey.parse(process.env.OPENCONDITIONS_SECRETS_KEY));
+  await sql`
+    INSERT INTO conditions.secrets_key_check (id, value_ciphertext, value_iv, value_tag)
+    VALUES (1, ${ciphertext}, ${iv}, ${tag})
+    ON CONFLICT (id) DO NOTHING`;
 } finally {
   await sql.end();
 }
@@ -724,8 +742,8 @@ def runtime_smoke(image, identity, source, output, *, exercise=None):
         }
         if image == "contributions-api":
             # The ingest service seals the secrets key check after migrating,
-            # and this service waits for it; seal it as ingest does, with the
-            # image's own code, before the service starts.
+            # and this service waits for it; seal it as ingest does, inside
+            # the image, before the service starts.
             command(
                 [
                     "docker",
