@@ -93,8 +93,8 @@ must not silently invent geometry either.
 
 ## Selected display contributors
 
-Migration `0068_flow_field_lineage` adds version 1 field lineage to the live
-segment surface. `GET /segments.geojson` properties include `lineage_version: 1`,
+The flow functions in the database migrations (`conditions.flow_*`, `conditions.segment_flow`)
+add version 1 field lineage to the live segment surface. `GET /segments.geojson` properties include `lineage_version: 1`,
 `field_sources`, `field_contributors` and `field_lineage_complete`; `conditions.segment_flow` encodes the
 three maps as JSON strings in MVT attributes. Each map has independent `speed`,
 `freeFlow`, `ratio`, `los`, `confidence` and `geometry` keys when the field's lineage is known.
@@ -105,8 +105,8 @@ Display credits have `{ sourceId, name, url?, licensing?,
 attributionText?, publisher?: { name, url? }, notes?, retrievedAt? }`. A required
 verbatim notice is an additional credit with the parent's source ID and the notice
 as its `name`. Deduplicate identical credits, rather than source IDs, so the notice
-survives. Migration `0069_captured_licensing` carries captured scoped definitions
-through these credits and the OSM geometry credit; it changes functions only.
+survives. Captured scoped definitions travel through these credits and the OSM
+geometry credit.
 See [licence metadata](licensing.md) for the display contract. An unknown source keeps its proven ID and any available provenance;
 missing catalogue metadata is never replaced with an unrelated feed's credit.
 

@@ -26,10 +26,11 @@ function resolveMigrationsFolder(): string {
 /**
  * Applies all pending migrations in `packages/core/drizzle/` (a baseline
  * drizzle-kit generates from the schema code, and a custom file with what it
- * cannot express) to the database. Applied migrations
- * are tracked in `drizzle.__drizzle_migrations_oc` — a dedicated table so an
- * OpenConditions DB shared with another Drizzle project (e.g. OpenMapX in dev)
- * keeps separate histories. Idempotent; safe to run on every service boot.
+ * cannot express; see docs/database-migrations.md) to the database. Applied
+ * migrations are tracked in `drizzle.__drizzle_migrations_oc` — a dedicated
+ * table so an OpenConditions DB shared with another Drizzle project (e.g.
+ * OpenMapX in dev) keeps separate histories. Idempotent; safe to run on every
+ * service boot.
  *
  * Takes a connection string (not a client) and opens its own short-lived
  * `max: 1` connection: drizzle's postgres-js driver replaces the client's type
