@@ -12,8 +12,8 @@ export const jmaBudget = conditionsSchema.table(
     reserved: bigint("reserved", { mode: "number" }).notNull().default(0),
   },
   (t) => [
-    primaryKey({ columns: [t.egress, t.day] }),
-    check("jma_budget_nonnegative", sql`${t.used} >= 0 AND ${t.reserved} >= 0`),
+    primaryKey({ name: "jma_budget_pkey", columns: [t.egress, t.day] }),
+    check("jma_budget_nonnegative_check", sql`${t.used} >= 0 AND ${t.reserved} >= 0`),
   ],
 );
 

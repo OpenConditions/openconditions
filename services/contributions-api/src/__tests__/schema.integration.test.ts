@@ -156,9 +156,9 @@ describe("crowd evidence keyed by record", () => {
     expect(names).toEqual(
       expect.arrayContaining([
         "sub_claim_subject_class_subject_id_key_id_claim_type_key",
-        "idx_sub_claim_key",
-        "idx_report_evidence_record",
-        "idx_report_evidence_merged",
+        "sub_claim_key_id_idx",
+        "report_evidence_record_class_record_id_occurred_at_idx",
+        "report_evidence_merged_idx",
         "situation_evidence_state_crowd_idx",
       ]),
     );
@@ -202,7 +202,7 @@ describe("spent_token single-use ledger", () => {
         "reporter.reporter_last_active_at_idx",
       ]),
     );
-    expect(names).not.toContain("spent_token.idx_spent_token_spent_at");
+    expect(names).not.toContain("spent_token.spent_token_spent_at_idx");
   }, 30_000);
 });
 
@@ -320,7 +320,7 @@ describe("CHECK constraints", () => {
       sql`INSERT INTO conditions.reporter (key_id, pub_jwk, reputation_alpha, reputation_beta,
             entitlement_expires_at, created_at, last_active_at)
           VALUES ('k-bad-a', '{}'::jsonb, 0, 1, now(), now(), now())`,
-    ).rejects.toThrow(/reporter_reputation_alpha_positive/);
+    ).rejects.toThrow(/reporter_reputation_alpha_check/);
   }, 30_000);
 
   it("rejects a reporter with an unknown status", async () => {
@@ -328,7 +328,7 @@ describe("CHECK constraints", () => {
       sql`INSERT INTO conditions.reporter (key_id, pub_jwk, reputation_alpha, reputation_beta,
             entitlement_expires_at, created_at, last_active_at, status)
           VALUES ('k-bad-s', '{}'::jsonb, 1, 1, now(), now(), now(), 'weird')`,
-    ).rejects.toThrow(/reporter_status_enum/);
+    ).rejects.toThrow(/reporter_status_check/);
   }, 30_000);
 
   it("rejects a sub_claim with an unknown claim_type", async () => {
@@ -336,7 +336,7 @@ describe("CHECK constraints", () => {
       sql`INSERT INTO conditions.sub_claim
             (id, subject_class, subject_id, claim_type, key_id, signature, created_at)
           VALUES ('sc-bad', 'situation', 'subj-1', 'shout', 'k-1', 'sig', now())`,
-    ).rejects.toThrow(/sub_claim_claim_type_enum/);
+    ).rejects.toThrow(/sub_claim_claim_type_check/);
   }, 30_000);
 
   it("rejects a sub_claim whose subject is not a record class", async () => {
@@ -344,7 +344,7 @@ describe("CHECK constraints", () => {
       sql`INSERT INTO conditions.sub_claim
             (id, subject_class, subject_id, claim_type, key_id, signature, created_at)
           VALUES ('sc-bad-class', 'observations', 'subj-1', 'confirm', 'k-1', 'sig', now())`,
-    ).rejects.toThrow(/sub_claim_subject_class_enum/);
+    ).rejects.toThrow(/sub_claim_subject_class_check/);
   }, 30_000);
 
   it("rejects a report_evidence with an unknown evidence_kind", async () => {
@@ -352,7 +352,7 @@ describe("CHECK constraints", () => {
       sql`INSERT INTO conditions.report_evidence
             (record_class, record_id, evidence_kind, occurred_at)
           VALUES ('situation', 'sit-1', 'telepathy', now())`,
-    ).rejects.toThrow(/report_evidence_kind_enum/);
+    ).rejects.toThrow(/report_evidence_evidence_kind_check/);
   }, 30_000);
 
   it("rejects a report_evidence whose record is not a record class", async () => {
@@ -360,14 +360,14 @@ describe("CHECK constraints", () => {
       sql`INSERT INTO conditions.report_evidence
             (record_class, record_id, evidence_kind, occurred_at)
           VALUES ('observations', 'obs-1', 'report', now())`,
-    ).rejects.toThrow(/report_evidence_record_class_enum/);
+    ).rejects.toThrow(/report_evidence_record_class_check/);
   }, 30_000);
 
   it("rejects a situation with an unknown evidence_state", async () => {
     const id = await seedFeedSituation(sql, "evidence-state-check");
     await expect(
       sql`UPDATE conditions.situation SET evidence_state = 'nonsense' WHERE id = ${id}`,
-    ).rejects.toThrow(/situation_evidence_state_enum/);
+    ).rejects.toThrow(/situation_evidence_state_check/);
     await expect(
       sql`UPDATE conditions.situation SET evidence_state = 'self_reported' WHERE id = ${id}`,
     ).resolves.toBeDefined();

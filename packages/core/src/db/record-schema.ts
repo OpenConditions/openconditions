@@ -24,6 +24,7 @@ import {
   boolean,
   check,
   doublePrecision,
+  foreignKey,
   index,
   integer,
   jsonb,
@@ -85,16 +86,16 @@ function kernelColumns() {
 /** The kernel-closed CHECKs of a class table, named after it. */
 function kernelChecks(table: string) {
   return [
-    check(`${table}_temporality_enum`, sql.raw(enumCheckSql("temporality", TEMPORALITIES))),
-    check(`${table}_origin_enum`, sql.raw(enumCheckSql("origin", ORIGINS))),
-    check(`${table}_access_mode_enum`, sql.raw(enumCheckSql("access_mode", ACCESS_MODES))),
-    check(`${table}_privacy_class_enum`, sql.raw(enumCheckSql("privacy_class", PRIVACY_CLASSES))),
-    check(`${table}_tombstone_reason_enum`, nullableEnum("tombstone_reason", TOMBSTONE_REASONS)),
+    check(`${table}_temporality_check`, sql.raw(enumCheckSql("temporality", TEMPORALITIES))),
+    check(`${table}_origin_check`, sql.raw(enumCheckSql("origin", ORIGINS))),
+    check(`${table}_access_mode_check`, sql.raw(enumCheckSql("access_mode", ACCESS_MODES))),
+    check(`${table}_privacy_class_check`, sql.raw(enumCheckSql("privacy_class", PRIVACY_CLASSES))),
+    check(`${table}_tombstone_reason_check`, nullableEnum("tombstone_reason", TOMBSTONE_REASONS)),
     check(
-      `${table}_tombstone_complete`,
+      `${table}_tombstone_check`,
       sql.raw("(tombstone_reason IS NULL) = (tombstoned_at IS NULL)"),
     ),
-    check(`${table}_revision_positive`, sql.raw("revision > 0")),
+    check(`${table}_revision_check`, sql.raw("revision > 0")),
   ];
 }
 
@@ -116,15 +117,20 @@ function revisionTable(table: string, parentColumn: string, parent: () => AnyPgC
   return conditionsSchema.table(
     `${table}_revision`,
     {
-      parentId: text(parentColumn).notNull().references(parent, { onDelete: "cascade" }),
+      parentId: text(parentColumn).notNull(),
       revision: integer("revision").notNull(),
       recordedAt: tstz("recorded_at").notNull(),
       changeKinds: text("change_kinds").array().notNull(),
       snapshot: jsonb("snapshot").notNull(),
     },
     (t) => [
-      primaryKey({ columns: [t.parentId, t.revision] }),
-      index(`idx_${table}_revision_recorded`).on(t.recordedAt),
+      primaryKey({ name: `${table}_revision_pkey`, columns: [t.parentId, t.revision] }),
+      foreignKey({
+        name: `${table}_revision_${parentColumn}_fkey`,
+        columns: [t.parentId],
+        foreignColumns: [parent()],
+      }).onDelete("cascade"),
+      index(`${table}_revision_recorded_at_idx`).on(t.recordedAt),
     ],
   );
 }
@@ -150,35 +156,37 @@ export const situation = conditionsSchema.table(
   },
   (t) => [
     ...kernelChecks("situation"),
-    check("situation_severity_enum", sql.raw(enumCheckSql("severity", SEVERITY_LABELS))),
+    check("situation_severity_check", sql.raw(enumCheckSql("severity", SEVERITY_LABELS))),
     check(
-      "situation_severity_level_range",
+      "situation_severity_level_check",
       sql`${t.severityLevel} IS NULL OR ${t.severityLevel} BETWEEN 1 AND 5`,
     ),
-    check("situation_certainty_enum", sql.raw(enumCheckSql("certainty", CERTAINTIES))),
+    check("situation_certainty_check", sql.raw(enumCheckSql("certainty", CERTAINTIES))),
     check(
-      "situation_validity_status_enum",
+      "situation_validity_status_check",
       sql.raw(enumCheckSql("validity_status", VALIDITY_STATUSES)),
     ),
-    check("situation_evidence_state_enum", nullableEnum("evidence_state", EVIDENCE_STATES)),
-    index("idx_situation_geom").using("gist", t.geom),
-    index("idx_situation_kind_type").on(t.kind, t.type),
+    check("situation_evidence_state_check", nullableEnum("evidence_state", EVIDENCE_STATES)),
+    index("situation_geom_idx").using("gist", t.geom),
+    index("situation_kind_type_idx").on(t.kind, t.type),
     // A source's records, paged by id (the federation reconcile).
-    index("idx_situation_source").on(t.sourceId, t.id),
-    index("idx_situation_canonical").on(t.canonicalId),
-    index("idx_situation_valid_to").on(t.validTo),
-    index("idx_situation_expires").on(t.expiresAt),
-    index("idx_situation_group").on(t.groupId),
+    index("situation_source_id_id_idx").on(t.sourceId, t.id),
+    index("situation_canonical_id_idx").on(t.canonicalId),
+    index("situation_valid_to_idx").on(t.validTo),
+    index("situation_expires_at_idx").on(t.expiresAt),
+    index("situation_group_id_idx").on(t.groupId),
     index("situation_evidence_state_crowd_idx")
       .on(t.evidenceState)
       .where(sql`${t.origin} = 'crowd'`),
-    index("idx_situation_tombstoned").on(t.tombstonedAt).where(sql`${t.tombstonedAt} IS NOT NULL`),
+    index("situation_tombstoned_at_idx")
+      .on(t.tombstonedAt)
+      .where(sql`${t.tombstonedAt} IS NOT NULL`),
     // The nightly archive prune looks up the erased records.
-    index("idx_situation_rights_revoked")
+    index("situation_id_rights_revoked_idx")
       .on(t.id)
       .where(sql`${t.tombstoneReason} = 'rights_revoked'`),
     // Records in byte order of their ids, as federation lists them to compare state.
-    index("idx_situation_id_bytes").on(sql`${t.id} COLLATE "C"`),
+    index("situation_id_bytes_idx").on(sql`${t.id} COLLATE "C"`),
   ],
 );
 
@@ -189,9 +197,7 @@ export const situation = conditionsSchema.table(
 export const situationEffect = conditionsSchema.table(
   "situation_effect",
   {
-    situationId: text("situation_id")
-      .notNull()
-      .references(() => situation.id, { onDelete: "cascade" }),
+    situationId: text("situation_id").notNull(),
     effectId: text("effect_id").notNull(),
     phaseId: text("phase_id").notNull().default(""),
     kind: text("kind").notNull(),
@@ -205,18 +211,23 @@ export const situationEffect = conditionsSchema.table(
     value: jsonb("value").notNull(),
   },
   (t) => [
-    primaryKey({ columns: [t.situationId, t.effectId] }),
+    primaryKey({ name: "situation_effect_pkey", columns: [t.situationId, t.effectId] }),
+    foreignKey({
+      name: "situation_effect_situation_id_fkey",
+      columns: [t.situationId],
+      foreignColumns: [situation.id],
+    }).onDelete("cascade"),
     check(
-      "situation_effect_applicability_enum",
+      "situation_effect_applicability_kind_check",
       sql.raw(enumCheckSql("applicability_kind", APPLICABILITY_KINDS)),
     ),
     check(
-      "situation_effect_normalization_enum",
+      "situation_effect_normalization_check",
       sql.raw(enumCheckSql("normalization", NORMALIZATION)),
     ),
-    check("situation_effect_compliance_enum", sql.raw(enumCheckSql("compliance", COMPLIANCE))),
-    index("idx_situation_effect_kind_valid_to").on(t.kind, t.validTo),
-    index("idx_situation_effect_geom").using("gist", t.geom),
+    check("situation_effect_compliance_check", sql.raw(enumCheckSql("compliance", COMPLIANCE))),
+    index("situation_effect_kind_valid_to_idx").on(t.kind, t.validTo),
+    index("situation_effect_geom_idx").using("gist", t.geom),
   ],
 );
 
@@ -231,25 +242,25 @@ export const feature = conditionsSchema.table(
   },
   (t) => [
     ...kernelChecks("feature"),
-    check("feature_lifecycle_enum", sql.raw(enumCheckSql("lifecycle", LIFECYCLES))),
-    index("idx_feature_geom").using("gist", t.geom),
-    index("idx_feature_kind_type").on(t.kind, t.type),
-    index("idx_feature_source").on(t.sourceId, t.id),
-    index("idx_feature_canonical").on(t.canonicalId),
-    index("idx_feature_kind_lifecycle").on(t.kind, t.lifecycle),
+    check("feature_lifecycle_check", sql.raw(enumCheckSql("lifecycle", LIFECYCLES))),
+    index("feature_geom_idx").using("gist", t.geom),
+    index("feature_kind_type_idx").on(t.kind, t.type),
+    index("feature_source_id_id_idx").on(t.sourceId, t.id),
+    index("feature_canonical_id_idx").on(t.canonicalId),
+    index("feature_kind_lifecycle_idx").on(t.kind, t.lifecycle),
     ...sweepIndexes("feature", t),
     // Linking finds the features that share an external id with a written one,
     // one id at a time, often in the transaction that just wrote them: entries
     // go into the index directly, as a pending list would be scanned whole on
     // every lookup.
-    index("idx_feature_external_ids")
+    index("feature_external_ids_idx")
       .using("gin", sql`(${t.record} -> 'externalIds') jsonb_path_ops`)
       .with({ fastupdate: "off" }),
-    index("idx_feature_rights_revoked")
+    index("feature_id_rights_revoked_idx")
       .on(t.id)
       .where(sql`${t.tombstoneReason} = 'rights_revoked'`),
     // Records in byte order of their ids, as federation lists them to compare state.
-    index("idx_feature_id_bytes").on(sql`${t.id} COLLATE "C"`),
+    index("feature_id_bytes_idx").on(sql`${t.id} COLLATE "C"`),
   ],
 );
 
@@ -261,9 +272,7 @@ export const feature = conditionsSchema.table(
 export const featureComponent = conditionsSchema.table(
   "feature_component",
   {
-    featureId: text("feature_id")
-      .notNull()
-      .references(() => feature.id, { onDelete: "cascade" }),
+    featureId: text("feature_id").notNull(),
     key: text("key").notNull(),
     parentKey: text("parent_key"),
     kind: text("kind").notNull(),
@@ -274,10 +283,15 @@ export const featureComponent = conditionsSchema.table(
     contentHash: text("content_hash").notNull(),
   },
   (t) => [
-    primaryKey({ columns: [t.featureId, t.key] }),
-    check("feature_component_lifecycle_enum", nullableEnum("lifecycle", LIFECYCLES)),
-    index("idx_feature_component_kind").on(t.kind),
-    index("idx_feature_component_external_ids").using("gin", t.externalIds.op("jsonb_path_ops")),
+    primaryKey({ name: "feature_component_pkey", columns: [t.featureId, t.key] }),
+    foreignKey({
+      name: "feature_component_feature_id_fkey",
+      columns: [t.featureId],
+      foreignColumns: [feature.id],
+    }).onDelete("cascade"),
+    check("feature_component_lifecycle_check", nullableEnum("lifecycle", LIFECYCLES)),
+    index("feature_component_kind_idx").on(t.kind),
+    index("feature_component_external_ids_idx").using("gin", t.externalIds.op("jsonb_path_ops")),
   ],
 );
 
@@ -296,12 +310,12 @@ export const featureLink = conditionsSchema.table(
     decidedAt: tstz("decided_at").notNull(),
   },
   (t) => [
-    primaryKey({ columns: [t.aId, t.bId] }),
+    primaryKey({ name: "feature_link_pkey", columns: [t.aId, t.bId] }),
     // Code point order, as the model orders a pair, whatever the database's collation.
-    check("feature_link_ordered", sql`${t.aId} < ${t.bId} COLLATE "C"`),
-    check("feature_link_method_enum", sql.raw(enumCheckSql("method", LINK_METHODS))),
-    check("feature_link_status_enum", sql.raw(enumCheckSql("status", LINK_STATUSES))),
-    index("idx_feature_link_b").on(t.bId),
+    check("feature_link_order_check", sql`${t.aId} < ${t.bId} COLLATE "C"`),
+    check("feature_link_method_check", sql.raw(enumCheckSql("method", LINK_METHODS))),
+    check("feature_link_status_check", sql.raw(enumCheckSql("status", LINK_STATUSES))),
+    index("feature_link_b_id_idx").on(t.bId),
   ],
 );
 
@@ -325,7 +339,7 @@ export const featureCanonical = conditionsSchema.table(
     computedAt: tstz("computed_at").notNull(),
   },
   (t) => [
-    index("idx_feature_canonical_members").using("gin", t.memberIds).with({ fastupdate: "off" }),
+    index("feature_canonical_member_ids_idx").using("gin", t.memberIds).with({ fastupdate: "off" }),
   ],
 );
 
@@ -345,16 +359,18 @@ export const offer = conditionsSchema.table(
   },
   (t) => [
     ...kernelChecks("offer"),
-    check("offer_subject_class_enum", sql.raw(enumCheckSql("subject_class", RECORD_CLASSES))),
-    index("idx_offer_subject").on(t.subjectId, t.componentKey),
-    index("idx_offer_kind_valid_to").on(t.kind, t.validTo),
-    index("idx_offer_geom").using("gist", t.geom),
-    index("idx_offer_source").on(t.sourceId, t.id),
-    index("idx_offer_canonical").on(t.canonicalId),
+    check("offer_subject_class_check", sql.raw(enumCheckSql("subject_class", RECORD_CLASSES))),
+    index("offer_subject_id_component_key_idx").on(t.subjectId, t.componentKey),
+    index("offer_kind_valid_to_idx").on(t.kind, t.validTo),
+    index("offer_geom_idx").using("gist", t.geom),
+    index("offer_source_id_id_idx").on(t.sourceId, t.id),
+    index("offer_canonical_id_idx").on(t.canonicalId),
     ...sweepIndexes("offer", t),
-    index("idx_offer_rights_revoked").on(t.id).where(sql`${t.tombstoneReason} = 'rights_revoked'`),
+    index("offer_id_rights_revoked_idx")
+      .on(t.id)
+      .where(sql`${t.tombstoneReason} = 'rights_revoked'`),
     // Records in byte order of their ids, as federation lists them to compare state.
-    index("idx_offer_id_bytes").on(sql`${t.id} COLLATE "C"`),
+    index("offer_id_bytes_idx").on(sql`${t.id} COLLATE "C"`),
   ],
 );
 
@@ -376,12 +392,12 @@ export const recordRelation = conditionsSchema.table(
   },
   (t) => [
     primaryKey({
-      name: "record_relation_pk",
+      name: "record_relation_pkey",
       columns: [t.fromClass, t.fromId, t.relation, t.toClass, t.toId, t.componentKey],
     }),
-    check("record_relation_from_class_enum", sql.raw(enumCheckSql("from_class", RECORD_CLASSES))),
-    check("record_relation_to_class_enum", sql.raw(enumCheckSql("to_class", RECORD_CLASSES))),
-    check("record_relation_relation_enum", sql.raw(enumCheckSql("relation", RELATIONS))),
-    index("idx_record_relation_to").on(t.toClass, t.toId),
+    check("record_relation_from_class_check", sql.raw(enumCheckSql("from_class", RECORD_CLASSES))),
+    check("record_relation_to_class_check", sql.raw(enumCheckSql("to_class", RECORD_CLASSES))),
+    check("record_relation_relation_check", sql.raw(enumCheckSql("relation", RELATIONS))),
+    index("record_relation_to_class_to_id_idx").on(t.toClass, t.toId),
   ],
 );

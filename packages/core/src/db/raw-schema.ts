@@ -38,10 +38,14 @@ export const rawPayload = conditionsSchema.table(
     evictedAt: tstz("evicted_at"),
   },
   (t) => [
-    primaryKey({ name: "raw_payload_pk", columns: [t.sourceId, t.hash] }),
-    check("raw_payload_tier_enum", sql.raw(enumCheckSql("tier", RAW_TIERS))),
-    index("idx_raw_payload_source_time").on(t.sourceId, t.firstFetchedAt),
-    index("idx_raw_payload_tier_seen").on(t.tier, t.lastSeenAt).where(sql`${t.evictedAt} IS NULL`),
-    index("idx_raw_payload_base").on(t.sourceId, t.baseHash).where(sql`${t.baseHash} IS NOT NULL`),
+    primaryKey({ name: "raw_payload_pkey", columns: [t.sourceId, t.hash] }),
+    check("raw_payload_tier_check", sql.raw(enumCheckSql("tier", RAW_TIERS))),
+    index("raw_payload_source_id_first_fetched_at_idx").on(t.sourceId, t.firstFetchedAt),
+    index("raw_payload_tier_last_seen_at_idx")
+      .on(t.tier, t.lastSeenAt)
+      .where(sql`${t.evictedAt} IS NULL`),
+    index("raw_payload_source_id_base_hash_idx")
+      .on(t.sourceId, t.baseHash)
+      .where(sql`${t.baseHash} IS NOT NULL`),
   ],
 );

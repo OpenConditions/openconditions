@@ -98,35 +98,43 @@ export const observationLatest = conditionsSchema.table(
     updatedAt: tstz("updated_at").notNull().defaultNow(),
   },
   (t) => [
-    unique("observation_latest_series").on(t.subjectKey, t.property, t.qualifierKey, t.sourceId),
+    // A series is its subject, property, qualifiers and source.
+    unique("observation_latest_series_key").on(
+      t.subjectKey,
+      t.property,
+      t.qualifierKey,
+      t.sourceId,
+    ),
     check(
-      "observation_latest_access_mode_enum",
+      "observation_latest_access_mode_check",
       sql.raw(enumCheckSql("access_mode", ACCESS_MODES)),
     ),
     check(
-      "observation_latest_evidence_state_enum",
+      "observation_latest_evidence_state_check",
       sql.raw(`evidence_state IS NULL OR ${enumCheckSql("evidence_state", EVIDENCE_STATES)}`),
     ),
-    index("idx_observation_latest_geom").using("gist", t.geom),
+    index("observation_latest_geom_idx").using("gist", t.geom),
     // Leads with the property, so it serves a filter by property alone too.
-    index("idx_observation_latest_property_text").on(t.property, t.valueText),
+    index("observation_latest_property_value_text_idx").on(t.property, t.valueText),
     // A poll compares its readings with every series of its source; the
     // federation reconcile pages them by series id. Neither column changes
     // on a reading's update, which stays heap-only.
-    index("idx_observation_latest_source").on(t.sourceId, t.seriesId),
-    index("idx_observation_latest_component").on(t.featureId, t.componentKey),
-    index("idx_observation_latest_fuel_price")
+    index("observation_latest_source_id_series_id_idx").on(t.sourceId, t.seriesId),
+    index("observation_latest_feature_id_component_key_idx").on(t.featureId, t.componentKey),
+    index("observation_latest_value_money_fuel_price_idx")
       .on(t.valueMoney)
       .where(sql`${t.property} = 'fuel.price'`),
-    index("idx_observation_latest_expires").on(t.expiresAt).where(sql`${t.expiresAt} IS NOT NULL`),
+    index("observation_latest_expires_at_idx")
+      .on(t.expiresAt)
+      .where(sql`${t.expiresAt} IS NOT NULL`),
     // Reads of readings since an instant (the last day's fire pixels). BRIN
     // summarizes block ranges, so a reading's update stays heap-only; a btree
     // on what every reading changes would not.
-    index("idx_observation_latest_effective_brin").using("brin", t.effectiveFrom),
+    index("observation_latest_effective_from_idx").using("brin", t.effectiveFrom),
     // A crowd report is found by its record id: votes, replays and re-keying
     // name it. Indexing an expression over `reading` would change with every
     // reading of every series and keep their updates from being HOT.
-    index("idx_observation_latest_crowd_record")
+    index("observation_latest_crowd_record_id_idx")
       .on(t.crowdRecordId)
       .where(sql`${t.crowdRecordId} IS NOT NULL`),
   ],
@@ -149,13 +157,13 @@ export const observationRollupHourly = conditionsSchema.table(
     mean: doublePrecision("mean").notNull(),
   },
   (t) => [
-    primaryKey({ columns: [t.seriesId, t.hourUtc] }),
+    primaryKey({ name: "observation_rollup_hourly_pkey", columns: [t.seriesId, t.hourUtc] }),
     foreignKey({
-      name: "observation_rollup_hourly_series_fk",
+      name: "observation_rollup_hourly_series_id_fkey",
       columns: [t.seriesId],
       foreignColumns: [observationLatest.seriesId],
     }).onDelete("cascade"),
-    index("idx_observation_rollup_hourly_hour").on(t.hourUtc),
+    index("observation_rollup_hourly_hour_utc_idx").on(t.hourUtc),
   ],
 );
 
@@ -174,13 +182,13 @@ export const observationRollupDaily = conditionsSchema.table(
     mean: doublePrecision("mean").notNull(),
   },
   (t) => [
-    primaryKey({ columns: [t.seriesId, t.dayUtc] }),
+    primaryKey({ name: "observation_rollup_daily_pkey", columns: [t.seriesId, t.dayUtc] }),
     foreignKey({
-      name: "observation_rollup_daily_series_fk",
+      name: "observation_rollup_daily_series_id_fkey",
       columns: [t.seriesId],
       foreignColumns: [observationLatest.seriesId],
     }).onDelete("cascade"),
-    index("idx_observation_rollup_daily_day").on(t.dayUtc),
+    index("observation_rollup_daily_day_utc_idx").on(t.dayUtc),
   ],
 );
 

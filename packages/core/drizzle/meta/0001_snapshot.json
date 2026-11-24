@@ -1,6 +1,6 @@
 {
-  "id": "bcbaa702-08fd-4a70-81c4-2defce62fabf",
-  "prevId": "fce49200-fc1d-446d-a4d4-aaab4faf4aff",
+  "id": "229df5f8-d63f-4dd4-9098-d0c998359237",
+  "prevId": "f667d34c-4e49-4cc7-bba2-c2e5f3b53ba2",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -62,8 +62,8 @@
         }
       },
       "indexes": {
-        "idx_binding_queue_due": {
-          "name": "idx_binding_queue_due",
+        "binding_queue_next_attempt_at_idx": {
+          "name": "binding_queue_next_attempt_at_idx",
           "columns": [
             {
               "expression": "next_attempt_at",
@@ -80,8 +80,8 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "binding_queue_record_class_record_id_effect_id_pk": {
-          "name": "binding_queue_record_class_record_id_effect_id_pk",
+        "binding_queue_pkey": {
+          "name": "binding_queue_pkey",
           "columns": [
             "record_class",
             "record_id",
@@ -186,8 +186,8 @@
         }
       },
       "indexes": {
-        "idx_record_binding_status": {
-          "name": "idx_record_binding_status",
+        "record_binding_status_idx": {
+          "name": "record_binding_status_idx",
           "columns": [
             {
               "expression": "status",
@@ -204,8 +204,8 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "record_binding_record_class_record_id_effect_id_pk": {
-          "name": "record_binding_record_class_record_id_effect_id_pk",
+        "record_binding_pkey": {
+          "name": "record_binding_pkey",
           "columns": [
             "record_class",
             "record_id",
@@ -216,8 +216,8 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
-        "record_binding_record_class_enum": {
-          "name": "record_binding_record_class_enum",
+        "record_binding_record_class_check": {
+          "name": "record_binding_record_class_check",
           "value": "\"record_class\" IN ('feature', 'situation', 'observation', 'offer')"
         },
         "record_binding_status_check": {
@@ -292,8 +292,8 @@
         }
       },
       "indexes": {
-        "idx_record_segment_segment": {
-          "name": "idx_record_segment_segment",
+        "record_segment_segment_id_idx": {
+          "name": "record_segment_segment_id_idx",
           "columns": [
             {
               "expression": "segment_id",
@@ -310,8 +310,8 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "record_segment_record_class_record_id_effect_id_seq_pk": {
-          "name": "record_segment_record_class_record_id_effect_id_seq_pk",
+        "record_segment_pkey": {
+          "name": "record_segment_pkey",
           "columns": [
             "record_class",
             "record_id",
@@ -398,8 +398,8 @@
         }
       },
       "indexes": {
-        "idx_report_evidence_record": {
-          "name": "idx_report_evidence_record",
+        "report_evidence_record_class_record_id_occurred_at_idx": {
+          "name": "report_evidence_record_class_record_id_occurred_at_idx",
           "columns": [
             {
               "expression": "record_class",
@@ -425,8 +425,8 @@
           "method": "btree",
           "concurrently": false
         },
-        "idx_report_evidence_actor": {
-          "name": "idx_report_evidence_actor",
+        "report_evidence_actor_key_id_occurred_at_idx": {
+          "name": "report_evidence_actor_key_id_occurred_at_idx",
           "columns": [
             {
               "expression": "actor_key_id",
@@ -446,8 +446,8 @@
           "method": "btree",
           "concurrently": false
         },
-        "idx_report_evidence_merged": {
-          "name": "idx_report_evidence_merged",
+        "report_evidence_merged_idx": {
+          "name": "report_evidence_merged_idx",
           "columns": [
             {
               "expression": "(\"details\" ->> 'merged')",
@@ -483,12 +483,12 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
-        "report_evidence_kind_enum": {
-          "name": "report_evidence_kind_enum",
+        "report_evidence_evidence_kind_check": {
+          "name": "report_evidence_evidence_kind_check",
           "value": "\"evidence_kind\" IN ('report', 'confirm', 'negate', 'official_match', 'reviewer_accept', 'reviewer_reject')"
         },
-        "report_evidence_record_class_enum": {
-          "name": "report_evidence_record_class_enum",
+        "report_evidence_record_class_check": {
+          "name": "report_evidence_record_class_check",
           "value": "\"record_class\" IN ('feature', 'situation', 'observation', 'offer')"
         }
       },
@@ -535,8 +535,8 @@
         }
       },
       "indexes": {
-        "idx_report_refusal_actor": {
-          "name": "idx_report_refusal_actor",
+        "report_refusal_actor_key_id_occurred_at_idx": {
+          "name": "report_refusal_actor_key_id_occurred_at_idx",
           "columns": [
             {
               "expression": "actor_key_id",
@@ -556,8 +556,8 @@
           "method": "btree",
           "concurrently": false
         },
-        "idx_report_refusal_occurred": {
-          "name": "idx_report_refusal_occurred",
+        "report_refusal_occurred_at_idx": {
+          "name": "report_refusal_occurred_at_idx",
           "columns": [
             {
               "expression": "occurred_at",
@@ -654,8 +654,8 @@
         }
       },
       "indexes": {
-        "idx_sub_claim_key": {
-          "name": "idx_sub_claim_key",
+        "sub_claim_key_id_idx": {
+          "name": "sub_claim_key_id_idx",
           "columns": [
             {
               "expression": "key_id",
@@ -701,12 +701,12 @@
       },
       "policies": {},
       "checkConstraints": {
-        "sub_claim_claim_type_enum": {
-          "name": "sub_claim_claim_type_enum",
+        "sub_claim_claim_type_check": {
+          "name": "sub_claim_claim_type_check",
           "value": "\"claim_type\" IN ('confirm', 'negate', 'flag')"
         },
-        "sub_claim_subject_class_enum": {
-          "name": "sub_claim_subject_class_enum",
+        "sub_claim_subject_class_check": {
+          "name": "sub_claim_subject_class_check",
           "value": "\"subject_class\" IN ('feature', 'situation', 'observation', 'offer')"
         }
       },
@@ -746,8 +746,8 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "jma_budget_egress_day_pk": {
-          "name": "jma_budget_egress_day_pk",
+        "jma_budget_pkey": {
+          "name": "jma_budget_pkey",
           "columns": [
             "egress",
             "day"
@@ -757,8 +757,8 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
-        "jma_budget_nonnegative": {
-          "name": "jma_budget_nonnegative",
+        "jma_budget_nonnegative_check": {
+          "name": "jma_budget_nonnegative_check",
           "value": "\"conditions\".\"jma_budget\".\"used\" >= 0 AND \"conditions\".\"jma_budget\".\"reserved\" >= 0"
         }
       },
@@ -1082,8 +1082,8 @@
         }
       },
       "indexes": {
-        "idx_observation_latest_geom": {
-          "name": "idx_observation_latest_geom",
+        "observation_latest_geom_idx": {
+          "name": "observation_latest_geom_idx",
           "columns": [
             {
               "expression": "geom",
@@ -1097,8 +1097,8 @@
           "method": "gist",
           "concurrently": false
         },
-        "idx_observation_latest_property_text": {
-          "name": "idx_observation_latest_property_text",
+        "observation_latest_property_value_text_idx": {
+          "name": "observation_latest_property_value_text_idx",
           "columns": [
             {
               "expression": "property",
@@ -1118,8 +1118,8 @@
           "method": "btree",
           "concurrently": false
         },
-        "idx_observation_latest_source": {
-          "name": "idx_observation_latest_source",
+        "observation_latest_source_id_series_id_idx": {
+          "name": "observation_latest_source_id_series_id_idx",
           "columns": [
             {
               "expression": "source_id",
@@ -1139,8 +1139,8 @@
           "method": "btree",
           "concurrently": false
         },
-        "idx_observation_latest_component": {
-          "name": "idx_observation_latest_component",
+        "observation_latest_feature_id_component_key_idx": {
+          "name": "observation_latest_feature_id_component_key_idx",
           "columns": [
             {
               "expression": "feature_id",
@@ -1160,8 +1160,8 @@
           "method": "btree",
           "concurrently": false
         },
-        "idx_observation_latest_fuel_price": {
-          "name": "idx_observation_latest_fuel_price",
+        "observation_latest_value_money_fuel_price_idx": {
+          "name": "observation_latest_value_money_fuel_price_idx",
           "columns": [
             {
               "expression": "value_money",
@@ -1176,8 +1176,8 @@
           "where": "\"conditions\".\"observation_latest\".\"property\" = 'fuel.price'",
           "concurrently": false
         },
-        "idx_observation_latest_expires": {
-          "name": "idx_observation_latest_expires",
+        "observation_latest_expires_at_idx": {
+          "name": "observation_latest_expires_at_idx",
           "columns": [
             {
               "expression": "expires_at",
@@ -1192,8 +1192,8 @@
           "where": "\"conditions\".\"observation_latest\".\"expires_at\" IS NOT NULL",
           "concurrently": false
         },
-        "idx_observation_latest_effective_brin": {
-          "name": "idx_observation_latest_effective_brin",
+        "observation_latest_effective_from_idx": {
+          "name": "observation_latest_effective_from_idx",
           "columns": [
             {
               "expression": "effective_from",
@@ -1207,8 +1207,8 @@
           "method": "brin",
           "concurrently": false
         },
-        "idx_observation_latest_crowd_record": {
-          "name": "idx_observation_latest_crowd_record",
+        "observation_latest_crowd_record_id_idx": {
+          "name": "observation_latest_crowd_record_id_idx",
           "columns": [
             {
               "expression": "crowd_record_id",
@@ -1227,8 +1227,8 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "observation_latest_series": {
-          "name": "observation_latest_series",
+        "observation_latest_series_key": {
+          "name": "observation_latest_series_key",
           "columns": [
             "subject_key",
             "property",
@@ -1240,12 +1240,12 @@
       },
       "policies": {},
       "checkConstraints": {
-        "observation_latest_access_mode_enum": {
-          "name": "observation_latest_access_mode_enum",
+        "observation_latest_access_mode_check": {
+          "name": "observation_latest_access_mode_check",
           "value": "\"access_mode\" IN ('bulk', 'on_demand')"
         },
-        "observation_latest_evidence_state_enum": {
-          "name": "observation_latest_evidence_state_enum",
+        "observation_latest_evidence_state_check": {
+          "name": "observation_latest_evidence_state_check",
           "value": "evidence_state IS NULL OR \"evidence_state\" IN ('self_reported', 'corroborated', 'externally_resolved', 'negated', 'expired')"
         }
       },
@@ -1306,8 +1306,8 @@
         }
       },
       "indexes": {
-        "idx_observation_rollup_daily_day": {
-          "name": "idx_observation_rollup_daily_day",
+        "observation_rollup_daily_day_utc_idx": {
+          "name": "observation_rollup_daily_day_utc_idx",
           "columns": [
             {
               "expression": "day_utc",
@@ -1323,8 +1323,8 @@
         }
       },
       "foreignKeys": {
-        "observation_rollup_daily_series_fk": {
-          "name": "observation_rollup_daily_series_fk",
+        "observation_rollup_daily_series_id_fkey": {
+          "name": "observation_rollup_daily_series_id_fkey",
           "tableFrom": "observation_rollup_daily",
           "columnsFrom": [
             "series_id"
@@ -1339,8 +1339,8 @@
         }
       },
       "compositePrimaryKeys": {
-        "observation_rollup_daily_series_id_day_utc_pk": {
-          "name": "observation_rollup_daily_series_id_day_utc_pk",
+        "observation_rollup_daily_pkey": {
+          "name": "observation_rollup_daily_pkey",
           "columns": [
             "series_id",
             "day_utc"
@@ -1419,8 +1419,8 @@
         }
       },
       "indexes": {
-        "idx_observation_rollup_hourly_hour": {
-          "name": "idx_observation_rollup_hourly_hour",
+        "observation_rollup_hourly_hour_utc_idx": {
+          "name": "observation_rollup_hourly_hour_utc_idx",
           "columns": [
             {
               "expression": "hour_utc",
@@ -1436,8 +1436,8 @@
         }
       },
       "foreignKeys": {
-        "observation_rollup_hourly_series_fk": {
-          "name": "observation_rollup_hourly_series_fk",
+        "observation_rollup_hourly_series_id_fkey": {
+          "name": "observation_rollup_hourly_series_id_fkey",
           "tableFrom": "observation_rollup_hourly",
           "columnsFrom": [
             "series_id"
@@ -1452,8 +1452,8 @@
         }
       },
       "compositePrimaryKeys": {
-        "observation_rollup_hourly_series_id_hour_utc_pk": {
-          "name": "observation_rollup_hourly_series_id_hour_utc_pk",
+        "observation_rollup_hourly_pkey": {
+          "name": "observation_rollup_hourly_pkey",
           "columns": [
             "series_id",
             "hour_utc"
@@ -1587,8 +1587,8 @@
         }
       },
       "indexes": {
-        "idx_raw_payload_source_time": {
-          "name": "idx_raw_payload_source_time",
+        "raw_payload_source_id_first_fetched_at_idx": {
+          "name": "raw_payload_source_id_first_fetched_at_idx",
           "columns": [
             {
               "expression": "source_id",
@@ -1608,8 +1608,8 @@
           "method": "btree",
           "concurrently": false
         },
-        "idx_raw_payload_tier_seen": {
-          "name": "idx_raw_payload_tier_seen",
+        "raw_payload_tier_last_seen_at_idx": {
+          "name": "raw_payload_tier_last_seen_at_idx",
           "columns": [
             {
               "expression": "tier",
@@ -1630,8 +1630,8 @@
           "where": "\"conditions\".\"raw_payload\".\"evicted_at\" IS NULL",
           "concurrently": false
         },
-        "idx_raw_payload_base": {
-          "name": "idx_raw_payload_base",
+        "raw_payload_source_id_base_hash_idx": {
+          "name": "raw_payload_source_id_base_hash_idx",
           "columns": [
             {
               "expression": "source_id",
@@ -1655,8 +1655,8 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "raw_payload_pk": {
-          "name": "raw_payload_pk",
+        "raw_payload_pkey": {
+          "name": "raw_payload_pkey",
           "columns": [
             "source_id",
             "hash"
@@ -1666,8 +1666,8 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
-        "raw_payload_tier_enum": {
-          "name": "raw_payload_tier_enum",
+        "raw_payload_tier_check": {
+          "name": "raw_payload_tier_check",
           "value": "\"tier\" IN ('situation', 'observation', 'reference', 'hot')"
         }
       },
@@ -1836,8 +1836,8 @@
         }
       },
       "indexes": {
-        "idx_feature_geom": {
-          "name": "idx_feature_geom",
+        "feature_geom_idx": {
+          "name": "feature_geom_idx",
           "columns": [
             {
               "expression": "geom",
@@ -1851,8 +1851,8 @@
           "method": "gist",
           "concurrently": false
         },
-        "idx_feature_kind_type": {
-          "name": "idx_feature_kind_type",
+        "feature_kind_type_idx": {
+          "name": "feature_kind_type_idx",
           "columns": [
             {
               "expression": "kind",
@@ -1872,8 +1872,8 @@
           "method": "btree",
           "concurrently": false
         },
-        "idx_feature_source": {
-          "name": "idx_feature_source",
+        "feature_source_id_id_idx": {
+          "name": "feature_source_id_id_idx",
           "columns": [
             {
               "expression": "source_id",
@@ -1893,8 +1893,8 @@
           "method": "btree",
           "concurrently": false
         },
-        "idx_feature_canonical": {
-          "name": "idx_feature_canonical",
+        "feature_canonical_id_idx": {
+          "name": "feature_canonical_id_idx",
           "columns": [
             {
               "expression": "canonical_id",
@@ -1908,8 +1908,8 @@
           "method": "btree",
           "concurrently": false
         },
-        "idx_feature_kind_lifecycle": {
-          "name": "idx_feature_kind_lifecycle",
+        "feature_kind_lifecycle_idx": {
+          "name": "feature_kind_lifecycle_idx",
           "columns": [
             {
               "expression": "kind",
@@ -1961,8 +1961,8 @@
           "where": "\"conditions\".\"feature\".\"tombstoned_at\" IS NOT NULL",
           "concurrently": false
         },
-        "idx_feature_external_ids": {
-          "name": "idx_feature_external_ids",
+        "feature_external_ids_idx": {
+          "name": "feature_external_ids_idx",
           "columns": [
             {
               "expression": "(\"record\" -> 'externalIds') jsonb_path_ops",
@@ -1978,8 +1978,8 @@
           "method": "gin",
           "concurrently": false
         },
-        "idx_feature_rights_revoked": {
-          "name": "idx_feature_rights_revoked",
+        "feature_id_rights_revoked_idx": {
+          "name": "feature_id_rights_revoked_idx",
           "columns": [
             {
               "expression": "id",
@@ -1994,8 +1994,8 @@
           "where": "\"conditions\".\"feature\".\"tombstone_reason\" = 'rights_revoked'",
           "concurrently": false
         },
-        "idx_feature_id_bytes": {
-          "name": "idx_feature_id_bytes",
+        "feature_id_bytes_idx": {
+          "name": "feature_id_bytes_idx",
           "columns": [
             {
               "expression": "\"id\" COLLATE \"C\"",
@@ -2015,36 +2015,36 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
-        "feature_temporality_enum": {
-          "name": "feature_temporality_enum",
+        "feature_temporality_check": {
+          "name": "feature_temporality_check",
           "value": "\"temporality\" IN ('static', 'scheduled', 'live', 'forecast')"
         },
-        "feature_origin_enum": {
-          "name": "feature_origin_enum",
+        "feature_origin_check": {
+          "name": "feature_origin_check",
           "value": "\"origin\" IN ('feed', 'crowd', 'federation', 'derived')"
         },
-        "feature_access_mode_enum": {
-          "name": "feature_access_mode_enum",
+        "feature_access_mode_check": {
+          "name": "feature_access_mode_check",
           "value": "\"access_mode\" IN ('bulk', 'on_demand')"
         },
-        "feature_privacy_class_enum": {
-          "name": "feature_privacy_class_enum",
+        "feature_privacy_class_check": {
+          "name": "feature_privacy_class_check",
           "value": "\"privacy_class\" IN ('authoritative', 'aggregate', 'k_anon', 'dp_noised', 'crowd_pseudonym')"
         },
-        "feature_tombstone_reason_enum": {
-          "name": "feature_tombstone_reason_enum",
+        "feature_tombstone_reason_check": {
+          "name": "feature_tombstone_reason_check",
           "value": "tombstone_reason IS NULL OR \"tombstone_reason\" IN ('expired', 'withdrawn', 'superseded', 'cancelled', 'rights_revoked', 'rejected')"
         },
-        "feature_tombstone_complete": {
-          "name": "feature_tombstone_complete",
+        "feature_tombstone_check": {
+          "name": "feature_tombstone_check",
           "value": "(tombstone_reason IS NULL) = (tombstoned_at IS NULL)"
         },
-        "feature_revision_positive": {
-          "name": "feature_revision_positive",
+        "feature_revision_check": {
+          "name": "feature_revision_check",
           "value": "revision > 0"
         },
-        "feature_lifecycle_enum": {
-          "name": "feature_lifecycle_enum",
+        "feature_lifecycle_check": {
+          "name": "feature_lifecycle_check",
           "value": "\"lifecycle\" IN ('planned', 'under_construction', 'operational', 'temporarily_closed', 'decommissioned', 'unknown')"
         }
       },
@@ -2093,8 +2093,8 @@
         }
       },
       "indexes": {
-        "idx_feature_canonical_members": {
-          "name": "idx_feature_canonical_members",
+        "feature_canonical_member_ids_idx": {
+          "name": "feature_canonical_member_ids_idx",
           "columns": [
             {
               "expression": "member_ids",
@@ -2178,8 +2178,8 @@
         }
       },
       "indexes": {
-        "idx_feature_component_kind": {
-          "name": "idx_feature_component_kind",
+        "feature_component_kind_idx": {
+          "name": "feature_component_kind_idx",
           "columns": [
             {
               "expression": "kind",
@@ -2193,8 +2193,8 @@
           "method": "btree",
           "concurrently": false
         },
-        "idx_feature_component_external_ids": {
-          "name": "idx_feature_component_external_ids",
+        "feature_component_external_ids_idx": {
+          "name": "feature_component_external_ids_idx",
           "columns": [
             {
               "expression": "external_ids",
@@ -2211,8 +2211,8 @@
         }
       },
       "foreignKeys": {
-        "feature_component_feature_id_feature_id_fk": {
-          "name": "feature_component_feature_id_feature_id_fk",
+        "feature_component_feature_id_fkey": {
+          "name": "feature_component_feature_id_fkey",
           "tableFrom": "feature_component",
           "columnsFrom": [
             "feature_id"
@@ -2227,8 +2227,8 @@
         }
       },
       "compositePrimaryKeys": {
-        "feature_component_feature_id_key_pk": {
-          "name": "feature_component_feature_id_key_pk",
+        "feature_component_pkey": {
+          "name": "feature_component_pkey",
           "columns": [
             "feature_id",
             "key"
@@ -2238,8 +2238,8 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
-        "feature_component_lifecycle_enum": {
-          "name": "feature_component_lifecycle_enum",
+        "feature_component_lifecycle_check": {
+          "name": "feature_component_lifecycle_check",
           "value": "lifecycle IS NULL OR \"lifecycle\" IN ('planned', 'under_construction', 'operational', 'temporarily_closed', 'decommissioned', 'unknown')"
         }
       },
@@ -2293,8 +2293,8 @@
         }
       },
       "indexes": {
-        "idx_feature_link_b": {
-          "name": "idx_feature_link_b",
+        "feature_link_b_id_idx": {
+          "name": "feature_link_b_id_idx",
           "columns": [
             {
               "expression": "b_id",
@@ -2311,8 +2311,8 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "feature_link_a_id_b_id_pk": {
-          "name": "feature_link_a_id_b_id_pk",
+        "feature_link_pkey": {
+          "name": "feature_link_pkey",
           "columns": [
             "a_id",
             "b_id"
@@ -2322,16 +2322,16 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
-        "feature_link_ordered": {
-          "name": "feature_link_ordered",
+        "feature_link_order_check": {
+          "name": "feature_link_order_check",
           "value": "\"conditions\".\"feature_link\".\"a_id\" < \"conditions\".\"feature_link\".\"b_id\" COLLATE \"C\""
         },
-        "feature_link_method_enum": {
-          "name": "feature_link_method_enum",
+        "feature_link_method_check": {
+          "name": "feature_link_method_check",
           "value": "\"method\" IN ('external_id', 'spatial_attribute', 'manual')"
         },
-        "feature_link_status_enum": {
-          "name": "feature_link_status_enum",
+        "feature_link_status_check": {
+          "name": "feature_link_status_check",
           "value": "\"status\" IN ('accepted', 'rejected', 'pending')"
         }
       },
@@ -2373,8 +2373,8 @@
         }
       },
       "indexes": {
-        "idx_feature_revision_recorded": {
-          "name": "idx_feature_revision_recorded",
+        "feature_revision_recorded_at_idx": {
+          "name": "feature_revision_recorded_at_idx",
           "columns": [
             {
               "expression": "recorded_at",
@@ -2390,8 +2390,8 @@
         }
       },
       "foreignKeys": {
-        "feature_revision_feature_id_feature_id_fk": {
-          "name": "feature_revision_feature_id_feature_id_fk",
+        "feature_revision_feature_id_fkey": {
+          "name": "feature_revision_feature_id_fkey",
           "tableFrom": "feature_revision",
           "columnsFrom": [
             "feature_id"
@@ -2406,8 +2406,8 @@
         }
       },
       "compositePrimaryKeys": {
-        "feature_revision_feature_id_revision_pk": {
-          "name": "feature_revision_feature_id_revision_pk",
+        "feature_revision_pkey": {
+          "name": "feature_revision_pkey",
           "columns": [
             "feature_id",
             "revision"
@@ -2624,8 +2624,8 @@
         }
       },
       "indexes": {
-        "idx_offer_subject": {
-          "name": "idx_offer_subject",
+        "offer_subject_id_component_key_idx": {
+          "name": "offer_subject_id_component_key_idx",
           "columns": [
             {
               "expression": "subject_id",
@@ -2645,8 +2645,8 @@
           "method": "btree",
           "concurrently": false
         },
-        "idx_offer_kind_valid_to": {
-          "name": "idx_offer_kind_valid_to",
+        "offer_kind_valid_to_idx": {
+          "name": "offer_kind_valid_to_idx",
           "columns": [
             {
               "expression": "kind",
@@ -2666,8 +2666,8 @@
           "method": "btree",
           "concurrently": false
         },
-        "idx_offer_geom": {
-          "name": "idx_offer_geom",
+        "offer_geom_idx": {
+          "name": "offer_geom_idx",
           "columns": [
             {
               "expression": "geom",
@@ -2681,8 +2681,8 @@
           "method": "gist",
           "concurrently": false
         },
-        "idx_offer_source": {
-          "name": "idx_offer_source",
+        "offer_source_id_id_idx": {
+          "name": "offer_source_id_id_idx",
           "columns": [
             {
               "expression": "source_id",
@@ -2702,8 +2702,8 @@
           "method": "btree",
           "concurrently": false
         },
-        "idx_offer_canonical": {
-          "name": "idx_offer_canonical",
+        "offer_canonical_id_idx": {
+          "name": "offer_canonical_id_idx",
           "columns": [
             {
               "expression": "canonical_id",
@@ -2749,8 +2749,8 @@
           "where": "\"conditions\".\"offer\".\"tombstoned_at\" IS NOT NULL",
           "concurrently": false
         },
-        "idx_offer_rights_revoked": {
-          "name": "idx_offer_rights_revoked",
+        "offer_id_rights_revoked_idx": {
+          "name": "offer_id_rights_revoked_idx",
           "columns": [
             {
               "expression": "id",
@@ -2765,8 +2765,8 @@
           "where": "\"conditions\".\"offer\".\"tombstone_reason\" = 'rights_revoked'",
           "concurrently": false
         },
-        "idx_offer_id_bytes": {
-          "name": "idx_offer_id_bytes",
+        "offer_id_bytes_idx": {
+          "name": "offer_id_bytes_idx",
           "columns": [
             {
               "expression": "\"id\" COLLATE \"C\"",
@@ -2786,36 +2786,36 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
-        "offer_temporality_enum": {
-          "name": "offer_temporality_enum",
+        "offer_temporality_check": {
+          "name": "offer_temporality_check",
           "value": "\"temporality\" IN ('static', 'scheduled', 'live', 'forecast')"
         },
-        "offer_origin_enum": {
-          "name": "offer_origin_enum",
+        "offer_origin_check": {
+          "name": "offer_origin_check",
           "value": "\"origin\" IN ('feed', 'crowd', 'federation', 'derived')"
         },
-        "offer_access_mode_enum": {
-          "name": "offer_access_mode_enum",
+        "offer_access_mode_check": {
+          "name": "offer_access_mode_check",
           "value": "\"access_mode\" IN ('bulk', 'on_demand')"
         },
-        "offer_privacy_class_enum": {
-          "name": "offer_privacy_class_enum",
+        "offer_privacy_class_check": {
+          "name": "offer_privacy_class_check",
           "value": "\"privacy_class\" IN ('authoritative', 'aggregate', 'k_anon', 'dp_noised', 'crowd_pseudonym')"
         },
-        "offer_tombstone_reason_enum": {
-          "name": "offer_tombstone_reason_enum",
+        "offer_tombstone_reason_check": {
+          "name": "offer_tombstone_reason_check",
           "value": "tombstone_reason IS NULL OR \"tombstone_reason\" IN ('expired', 'withdrawn', 'superseded', 'cancelled', 'rights_revoked', 'rejected')"
         },
-        "offer_tombstone_complete": {
-          "name": "offer_tombstone_complete",
+        "offer_tombstone_check": {
+          "name": "offer_tombstone_check",
           "value": "(tombstone_reason IS NULL) = (tombstoned_at IS NULL)"
         },
-        "offer_revision_positive": {
-          "name": "offer_revision_positive",
+        "offer_revision_check": {
+          "name": "offer_revision_check",
           "value": "revision > 0"
         },
-        "offer_subject_class_enum": {
-          "name": "offer_subject_class_enum",
+        "offer_subject_class_check": {
+          "name": "offer_subject_class_check",
           "value": "\"subject_class\" IN ('feature', 'situation', 'observation', 'offer')"
         }
       },
@@ -2857,8 +2857,8 @@
         }
       },
       "indexes": {
-        "idx_offer_revision_recorded": {
-          "name": "idx_offer_revision_recorded",
+        "offer_revision_recorded_at_idx": {
+          "name": "offer_revision_recorded_at_idx",
           "columns": [
             {
               "expression": "recorded_at",
@@ -2874,8 +2874,8 @@
         }
       },
       "foreignKeys": {
-        "offer_revision_offer_id_offer_id_fk": {
-          "name": "offer_revision_offer_id_offer_id_fk",
+        "offer_revision_offer_id_fkey": {
+          "name": "offer_revision_offer_id_fkey",
           "tableFrom": "offer_revision",
           "columnsFrom": [
             "offer_id"
@@ -2890,8 +2890,8 @@
         }
       },
       "compositePrimaryKeys": {
-        "offer_revision_offer_id_revision_pk": {
-          "name": "offer_revision_offer_id_revision_pk",
+        "offer_revision_pkey": {
+          "name": "offer_revision_pkey",
           "columns": [
             "offer_id",
             "revision"
@@ -2946,8 +2946,8 @@
         }
       },
       "indexes": {
-        "idx_record_relation_to": {
-          "name": "idx_record_relation_to",
+        "record_relation_to_class_to_id_idx": {
+          "name": "record_relation_to_class_to_id_idx",
           "columns": [
             {
               "expression": "to_class",
@@ -2970,8 +2970,8 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "record_relation_pk": {
-          "name": "record_relation_pk",
+        "record_relation_pkey": {
+          "name": "record_relation_pkey",
           "columns": [
             "from_class",
             "from_id",
@@ -2985,16 +2985,16 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
-        "record_relation_from_class_enum": {
-          "name": "record_relation_from_class_enum",
+        "record_relation_from_class_check": {
+          "name": "record_relation_from_class_check",
           "value": "\"from_class\" IN ('feature', 'situation', 'observation', 'offer')"
         },
-        "record_relation_to_class_enum": {
-          "name": "record_relation_to_class_enum",
+        "record_relation_to_class_check": {
+          "name": "record_relation_to_class_check",
           "value": "\"to_class\" IN ('feature', 'situation', 'observation', 'offer')"
         },
-        "record_relation_relation_enum": {
-          "name": "record_relation_relation_enum",
+        "record_relation_relation_check": {
+          "name": "record_relation_relation_check",
           "value": "\"relation\" IN ('part_of', 'monitors', 'controls', 'serves', 'group', 'next_occurrence', 'first_occurrence', 'related_work_zone', 'caused_by', 'detour_for', 'supersedes', 'update_of', 'cancels', 'related')"
         }
       },
@@ -3237,8 +3237,8 @@
         }
       },
       "indexes": {
-        "idx_situation_geom": {
-          "name": "idx_situation_geom",
+        "situation_geom_idx": {
+          "name": "situation_geom_idx",
           "columns": [
             {
               "expression": "geom",
@@ -3252,8 +3252,8 @@
           "method": "gist",
           "concurrently": false
         },
-        "idx_situation_kind_type": {
-          "name": "idx_situation_kind_type",
+        "situation_kind_type_idx": {
+          "name": "situation_kind_type_idx",
           "columns": [
             {
               "expression": "kind",
@@ -3273,8 +3273,8 @@
           "method": "btree",
           "concurrently": false
         },
-        "idx_situation_source": {
-          "name": "idx_situation_source",
+        "situation_source_id_id_idx": {
+          "name": "situation_source_id_id_idx",
           "columns": [
             {
               "expression": "source_id",
@@ -3294,8 +3294,8 @@
           "method": "btree",
           "concurrently": false
         },
-        "idx_situation_canonical": {
-          "name": "idx_situation_canonical",
+        "situation_canonical_id_idx": {
+          "name": "situation_canonical_id_idx",
           "columns": [
             {
               "expression": "canonical_id",
@@ -3309,8 +3309,8 @@
           "method": "btree",
           "concurrently": false
         },
-        "idx_situation_valid_to": {
-          "name": "idx_situation_valid_to",
+        "situation_valid_to_idx": {
+          "name": "situation_valid_to_idx",
           "columns": [
             {
               "expression": "valid_to",
@@ -3324,8 +3324,8 @@
           "method": "btree",
           "concurrently": false
         },
-        "idx_situation_expires": {
-          "name": "idx_situation_expires",
+        "situation_expires_at_idx": {
+          "name": "situation_expires_at_idx",
           "columns": [
             {
               "expression": "expires_at",
@@ -3339,8 +3339,8 @@
           "method": "btree",
           "concurrently": false
         },
-        "idx_situation_group": {
-          "name": "idx_situation_group",
+        "situation_group_id_idx": {
+          "name": "situation_group_id_idx",
           "columns": [
             {
               "expression": "group_id",
@@ -3370,8 +3370,8 @@
           "where": "\"conditions\".\"situation\".\"origin\" = 'crowd'",
           "concurrently": false
         },
-        "idx_situation_tombstoned": {
-          "name": "idx_situation_tombstoned",
+        "situation_tombstoned_at_idx": {
+          "name": "situation_tombstoned_at_idx",
           "columns": [
             {
               "expression": "tombstoned_at",
@@ -3386,8 +3386,8 @@
           "where": "\"conditions\".\"situation\".\"tombstoned_at\" IS NOT NULL",
           "concurrently": false
         },
-        "idx_situation_rights_revoked": {
-          "name": "idx_situation_rights_revoked",
+        "situation_id_rights_revoked_idx": {
+          "name": "situation_id_rights_revoked_idx",
           "columns": [
             {
               "expression": "id",
@@ -3402,8 +3402,8 @@
           "where": "\"conditions\".\"situation\".\"tombstone_reason\" = 'rights_revoked'",
           "concurrently": false
         },
-        "idx_situation_id_bytes": {
-          "name": "idx_situation_id_bytes",
+        "situation_id_bytes_idx": {
+          "name": "situation_id_bytes_idx",
           "columns": [
             {
               "expression": "\"id\" COLLATE \"C\"",
@@ -3423,52 +3423,52 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
-        "situation_temporality_enum": {
-          "name": "situation_temporality_enum",
+        "situation_temporality_check": {
+          "name": "situation_temporality_check",
           "value": "\"temporality\" IN ('static', 'scheduled', 'live', 'forecast')"
         },
-        "situation_origin_enum": {
-          "name": "situation_origin_enum",
+        "situation_origin_check": {
+          "name": "situation_origin_check",
           "value": "\"origin\" IN ('feed', 'crowd', 'federation', 'derived')"
         },
-        "situation_access_mode_enum": {
-          "name": "situation_access_mode_enum",
+        "situation_access_mode_check": {
+          "name": "situation_access_mode_check",
           "value": "\"access_mode\" IN ('bulk', 'on_demand')"
         },
-        "situation_privacy_class_enum": {
-          "name": "situation_privacy_class_enum",
+        "situation_privacy_class_check": {
+          "name": "situation_privacy_class_check",
           "value": "\"privacy_class\" IN ('authoritative', 'aggregate', 'k_anon', 'dp_noised', 'crowd_pseudonym')"
         },
-        "situation_tombstone_reason_enum": {
-          "name": "situation_tombstone_reason_enum",
+        "situation_tombstone_reason_check": {
+          "name": "situation_tombstone_reason_check",
           "value": "tombstone_reason IS NULL OR \"tombstone_reason\" IN ('expired', 'withdrawn', 'superseded', 'cancelled', 'rights_revoked', 'rejected')"
         },
-        "situation_tombstone_complete": {
-          "name": "situation_tombstone_complete",
+        "situation_tombstone_check": {
+          "name": "situation_tombstone_check",
           "value": "(tombstone_reason IS NULL) = (tombstoned_at IS NULL)"
         },
-        "situation_revision_positive": {
-          "name": "situation_revision_positive",
+        "situation_revision_check": {
+          "name": "situation_revision_check",
           "value": "revision > 0"
         },
-        "situation_severity_enum": {
-          "name": "situation_severity_enum",
+        "situation_severity_check": {
+          "name": "situation_severity_check",
           "value": "\"severity\" IN ('none', 'minor', 'moderate', 'major', 'critical', 'unknown')"
         },
-        "situation_severity_level_range": {
-          "name": "situation_severity_level_range",
+        "situation_severity_level_check": {
+          "name": "situation_severity_level_check",
           "value": "\"conditions\".\"situation\".\"severity_level\" IS NULL OR \"conditions\".\"situation\".\"severity_level\" BETWEEN 1 AND 5"
         },
-        "situation_certainty_enum": {
-          "name": "situation_certainty_enum",
+        "situation_certainty_check": {
+          "name": "situation_certainty_check",
           "value": "\"certainty\" IN ('observed', 'likely', 'possible', 'unlikely', 'unknown')"
         },
-        "situation_validity_status_enum": {
-          "name": "situation_validity_status_enum",
+        "situation_validity_status_check": {
+          "name": "situation_validity_status_check",
           "value": "\"validity_status\" IN ('planned', 'active', 'suspended', 'ended', 'cancelled', 'unknown')"
         },
-        "situation_evidence_state_enum": {
-          "name": "situation_evidence_state_enum",
+        "situation_evidence_state_check": {
+          "name": "situation_evidence_state_check",
           "value": "evidence_state IS NULL OR \"evidence_state\" IN ('self_reported', 'corroborated', 'externally_resolved', 'negated', 'expired')"
         }
       },
@@ -3553,8 +3553,8 @@
         }
       },
       "indexes": {
-        "idx_situation_effect_kind_valid_to": {
-          "name": "idx_situation_effect_kind_valid_to",
+        "situation_effect_kind_valid_to_idx": {
+          "name": "situation_effect_kind_valid_to_idx",
           "columns": [
             {
               "expression": "kind",
@@ -3574,8 +3574,8 @@
           "method": "btree",
           "concurrently": false
         },
-        "idx_situation_effect_geom": {
-          "name": "idx_situation_effect_geom",
+        "situation_effect_geom_idx": {
+          "name": "situation_effect_geom_idx",
           "columns": [
             {
               "expression": "geom",
@@ -3591,8 +3591,8 @@
         }
       },
       "foreignKeys": {
-        "situation_effect_situation_id_situation_id_fk": {
-          "name": "situation_effect_situation_id_situation_id_fk",
+        "situation_effect_situation_id_fkey": {
+          "name": "situation_effect_situation_id_fkey",
           "tableFrom": "situation_effect",
           "columnsFrom": [
             "situation_id"
@@ -3607,8 +3607,8 @@
         }
       },
       "compositePrimaryKeys": {
-        "situation_effect_situation_id_effect_id_pk": {
-          "name": "situation_effect_situation_id_effect_id_pk",
+        "situation_effect_pkey": {
+          "name": "situation_effect_pkey",
           "columns": [
             "situation_id",
             "effect_id"
@@ -3618,16 +3618,16 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
-        "situation_effect_applicability_enum": {
-          "name": "situation_effect_applicability_enum",
+        "situation_effect_applicability_kind_check": {
+          "name": "situation_effect_applicability_kind_check",
           "value": "\"applicability_kind\" IN ('all', 'classes', 'unknown')"
         },
-        "situation_effect_normalization_enum": {
-          "name": "situation_effect_normalization_enum",
+        "situation_effect_normalization_check": {
+          "name": "situation_effect_normalization_check",
           "value": "\"normalization\" IN ('complete', 'partial', 'unsupported')"
         },
-        "situation_effect_compliance_enum": {
-          "name": "situation_effect_compliance_enum",
+        "situation_effect_compliance_check": {
+          "name": "situation_effect_compliance_check",
           "value": "\"compliance\" IN ('mandatory', 'advisory', 'unknown')"
         }
       },
@@ -3669,8 +3669,8 @@
         }
       },
       "indexes": {
-        "idx_situation_revision_recorded": {
-          "name": "idx_situation_revision_recorded",
+        "situation_revision_recorded_at_idx": {
+          "name": "situation_revision_recorded_at_idx",
           "columns": [
             {
               "expression": "recorded_at",
@@ -3686,8 +3686,8 @@
         }
       },
       "foreignKeys": {
-        "situation_revision_situation_id_situation_id_fk": {
-          "name": "situation_revision_situation_id_situation_id_fk",
+        "situation_revision_situation_id_fkey": {
+          "name": "situation_revision_situation_id_fkey",
           "tableFrom": "situation_revision",
           "columnsFrom": [
             "situation_id"
@@ -3702,8 +3702,8 @@
         }
       },
       "compositePrimaryKeys": {
-        "situation_revision_situation_id_revision_pk": {
-          "name": "situation_revision_situation_id_revision_pk",
+        "situation_revision_pkey": {
+          "name": "situation_revision_pkey",
           "columns": [
             "situation_id",
             "revision"
@@ -4003,8 +4003,8 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
-        "federation_journal_single_row": {
-          "name": "federation_journal_single_row",
+        "federation_journal_singleton_check": {
+          "name": "federation_journal_singleton_check",
           "value": "\"conditions\".\"federation_journal\".\"singleton\""
         }
       },
@@ -4052,8 +4052,8 @@
         }
       },
       "indexes": {
-        "idx_federation_lapsed_copy_source": {
-          "name": "idx_federation_lapsed_copy_source",
+        "federation_lapsed_copy_peer_instance_id_source_id_idx": {
+          "name": "federation_lapsed_copy_peer_instance_id_source_id_idx",
           "columns": [
             {
               "expression": "peer_instance_id",
@@ -4076,8 +4076,8 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "federation_lapsed_copy_record_class_record_id_pk": {
-          "name": "federation_lapsed_copy_record_class_record_id_pk",
+        "federation_lapsed_copy_pkey": {
+          "name": "federation_lapsed_copy_pkey",
           "columns": [
             "record_class",
             "record_id"
@@ -4193,8 +4193,8 @@
         }
       },
       "indexes": {
-        "idx_federation_outbox_record": {
-          "name": "idx_federation_outbox_record",
+        "federation_outbox_record_class_record_id_seq_idx": {
+          "name": "federation_outbox_record_class_record_id_seq_idx",
           "columns": [
             {
               "expression": "record_class",
@@ -4220,8 +4220,8 @@
           "method": "btree",
           "concurrently": false
         },
-        "idx_federation_outbox_cursor": {
-          "name": "idx_federation_outbox_cursor",
+        "federation_outbox_txid_seq_idx": {
+          "name": "federation_outbox_txid_seq_idx",
           "columns": [
             {
               "expression": "txid",
@@ -4241,8 +4241,8 @@
           "method": "btree",
           "concurrently": false
         },
-        "idx_federation_outbox_created_at": {
-          "name": "idx_federation_outbox_created_at",
+        "federation_outbox_created_at_idx": {
+          "name": "federation_outbox_created_at_idx",
           "columns": [
             {
               "expression": "created_at",
@@ -4262,16 +4262,16 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
-        "federation_outbox_operation_enum": {
-          "name": "federation_outbox_operation_enum",
+        "federation_outbox_operation_check": {
+          "name": "federation_outbox_operation_check",
           "value": "\"conditions\".\"federation_outbox\".\"operation\" IN ('create','update','delete','liveness')"
         },
-        "federation_outbox_record_class_enum": {
-          "name": "federation_outbox_record_class_enum",
+        "federation_outbox_record_class_check": {
+          "name": "federation_outbox_record_class_check",
           "value": "\"record_class\" IN ('feature', 'situation', 'observation', 'offer')"
         },
-        "federation_outbox_delete_shape": {
-          "name": "federation_outbox_delete_shape",
+        "federation_outbox_delete_shape_check": {
+          "name": "federation_outbox_delete_shape_check",
           "value": "(\"conditions\".\"federation_outbox\".\"operation\" = 'delete') = (\"conditions\".\"federation_outbox\".\"snapshot\" IS NULL AND \"conditions\".\"federation_outbox\".\"tombstone_reason\" IS NOT NULL)"
         }
       },
@@ -4500,8 +4500,8 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "federation_peer_key_peer_instance_id_key_id_pk": {
-          "name": "federation_peer_key_peer_instance_id_key_id_pk",
+        "federation_peer_key_pkey": {
+          "name": "federation_peer_key_pkey",
           "columns": [
             "peer_instance_id",
             "key_id"
@@ -4551,8 +4551,8 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "federation_source_receipt_peer_instance_id_source_id_pk": {
-          "name": "federation_source_receipt_peer_instance_id_source_id_pk",
+        "federation_source_receipt_pkey": {
+          "name": "federation_source_receipt_pkey",
           "columns": [
             "peer_instance_id",
             "source_id"
@@ -4656,8 +4656,8 @@
         }
       },
       "indexes": {
-        "idx_federation_subscription_peer": {
-          "name": "idx_federation_subscription_peer",
+        "federation_subscription_peer_id_idx": {
+          "name": "federation_subscription_peer_id_idx",
           "columns": [
             {
               "expression": "peer_id",
@@ -4671,8 +4671,8 @@
           "method": "btree",
           "concurrently": false
         },
-        "uq_federation_subscription_target": {
-          "name": "uq_federation_subscription_target",
+        "federation_subscription_target_key": {
+          "name": "federation_subscription_target_key",
           "columns": [
             {
               "expression": "peer_id",
@@ -4705,8 +4705,8 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
-        "federation_subscription_delivery_mode_enum": {
-          "name": "federation_subscription_delivery_mode_enum",
+        "federation_subscription_delivery_mode_check": {
+          "name": "federation_subscription_delivery_mode_check",
           "value": "\"conditions\".\"federation_subscription\".\"delivery_mode\" IN ('pull','webhook','sse')"
         },
         "federation_subscription_status_check": {
@@ -4772,8 +4772,8 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "federation_tombstone_canonical_id_peer_instance_id_pk": {
-          "name": "federation_tombstone_canonical_id_peer_instance_id_pk",
+        "federation_tombstone_pkey": {
+          "name": "federation_tombstone_pkey",
           "columns": [
             "canonical_id",
             "peer_instance_id"
@@ -4825,7 +4825,12 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "geonet_coverage_order_check": {
+          "name": "geonet_coverage_order_check",
+          "value": "\"conditions\".\"geonet_coverage\".\"covered_from\" < \"conditions\".\"geonet_coverage\".\"covered_until\""
+        }
+      },
       "isRLSEnabled": false
     },
     "conditions.issuer_key": {
@@ -4932,8 +4937,8 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "nsw_rfs_clock_source_id_incident_id_pk": {
-          "name": "nsw_rfs_clock_source_id_incident_id_pk",
+        "nsw_rfs_clock_pkey": {
+          "name": "nsw_rfs_clock_pkey",
           "columns": [
             "source_id",
             "incident_id"
@@ -4995,8 +5000,8 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "observation_revision_source_id_feature_id_property_pk": {
-          "name": "observation_revision_source_id_feature_id_property_pk",
+        "observation_revision_pkey": {
+          "name": "observation_revision_pkey",
           "columns": [
             "source_id",
             "feature_id",
@@ -5059,8 +5064,8 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "on_demand_fetch_source_id_cell_pk": {
-          "name": "on_demand_fetch_source_id_cell_pk",
+        "on_demand_fetch_pkey": {
+          "name": "on_demand_fetch_pkey",
           "columns": [
             "source_id",
             "cell"
@@ -5070,8 +5075,8 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
-        "on_demand_fetch_status_enum": {
-          "name": "on_demand_fetch_status_enum",
+        "on_demand_fetch_status_check": {
+          "name": "on_demand_fetch_status_check",
           "value": "\"conditions\".\"on_demand_fetch\".\"status\" IN ('pending','fresh','failed')"
         }
       },
@@ -5200,8 +5205,8 @@
         }
       },
       "indexes": {
-        "idx_osm_road_geom": {
-          "name": "idx_osm_road_geom",
+        "osm_road_geom_idx": {
+          "name": "osm_road_geom_idx",
           "columns": [
             {
               "expression": "geom",
@@ -5215,8 +5220,8 @@
           "method": "gist",
           "concurrently": false
         },
-        "idx_osm_road_highway": {
-          "name": "idx_osm_road_highway",
+        "osm_road_highway_idx": {
+          "name": "osm_road_highway_idx",
           "columns": [
             {
               "expression": "highway",
@@ -5230,8 +5235,8 @@
           "method": "btree",
           "concurrently": false
         },
-        "idx_osm_road_ref": {
-          "name": "idx_osm_road_ref",
+        "osm_road_ref_idx": {
+          "name": "osm_road_ref_idx",
           "columns": [
             {
               "expression": "ref",
@@ -5361,16 +5366,16 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
-        "reporter_reputation_alpha_positive": {
-          "name": "reporter_reputation_alpha_positive",
+        "reporter_reputation_alpha_check": {
+          "name": "reporter_reputation_alpha_check",
           "value": "\"conditions\".\"reporter\".\"reputation_alpha\" > 0"
         },
-        "reporter_reputation_beta_positive": {
-          "name": "reporter_reputation_beta_positive",
+        "reporter_reputation_beta_check": {
+          "name": "reporter_reputation_beta_check",
           "value": "\"conditions\".\"reporter\".\"reputation_beta\" > 0"
         },
-        "reporter_status_enum": {
-          "name": "reporter_status_enum",
+        "reporter_status_check": {
+          "name": "reporter_status_check",
           "value": "\"conditions\".\"reporter\".\"status\" IN ('active','blocked')"
         }
       },
@@ -5437,8 +5442,8 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
-        "road_graph_state_singleton": {
-          "name": "road_graph_state_singleton",
+        "road_graph_state_singleton_check": {
+          "name": "road_graph_state_singleton_check",
           "value": "\"conditions\".\"road_graph_state\".\"singleton\" IS TRUE"
         }
       },
@@ -5516,8 +5521,8 @@
         }
       },
       "indexes": {
-        "idx_road_segment_geom": {
-          "name": "idx_road_segment_geom",
+        "road_segment_geom_idx": {
+          "name": "road_segment_geom_idx",
           "columns": [
             {
               "expression": "geom",
@@ -5531,8 +5536,8 @@
           "method": "gist",
           "concurrently": false
         },
-        "idx_road_segment_way": {
-          "name": "idx_road_segment_way",
+        "road_segment_way_id_idx": {
+          "name": "road_segment_way_id_idx",
           "columns": [
             {
               "expression": "way_id",
@@ -5546,8 +5551,8 @@
           "method": "btree",
           "concurrently": false
         },
-        "idx_road_segment_minzoom": {
-          "name": "idx_road_segment_minzoom",
+        "road_segment_min_zoom_idx": {
+          "name": "road_segment_min_zoom_idx",
           "columns": [
             {
               "expression": "min_zoom",
@@ -5727,8 +5732,8 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "segment_observation_segment_id_source_pk": {
-          "name": "segment_observation_segment_id_source_pk",
+        "segment_observation_pkey": {
+          "name": "segment_observation_pkey",
           "columns": [
             "segment_id",
             "source"
@@ -5815,8 +5820,8 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "segment_profile_segment_id_dow_tod_hour_pk": {
-          "name": "segment_profile_segment_id_dow_tod_hour_pk",
+        "segment_profile_pkey": {
+          "name": "segment_profile_pkey",
           "columns": [
             "segment_id",
             "dow",
@@ -6027,8 +6032,8 @@
         }
       },
       "indexes": {
-        "idx_sensor_baseline_source_bucket": {
-          "name": "idx_sensor_baseline_source_bucket",
+        "sensor_baseline_source_dow_bucket_tod_bucket_idx": {
+          "name": "sensor_baseline_source_dow_bucket_tod_bucket_idx",
           "columns": [
             {
               "expression": "source",
@@ -6057,8 +6062,8 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "sensor_baseline_subject_key_dow_bucket_tod_bucket_method_pk": {
-          "name": "sensor_baseline_subject_key_dow_bucket_tod_bucket_method_pk",
+        "sensor_baseline_pkey": {
+          "name": "sensor_baseline_pkey",
           "columns": [
             "subject_key",
             "dow_bucket",
@@ -6114,8 +6119,8 @@
         }
       },
       "indexes": {
-        "idx_sensor_segment_segment": {
-          "name": "idx_sensor_segment_segment",
+        "sensor_segment_segment_id_idx": {
+          "name": "sensor_segment_segment_id_idx",
           "columns": [
             {
               "expression": "segment_id",
@@ -6216,8 +6221,8 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "smn_cap_message_source_id_variant_pk": {
-          "name": "smn_cap_message_source_id_variant_pk",
+        "smn_cap_message_pkey": {
+          "name": "smn_cap_message_pkey",
           "columns": [
             "source_id",
             "variant"
@@ -6355,8 +6360,8 @@
         }
       },
       "indexes": {
-        "idx_source_poll_attempt_source_time": {
-          "name": "idx_source_poll_attempt_source_time",
+        "source_poll_attempt_source_attempted_at_idx": {
+          "name": "source_poll_attempt_source_attempted_at_idx",
           "columns": [
             {
               "expression": "source",
@@ -6376,8 +6381,8 @@
           "method": "btree",
           "concurrently": false
         },
-        "idx_source_poll_attempt_time": {
-          "name": "idx_source_poll_attempt_time",
+        "source_poll_attempt_attempted_at_id_idx": {
+          "name": "source_poll_attempt_attempted_at_id_idx",
           "columns": [
             {
               "expression": "attempted_at",
@@ -6449,8 +6454,8 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "source_shrink_source_id_scope_pk": {
-          "name": "source_shrink_source_id_scope_pk",
+        "source_shrink_pkey": {
+          "name": "source_shrink_pkey",
           "columns": [
             "source_id",
             "scope"
@@ -6460,8 +6465,8 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
-        "source_shrink_scope_enum": {
-          "name": "source_shrink_scope_enum",
+        "source_shrink_scope_check": {
+          "name": "source_shrink_scope_check",
           "value": "\"conditions\".\"source_shrink\".\"scope\" IN ('series','records')"
         }
       },
@@ -6710,8 +6715,8 @@
         }
       },
       "compositePrimaryKeys": {
-        "token_quota_key_id_epoch_pk": {
-          "name": "token_quota_key_id_epoch_pk",
+        "token_quota_pkey": {
+          "name": "token_quota_pkey",
           "columns": [
             "key_id",
             "epoch"
@@ -7045,12 +7050,12 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
-        "source_access_mode_enum": {
-          "name": "source_access_mode_enum",
+        "source_access_mode_check": {
+          "name": "source_access_mode_check",
           "value": "\"access_mode\" IN ('bulk', 'on_demand')"
         },
-        "source_tier_enum": {
-          "name": "source_tier_enum",
+        "source_tier_check": {
+          "name": "source_tier_check",
           "value": "\"tier\" IN ('authoritative', 'operator', 'aggregator', 'community')"
         }
       },

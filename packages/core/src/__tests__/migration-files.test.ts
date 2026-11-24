@@ -80,12 +80,6 @@ const allowed: { kind: string; pattern: RegExp }[] = [
     pattern:
       /^ALTER TABLE "conditions"\."observation_latest" ALTER COLUMN "\w+" SET STORAGE (EXTERNAL|MAIN);?$/,
   },
-  // Until the schema code declares this CHECK, the custom file carries it.
-  {
-    kind: "geonet coverage order",
-    pattern:
-      /^ALTER TABLE "conditions"\."geonet_coverage" ADD CONSTRAINT "geonet_coverage_order" CHECK \("covered_from" < "covered_until"\);?$/,
-  },
 ];
 
 // The federation journal's first epoch, the one seed row.
@@ -143,6 +137,10 @@ describe("migration files", () => {
     [
       "an index drizzle-kit can generate",
       'CREATE INDEX "x_idx" ON "conditions"."source" USING btree ("id");',
+    ],
+    [
+      "a CHECK drizzle-kit can generate",
+      'ALTER TABLE "conditions"."geonet_coverage" ADD CONSTRAINT "geonet_coverage_order_check" CHECK ("covered_from" < "covered_until");',
     ],
     [
       "a lowercase table",

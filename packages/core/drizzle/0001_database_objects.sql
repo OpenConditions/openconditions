@@ -32,8 +32,8 @@ CREATE TABLE "conditions"."observation" (
 	"fetch_id" bigint,
 	"raw_part" smallint,
 	"extra" jsonb,
-	CONSTRAINT "observation_pk" PRIMARY KEY ("series_id", "phenomenon_start", "issued_at", "retention_days"),
-	CONSTRAINT "observation_retention_days_nonneg" CHECK ("retention_days" >= 0)
+	CONSTRAINT "observation_pkey" PRIMARY KEY ("series_id", "phenomenon_start", "issued_at", "retention_days"),
+	CONSTRAINT "observation_retention_days_check" CHECK ("retention_days" >= 0)
 ) PARTITION BY LIST ("retention_days");
 --> statement-breakpoint
 -- History is read by series through the primary key (it leads with
@@ -41,7 +41,7 @@ CREATE TABLE "conditions"."observation" (
 -- by time alone, an hour of a day partition. Readings arrive roughly in time
 -- order, so a block range index serves that read for a few pages a
 -- partition, where a btree on time took about a fifth of every row's bytes.
-CREATE INDEX "idx_observation_start_brin" ON "conditions"."observation" USING brin ("phenomenon_start");
+CREATE INDEX "observation_phenomenon_start_idx" ON "conditions"."observation" USING brin ("phenomenon_start");
 --> statement-breakpoint
 -- A latest row keeps its reading inline and its series template out of
 -- line: a row grows past the tuple target only by its template (about a
@@ -69,10 +69,6 @@ ALTER TABLE "conditions"."observation_latest" SET (toast_tuple_target = 1200, fi
 -- over: an update changes a reading, not the distribution of series the
 -- planner reads.
 ALTER TABLE "conditions"."observation_latest" SET (autovacuum_vacuum_scale_factor = 0.5, autovacuum_analyze_scale_factor = 2);
---> statement-breakpoint
--- A coverage window ends after it starts. The schema code does not declare
--- this CHECK yet; once it does, the generated baseline carries it instead.
-ALTER TABLE "conditions"."geonet_coverage" ADD CONSTRAINT "geonet_coverage_order" CHECK ("covered_from" < "covered_until");
 --> statement-breakpoint
 -- A fused reading keeps the record IDs of its contributors once, in the
 -- reading; its provenance is rebuilt from them when the record is read.

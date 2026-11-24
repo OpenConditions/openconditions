@@ -87,6 +87,6 @@ describe("binding tables", () => {
             (record_class, record_id, status, direction_mode, resolver_version, geom_hash,
              record_revision, bound_at)
           VALUES ('event', 'x', 'exact', 'single', 'v', 'h', 1, now())`,
-    ).rejects.toThrow(/record_binding_record_class_enum/);
+    ).rejects.toThrow(/record_binding_record_class_check/);
   }, 30_000);
 });

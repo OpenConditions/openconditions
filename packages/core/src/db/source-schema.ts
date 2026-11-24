@@ -84,8 +84,8 @@ export const source = conditionsSchema.table(
     updatedAt: tstz("updated_at").notNull().defaultNow(),
   },
   () => [
-    check("source_access_mode_enum", sql.raw(enumCheckSql("access_mode", ACCESS_MODES))),
-    check("source_tier_enum", sql.raw(enumCheckSql("tier", SOURCE_TIERS))),
+    check("source_access_mode_check", sql.raw(enumCheckSql("access_mode", ACCESS_MODES))),
+    check("source_tier_check", sql.raw(enumCheckSql("tier", SOURCE_TIERS))),
   ],
 );
 

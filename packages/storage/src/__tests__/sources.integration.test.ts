@@ -106,7 +106,7 @@ describe("syncSources", () => {
 
   it("refuses a tier the kernel does not know", async () => {
     await expect(syncSources(sql, [{ ...ndw, tier: "official" }])).rejects.toThrow(
-      /source_tier_enum/,
+      /source_tier_check/,
     );
   });
 

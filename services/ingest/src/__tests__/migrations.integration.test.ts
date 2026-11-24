@@ -165,7 +165,7 @@ it("after a fresh migrate, segment_flow, the helper functions, the four capture 
     expect(
       await db.sql`SELECT conname FROM pg_constraint
         WHERE conrelid = 'conditions.geonet_coverage'::regclass AND contype = 'c'`,
-    ).toEqual([{ conname: "geonet_coverage_order" }]);
+    ).toEqual([{ conname: "geonet_coverage_order_check" }]);
     expect(await db.sql`SELECT count(*)::int AS n FROM conditions.federation_journal`).toEqual([
       { n: 1 },
     ]);

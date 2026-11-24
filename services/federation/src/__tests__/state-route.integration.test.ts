@@ -485,7 +485,7 @@ describe("reading records in byte order of their ids", () => {
       heldCopiesStatement("situation", "peer.example.net", after, through),
     ]) {
       const plan = await explain(statement);
-      expect(plan, statement.text).toContain('"Index Name":"idx_situation_id_bytes"');
+      expect(plan, statement.text).toContain('"Index Name":"situation_id_bytes_idx"');
       expect(plan, statement.text).not.toContain('"Node Type":"Sort"');
     }
   }, 60_000);

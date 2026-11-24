@@ -31,7 +31,7 @@ describe("segment schema", () => {
     );
     const idx =
       await sql`SELECT indexname FROM pg_indexes WHERE schemaname='conditions' AND tablename='road_segment'`;
-    expect(idx.map((i) => i.indexname)).toContain("idx_road_segment_geom");
+    expect(idx.map((i) => i.indexname)).toContain("road_segment_geom_idx");
   }, 30_000);
 
   it("creates osm_road with a bigint primary key", async () => {

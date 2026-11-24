@@ -7,7 +7,7 @@ CREATE TABLE "conditions"."binding_queue" (
 	"next_attempt_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"last_error" text,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "binding_queue_record_class_record_id_effect_id_pk" PRIMARY KEY("record_class","record_id","effect_id")
+	CONSTRAINT "binding_queue_pkey" PRIMARY KEY("record_class","record_id","effect_id")
 );
 --> statement-breakpoint
 CREATE TABLE "conditions"."record_binding" (
@@ -25,8 +25,8 @@ CREATE TABLE "conditions"."record_binding" (
 	"record_revision" integer NOT NULL,
 	"graph_generation" text,
 	"bound_at" timestamp with time zone NOT NULL,
-	CONSTRAINT "record_binding_record_class_record_id_effect_id_pk" PRIMARY KEY("record_class","record_id","effect_id"),
-	CONSTRAINT "record_binding_record_class_enum" CHECK ("record_class" IN ('feature', 'situation', 'observation', 'offer')),
+	CONSTRAINT "record_binding_pkey" PRIMARY KEY("record_class","record_id","effect_id"),
+	CONSTRAINT "record_binding_record_class_check" CHECK ("record_class" IN ('feature', 'situation', 'observation', 'offer')),
 	CONSTRAINT "record_binding_status_check" CHECK ("status" IN ('exact', 'likely', 'ambiguous', 'unresolved', 'no_coverage', 'not_applicable', 'obsolete')),
 	CONSTRAINT "record_binding_direction_mode_check" CHECK ("direction_mode" IN ('single', 'both', 'unknown'))
 );
@@ -41,7 +41,7 @@ CREATE TABLE "conditions"."record_segment" (
 	"dir" text NOT NULL,
 	"start_fraction" double precision NOT NULL,
 	"end_fraction" double precision NOT NULL,
-	CONSTRAINT "record_segment_record_class_record_id_effect_id_seq_pk" PRIMARY KEY("record_class","record_id","effect_id","seq")
+	CONSTRAINT "record_segment_pkey" PRIMARY KEY("record_class","record_id","effect_id","seq")
 );
 --> statement-breakpoint
 CREATE TABLE "conditions"."report_evidence" (
@@ -54,8 +54,8 @@ CREATE TABLE "conditions"."report_evidence" (
 	"source_id" text,
 	"occurred_at" timestamp with time zone NOT NULL,
 	"details" jsonb DEFAULT '{}'::jsonb NOT NULL,
-	CONSTRAINT "report_evidence_kind_enum" CHECK ("evidence_kind" IN ('report', 'confirm', 'negate', 'official_match', 'reviewer_accept', 'reviewer_reject')),
-	CONSTRAINT "report_evidence_record_class_enum" CHECK ("record_class" IN ('feature', 'situation', 'observation', 'offer'))
+	CONSTRAINT "report_evidence_evidence_kind_check" CHECK ("evidence_kind" IN ('report', 'confirm', 'negate', 'official_match', 'reviewer_accept', 'reviewer_reject')),
+	CONSTRAINT "report_evidence_record_class_check" CHECK ("record_class" IN ('feature', 'situation', 'observation', 'offer'))
 );
 --> statement-breakpoint
 CREATE TABLE "conditions"."report_refusal" (
@@ -76,8 +76,8 @@ CREATE TABLE "conditions"."sub_claim" (
 	"signature" text NOT NULL,
 	"created_at" timestamp with time zone NOT NULL,
 	CONSTRAINT "sub_claim_subject_class_subject_id_key_id_claim_type_key" UNIQUE("subject_class","subject_id","key_id","claim_type"),
-	CONSTRAINT "sub_claim_claim_type_enum" CHECK ("claim_type" IN ('confirm', 'negate', 'flag')),
-	CONSTRAINT "sub_claim_subject_class_enum" CHECK ("subject_class" IN ('feature', 'situation', 'observation', 'offer'))
+	CONSTRAINT "sub_claim_claim_type_check" CHECK ("claim_type" IN ('confirm', 'negate', 'flag')),
+	CONSTRAINT "sub_claim_subject_class_check" CHECK ("subject_class" IN ('feature', 'situation', 'observation', 'offer'))
 );
 --> statement-breakpoint
 CREATE TABLE "conditions"."jma_budget" (
@@ -85,8 +85,8 @@ CREATE TABLE "conditions"."jma_budget" (
 	"day" date NOT NULL,
 	"used" bigint DEFAULT 0 NOT NULL,
 	"reserved" bigint DEFAULT 0 NOT NULL,
-	CONSTRAINT "jma_budget_egress_day_pk" PRIMARY KEY("egress","day"),
-	CONSTRAINT "jma_budget_nonnegative" CHECK ("conditions"."jma_budget"."used" >= 0 AND "conditions"."jma_budget"."reserved" >= 0)
+	CONSTRAINT "jma_budget_pkey" PRIMARY KEY("egress","day"),
+	CONSTRAINT "jma_budget_nonnegative_check" CHECK ("conditions"."jma_budget"."used" >= 0 AND "conditions"."jma_budget"."reserved" >= 0)
 );
 --> statement-breakpoint
 CREATE TABLE "conditions"."jma_download" (
@@ -142,9 +142,9 @@ CREATE TABLE "conditions"."observation_latest" (
 	"expires_at" timestamp with time zone,
 	"retention_days" smallint,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "observation_latest_series" UNIQUE("subject_key","property","qualifier_key","source_id"),
-	CONSTRAINT "observation_latest_access_mode_enum" CHECK ("access_mode" IN ('bulk', 'on_demand')),
-	CONSTRAINT "observation_latest_evidence_state_enum" CHECK (evidence_state IS NULL OR "evidence_state" IN ('self_reported', 'corroborated', 'externally_resolved', 'negated', 'expired'))
+	CONSTRAINT "observation_latest_series_key" UNIQUE("subject_key","property","qualifier_key","source_id"),
+	CONSTRAINT "observation_latest_access_mode_check" CHECK ("access_mode" IN ('bulk', 'on_demand')),
+	CONSTRAINT "observation_latest_evidence_state_check" CHECK (evidence_state IS NULL OR "evidence_state" IN ('self_reported', 'corroborated', 'externally_resolved', 'negated', 'expired'))
 );
 --> statement-breakpoint
 CREATE TABLE "conditions"."observation_rollup_daily" (
@@ -156,7 +156,7 @@ CREATE TABLE "conditions"."observation_rollup_daily" (
 	"min" double precision NOT NULL,
 	"max" double precision NOT NULL,
 	"mean" double precision NOT NULL,
-	CONSTRAINT "observation_rollup_daily_series_id_day_utc_pk" PRIMARY KEY("series_id","day_utc")
+	CONSTRAINT "observation_rollup_daily_pkey" PRIMARY KEY("series_id","day_utc")
 );
 --> statement-breakpoint
 CREATE TABLE "conditions"."observation_rollup_hourly" (
@@ -170,7 +170,7 @@ CREATE TABLE "conditions"."observation_rollup_hourly" (
 	"min" double precision NOT NULL,
 	"max" double precision NOT NULL,
 	"mean" double precision NOT NULL,
-	CONSTRAINT "observation_rollup_hourly_series_id_hour_utc_pk" PRIMARY KEY("series_id","hour_utc")
+	CONSTRAINT "observation_rollup_hourly_pkey" PRIMARY KEY("series_id","hour_utc")
 );
 --> statement-breakpoint
 CREATE TABLE "conditions"."observation_rollup_progress" (
@@ -194,8 +194,8 @@ CREATE TABLE "conditions"."raw_payload" (
 	"storage_key" text NOT NULL,
 	"base_hash" text,
 	"evicted_at" timestamp with time zone,
-	CONSTRAINT "raw_payload_pk" PRIMARY KEY("source_id","hash"),
-	CONSTRAINT "raw_payload_tier_enum" CHECK ("tier" IN ('situation', 'observation', 'reference', 'hot'))
+	CONSTRAINT "raw_payload_pkey" PRIMARY KEY("source_id","hash"),
+	CONSTRAINT "raw_payload_tier_check" CHECK ("tier" IN ('situation', 'observation', 'reference', 'hot'))
 );
 --> statement-breakpoint
 CREATE TABLE "conditions"."feature" (
@@ -225,14 +225,14 @@ CREATE TABLE "conditions"."feature" (
 	"tombstoned_at" timestamp with time zone,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"lifecycle" text NOT NULL,
-	CONSTRAINT "feature_temporality_enum" CHECK ("temporality" IN ('static', 'scheduled', 'live', 'forecast')),
-	CONSTRAINT "feature_origin_enum" CHECK ("origin" IN ('feed', 'crowd', 'federation', 'derived')),
-	CONSTRAINT "feature_access_mode_enum" CHECK ("access_mode" IN ('bulk', 'on_demand')),
-	CONSTRAINT "feature_privacy_class_enum" CHECK ("privacy_class" IN ('authoritative', 'aggregate', 'k_anon', 'dp_noised', 'crowd_pseudonym')),
-	CONSTRAINT "feature_tombstone_reason_enum" CHECK (tombstone_reason IS NULL OR "tombstone_reason" IN ('expired', 'withdrawn', 'superseded', 'cancelled', 'rights_revoked', 'rejected')),
-	CONSTRAINT "feature_tombstone_complete" CHECK ((tombstone_reason IS NULL) = (tombstoned_at IS NULL)),
-	CONSTRAINT "feature_revision_positive" CHECK (revision > 0),
-	CONSTRAINT "feature_lifecycle_enum" CHECK ("lifecycle" IN ('planned', 'under_construction', 'operational', 'temporarily_closed', 'decommissioned', 'unknown'))
+	CONSTRAINT "feature_temporality_check" CHECK ("temporality" IN ('static', 'scheduled', 'live', 'forecast')),
+	CONSTRAINT "feature_origin_check" CHECK ("origin" IN ('feed', 'crowd', 'federation', 'derived')),
+	CONSTRAINT "feature_access_mode_check" CHECK ("access_mode" IN ('bulk', 'on_demand')),
+	CONSTRAINT "feature_privacy_class_check" CHECK ("privacy_class" IN ('authoritative', 'aggregate', 'k_anon', 'dp_noised', 'crowd_pseudonym')),
+	CONSTRAINT "feature_tombstone_reason_check" CHECK (tombstone_reason IS NULL OR "tombstone_reason" IN ('expired', 'withdrawn', 'superseded', 'cancelled', 'rights_revoked', 'rejected')),
+	CONSTRAINT "feature_tombstone_check" CHECK ((tombstone_reason IS NULL) = (tombstoned_at IS NULL)),
+	CONSTRAINT "feature_revision_check" CHECK (revision > 0),
+	CONSTRAINT "feature_lifecycle_check" CHECK ("lifecycle" IN ('planned', 'under_construction', 'operational', 'temporarily_closed', 'decommissioned', 'unknown'))
 );
 --> statement-breakpoint
 CREATE TABLE "conditions"."feature_canonical" (
@@ -254,8 +254,8 @@ CREATE TABLE "conditions"."feature_component" (
 	"external_ids" jsonb,
 	"details" jsonb NOT NULL,
 	"content_hash" text NOT NULL,
-	CONSTRAINT "feature_component_feature_id_key_pk" PRIMARY KEY("feature_id","key"),
-	CONSTRAINT "feature_component_lifecycle_enum" CHECK (lifecycle IS NULL OR "lifecycle" IN ('planned', 'under_construction', 'operational', 'temporarily_closed', 'decommissioned', 'unknown'))
+	CONSTRAINT "feature_component_pkey" PRIMARY KEY("feature_id","key"),
+	CONSTRAINT "feature_component_lifecycle_check" CHECK (lifecycle IS NULL OR "lifecycle" IN ('planned', 'under_construction', 'operational', 'temporarily_closed', 'decommissioned', 'unknown'))
 );
 --> statement-breakpoint
 CREATE TABLE "conditions"."feature_link" (
@@ -266,10 +266,10 @@ CREATE TABLE "conditions"."feature_link" (
 	"status" text NOT NULL,
 	"decided_by" text,
 	"decided_at" timestamp with time zone NOT NULL,
-	CONSTRAINT "feature_link_a_id_b_id_pk" PRIMARY KEY("a_id","b_id"),
-	CONSTRAINT "feature_link_ordered" CHECK ("conditions"."feature_link"."a_id" < "conditions"."feature_link"."b_id" COLLATE "C"),
-	CONSTRAINT "feature_link_method_enum" CHECK ("method" IN ('external_id', 'spatial_attribute', 'manual')),
-	CONSTRAINT "feature_link_status_enum" CHECK ("status" IN ('accepted', 'rejected', 'pending'))
+	CONSTRAINT "feature_link_pkey" PRIMARY KEY("a_id","b_id"),
+	CONSTRAINT "feature_link_order_check" CHECK ("conditions"."feature_link"."a_id" < "conditions"."feature_link"."b_id" COLLATE "C"),
+	CONSTRAINT "feature_link_method_check" CHECK ("method" IN ('external_id', 'spatial_attribute', 'manual')),
+	CONSTRAINT "feature_link_status_check" CHECK ("status" IN ('accepted', 'rejected', 'pending'))
 );
 --> statement-breakpoint
 CREATE TABLE "conditions"."feature_revision" (
@@ -278,7 +278,7 @@ CREATE TABLE "conditions"."feature_revision" (
 	"recorded_at" timestamp with time zone NOT NULL,
 	"change_kinds" text[] NOT NULL,
 	"snapshot" jsonb NOT NULL,
-	CONSTRAINT "feature_revision_feature_id_revision_pk" PRIMARY KEY("feature_id","revision")
+	CONSTRAINT "feature_revision_pkey" PRIMARY KEY("feature_id","revision")
 );
 --> statement-breakpoint
 CREATE TABLE "conditions"."offer" (
@@ -315,14 +315,14 @@ CREATE TABLE "conditions"."offer" (
 	"valid_to" timestamp with time zone,
 	"min_price" numeric(14, 4),
 	"max_price" numeric(14, 4),
-	CONSTRAINT "offer_temporality_enum" CHECK ("temporality" IN ('static', 'scheduled', 'live', 'forecast')),
-	CONSTRAINT "offer_origin_enum" CHECK ("origin" IN ('feed', 'crowd', 'federation', 'derived')),
-	CONSTRAINT "offer_access_mode_enum" CHECK ("access_mode" IN ('bulk', 'on_demand')),
-	CONSTRAINT "offer_privacy_class_enum" CHECK ("privacy_class" IN ('authoritative', 'aggregate', 'k_anon', 'dp_noised', 'crowd_pseudonym')),
-	CONSTRAINT "offer_tombstone_reason_enum" CHECK (tombstone_reason IS NULL OR "tombstone_reason" IN ('expired', 'withdrawn', 'superseded', 'cancelled', 'rights_revoked', 'rejected')),
-	CONSTRAINT "offer_tombstone_complete" CHECK ((tombstone_reason IS NULL) = (tombstoned_at IS NULL)),
-	CONSTRAINT "offer_revision_positive" CHECK (revision > 0),
-	CONSTRAINT "offer_subject_class_enum" CHECK ("subject_class" IN ('feature', 'situation', 'observation', 'offer'))
+	CONSTRAINT "offer_temporality_check" CHECK ("temporality" IN ('static', 'scheduled', 'live', 'forecast')),
+	CONSTRAINT "offer_origin_check" CHECK ("origin" IN ('feed', 'crowd', 'federation', 'derived')),
+	CONSTRAINT "offer_access_mode_check" CHECK ("access_mode" IN ('bulk', 'on_demand')),
+	CONSTRAINT "offer_privacy_class_check" CHECK ("privacy_class" IN ('authoritative', 'aggregate', 'k_anon', 'dp_noised', 'crowd_pseudonym')),
+	CONSTRAINT "offer_tombstone_reason_check" CHECK (tombstone_reason IS NULL OR "tombstone_reason" IN ('expired', 'withdrawn', 'superseded', 'cancelled', 'rights_revoked', 'rejected')),
+	CONSTRAINT "offer_tombstone_check" CHECK ((tombstone_reason IS NULL) = (tombstoned_at IS NULL)),
+	CONSTRAINT "offer_revision_check" CHECK (revision > 0),
+	CONSTRAINT "offer_subject_class_check" CHECK ("subject_class" IN ('feature', 'situation', 'observation', 'offer'))
 );
 --> statement-breakpoint
 CREATE TABLE "conditions"."offer_revision" (
@@ -331,7 +331,7 @@ CREATE TABLE "conditions"."offer_revision" (
 	"recorded_at" timestamp with time zone NOT NULL,
 	"change_kinds" text[] NOT NULL,
 	"snapshot" jsonb NOT NULL,
-	CONSTRAINT "offer_revision_offer_id_revision_pk" PRIMARY KEY("offer_id","revision")
+	CONSTRAINT "offer_revision_pkey" PRIMARY KEY("offer_id","revision")
 );
 --> statement-breakpoint
 CREATE TABLE "conditions"."record_relation" (
@@ -341,10 +341,10 @@ CREATE TABLE "conditions"."record_relation" (
 	"to_class" text NOT NULL,
 	"to_id" text NOT NULL,
 	"component_key" text DEFAULT '' NOT NULL,
-	CONSTRAINT "record_relation_pk" PRIMARY KEY("from_class","from_id","relation","to_class","to_id","component_key"),
-	CONSTRAINT "record_relation_from_class_enum" CHECK ("from_class" IN ('feature', 'situation', 'observation', 'offer')),
-	CONSTRAINT "record_relation_to_class_enum" CHECK ("to_class" IN ('feature', 'situation', 'observation', 'offer')),
-	CONSTRAINT "record_relation_relation_enum" CHECK ("relation" IN ('part_of', 'monitors', 'controls', 'serves', 'group', 'next_occurrence', 'first_occurrence', 'related_work_zone', 'caused_by', 'detour_for', 'supersedes', 'update_of', 'cancels', 'related'))
+	CONSTRAINT "record_relation_pkey" PRIMARY KEY("from_class","from_id","relation","to_class","to_id","component_key"),
+	CONSTRAINT "record_relation_from_class_check" CHECK ("from_class" IN ('feature', 'situation', 'observation', 'offer')),
+	CONSTRAINT "record_relation_to_class_check" CHECK ("to_class" IN ('feature', 'situation', 'observation', 'offer')),
+	CONSTRAINT "record_relation_relation_check" CHECK ("relation" IN ('part_of', 'monitors', 'controls', 'serves', 'group', 'next_occurrence', 'first_occurrence', 'related_work_zone', 'caused_by', 'detour_for', 'supersedes', 'update_of', 'cancels', 'related'))
 );
 --> statement-breakpoint
 CREATE TABLE "conditions"."situation" (
@@ -386,18 +386,18 @@ CREATE TABLE "conditions"."situation" (
 	"routing_eligible" boolean DEFAULT false NOT NULL,
 	"corroborations" integer DEFAULT 0 NOT NULL,
 	"flagged_at" timestamp with time zone,
-	CONSTRAINT "situation_temporality_enum" CHECK ("temporality" IN ('static', 'scheduled', 'live', 'forecast')),
-	CONSTRAINT "situation_origin_enum" CHECK ("origin" IN ('feed', 'crowd', 'federation', 'derived')),
-	CONSTRAINT "situation_access_mode_enum" CHECK ("access_mode" IN ('bulk', 'on_demand')),
-	CONSTRAINT "situation_privacy_class_enum" CHECK ("privacy_class" IN ('authoritative', 'aggregate', 'k_anon', 'dp_noised', 'crowd_pseudonym')),
-	CONSTRAINT "situation_tombstone_reason_enum" CHECK (tombstone_reason IS NULL OR "tombstone_reason" IN ('expired', 'withdrawn', 'superseded', 'cancelled', 'rights_revoked', 'rejected')),
-	CONSTRAINT "situation_tombstone_complete" CHECK ((tombstone_reason IS NULL) = (tombstoned_at IS NULL)),
-	CONSTRAINT "situation_revision_positive" CHECK (revision > 0),
-	CONSTRAINT "situation_severity_enum" CHECK ("severity" IN ('none', 'minor', 'moderate', 'major', 'critical', 'unknown')),
-	CONSTRAINT "situation_severity_level_range" CHECK ("conditions"."situation"."severity_level" IS NULL OR "conditions"."situation"."severity_level" BETWEEN 1 AND 5),
-	CONSTRAINT "situation_certainty_enum" CHECK ("certainty" IN ('observed', 'likely', 'possible', 'unlikely', 'unknown')),
-	CONSTRAINT "situation_validity_status_enum" CHECK ("validity_status" IN ('planned', 'active', 'suspended', 'ended', 'cancelled', 'unknown')),
-	CONSTRAINT "situation_evidence_state_enum" CHECK (evidence_state IS NULL OR "evidence_state" IN ('self_reported', 'corroborated', 'externally_resolved', 'negated', 'expired'))
+	CONSTRAINT "situation_temporality_check" CHECK ("temporality" IN ('static', 'scheduled', 'live', 'forecast')),
+	CONSTRAINT "situation_origin_check" CHECK ("origin" IN ('feed', 'crowd', 'federation', 'derived')),
+	CONSTRAINT "situation_access_mode_check" CHECK ("access_mode" IN ('bulk', 'on_demand')),
+	CONSTRAINT "situation_privacy_class_check" CHECK ("privacy_class" IN ('authoritative', 'aggregate', 'k_anon', 'dp_noised', 'crowd_pseudonym')),
+	CONSTRAINT "situation_tombstone_reason_check" CHECK (tombstone_reason IS NULL OR "tombstone_reason" IN ('expired', 'withdrawn', 'superseded', 'cancelled', 'rights_revoked', 'rejected')),
+	CONSTRAINT "situation_tombstone_check" CHECK ((tombstone_reason IS NULL) = (tombstoned_at IS NULL)),
+	CONSTRAINT "situation_revision_check" CHECK (revision > 0),
+	CONSTRAINT "situation_severity_check" CHECK ("severity" IN ('none', 'minor', 'moderate', 'major', 'critical', 'unknown')),
+	CONSTRAINT "situation_severity_level_check" CHECK ("conditions"."situation"."severity_level" IS NULL OR "conditions"."situation"."severity_level" BETWEEN 1 AND 5),
+	CONSTRAINT "situation_certainty_check" CHECK ("certainty" IN ('observed', 'likely', 'possible', 'unlikely', 'unknown')),
+	CONSTRAINT "situation_validity_status_check" CHECK ("validity_status" IN ('planned', 'active', 'suspended', 'ended', 'cancelled', 'unknown')),
+	CONSTRAINT "situation_evidence_state_check" CHECK (evidence_state IS NULL OR "evidence_state" IN ('self_reported', 'corroborated', 'externally_resolved', 'negated', 'expired'))
 );
 --> statement-breakpoint
 CREATE TABLE "conditions"."situation_effect" (
@@ -413,10 +413,10 @@ CREATE TABLE "conditions"."situation_effect" (
 	"valid_to" timestamp with time zone,
 	"geom" geometry(Geometry, 4326),
 	"value" jsonb NOT NULL,
-	CONSTRAINT "situation_effect_situation_id_effect_id_pk" PRIMARY KEY("situation_id","effect_id"),
-	CONSTRAINT "situation_effect_applicability_enum" CHECK ("applicability_kind" IN ('all', 'classes', 'unknown')),
-	CONSTRAINT "situation_effect_normalization_enum" CHECK ("normalization" IN ('complete', 'partial', 'unsupported')),
-	CONSTRAINT "situation_effect_compliance_enum" CHECK ("compliance" IN ('mandatory', 'advisory', 'unknown'))
+	CONSTRAINT "situation_effect_pkey" PRIMARY KEY("situation_id","effect_id"),
+	CONSTRAINT "situation_effect_applicability_kind_check" CHECK ("applicability_kind" IN ('all', 'classes', 'unknown')),
+	CONSTRAINT "situation_effect_normalization_check" CHECK ("normalization" IN ('complete', 'partial', 'unsupported')),
+	CONSTRAINT "situation_effect_compliance_check" CHECK ("compliance" IN ('mandatory', 'advisory', 'unknown'))
 );
 --> statement-breakpoint
 CREATE TABLE "conditions"."situation_revision" (
@@ -425,7 +425,7 @@ CREATE TABLE "conditions"."situation_revision" (
 	"recorded_at" timestamp with time zone NOT NULL,
 	"change_kinds" text[] NOT NULL,
 	"snapshot" jsonb NOT NULL,
-	CONSTRAINT "situation_revision_situation_id_revision_pk" PRIMARY KEY("situation_id","revision")
+	CONSTRAINT "situation_revision_pkey" PRIMARY KEY("situation_id","revision")
 );
 --> statement-breakpoint
 CREATE TABLE "conditions"."archive_erasure" (
@@ -479,7 +479,7 @@ CREATE TABLE "conditions"."federation_journal" (
 	"timeline_id" integer,
 	"database_oid" bigint,
 	"system_identifier" bigint,
-	CONSTRAINT "federation_journal_single_row" CHECK ("conditions"."federation_journal"."singleton")
+	CONSTRAINT "federation_journal_singleton_check" CHECK ("conditions"."federation_journal"."singleton")
 );
 --> statement-breakpoint
 CREATE TABLE "conditions"."federation_lapsed_copy" (
@@ -489,7 +489,7 @@ CREATE TABLE "conditions"."federation_lapsed_copy" (
 	"source_id" text NOT NULL,
 	"revision" integer NOT NULL,
 	"lapsed_at" timestamp with time zone NOT NULL,
-	CONSTRAINT "federation_lapsed_copy_record_class_record_id_pk" PRIMARY KEY("record_class","record_id")
+	CONSTRAINT "federation_lapsed_copy_pkey" PRIMARY KEY("record_class","record_id")
 );
 --> statement-breakpoint
 CREATE TABLE "conditions"."federation_outbox" (
@@ -507,9 +507,9 @@ CREATE TABLE "conditions"."federation_outbox" (
 	"revision" integer,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"txid" "xid8" DEFAULT pg_current_xact_id() NOT NULL,
-	CONSTRAINT "federation_outbox_operation_enum" CHECK ("conditions"."federation_outbox"."operation" IN ('create','update','delete','liveness')),
-	CONSTRAINT "federation_outbox_record_class_enum" CHECK ("record_class" IN ('feature', 'situation', 'observation', 'offer')),
-	CONSTRAINT "federation_outbox_delete_shape" CHECK (("conditions"."federation_outbox"."operation" = 'delete') = ("conditions"."federation_outbox"."snapshot" IS NULL AND "conditions"."federation_outbox"."tombstone_reason" IS NOT NULL))
+	CONSTRAINT "federation_outbox_operation_check" CHECK ("conditions"."federation_outbox"."operation" IN ('create','update','delete','liveness')),
+	CONSTRAINT "federation_outbox_record_class_check" CHECK ("record_class" IN ('feature', 'situation', 'observation', 'offer')),
+	CONSTRAINT "federation_outbox_delete_shape_check" CHECK (("conditions"."federation_outbox"."operation" = 'delete') = ("conditions"."federation_outbox"."snapshot" IS NULL AND "conditions"."federation_outbox"."tombstone_reason" IS NOT NULL))
 );
 --> statement-breakpoint
 CREATE TABLE "conditions"."federation_peer_capabilities" (
@@ -550,7 +550,7 @@ CREATE TABLE "conditions"."federation_peer_key" (
 	"key_id" text NOT NULL,
 	"anchor" text NOT NULL,
 	"learned_at" timestamp with time zone NOT NULL,
-	CONSTRAINT "federation_peer_key_peer_instance_id_key_id_pk" PRIMARY KEY("peer_instance_id","key_id")
+	CONSTRAINT "federation_peer_key_pkey" PRIMARY KEY("peer_instance_id","key_id")
 );
 --> statement-breakpoint
 CREATE TABLE "conditions"."federation_source_receipt" (
@@ -559,7 +559,7 @@ CREATE TABLE "conditions"."federation_source_receipt" (
 	"last_received_at" timestamp with time zone NOT NULL,
 	"liveness_at" timestamp with time zone,
 	"cadence_sec" integer,
-	CONSTRAINT "federation_source_receipt_peer_instance_id_source_id_pk" PRIMARY KEY("peer_instance_id","source_id")
+	CONSTRAINT "federation_source_receipt_pkey" PRIMARY KEY("peer_instance_id","source_id")
 );
 --> statement-breakpoint
 CREATE TABLE "conditions"."federation_subscription" (
@@ -576,7 +576,7 @@ CREATE TABLE "conditions"."federation_subscription" (
 	"created_at" timestamp with time zone NOT NULL,
 	"updated_at" timestamp with time zone NOT NULL,
 	"expires_at" timestamp with time zone DEFAULT now() + interval '30 days' NOT NULL,
-	CONSTRAINT "federation_subscription_delivery_mode_enum" CHECK ("conditions"."federation_subscription"."delivery_mode" IN ('pull','webhook','sse')),
+	CONSTRAINT "federation_subscription_delivery_mode_check" CHECK ("conditions"."federation_subscription"."delivery_mode" IN ('pull','webhook','sse')),
 	CONSTRAINT "federation_subscription_status_check" CHECK ("conditions"."federation_subscription"."status" IN ('active','push_disabled'))
 );
 --> statement-breakpoint
@@ -586,7 +586,7 @@ CREATE TABLE "conditions"."federation_tombstone" (
 	"reason" text NOT NULL,
 	"tombstoned_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"expires_at" timestamp with time zone NOT NULL,
-	CONSTRAINT "federation_tombstone_canonical_id_peer_instance_id_pk" PRIMARY KEY("canonical_id","peer_instance_id"),
+	CONSTRAINT "federation_tombstone_pkey" PRIMARY KEY("canonical_id","peer_instance_id"),
 	CONSTRAINT "federation_tombstone_reason_check" CHECK ("reason" IN ('expired', 'withdrawn', 'superseded', 'cancelled', 'rights_revoked', 'rejected'))
 );
 --> statement-breakpoint
@@ -594,7 +594,8 @@ CREATE TABLE "conditions"."geonet_coverage" (
 	"revisions" jsonb DEFAULT '{}'::jsonb NOT NULL,
 	"source_id" text PRIMARY KEY NOT NULL,
 	"covered_from" timestamp with time zone NOT NULL,
-	"covered_until" timestamp with time zone NOT NULL
+	"covered_until" timestamp with time zone NOT NULL,
+	CONSTRAINT "geonet_coverage_order_check" CHECK ("conditions"."geonet_coverage"."covered_from" < "conditions"."geonet_coverage"."covered_until")
 );
 --> statement-breakpoint
 CREATE TABLE "conditions"."issuer_key" (
@@ -615,7 +616,7 @@ CREATE TABLE "conditions"."nsw_rfs_clock" (
 	"published" text NOT NULL,
 	"content" text NOT NULL,
 	"expiry" text NOT NULL,
-	CONSTRAINT "nsw_rfs_clock_source_id_incident_id_pk" PRIMARY KEY("source_id","incident_id")
+	CONSTRAINT "nsw_rfs_clock_pkey" PRIMARY KEY("source_id","incident_id")
 );
 --> statement-breakpoint
 CREATE TABLE "conditions"."observation_revision" (
@@ -626,7 +627,7 @@ CREATE TABLE "conditions"."observation_revision" (
 	"rank" text NOT NULL,
 	"signature" text NOT NULL,
 	"suppressed" boolean NOT NULL,
-	CONSTRAINT "observation_revision_source_id_feature_id_property_pk" PRIMARY KEY("source_id","feature_id","property")
+	CONSTRAINT "observation_revision_pkey" PRIMARY KEY("source_id","feature_id","property")
 );
 --> statement-breakpoint
 CREATE TABLE "conditions"."on_demand_fetch" (
@@ -637,8 +638,8 @@ CREATE TABLE "conditions"."on_demand_fetch" (
 	"status" text NOT NULL,
 	"retry_at" timestamp with time zone,
 	"claimed_until" timestamp with time zone,
-	CONSTRAINT "on_demand_fetch_source_id_cell_pk" PRIMARY KEY("source_id","cell"),
-	CONSTRAINT "on_demand_fetch_status_enum" CHECK ("conditions"."on_demand_fetch"."status" IN ('pending','fresh','failed'))
+	CONSTRAINT "on_demand_fetch_pkey" PRIMARY KEY("source_id","cell"),
+	CONSTRAINT "on_demand_fetch_status_check" CHECK ("conditions"."on_demand_fetch"."status" IN ('pending','fresh','failed'))
 );
 --> statement-breakpoint
 CREATE TABLE "conditions"."on_demand_quota" (
@@ -679,9 +680,9 @@ CREATE TABLE "conditions"."reporter" (
 	"status" text DEFAULT 'active' NOT NULL,
 	"created_at" timestamp with time zone NOT NULL,
 	"last_active_at" timestamp with time zone NOT NULL,
-	CONSTRAINT "reporter_reputation_alpha_positive" CHECK ("conditions"."reporter"."reputation_alpha" > 0),
-	CONSTRAINT "reporter_reputation_beta_positive" CHECK ("conditions"."reporter"."reputation_beta" > 0),
-	CONSTRAINT "reporter_status_enum" CHECK ("conditions"."reporter"."status" IN ('active','blocked'))
+	CONSTRAINT "reporter_reputation_alpha_check" CHECK ("conditions"."reporter"."reputation_alpha" > 0),
+	CONSTRAINT "reporter_reputation_beta_check" CHECK ("conditions"."reporter"."reputation_beta" > 0),
+	CONSTRAINT "reporter_status_check" CHECK ("conditions"."reporter"."status" IN ('active','blocked'))
 );
 --> statement-breakpoint
 CREATE TABLE "conditions"."road_graph_state" (
@@ -693,7 +694,7 @@ CREATE TABLE "conditions"."road_graph_state" (
 	"pbf_provenance" jsonb NOT NULL,
 	"imported_at" timestamp with time zone NOT NULL,
 	"activated_at" timestamp with time zone NOT NULL,
-	CONSTRAINT "road_graph_state_singleton" CHECK ("conditions"."road_graph_state"."singleton" IS TRUE)
+	CONSTRAINT "road_graph_state_singleton_check" CHECK ("conditions"."road_graph_state"."singleton" IS TRUE)
 );
 --> statement-breakpoint
 CREATE TABLE "conditions"."road_segment" (
@@ -737,7 +738,7 @@ CREATE TABLE "conditions"."segment_observation" (
 	"permission_licenses" text[],
 	"observed_at" timestamp with time zone NOT NULL,
 	"expires_at" timestamp with time zone,
-	CONSTRAINT "segment_observation_segment_id_source_pk" PRIMARY KEY("segment_id","source"),
+	CONSTRAINT "segment_observation_pkey" PRIMARY KEY("segment_id","source"),
 	CONSTRAINT "segment_observation_los_check" CHECK ("los" IN ('free_flow', 'heavy', 'queuing', 'stationary', 'blocked', 'unknown'))
 );
 --> statement-breakpoint
@@ -752,7 +753,7 @@ CREATE TABLE "conditions"."segment_profile" (
 	"permission_licenses" text[],
 	"contributing" text[] DEFAULT '{}'::text[] NOT NULL,
 	"computed_at" timestamp with time zone NOT NULL,
-	CONSTRAINT "segment_profile_segment_id_dow_tod_hour_pk" PRIMARY KEY("segment_id","dow","tod_hour")
+	CONSTRAINT "segment_profile_pkey" PRIMARY KEY("segment_id","dow","tod_hour")
 );
 --> statement-breakpoint
 CREATE TABLE "conditions"."segment_speed" (
@@ -789,7 +790,7 @@ CREATE TABLE "conditions"."sensor_baseline" (
 	"contributing" text[],
 	"sample_count" integer NOT NULL,
 	"computed_at" timestamp with time zone NOT NULL,
-	CONSTRAINT "sensor_baseline_subject_key_dow_bucket_tod_bucket_method_pk" PRIMARY KEY("subject_key","dow_bucket","tod_bucket","method")
+	CONSTRAINT "sensor_baseline_pkey" PRIMARY KEY("subject_key","dow_bucket","tod_bucket","method")
 );
 --> statement-breakpoint
 CREATE TABLE "conditions"."sensor_segment" (
@@ -814,7 +815,7 @@ CREATE TABLE "conditions"."smn_cap_message" (
 	"retrieval" jsonb NOT NULL,
 	"body" "bytea" NOT NULL,
 	"retain_until" timestamp with time zone NOT NULL,
-	CONSTRAINT "smn_cap_message_source_id_variant_pk" PRIMARY KEY("source_id","variant")
+	CONSTRAINT "smn_cap_message_pkey" PRIMARY KEY("source_id","variant")
 );
 --> statement-breakpoint
 CREATE TABLE "conditions"."source_poll_attempt" (
@@ -845,8 +846,8 @@ CREATE TABLE "conditions"."source_shrink" (
 	"polls" integer NOT NULL,
 	"stated" integer NOT NULL,
 	"held" integer NOT NULL,
-	CONSTRAINT "source_shrink_source_id_scope_pk" PRIMARY KEY("source_id","scope"),
-	CONSTRAINT "source_shrink_scope_enum" CHECK ("conditions"."source_shrink"."scope" IN ('series','records'))
+	CONSTRAINT "source_shrink_pkey" PRIMARY KEY("source_id","scope"),
+	CONSTRAINT "source_shrink_scope_check" CHECK ("conditions"."source_shrink"."scope" IN ('series','records'))
 );
 --> statement-breakpoint
 CREATE TABLE "conditions"."source_status" (
@@ -885,7 +886,7 @@ CREATE TABLE "conditions"."token_quota" (
 	"key_id" text NOT NULL,
 	"epoch" text NOT NULL,
 	"issued" integer DEFAULT 0 NOT NULL,
-	CONSTRAINT "token_quota_key_id_epoch_pk" PRIMARY KEY("key_id","epoch")
+	CONSTRAINT "token_quota_pkey" PRIMARY KEY("key_id","epoch")
 );
 --> statement-breakpoint
 CREATE TABLE "conditions"."oauth_grant" (
@@ -941,99 +942,99 @@ CREATE TABLE "conditions"."source" (
 	"selection_state" text,
 	"active" boolean DEFAULT true NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "source_access_mode_enum" CHECK ("access_mode" IN ('bulk', 'on_demand')),
-	CONSTRAINT "source_tier_enum" CHECK ("tier" IN ('authoritative', 'operator', 'aggregator', 'community'))
+	CONSTRAINT "source_access_mode_check" CHECK ("access_mode" IN ('bulk', 'on_demand')),
+	CONSTRAINT "source_tier_check" CHECK ("tier" IN ('authoritative', 'operator', 'aggregator', 'community'))
 );
 --> statement-breakpoint
 ALTER TABLE "conditions"."report_evidence" ADD CONSTRAINT "report_evidence_actor_key_id_fkey" FOREIGN KEY ("actor_key_id") REFERENCES "conditions"."reporter"("key_id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "conditions"."report_refusal" ADD CONSTRAINT "report_refusal_actor_key_id_fkey" FOREIGN KEY ("actor_key_id") REFERENCES "conditions"."reporter"("key_id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "conditions"."sub_claim" ADD CONSTRAINT "sub_claim_key_id_fkey" FOREIGN KEY ("key_id") REFERENCES "conditions"."reporter"("key_id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "conditions"."observation_rollup_daily" ADD CONSTRAINT "observation_rollup_daily_series_fk" FOREIGN KEY ("series_id") REFERENCES "conditions"."observation_latest"("series_id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "conditions"."observation_rollup_hourly" ADD CONSTRAINT "observation_rollup_hourly_series_fk" FOREIGN KEY ("series_id") REFERENCES "conditions"."observation_latest"("series_id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "conditions"."feature_component" ADD CONSTRAINT "feature_component_feature_id_feature_id_fk" FOREIGN KEY ("feature_id") REFERENCES "conditions"."feature"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "conditions"."feature_revision" ADD CONSTRAINT "feature_revision_feature_id_feature_id_fk" FOREIGN KEY ("feature_id") REFERENCES "conditions"."feature"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "conditions"."offer_revision" ADD CONSTRAINT "offer_revision_offer_id_offer_id_fk" FOREIGN KEY ("offer_id") REFERENCES "conditions"."offer"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "conditions"."situation_effect" ADD CONSTRAINT "situation_effect_situation_id_situation_id_fk" FOREIGN KEY ("situation_id") REFERENCES "conditions"."situation"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "conditions"."situation_revision" ADD CONSTRAINT "situation_revision_situation_id_situation_id_fk" FOREIGN KEY ("situation_id") REFERENCES "conditions"."situation"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "conditions"."observation_rollup_daily" ADD CONSTRAINT "observation_rollup_daily_series_id_fkey" FOREIGN KEY ("series_id") REFERENCES "conditions"."observation_latest"("series_id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "conditions"."observation_rollup_hourly" ADD CONSTRAINT "observation_rollup_hourly_series_id_fkey" FOREIGN KEY ("series_id") REFERENCES "conditions"."observation_latest"("series_id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "conditions"."feature_component" ADD CONSTRAINT "feature_component_feature_id_fkey" FOREIGN KEY ("feature_id") REFERENCES "conditions"."feature"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "conditions"."feature_revision" ADD CONSTRAINT "feature_revision_feature_id_fkey" FOREIGN KEY ("feature_id") REFERENCES "conditions"."feature"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "conditions"."offer_revision" ADD CONSTRAINT "offer_revision_offer_id_fkey" FOREIGN KEY ("offer_id") REFERENCES "conditions"."offer"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "conditions"."situation_effect" ADD CONSTRAINT "situation_effect_situation_id_fkey" FOREIGN KEY ("situation_id") REFERENCES "conditions"."situation"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "conditions"."situation_revision" ADD CONSTRAINT "situation_revision_situation_id_fkey" FOREIGN KEY ("situation_id") REFERENCES "conditions"."situation"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "conditions"."token_quota" ADD CONSTRAINT "token_quota_key_id_fkey" FOREIGN KEY ("key_id") REFERENCES "conditions"."reporter"("key_id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-CREATE INDEX "idx_binding_queue_due" ON "conditions"."binding_queue" USING btree ("next_attempt_at");--> statement-breakpoint
-CREATE INDEX "idx_record_binding_status" ON "conditions"."record_binding" USING btree ("status");--> statement-breakpoint
-CREATE INDEX "idx_record_segment_segment" ON "conditions"."record_segment" USING btree ("segment_id");--> statement-breakpoint
-CREATE INDEX "idx_report_evidence_record" ON "conditions"."report_evidence" USING btree ("record_class","record_id","occurred_at");--> statement-breakpoint
-CREATE INDEX "idx_report_evidence_actor" ON "conditions"."report_evidence" USING btree ("actor_key_id","occurred_at");--> statement-breakpoint
-CREATE INDEX "idx_report_evidence_merged" ON "conditions"."report_evidence" USING btree (("details" ->> 'merged')) WHERE "conditions"."report_evidence"."details" ? 'merged';--> statement-breakpoint
-CREATE INDEX "idx_report_refusal_actor" ON "conditions"."report_refusal" USING btree ("actor_key_id","occurred_at");--> statement-breakpoint
-CREATE INDEX "idx_report_refusal_occurred" ON "conditions"."report_refusal" USING btree ("occurred_at");--> statement-breakpoint
-CREATE INDEX "idx_sub_claim_key" ON "conditions"."sub_claim" USING btree ("key_id");--> statement-breakpoint
-CREATE INDEX "idx_observation_latest_geom" ON "conditions"."observation_latest" USING gist ("geom");--> statement-breakpoint
-CREATE INDEX "idx_observation_latest_property_text" ON "conditions"."observation_latest" USING btree ("property","value_text");--> statement-breakpoint
-CREATE INDEX "idx_observation_latest_source" ON "conditions"."observation_latest" USING btree ("source_id","series_id");--> statement-breakpoint
-CREATE INDEX "idx_observation_latest_component" ON "conditions"."observation_latest" USING btree ("feature_id","component_key");--> statement-breakpoint
-CREATE INDEX "idx_observation_latest_fuel_price" ON "conditions"."observation_latest" USING btree ("value_money") WHERE "conditions"."observation_latest"."property" = 'fuel.price';--> statement-breakpoint
-CREATE INDEX "idx_observation_latest_expires" ON "conditions"."observation_latest" USING btree ("expires_at") WHERE "conditions"."observation_latest"."expires_at" IS NOT NULL;--> statement-breakpoint
-CREATE INDEX "idx_observation_latest_effective_brin" ON "conditions"."observation_latest" USING brin ("effective_from");--> statement-breakpoint
-CREATE INDEX "idx_observation_latest_crowd_record" ON "conditions"."observation_latest" USING btree ("crowd_record_id") WHERE "conditions"."observation_latest"."crowd_record_id" IS NOT NULL;--> statement-breakpoint
-CREATE INDEX "idx_observation_rollup_daily_day" ON "conditions"."observation_rollup_daily" USING btree ("day_utc");--> statement-breakpoint
-CREATE INDEX "idx_observation_rollup_hourly_hour" ON "conditions"."observation_rollup_hourly" USING btree ("hour_utc");--> statement-breakpoint
-CREATE INDEX "idx_raw_payload_source_time" ON "conditions"."raw_payload" USING btree ("source_id","first_fetched_at");--> statement-breakpoint
-CREATE INDEX "idx_raw_payload_tier_seen" ON "conditions"."raw_payload" USING btree ("tier","last_seen_at") WHERE "conditions"."raw_payload"."evicted_at" IS NULL;--> statement-breakpoint
-CREATE INDEX "idx_raw_payload_base" ON "conditions"."raw_payload" USING btree ("source_id","base_hash") WHERE "conditions"."raw_payload"."base_hash" IS NOT NULL;--> statement-breakpoint
-CREATE INDEX "idx_feature_geom" ON "conditions"."feature" USING gist ("geom");--> statement-breakpoint
-CREATE INDEX "idx_feature_kind_type" ON "conditions"."feature" USING btree ("kind","type");--> statement-breakpoint
-CREATE INDEX "idx_feature_source" ON "conditions"."feature" USING btree ("source_id","id");--> statement-breakpoint
-CREATE INDEX "idx_feature_canonical" ON "conditions"."feature" USING btree ("canonical_id");--> statement-breakpoint
-CREATE INDEX "idx_feature_kind_lifecycle" ON "conditions"."feature" USING btree ("kind","lifecycle");--> statement-breakpoint
+CREATE INDEX "binding_queue_next_attempt_at_idx" ON "conditions"."binding_queue" USING btree ("next_attempt_at");--> statement-breakpoint
+CREATE INDEX "record_binding_status_idx" ON "conditions"."record_binding" USING btree ("status");--> statement-breakpoint
+CREATE INDEX "record_segment_segment_id_idx" ON "conditions"."record_segment" USING btree ("segment_id");--> statement-breakpoint
+CREATE INDEX "report_evidence_record_class_record_id_occurred_at_idx" ON "conditions"."report_evidence" USING btree ("record_class","record_id","occurred_at");--> statement-breakpoint
+CREATE INDEX "report_evidence_actor_key_id_occurred_at_idx" ON "conditions"."report_evidence" USING btree ("actor_key_id","occurred_at");--> statement-breakpoint
+CREATE INDEX "report_evidence_merged_idx" ON "conditions"."report_evidence" USING btree (("details" ->> 'merged')) WHERE "conditions"."report_evidence"."details" ? 'merged';--> statement-breakpoint
+CREATE INDEX "report_refusal_actor_key_id_occurred_at_idx" ON "conditions"."report_refusal" USING btree ("actor_key_id","occurred_at");--> statement-breakpoint
+CREATE INDEX "report_refusal_occurred_at_idx" ON "conditions"."report_refusal" USING btree ("occurred_at");--> statement-breakpoint
+CREATE INDEX "sub_claim_key_id_idx" ON "conditions"."sub_claim" USING btree ("key_id");--> statement-breakpoint
+CREATE INDEX "observation_latest_geom_idx" ON "conditions"."observation_latest" USING gist ("geom");--> statement-breakpoint
+CREATE INDEX "observation_latest_property_value_text_idx" ON "conditions"."observation_latest" USING btree ("property","value_text");--> statement-breakpoint
+CREATE INDEX "observation_latest_source_id_series_id_idx" ON "conditions"."observation_latest" USING btree ("source_id","series_id");--> statement-breakpoint
+CREATE INDEX "observation_latest_feature_id_component_key_idx" ON "conditions"."observation_latest" USING btree ("feature_id","component_key");--> statement-breakpoint
+CREATE INDEX "observation_latest_value_money_fuel_price_idx" ON "conditions"."observation_latest" USING btree ("value_money") WHERE "conditions"."observation_latest"."property" = 'fuel.price';--> statement-breakpoint
+CREATE INDEX "observation_latest_expires_at_idx" ON "conditions"."observation_latest" USING btree ("expires_at") WHERE "conditions"."observation_latest"."expires_at" IS NOT NULL;--> statement-breakpoint
+CREATE INDEX "observation_latest_effective_from_idx" ON "conditions"."observation_latest" USING brin ("effective_from");--> statement-breakpoint
+CREATE INDEX "observation_latest_crowd_record_id_idx" ON "conditions"."observation_latest" USING btree ("crowd_record_id") WHERE "conditions"."observation_latest"."crowd_record_id" IS NOT NULL;--> statement-breakpoint
+CREATE INDEX "observation_rollup_daily_day_utc_idx" ON "conditions"."observation_rollup_daily" USING btree ("day_utc");--> statement-breakpoint
+CREATE INDEX "observation_rollup_hourly_hour_utc_idx" ON "conditions"."observation_rollup_hourly" USING btree ("hour_utc");--> statement-breakpoint
+CREATE INDEX "raw_payload_source_id_first_fetched_at_idx" ON "conditions"."raw_payload" USING btree ("source_id","first_fetched_at");--> statement-breakpoint
+CREATE INDEX "raw_payload_tier_last_seen_at_idx" ON "conditions"."raw_payload" USING btree ("tier","last_seen_at") WHERE "conditions"."raw_payload"."evicted_at" IS NULL;--> statement-breakpoint
+CREATE INDEX "raw_payload_source_id_base_hash_idx" ON "conditions"."raw_payload" USING btree ("source_id","base_hash") WHERE "conditions"."raw_payload"."base_hash" IS NOT NULL;--> statement-breakpoint
+CREATE INDEX "feature_geom_idx" ON "conditions"."feature" USING gist ("geom");--> statement-breakpoint
+CREATE INDEX "feature_kind_type_idx" ON "conditions"."feature" USING btree ("kind","type");--> statement-breakpoint
+CREATE INDEX "feature_source_id_id_idx" ON "conditions"."feature" USING btree ("source_id","id");--> statement-breakpoint
+CREATE INDEX "feature_canonical_id_idx" ON "conditions"."feature" USING btree ("canonical_id");--> statement-breakpoint
+CREATE INDEX "feature_kind_lifecycle_idx" ON "conditions"."feature" USING btree ("kind","lifecycle");--> statement-breakpoint
 CREATE INDEX "feature_expires_at_idx" ON "conditions"."feature" USING btree ("expires_at") WHERE "conditions"."feature"."tombstoned_at" IS NULL;--> statement-breakpoint
 CREATE INDEX "feature_tombstoned_at_idx" ON "conditions"."feature" USING btree ("tombstoned_at") WHERE "conditions"."feature"."tombstoned_at" IS NOT NULL;--> statement-breakpoint
-CREATE INDEX "idx_feature_external_ids" ON "conditions"."feature" USING gin (("record" -> 'externalIds') jsonb_path_ops) WITH (fastupdate=off);--> statement-breakpoint
-CREATE INDEX "idx_feature_rights_revoked" ON "conditions"."feature" USING btree ("id") WHERE "conditions"."feature"."tombstone_reason" = 'rights_revoked';--> statement-breakpoint
-CREATE INDEX "idx_feature_id_bytes" ON "conditions"."feature" USING btree ("id" COLLATE "C");--> statement-breakpoint
-CREATE INDEX "idx_feature_canonical_members" ON "conditions"."feature_canonical" USING gin ("member_ids") WITH (fastupdate=off);--> statement-breakpoint
-CREATE INDEX "idx_feature_component_kind" ON "conditions"."feature_component" USING btree ("kind");--> statement-breakpoint
-CREATE INDEX "idx_feature_component_external_ids" ON "conditions"."feature_component" USING gin ("external_ids" jsonb_path_ops);--> statement-breakpoint
-CREATE INDEX "idx_feature_link_b" ON "conditions"."feature_link" USING btree ("b_id");--> statement-breakpoint
-CREATE INDEX "idx_feature_revision_recorded" ON "conditions"."feature_revision" USING btree ("recorded_at");--> statement-breakpoint
-CREATE INDEX "idx_offer_subject" ON "conditions"."offer" USING btree ("subject_id","component_key");--> statement-breakpoint
-CREATE INDEX "idx_offer_kind_valid_to" ON "conditions"."offer" USING btree ("kind","valid_to");--> statement-breakpoint
-CREATE INDEX "idx_offer_geom" ON "conditions"."offer" USING gist ("geom");--> statement-breakpoint
-CREATE INDEX "idx_offer_source" ON "conditions"."offer" USING btree ("source_id","id");--> statement-breakpoint
-CREATE INDEX "idx_offer_canonical" ON "conditions"."offer" USING btree ("canonical_id");--> statement-breakpoint
+CREATE INDEX "feature_external_ids_idx" ON "conditions"."feature" USING gin (("record" -> 'externalIds') jsonb_path_ops) WITH (fastupdate=off);--> statement-breakpoint
+CREATE INDEX "feature_id_rights_revoked_idx" ON "conditions"."feature" USING btree ("id") WHERE "conditions"."feature"."tombstone_reason" = 'rights_revoked';--> statement-breakpoint
+CREATE INDEX "feature_id_bytes_idx" ON "conditions"."feature" USING btree ("id" COLLATE "C");--> statement-breakpoint
+CREATE INDEX "feature_canonical_member_ids_idx" ON "conditions"."feature_canonical" USING gin ("member_ids") WITH (fastupdate=off);--> statement-breakpoint
+CREATE INDEX "feature_component_kind_idx" ON "conditions"."feature_component" USING btree ("kind");--> statement-breakpoint
+CREATE INDEX "feature_component_external_ids_idx" ON "conditions"."feature_component" USING gin ("external_ids" jsonb_path_ops);--> statement-breakpoint
+CREATE INDEX "feature_link_b_id_idx" ON "conditions"."feature_link" USING btree ("b_id");--> statement-breakpoint
+CREATE INDEX "feature_revision_recorded_at_idx" ON "conditions"."feature_revision" USING btree ("recorded_at");--> statement-breakpoint
+CREATE INDEX "offer_subject_id_component_key_idx" ON "conditions"."offer" USING btree ("subject_id","component_key");--> statement-breakpoint
+CREATE INDEX "offer_kind_valid_to_idx" ON "conditions"."offer" USING btree ("kind","valid_to");--> statement-breakpoint
+CREATE INDEX "offer_geom_idx" ON "conditions"."offer" USING gist ("geom");--> statement-breakpoint
+CREATE INDEX "offer_source_id_id_idx" ON "conditions"."offer" USING btree ("source_id","id");--> statement-breakpoint
+CREATE INDEX "offer_canonical_id_idx" ON "conditions"."offer" USING btree ("canonical_id");--> statement-breakpoint
 CREATE INDEX "offer_expires_at_idx" ON "conditions"."offer" USING btree ("expires_at") WHERE "conditions"."offer"."tombstoned_at" IS NULL;--> statement-breakpoint
 CREATE INDEX "offer_tombstoned_at_idx" ON "conditions"."offer" USING btree ("tombstoned_at") WHERE "conditions"."offer"."tombstoned_at" IS NOT NULL;--> statement-breakpoint
-CREATE INDEX "idx_offer_rights_revoked" ON "conditions"."offer" USING btree ("id") WHERE "conditions"."offer"."tombstone_reason" = 'rights_revoked';--> statement-breakpoint
-CREATE INDEX "idx_offer_id_bytes" ON "conditions"."offer" USING btree ("id" COLLATE "C");--> statement-breakpoint
-CREATE INDEX "idx_offer_revision_recorded" ON "conditions"."offer_revision" USING btree ("recorded_at");--> statement-breakpoint
-CREATE INDEX "idx_record_relation_to" ON "conditions"."record_relation" USING btree ("to_class","to_id");--> statement-breakpoint
-CREATE INDEX "idx_situation_geom" ON "conditions"."situation" USING gist ("geom");--> statement-breakpoint
-CREATE INDEX "idx_situation_kind_type" ON "conditions"."situation" USING btree ("kind","type");--> statement-breakpoint
-CREATE INDEX "idx_situation_source" ON "conditions"."situation" USING btree ("source_id","id");--> statement-breakpoint
-CREATE INDEX "idx_situation_canonical" ON "conditions"."situation" USING btree ("canonical_id");--> statement-breakpoint
-CREATE INDEX "idx_situation_valid_to" ON "conditions"."situation" USING btree ("valid_to");--> statement-breakpoint
-CREATE INDEX "idx_situation_expires" ON "conditions"."situation" USING btree ("expires_at");--> statement-breakpoint
-CREATE INDEX "idx_situation_group" ON "conditions"."situation" USING btree ("group_id");--> statement-breakpoint
+CREATE INDEX "offer_id_rights_revoked_idx" ON "conditions"."offer" USING btree ("id") WHERE "conditions"."offer"."tombstone_reason" = 'rights_revoked';--> statement-breakpoint
+CREATE INDEX "offer_id_bytes_idx" ON "conditions"."offer" USING btree ("id" COLLATE "C");--> statement-breakpoint
+CREATE INDEX "offer_revision_recorded_at_idx" ON "conditions"."offer_revision" USING btree ("recorded_at");--> statement-breakpoint
+CREATE INDEX "record_relation_to_class_to_id_idx" ON "conditions"."record_relation" USING btree ("to_class","to_id");--> statement-breakpoint
+CREATE INDEX "situation_geom_idx" ON "conditions"."situation" USING gist ("geom");--> statement-breakpoint
+CREATE INDEX "situation_kind_type_idx" ON "conditions"."situation" USING btree ("kind","type");--> statement-breakpoint
+CREATE INDEX "situation_source_id_id_idx" ON "conditions"."situation" USING btree ("source_id","id");--> statement-breakpoint
+CREATE INDEX "situation_canonical_id_idx" ON "conditions"."situation" USING btree ("canonical_id");--> statement-breakpoint
+CREATE INDEX "situation_valid_to_idx" ON "conditions"."situation" USING btree ("valid_to");--> statement-breakpoint
+CREATE INDEX "situation_expires_at_idx" ON "conditions"."situation" USING btree ("expires_at");--> statement-breakpoint
+CREATE INDEX "situation_group_id_idx" ON "conditions"."situation" USING btree ("group_id");--> statement-breakpoint
 CREATE INDEX "situation_evidence_state_crowd_idx" ON "conditions"."situation" USING btree ("evidence_state") WHERE "conditions"."situation"."origin" = 'crowd';--> statement-breakpoint
-CREATE INDEX "idx_situation_tombstoned" ON "conditions"."situation" USING btree ("tombstoned_at") WHERE "conditions"."situation"."tombstoned_at" IS NOT NULL;--> statement-breakpoint
-CREATE INDEX "idx_situation_rights_revoked" ON "conditions"."situation" USING btree ("id") WHERE "conditions"."situation"."tombstone_reason" = 'rights_revoked';--> statement-breakpoint
-CREATE INDEX "idx_situation_id_bytes" ON "conditions"."situation" USING btree ("id" COLLATE "C");--> statement-breakpoint
-CREATE INDEX "idx_situation_effect_kind_valid_to" ON "conditions"."situation_effect" USING btree ("kind","valid_to");--> statement-breakpoint
-CREATE INDEX "idx_situation_effect_geom" ON "conditions"."situation_effect" USING gist ("geom");--> statement-breakpoint
-CREATE INDEX "idx_situation_revision_recorded" ON "conditions"."situation_revision" USING btree ("recorded_at");--> statement-breakpoint
-CREATE INDEX "idx_federation_lapsed_copy_source" ON "conditions"."federation_lapsed_copy" USING btree ("peer_instance_id","source_id");--> statement-breakpoint
-CREATE INDEX "idx_federation_outbox_record" ON "conditions"."federation_outbox" USING btree ("record_class","record_id","seq");--> statement-breakpoint
-CREATE INDEX "idx_federation_outbox_cursor" ON "conditions"."federation_outbox" USING btree ("txid","seq");--> statement-breakpoint
-CREATE INDEX "idx_federation_outbox_created_at" ON "conditions"."federation_outbox" USING btree ("created_at");--> statement-breakpoint
-CREATE INDEX "idx_federation_subscription_peer" ON "conditions"."federation_subscription" USING btree ("peer_id");--> statement-breakpoint
-CREATE UNIQUE INDEX "uq_federation_subscription_target" ON "conditions"."federation_subscription" USING btree ("peer_id","delivery_mode",coalesce("inbox_url", '')) WHERE "conditions"."federation_subscription"."delivery_mode" <> 'sse';--> statement-breakpoint
+CREATE INDEX "situation_tombstoned_at_idx" ON "conditions"."situation" USING btree ("tombstoned_at") WHERE "conditions"."situation"."tombstoned_at" IS NOT NULL;--> statement-breakpoint
+CREATE INDEX "situation_id_rights_revoked_idx" ON "conditions"."situation" USING btree ("id") WHERE "conditions"."situation"."tombstone_reason" = 'rights_revoked';--> statement-breakpoint
+CREATE INDEX "situation_id_bytes_idx" ON "conditions"."situation" USING btree ("id" COLLATE "C");--> statement-breakpoint
+CREATE INDEX "situation_effect_kind_valid_to_idx" ON "conditions"."situation_effect" USING btree ("kind","valid_to");--> statement-breakpoint
+CREATE INDEX "situation_effect_geom_idx" ON "conditions"."situation_effect" USING gist ("geom");--> statement-breakpoint
+CREATE INDEX "situation_revision_recorded_at_idx" ON "conditions"."situation_revision" USING btree ("recorded_at");--> statement-breakpoint
+CREATE INDEX "federation_lapsed_copy_peer_instance_id_source_id_idx" ON "conditions"."federation_lapsed_copy" USING btree ("peer_instance_id","source_id");--> statement-breakpoint
+CREATE INDEX "federation_outbox_record_class_record_id_seq_idx" ON "conditions"."federation_outbox" USING btree ("record_class","record_id","seq");--> statement-breakpoint
+CREATE INDEX "federation_outbox_txid_seq_idx" ON "conditions"."federation_outbox" USING btree ("txid","seq");--> statement-breakpoint
+CREATE INDEX "federation_outbox_created_at_idx" ON "conditions"."federation_outbox" USING btree ("created_at");--> statement-breakpoint
+CREATE INDEX "federation_subscription_peer_id_idx" ON "conditions"."federation_subscription" USING btree ("peer_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "federation_subscription_target_key" ON "conditions"."federation_subscription" USING btree ("peer_id","delivery_mode",coalesce("inbox_url", '')) WHERE "conditions"."federation_subscription"."delivery_mode" <> 'sse';--> statement-breakpoint
 CREATE INDEX "federation_tombstone_expires_at_idx" ON "conditions"."federation_tombstone" USING btree ("expires_at");--> statement-breakpoint
-CREATE INDEX "idx_osm_road_geom" ON "conditions"."osm_road" USING gist ("geom");--> statement-breakpoint
-CREATE INDEX "idx_osm_road_highway" ON "conditions"."osm_road" USING btree ("highway");--> statement-breakpoint
-CREATE INDEX "idx_osm_road_ref" ON "conditions"."osm_road" USING btree ("ref");--> statement-breakpoint
+CREATE INDEX "osm_road_geom_idx" ON "conditions"."osm_road" USING gist ("geom");--> statement-breakpoint
+CREATE INDEX "osm_road_highway_idx" ON "conditions"."osm_road" USING btree ("highway");--> statement-breakpoint
+CREATE INDEX "osm_road_ref_idx" ON "conditions"."osm_road" USING btree ("ref");--> statement-breakpoint
 CREATE INDEX "reporter_last_active_at_idx" ON "conditions"."reporter" USING btree ("last_active_at");--> statement-breakpoint
-CREATE INDEX "idx_road_segment_geom" ON "conditions"."road_segment" USING gist ("geom");--> statement-breakpoint
-CREATE INDEX "idx_road_segment_way" ON "conditions"."road_segment" USING btree ("way_id");--> statement-breakpoint
-CREATE INDEX "idx_road_segment_minzoom" ON "conditions"."road_segment" USING btree ("min_zoom");--> statement-breakpoint
-CREATE INDEX "idx_sensor_baseline_source_bucket" ON "conditions"."sensor_baseline" USING btree ("source","dow_bucket","tod_bucket");--> statement-breakpoint
-CREATE INDEX "idx_sensor_segment_segment" ON "conditions"."sensor_segment" USING btree ("segment_id");--> statement-breakpoint
-CREATE INDEX "idx_source_poll_attempt_source_time" ON "conditions"."source_poll_attempt" USING btree ("source","attempted_at");--> statement-breakpoint
-CREATE INDEX "idx_source_poll_attempt_time" ON "conditions"."source_poll_attempt" USING btree ("attempted_at","id");--> statement-breakpoint
+CREATE INDEX "road_segment_geom_idx" ON "conditions"."road_segment" USING gist ("geom");--> statement-breakpoint
+CREATE INDEX "road_segment_way_id_idx" ON "conditions"."road_segment" USING btree ("way_id");--> statement-breakpoint
+CREATE INDEX "road_segment_min_zoom_idx" ON "conditions"."road_segment" USING btree ("min_zoom");--> statement-breakpoint
+CREATE INDEX "sensor_baseline_source_dow_bucket_tod_bucket_idx" ON "conditions"."sensor_baseline" USING btree ("source","dow_bucket","tod_bucket");--> statement-breakpoint
+CREATE INDEX "sensor_segment_segment_id_idx" ON "conditions"."sensor_segment" USING btree ("segment_id");--> statement-breakpoint
+CREATE INDEX "source_poll_attempt_source_attempted_at_idx" ON "conditions"."source_poll_attempt" USING btree ("source","attempted_at");--> statement-breakpoint
+CREATE INDEX "source_poll_attempt_attempted_at_id_idx" ON "conditions"."source_poll_attempt" USING btree ("attempted_at","id");--> statement-breakpoint
 CREATE INDEX "spent_token_expires_at_idx" ON "conditions"."spent_token" USING btree ("expires_at");

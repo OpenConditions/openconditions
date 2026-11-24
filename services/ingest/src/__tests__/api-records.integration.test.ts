@@ -185,8 +185,8 @@ describe("GET /features", () => {
     });
     // The box picks the features, and each one's cluster is looked up by
     // member: no walk over every cluster in id order.
-    expect(plans[0]).toMatch(/idx_feature_geom/);
-    expect(plans[0]).toMatch(/idx_feature_canonical_members/);
+    expect(plans[0]).toMatch(/feature_geom_idx/);
+    expect(plans[0]).toMatch(/feature_canonical_member_ids_idx/);
   });
 
   it("serves the canonical view: one record per cluster, carrying its members", async () => {

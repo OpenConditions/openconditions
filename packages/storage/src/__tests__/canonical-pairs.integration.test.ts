@@ -62,7 +62,7 @@ function externalIdIntersections(plan: PlanNode): PlanNode[] {
   return nodesOf(plan).filter(
     (node) =>
       node["Node Type"] === "BitmapAnd" &&
-      nodesOf(node).some((descendant) => descendant["Index Name"] === "idx_feature_external_ids"),
+      nodesOf(node).some((descendant) => descendant["Index Name"] === "feature_external_ids_idx"),
   );
 }
 
@@ -71,12 +71,12 @@ describe("external-ID lookup plan guard", () => {
     const plan: PlanNode = {
       "Node Type": "Append",
       Plans: [
-        { "Node Type": "Bitmap Index Scan", "Index Name": "idx_feature_external_ids" },
+        { "Node Type": "Bitmap Index Scan", "Index Name": "feature_external_ids_idx" },
         {
           "Node Type": "BitmapAnd",
           Plans: [
-            { "Node Type": "Bitmap Index Scan", "Index Name": "idx_feature_kind_lifecycle" },
-            { "Node Type": "Bitmap Index Scan", "Index Name": "idx_feature_source" },
+            { "Node Type": "Bitmap Index Scan", "Index Name": "feature_kind_lifecycle_idx" },
+            { "Node Type": "Bitmap Index Scan", "Index Name": "feature_source_id_id_idx" },
           ],
         },
       ],
@@ -89,8 +89,8 @@ describe("external-ID lookup plan guard", () => {
     const intersection: PlanNode = {
       "Node Type": "BitmapAnd",
       Plans: [
-        { "Node Type": "Bitmap Index Scan", "Index Name": "idx_feature_external_ids" },
-        { "Node Type": "Bitmap Index Scan", "Index Name": "idx_feature_kind_lifecycle" },
+        { "Node Type": "Bitmap Index Scan", "Index Name": "feature_external_ids_idx" },
+        { "Node Type": "Bitmap Index Scan", "Index Name": "feature_kind_lifecycle_idx" },
       ],
     };
 
@@ -101,21 +101,21 @@ describe("external-ID lookup plan guard", () => {
     const inner: PlanNode = {
       "Node Type": "BitmapAnd",
       Plans: [
-        { "Node Type": "Bitmap Index Scan", "Index Name": "idx_feature_external_ids" },
-        { "Node Type": "Bitmap Index Scan", "Index Name": "idx_feature_kind_lifecycle" },
+        { "Node Type": "Bitmap Index Scan", "Index Name": "feature_external_ids_idx" },
+        { "Node Type": "Bitmap Index Scan", "Index Name": "feature_kind_lifecycle_idx" },
       ],
     };
     const outer: PlanNode = {
       "Node Type": "BitmapAnd",
       Plans: [
         { "Node Type": "BitmapOr", Plans: [inner] },
-        { "Node Type": "Bitmap Index Scan", "Index Name": "idx_feature_source" },
+        { "Node Type": "Bitmap Index Scan", "Index Name": "feature_source_id_id_idx" },
       ],
     };
     const plan: PlanNode = {
       "Node Type": "Append",
       Plans: [
-        { "Node Type": "Bitmap Index Scan", "Index Name": "idx_feature_external_ids" },
+        { "Node Type": "Bitmap Index Scan", "Index Name": "feature_external_ids_idx" },
         outer,
       ],
     };
@@ -150,7 +150,7 @@ describe("the pair search of a register's poll", () => {
       search!.params as never,
     )) as { "QUERY PLAN": { Plan: PlanNode }[] }[];
     const nodes = nodesOf(plans![0]!.Plan);
-    expect(nodes.some((n) => n["Index Name"] === "idx_feature_external_ids")).toBe(true);
+    expect(nodes.some((n) => n["Index Name"] === "feature_external_ids_idx")).toBe(true);
     expect(externalIdIntersections(plans![0]!.Plan)).toEqual([]);
   }, 300_000);
 });

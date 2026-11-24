@@ -55,9 +55,9 @@ export const subClaim = conditionsSchema.table(
       columns: [t.keyId],
       foreignColumns: [reporter.keyId],
     }).onDelete("cascade"),
-    index("idx_sub_claim_key").on(t.keyId),
-    check("sub_claim_claim_type_enum", sql.raw(enumCheckSql("claim_type", SUB_CLAIM_TYPES))),
-    check("sub_claim_subject_class_enum", sql.raw(enumCheckSql("subject_class", RECORD_CLASSES))),
+    index("sub_claim_key_id_idx").on(t.keyId),
+    check("sub_claim_claim_type_check", sql.raw(enumCheckSql("claim_type", SUB_CLAIM_TYPES))),
+    check("sub_claim_subject_class_check", sql.raw(enumCheckSql("subject_class", RECORD_CLASSES))),
   ],
 );
 
@@ -82,8 +82,8 @@ export const reportRefusal = conditionsSchema.table(
       columns: [t.actorKeyId],
       foreignColumns: [reporter.keyId],
     }).onDelete("cascade"),
-    index("idx_report_refusal_actor").on(t.actorKeyId, t.occurredAt),
-    index("idx_report_refusal_occurred").on(t.occurredAt),
+    index("report_refusal_actor_key_id_occurred_at_idx").on(t.actorKeyId, t.occurredAt),
+    index("report_refusal_occurred_at_idx").on(t.occurredAt),
   ],
 );
 
@@ -116,15 +116,22 @@ export const reportEvidence = conditionsSchema.table(
       columns: [t.actorKeyId],
       foreignColumns: [reporter.keyId],
     }).onDelete("set null"),
-    index("idx_report_evidence_record").on(t.recordClass, t.recordId, t.occurredAt),
+    index("report_evidence_record_class_record_id_occurred_at_idx").on(
+      t.recordClass,
+      t.recordId,
+      t.occurredAt,
+    ),
     // Supports the per-key report-rate limiter's trailing-window count.
-    index("idx_report_evidence_actor").on(t.actorKeyId, t.occurredAt),
-    index("idx_report_evidence_merged")
+    index("report_evidence_actor_key_id_occurred_at_idx").on(t.actorKeyId, t.occurredAt),
+    index("report_evidence_merged_idx")
       .on(sql`(${t.details} ->> 'merged')`)
       .where(sql`${t.details} ? 'merged'`),
-    check("report_evidence_kind_enum", sql.raw(enumCheckSql("evidence_kind", EVIDENCE_KINDS))),
     check(
-      "report_evidence_record_class_enum",
+      "report_evidence_evidence_kind_check",
+      sql.raw(enumCheckSql("evidence_kind", EVIDENCE_KINDS)),
+    ),
+    check(
+      "report_evidence_record_class_check",
       sql.raw(enumCheckSql("record_class", RECORD_CLASSES)),
     ),
   ],

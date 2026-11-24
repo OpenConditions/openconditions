@@ -42,9 +42,9 @@ export const recordBinding = conditionsSchema.table(
     boundAt: timestamp("bound_at", { withTimezone: true }).notNull(),
   },
   (t) => [
-    primaryKey({ columns: [t.recordClass, t.recordId, t.effectId] }),
+    primaryKey({ name: "record_binding_pkey", columns: [t.recordClass, t.recordId, t.effectId] }),
     check(
-      "record_binding_record_class_enum",
+      "record_binding_record_class_check",
       sql.raw(enumCheckSql("record_class", RECORD_CLASSES)),
     ),
     check("record_binding_status_check", sql.raw(enumCheckSql("status", BINDING_STATUSES))),
@@ -52,7 +52,7 @@ export const recordBinding = conditionsSchema.table(
       "record_binding_direction_mode_check",
       sql.raw(enumCheckSql("direction_mode", DIRECTION_MODES)),
     ),
-    index("idx_record_binding_status").on(t.status),
+    index("record_binding_status_idx").on(t.status),
   ],
 );
 
@@ -75,8 +75,8 @@ export const bindingQueue = conditionsSchema.table(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
-    primaryKey({ columns: [t.recordClass, t.recordId, t.effectId] }),
-    index("idx_binding_queue_due").on(t.nextAttemptAt),
+    primaryKey({ name: "binding_queue_pkey", columns: [t.recordClass, t.recordId, t.effectId] }),
+    index("binding_queue_next_attempt_at_idx").on(t.nextAttemptAt),
   ],
 );
 
@@ -100,7 +100,10 @@ export const recordSegment = conditionsSchema.table(
     endFraction: doublePrecision("end_fraction").notNull(),
   },
   (t) => [
-    primaryKey({ columns: [t.recordClass, t.recordId, t.effectId, t.seq] }),
-    index("idx_record_segment_segment").on(t.segmentId),
+    primaryKey({
+      name: "record_segment_pkey",
+      columns: [t.recordClass, t.recordId, t.effectId, t.seq],
+    }),
+    index("record_segment_segment_id_idx").on(t.segmentId),
   ],
 );

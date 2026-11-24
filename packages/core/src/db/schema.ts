@@ -94,8 +94,8 @@ export const sourceShrink = conditionsSchema.table(
     held: integer("held").notNull(),
   },
   (t) => [
-    primaryKey({ columns: [t.sourceId, t.scope] }),
-    check("source_shrink_scope_enum", sql`${t.scope} IN ('series','records')`),
+    primaryKey({ name: "source_shrink_pkey", columns: [t.sourceId, t.scope] }),
+    check("source_shrink_scope_check", sql`${t.scope} IN ('series','records')`),
   ],
 );
 
@@ -126,8 +126,8 @@ export const sourcePollAttempt = conditionsSchema.table(
     payloadHashes: text("payload_hashes").array(),
   },
   (t) => [
-    index("idx_source_poll_attempt_source_time").on(t.source, t.attemptedAt),
-    index("idx_source_poll_attempt_time").on(t.attemptedAt, t.id),
+    index("source_poll_attempt_source_attempted_at_idx").on(t.source, t.attemptedAt),
+    index("source_poll_attempt_attempted_at_id_idx").on(t.attemptedAt, t.id),
   ],
 );
 
@@ -155,8 +155,15 @@ export const sensorBaseline = conditionsSchema.table(
     computedAt: timestamp("computed_at", { withTimezone: true }).notNull(),
   },
   (t) => [
-    primaryKey({ columns: [t.subjectKey, t.dowBucket, t.todBucket, t.method] }),
-    index("idx_sensor_baseline_source_bucket").on(t.source, t.dowBucket, t.todBucket),
+    primaryKey({
+      name: "sensor_baseline_pkey",
+      columns: [t.subjectKey, t.dowBucket, t.todBucket, t.method],
+    }),
+    index("sensor_baseline_source_dow_bucket_tod_bucket_idx").on(
+      t.source,
+      t.dowBucket,
+      t.todBucket,
+    ),
   ],
 );
 
@@ -181,9 +188,9 @@ export const osmRoad = conditionsSchema.table(
     importedAt: timestamp("imported_at", { withTimezone: true }).notNull(),
   },
   (t) => [
-    index("idx_osm_road_geom").using("gist", t.geom),
-    index("idx_osm_road_highway").on(t.highway),
-    index("idx_osm_road_ref").on(t.ref),
+    index("osm_road_geom_idx").using("gist", t.geom),
+    index("osm_road_highway_idx").on(t.highway),
+    index("osm_road_ref_idx").on(t.ref),
   ],
 );
 
@@ -207,9 +214,9 @@ export const roadSegment = conditionsSchema.table(
     computedAt: timestamp("computed_at", { withTimezone: true }).notNull(),
   },
   (t) => [
-    index("idx_road_segment_geom").using("gist", t.geom),
-    index("idx_road_segment_way").on(t.wayId),
-    index("idx_road_segment_minzoom").on(t.minZoom),
+    index("road_segment_geom_idx").using("gist", t.geom),
+    index("road_segment_way_id_idx").on(t.wayId),
+    index("road_segment_min_zoom_idx").on(t.minZoom),
   ],
 );
 
@@ -227,7 +234,7 @@ export const sensorSegment = conditionsSchema.table(
     bearingDeg: doublePrecision("bearing_deg"),
     matchedAt: timestamp("matched_at", { withTimezone: true }).notNull(),
   },
-  (t) => [index("idx_sensor_segment_segment").on(t.segmentId)],
+  (t) => [index("sensor_segment_segment_id_idx").on(t.segmentId)],
 );
 
 /** Singleton identity and provenance of the segment spine currently active. */
@@ -243,7 +250,7 @@ export const roadGraphState = conditionsSchema.table(
     importedAt: timestamp("imported_at", { withTimezone: true }).notNull(),
     activatedAt: timestamp("activated_at", { withTimezone: true }).notNull(),
   },
-  (t) => [check("road_graph_state_singleton", sql`${t.singleton} IS TRUE`)],
+  (t) => [check("road_graph_state_singleton_check", sql`${t.singleton} IS TRUE`)],
 );
 
 /** Current reviewed public licence policy, refreshed atomically with the source catalogue. */
@@ -283,7 +290,7 @@ export const segmentObservation = conditionsSchema.table(
     expiresAt: timestamp("expires_at", { withTimezone: true }),
   },
   (t) => [
-    primaryKey({ columns: [t.segmentId, t.source] }),
+    primaryKey({ name: "segment_observation_pkey", columns: [t.segmentId, t.source] }),
     check("segment_observation_los_check", sql.raw(enumCheckSql("los", SEGMENT_LOS))),
   ],
 );
@@ -309,7 +316,7 @@ export const segmentProfile = conditionsSchema.table(
     contributing: text("contributing").array().notNull().default(sql`'{}'::text[]`),
     computedAt: timestamp("computed_at", { withTimezone: true }).notNull(),
   },
-  (t) => [primaryKey({ columns: [t.segmentId, t.dow, t.todHour] })],
+  (t) => [primaryKey({ name: "segment_profile_pkey", columns: [t.segmentId, t.dow, t.todHour] })],
 );
 
 /**
@@ -375,9 +382,9 @@ export const reporter = conditionsSchema.table(
   },
   (t) => [
     index("reporter_last_active_at_idx").on(t.lastActiveAt),
-    check("reporter_reputation_alpha_positive", sql`${t.reputationAlpha} > 0`),
-    check("reporter_reputation_beta_positive", sql`${t.reputationBeta} > 0`),
-    check("reporter_status_enum", sql`${t.status} IN ('active','blocked')`),
+    check("reporter_reputation_alpha_check", sql`${t.reputationAlpha} > 0`),
+    check("reporter_reputation_beta_check", sql`${t.reputationBeta} > 0`),
+    check("reporter_status_check", sql`${t.status} IN ('active','blocked')`),
   ],
 );
 
@@ -394,7 +401,7 @@ export const tokenQuota = conditionsSchema.table(
     issued: integer("issued").notNull().default(0),
   },
   (t) => [
-    primaryKey({ columns: [t.keyId, t.epoch] }),
+    primaryKey({ name: "token_quota_pkey", columns: [t.keyId, t.epoch] }),
     foreignKey({
       name: "token_quota_key_id_fkey",
       columns: [t.keyId],
@@ -491,23 +498,23 @@ export const federationOutbox = conditionsSchema.table(
     txid: xid8("txid").notNull().default(sql`pg_current_xact_id()`),
   },
   (t) => [
-    index("idx_federation_outbox_record").on(t.recordClass, t.recordId, t.seq),
+    index("federation_outbox_record_class_record_id_seq_idx").on(t.recordClass, t.recordId, t.seq),
     // The composite peer cursor's covering index: WHERE/ORDER BY are (txid, seq).
-    index("idx_federation_outbox_cursor").on(t.txid, t.seq),
+    index("federation_outbox_txid_seq_idx").on(t.txid, t.seq),
     // The daily retention prune deletes on `created_at < floor`; this btree
     // keeps that a range scan instead of a full seq-scan as the journal grows.
-    index("idx_federation_outbox_created_at").on(t.createdAt),
+    index("federation_outbox_created_at_idx").on(t.createdAt),
     check(
-      "federation_outbox_operation_enum",
+      "federation_outbox_operation_check",
       sql`${t.operation} IN ('create','update','delete','liveness')`,
     ),
     check(
-      "federation_outbox_record_class_enum",
+      "federation_outbox_record_class_check",
       sql.raw(enumCheckSql("record_class", RECORD_CLASSES)),
     ),
     // A change carries its record, a delete its reason and nothing else.
     check(
-      "federation_outbox_delete_shape",
+      "federation_outbox_delete_shape_check",
       sql`(${t.operation} = 'delete') = (${t.snapshot} IS NULL AND ${t.tombstoneReason} IS NOT NULL)`,
     ),
   ],
@@ -539,7 +546,7 @@ export const federationJournal = conditionsSchema.table(
     databaseOid: bigint("database_oid", { mode: "number" }),
     systemIdentifier: bigint("system_identifier", { mode: "bigint" }),
   },
-  (t) => [check("federation_journal_single_row", sql`${t.singleton}`)],
+  (t) => [check("federation_journal_singleton_check", sql`${t.singleton}`)],
 );
 
 /**
@@ -565,7 +572,7 @@ export const federationTombstone = conditionsSchema.table(
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
   },
   (t) => [
-    primaryKey({ columns: [t.canonicalId, t.peerInstanceId] }),
+    primaryKey({ name: "federation_tombstone_pkey", columns: [t.canonicalId, t.peerInstanceId] }),
     index("federation_tombstone_expires_at_idx").on(t.expiresAt),
     check("federation_tombstone_reason_check", sql.raw(enumCheckSql("reason", TOMBSTONE_REASONS))),
   ],
@@ -601,7 +608,9 @@ export const federationSourceReceipt = conditionsSchema.table(
      */
     cadenceSec: integer("cadence_sec"),
   },
-  (t) => [primaryKey({ columns: [t.peerInstanceId, t.sourceId] })],
+  (t) => [
+    primaryKey({ name: "federation_source_receipt_pkey", columns: [t.peerInstanceId, t.sourceId] }),
+  ],
 );
 
 /**
@@ -623,8 +632,8 @@ export const federationLapsedCopy = conditionsSchema.table(
     lapsedAt: timestamp("lapsed_at", { withTimezone: true }).notNull(),
   },
   (t) => [
-    primaryKey({ columns: [t.recordClass, t.recordId] }),
-    index("idx_federation_lapsed_copy_source").on(t.peerInstanceId, t.sourceId),
+    primaryKey({ name: "federation_lapsed_copy_pkey", columns: [t.recordClass, t.recordId] }),
+    index("federation_lapsed_copy_peer_instance_id_source_id_idx").on(t.peerInstanceId, t.sourceId),
   ],
 );
 
@@ -677,8 +686,8 @@ export const onDemandFetch = conditionsSchema.table(
     claimedUntil: timestamp("claimed_until", { withTimezone: true }),
   },
   (t) => [
-    primaryKey({ columns: [t.sourceId, t.cell] }),
-    check("on_demand_fetch_status_enum", sql`${t.status} IN ('pending','fresh','failed')`),
+    primaryKey({ name: "on_demand_fetch_pkey", columns: [t.sourceId, t.cell] }),
+    check("on_demand_fetch_status_check", sql`${t.status} IN ('pending','fresh','failed')`),
   ],
 );
 
@@ -785,7 +794,7 @@ export const federationPeerKey = conditionsSchema.table(
     anchor: text("anchor").notNull(),
     learnedAt: timestamp("learned_at", { withTimezone: true }).notNull(),
   },
-  (t) => [primaryKey({ columns: [t.peerInstanceId, t.keyId] })],
+  (t) => [primaryKey({ name: "federation_peer_key_pkey", columns: [t.peerInstanceId, t.keyId] })],
 );
 
 /**
@@ -931,14 +940,14 @@ export const federationSubscription = conditionsSchema.table(
       .default(sql`now() + interval '30 days'`),
   },
   (t) => [
-    index("idx_federation_subscription_peer").on(t.peerId),
+    index("federation_subscription_peer_id_idx").on(t.peerId),
     // A peer holds one pull subscription and one webhook per inbox, which it
     // patches to what it wants; a second would push or journal twice.
-    uniqueIndex("uq_federation_subscription_target")
+    uniqueIndex("federation_subscription_target_key")
       .on(t.peerId, t.deliveryMode, sql`coalesce(${t.inboxUrl}, '')`)
       .where(sql`${t.deliveryMode} <> 'sse'`),
     check(
-      "federation_subscription_delivery_mode_enum",
+      "federation_subscription_delivery_mode_check",
       sql`${t.deliveryMode} IN ('pull','webhook','sse')`,
     ),
     check("federation_subscription_status_check", sql`${t.status} IN ('active','push_disabled')`),
@@ -957,16 +966,26 @@ export const observationRevision = conditionsSchema.table(
     signature: text("signature").notNull(),
     suppressed: boolean("suppressed").notNull(),
   },
-  (t) => [primaryKey({ columns: [t.sourceId, t.featureId, t.property] })],
+  (t) => [
+    primaryKey({
+      name: "observation_revision_pkey",
+      columns: [t.sourceId, t.featureId, t.property],
+    }),
+  ],
 );
 
 /** Last wholly accepted GeoNet acquisition; publication shares its transaction. */
-export const geonetCoverage = conditionsSchema.table("geonet_coverage", {
-  revisions: jsonb("revisions").notNull().default({}),
-  sourceId: text("source_id").primaryKey(),
-  coveredFrom: timestamp("covered_from", { withTimezone: true }).notNull(),
-  coveredUntil: timestamp("covered_until", { withTimezone: true }).notNull(),
-});
+export const geonetCoverage = conditionsSchema.table(
+  "geonet_coverage",
+  {
+    revisions: jsonb("revisions").notNull().default({}),
+    sourceId: text("source_id").primaryKey(),
+    coveredFrom: timestamp("covered_from", { withTimezone: true }).notNull(),
+    coveredUntil: timestamp("covered_until", { withTimezone: true }).notNull(),
+  },
+  // A coverage window ends after it starts.
+  (t) => [check("geonet_coverage_order_check", sql`${t.coveredFrom} < ${t.coveredUntil}`)],
+);
 
 /** Durable CAP message window for SMN's rolling indexes, committed with publication. */
 export const smnCapMessage = conditionsSchema.table(
@@ -979,7 +998,7 @@ export const smnCapMessage = conditionsSchema.table(
     body: bytea("body").notNull(),
     retainUntil: timestamp("retain_until", { withTimezone: true }).notNull(),
   },
-  (t) => [primaryKey({ columns: [t.sourceId, t.variant] })],
+  (t) => [primaryKey({ name: "smn_cap_message_pkey", columns: [t.sourceId, t.variant] })],
 );
 
 /** The bounded latest SMN projection decision, committed with originals and public records. */
@@ -1003,5 +1022,5 @@ export const nswRfsClock = conditionsSchema.table(
     content: text("content").notNull(),
     expiry: text("expiry").notNull(),
   },
-  (t) => [primaryKey({ columns: [t.sourceId, t.incidentId] })],
+  (t) => [primaryKey({ name: "nsw_rfs_clock_pkey", columns: [t.sourceId, t.incidentId] })],
 );
