@@ -2,6 +2,7 @@ import { runMigrations } from "@openconditions/core/server";
 import { syncSources } from "@openconditions/storage";
 import {
   CONTRIBUTIONS_ROLE,
+  contributionsRoleUrl,
   createTestDatabase,
   createTestRole,
   type TestDatabase,
@@ -12,10 +13,10 @@ import postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 /**
- * The custom migration grants OpenMapX's tile role and the contributions
- * service's role exactly what they use, by name, to roles that exist when it
- * runs. The integration run's server has both roles, created after the
- * template was migrated.
+ * Every migrate grants OpenMapX's tile role and the contributions service's
+ * role exactly what they use, by name, if they exist, through
+ * `conditions.grant_consumer_roles()`. The integration run's server has both
+ * roles, created after the template was migrated.
  */
 
 /** Each privilege a role holds in the schema conditions, as `<kind> <object> <privilege>`. */
@@ -142,6 +143,35 @@ describe("roles created before the first migrate", () => {
     expect(await privileges(db.sql, CONTRIBUTIONS_ROLE)).toEqual(CONTRIBUTIONS_GRANTS);
   });
 
+  it("let no one but the owner run the grant function, which runs with its caller's rights", async () => {
+    const fn = "conditions.grant_consumer_roles()";
+    expect(
+      await db.sql`
+        SELECT has_function_privilege('public', ${fn}, 'EXECUTE') AS public,
+          has_function_privilege(${TILES_OWNER_ROLE}, ${fn}, 'EXECUTE') AS tiles,
+          has_function_privilege(${CONTRIBUTIONS_ROLE}, ${fn}, 'EXECUTE') AS contributions,
+          p.prosecdef AS definer, p.proconfig AS config
+        FROM pg_proc p WHERE p.oid = ${fn}::regprocedure`,
+    ).toEqual([
+      {
+        public: false,
+        tiles: false,
+        contributions: false,
+        definer: false,
+        config: ["search_path=pg_catalog, pg_temp"],
+      },
+    ]);
+    // The ingest service's role owns it and calls it at every migrate.
+    await expect(ingest`SELECT conditions.grant_consumer_roles()`).resolves.toBeDefined();
+    // The contributions role may use the schema, but not call it.
+    const contributions = postgres(contributionsRoleUrl(db), { max: 1, onnotice: () => {} });
+    clients.push(contributions);
+    await expect(contributions`SELECT conditions.grant_consumer_roles()`).rejects.toMatchObject({
+      code: "42501",
+      message: "permission denied for function grant_consumer_roles",
+    });
+  });
+
   it("segment_flow renders as a role holding only the tile grants", async () => {
     // A segment with a measurement under a public licence, written as ingest writes it.
     await syncSources(ingest, []);
@@ -189,14 +219,14 @@ describe("roles created before the first migrate", () => {
   }, 60_000);
 });
 
-it("a role created after the migrate holds no grants, also after the next migrate", async () => {
+it("a role created after the migrate gets its grants at the next migrate", async () => {
   // The template was migrated before the roles existed; a migrate with
-  // nothing pending grants nothing either.
+  // nothing pending, as at the ingest service's next start, grants them.
   const db = await createTestDatabase();
   databases.push(db);
   expect(await privileges(db.sql, TILES_OWNER_ROLE)).toEqual([]);
   expect(await privileges(db.sql, CONTRIBUTIONS_ROLE)).toEqual([]);
   await runMigrations(db.url);
-  expect(await privileges(db.sql, TILES_OWNER_ROLE)).toEqual([]);
-  expect(await privileges(db.sql, CONTRIBUTIONS_ROLE)).toEqual([]);
+  expect(await privileges(db.sql, TILES_OWNER_ROLE)).toEqual(TILE_GRANTS);
+  expect(await privileges(db.sql, CONTRIBUTIONS_ROLE)).toEqual(CONTRIBUTIONS_GRANTS);
 }, 60_000);

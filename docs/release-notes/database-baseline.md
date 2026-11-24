@@ -6,7 +6,7 @@ Action: Create the OpenConditions database afresh. A database created by an earl
 
 Only the ingest service migrates now, and it records the history in `conditions.__drizzle_migrations`. The contributions and federation services wait at start until the schema reaches their version, for at most `OPENCONDITIONS_SCHEMA_WAIT_TIMEOUT_MS` (five minutes by default).
 
-The migration grants OpenMapX's tile role `openmapx_tiles_owner` and the contributions service's role `openconditions_contributions` exactly what they use, provided they exist when it runs, so create both before the ingest service first starts. The federation service connects as the ingest service's role.
+At every start the ingest service grants OpenMapX's tile role `openmapx_tiles_owner` and the contributions service's role `openconditions_contributions` exactly what they use, each if it exists. Create both before the ingest service first starts; a role created later gets its grants when the ingest service restarts. The federation service connects as the ingest service's role.
 
 Compatibility: The resulting schema equals the one the earlier migrations produced, apart from the physical column order of some tables. The traffic tile function `conditions.segment_flow(integer, integer, integer, json)` is unchanged. Data fixes that the earlier migrations applied to existing rows are not part of the baseline, since a new database has no rows to fix.
 

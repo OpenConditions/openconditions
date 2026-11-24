@@ -129,6 +129,7 @@ it("after a fresh migrate, segment_flow, the helper functions and the four trigg
       "flow_public_licenses",
       "flow_receipt_permissions",
       "flow_source_credit",
+      "grant_consumer_roles",
       "observation_fusion_provenance",
       "observation_record",
       "segment_flow",

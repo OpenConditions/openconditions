@@ -48,6 +48,10 @@ export function resolveMigrationsFolder(): string {
  * migration: drizzle-kit cannot model `CREATE EXTENSION`, and the generated
  * migrations reference the `conditions` schema and the `geometry` type, both
  * of which must already exist before the first migration runs.
+ *
+ * After the migrations it grants the roles of OpenMapX's traffic tile and the
+ * contributions service what they use ({@link grantConsumerRoles}), so a role
+ * created after the first migrate gets its grants at the next start.
  */
 export async function runMigrations(connectionString: string): Promise<void> {
   const migrationsFolder = resolveMigrationsFolder();
@@ -72,6 +76,7 @@ export async function runMigrations(connectionString: string): Promise<void> {
       migrationsSchema: MIGRATIONS_SCHEMA,
       migrationsTable: MIGRATIONS_TABLE,
     });
+    await grantConsumerRoles(client);
   } finally {
     try {
       if (locked) {
@@ -81,4 +86,33 @@ export async function runMigrations(connectionString: string): Promise<void> {
       await client.end();
     }
   }
+}
+
+/**
+ * Runs `conditions.grant_consumer_roles()`, which grants each consumer role
+ * that exists exactly what it uses; re-granting changes nothing. A grant
+ * rewrites catalog rows another session of the same role (the federation
+ * service maintaining partitions) may be updating at that moment, which
+ * PostgreSQL refuses with "tuple concurrently updated"; that is tried once
+ * more.
+ */
+export async function grantConsumerRoles(client: postgres.Sql): Promise<void> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      await client`SELECT conditions.grant_consumer_roles()`;
+      return;
+    } catch (error) {
+      if (attempt > 1 || !isConcurrentCatalogUpdate(error)) throw error;
+    }
+  }
+}
+
+function isConcurrentCatalogUpdate(error: unknown): boolean {
+  const { code, message } = error as { code?: unknown; message?: unknown };
+  return (
+    code === "40001" ||
+    (code === "XX000" &&
+      typeof message === "string" &&
+      message.includes("tuple concurrently updated"))
+  );
 }

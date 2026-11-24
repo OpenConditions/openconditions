@@ -57,7 +57,8 @@ import {
  * situations and readings, votes, the reviewer's decisions and block list,
  * and the cross-validation sweeps. A privilege the migration does not grant
  * fails the flow that needs it. Fixtures are written as the ingest service
- * writes them, by the schema's owner.
+ * writes them, by the schema's owner. The cases build on one another and run
+ * in order.
  */
 
 type Rec = Record<string, unknown>;
@@ -481,7 +482,7 @@ describe("the contributions service as its own role", () => {
     ok(await asReviewer("DELETE", `/contrib/reviewer/blocklist/${key.keyId}`));
   });
 
-  it("lands crowd fuel prices, which keep history, and checks one against a later feed price", async () => {
+  it("lands crowd fuel prices and checks one against a later feed price", async () => {
     clock.now = "2026-09-22T12:01:00.000Z";
     const published = Number((e5["result"] as { amount: string }).amount);
     const price = async (delta: number, reportedAt: string) => {
@@ -509,7 +510,7 @@ describe("the contributions service as its own role", () => {
     // Within a cent of the ministry's price: resolved as it lands.
     ok(await price(0.009, "2026-09-22T12:00:00.000Z"));
     ok(await price(0.02, "2026-09-22T12:00:30.000Z"));
-    // The ministry publishes a later price: the sweep reads the series' history.
+    // The ministry publishes a later price: the sweep reads the series' history table.
     const repriced: Rec = {
       ...draftOf(e5),
       result: { ...(e5["result"] as Rec), amount: (published + 0.02).toFixed(3) },
