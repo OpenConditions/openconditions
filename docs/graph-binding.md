@@ -661,7 +661,6 @@ binding of each situation's own location:
     "unattempted": 30,
     "obsolete": 10,
     "unattemptedOrObsolete": 40,
-    "unknownStatus": 0,
     "exact": 1103,
     "likely": 214,
     "ambiguous": 61,
