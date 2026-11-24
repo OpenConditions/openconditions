@@ -500,13 +500,14 @@ public paths of the actor's `baseUrl` to it and to the archive:
 The service signs and verifies against its configured `baseUrl`, not the
 request's host, so the proxy may rewrite the host but not the path. The
 stream (`/peer/stream`) is server-sent events: the proxy must not buffer it.
-With an OpenMapX install, a compose file beside it adds the service to the
-same network:
+With an OpenMapX install, a compose file beside it, in a Compose project of
+its own, adds the service to OpenMapX's network:
 
 ```yaml
 services:
   openconditions-federation:
-    image: ghcr.io/openconditions/federation:latest
+    # The release of the installed extension's services; never a moving tag.
+    image: ghcr.io/openconditions/federation:0.8.1
     restart: unless-stopped
     environment:
       # The ingest service's own role, never the PostgreSQL superuser.
@@ -535,6 +536,8 @@ services:
 
 networks:
   openmapx:
+    # OpenMapX's platform network: Compose project openmapx, network openmapx.
+    name: openmapx_openmapx
     external: true
 
 secrets:
@@ -543,9 +546,13 @@ secrets:
 
 volumes:
   openmapx-openconditions-ingest-data:
+    # The ingest service's volume, with the openmapx project prefix.
+    name: openmapx_openmapx-openconditions-ingest-data
     external: true
   openconditions-federation-data:
 ```
+
+These two containers join OpenMapX's platform network, which OpenMapX otherwise reserves for its built-in services: a community service OpenMapX runs gets a network of its own and reaches only the services it is granted. Started this way, outside OpenMapX, they can reach every service on that network, so run only these images, pinned to the release of the installed extension (`0.8.1` above; take the `tag` of `services/federation/service.json` at that release).
 
 The file `federation-secrets/secrets-key` holds the same value that was entered as the Secrets key of `openconditions-ingest` in OpenMapX's admin services panel, taken from the recovery set. It must be readable by the container's user, and it stays out of the `federation` config folder and out of backups. The service refuses to start with any other key; see [secrets encrypted at rest](../README.md#secrets-encrypted-at-rest).
 
@@ -567,8 +574,9 @@ maps.example.org {
 }
 ```
 
-Use the network and volume names of the install (`docker network ls`,
-`docker volume ls`), and set the same `OPENCONDITIONS_INSTANCE_ID` on the
+The network and volume names above are those of an OpenMapX install under its
+Compose project `openmapx`; check them with `docker network ls` and
+`docker volume ls`. Set the same `OPENCONDITIONS_INSTANCE_ID` as on the
 ingest and contributions services. Its signing keys live in the database; its
 volume holds the registry's verified metadata and a peer's archive files while
 they land, up to 32 GiB a file.
