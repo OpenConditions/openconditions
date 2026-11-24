@@ -31,7 +31,7 @@ describe("UNVERIFIED_OSM_AUTH default verifier", () => {
     const result = await UNVERIFIED_OSM_AUTH.verify("anything-a-sybil-sends", { keyId: "key-1" });
     expect(result.verified).toBe(false);
     expect(result.reason).toBe("no-osm-verifier-configured");
-    expect(result.osmUid).toBeUndefined();
+    expect(Object.keys(result).sort()).toEqual(["reason", "verified"]);
   });
 
   it("satisfies the OsmAuthVerifier contract", () => {

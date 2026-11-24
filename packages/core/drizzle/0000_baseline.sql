@@ -67,13 +67,13 @@ CREATE TABLE "conditions"."sub_claim" (
 	"id" text PRIMARY KEY NOT NULL,
 	"subject_class" text NOT NULL,
 	"subject_id" text NOT NULL,
-	"subject_component_key" text DEFAULT '' NOT NULL,
 	"claim_type" text NOT NULL,
 	"key_id" text NOT NULL,
 	"reason" text,
 	"geom" geometry(Point, 4326),
 	"signature" text NOT NULL,
 	"created_at" timestamp with time zone NOT NULL,
+	CONSTRAINT "sub_claim_subject_class_subject_id_key_id_claim_type_key" UNIQUE("subject_class","subject_id","key_id","claim_type"),
 	CONSTRAINT "sub_claim_claim_type_enum" CHECK ("claim_type" IN ('confirm', 'negate', 'flag')),
 	CONSTRAINT "sub_claim_subject_class_enum" CHECK ("subject_class" IN ('feature', 'situation', 'observation', 'offer'))
 );
@@ -667,12 +667,9 @@ CREATE TABLE "conditions"."public_license_policy" (
 CREATE TABLE "conditions"."reporter" (
 	"key_id" text PRIMARY KEY NOT NULL,
 	"pub_jwk" jsonb NOT NULL,
-	"osm_uid" text,
-	"email_lookup_hmac" text,
 	"reputation_alpha" double precision NOT NULL,
 	"reputation_beta" double precision NOT NULL,
 	"corroborated_count" integer DEFAULT 0 NOT NULL,
-	"flagged_count" integer DEFAULT 0 NOT NULL,
 	"trust_signal" double precision,
 	"entitlement_expires_at" timestamp with time zone NOT NULL,
 	"status" text DEFAULT 'active' NOT NULL,
@@ -873,7 +870,8 @@ CREATE TABLE "conditions"."source_status" (
 CREATE TABLE "conditions"."spent_token" (
 	"token_hash" text PRIMARY KEY NOT NULL,
 	"purpose" text NOT NULL,
-	"spent_at" timestamp with time zone NOT NULL
+	"spent_at" timestamp with time zone NOT NULL,
+	"expires_at" timestamp with time zone NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "conditions"."token_quota" (
@@ -940,6 +938,9 @@ CREATE TABLE "conditions"."source" (
 	CONSTRAINT "source_tier_enum" CHECK ("tier" IN ('authoritative', 'operator', 'aggregator', 'community'))
 );
 --> statement-breakpoint
+ALTER TABLE "conditions"."report_evidence" ADD CONSTRAINT "report_evidence_actor_key_id_fkey" FOREIGN KEY ("actor_key_id") REFERENCES "conditions"."reporter"("key_id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "conditions"."report_refusal" ADD CONSTRAINT "report_refusal_actor_key_id_fkey" FOREIGN KEY ("actor_key_id") REFERENCES "conditions"."reporter"("key_id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "conditions"."sub_claim" ADD CONSTRAINT "sub_claim_key_id_fkey" FOREIGN KEY ("key_id") REFERENCES "conditions"."reporter"("key_id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "conditions"."observation_rollup_daily" ADD CONSTRAINT "observation_rollup_daily_series_fk" FOREIGN KEY ("series_id") REFERENCES "conditions"."observation_latest"("series_id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "conditions"."observation_rollup_hourly" ADD CONSTRAINT "observation_rollup_hourly_series_fk" FOREIGN KEY ("series_id") REFERENCES "conditions"."observation_latest"("series_id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "conditions"."feature_component" ADD CONSTRAINT "feature_component_feature_id_feature_id_fk" FOREIGN KEY ("feature_id") REFERENCES "conditions"."feature"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -947,6 +948,7 @@ ALTER TABLE "conditions"."feature_revision" ADD CONSTRAINT "feature_revision_fea
 ALTER TABLE "conditions"."offer_revision" ADD CONSTRAINT "offer_revision_offer_id_offer_id_fk" FOREIGN KEY ("offer_id") REFERENCES "conditions"."offer"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "conditions"."situation_effect" ADD CONSTRAINT "situation_effect_situation_id_situation_id_fk" FOREIGN KEY ("situation_id") REFERENCES "conditions"."situation"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "conditions"."situation_revision" ADD CONSTRAINT "situation_revision_situation_id_situation_id_fk" FOREIGN KEY ("situation_id") REFERENCES "conditions"."situation"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "conditions"."token_quota" ADD CONSTRAINT "token_quota_key_id_fkey" FOREIGN KEY ("key_id") REFERENCES "conditions"."reporter"("key_id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "idx_binding_queue_due" ON "conditions"."binding_queue" USING btree ("next_attempt_at");--> statement-breakpoint
 CREATE INDEX "idx_record_binding_status" ON "conditions"."record_binding" USING btree ("status");--> statement-breakpoint
 CREATE INDEX "idx_record_segment_segment" ON "conditions"."record_segment" USING btree ("segment_id");--> statement-breakpoint
@@ -955,7 +957,6 @@ CREATE INDEX "idx_report_evidence_actor" ON "conditions"."report_evidence" USING
 CREATE INDEX "idx_report_evidence_merged" ON "conditions"."report_evidence" USING btree (("details" ->> 'merged')) WHERE "conditions"."report_evidence"."details" ? 'merged';--> statement-breakpoint
 CREATE INDEX "idx_report_refusal_actor" ON "conditions"."report_refusal" USING btree ("actor_key_id","occurred_at");--> statement-breakpoint
 CREATE INDEX "idx_report_refusal_occurred" ON "conditions"."report_refusal" USING btree ("occurred_at");--> statement-breakpoint
-CREATE UNIQUE INDEX "uq_sub_claim_subject_key_type" ON "conditions"."sub_claim" USING btree ("subject_class","subject_id","subject_component_key","key_id","claim_type");--> statement-breakpoint
 CREATE INDEX "idx_sub_claim_key" ON "conditions"."sub_claim" USING btree ("key_id");--> statement-breakpoint
 CREATE INDEX "idx_observation_latest_geom" ON "conditions"."observation_latest" USING gist ("geom");--> statement-breakpoint
 CREATE INDEX "idx_observation_latest_property_text" ON "conditions"."observation_latest" USING btree ("property","value_text");--> statement-breakpoint
@@ -1012,9 +1013,11 @@ CREATE INDEX "idx_federation_outbox_cursor" ON "conditions"."federation_outbox" 
 CREATE INDEX "idx_federation_outbox_created_at" ON "conditions"."federation_outbox" USING btree ("created_at");--> statement-breakpoint
 CREATE INDEX "idx_federation_subscription_peer" ON "conditions"."federation_subscription" USING btree ("peer_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "uq_federation_subscription_target" ON "conditions"."federation_subscription" USING btree ("peer_id","delivery_mode",coalesce("inbox_url", '')) WHERE "conditions"."federation_subscription"."delivery_mode" <> 'sse';--> statement-breakpoint
+CREATE INDEX "federation_tombstone_expires_at_idx" ON "conditions"."federation_tombstone" USING btree ("expires_at");--> statement-breakpoint
 CREATE INDEX "idx_osm_road_geom" ON "conditions"."osm_road" USING gist ("geom");--> statement-breakpoint
 CREATE INDEX "idx_osm_road_highway" ON "conditions"."osm_road" USING btree ("highway");--> statement-breakpoint
 CREATE INDEX "idx_osm_road_ref" ON "conditions"."osm_road" USING btree ("ref");--> statement-breakpoint
+CREATE INDEX "reporter_last_active_at_idx" ON "conditions"."reporter" USING btree ("last_active_at");--> statement-breakpoint
 CREATE INDEX "idx_road_segment_geom" ON "conditions"."road_segment" USING gist ("geom");--> statement-breakpoint
 CREATE INDEX "idx_road_segment_way" ON "conditions"."road_segment" USING btree ("way_id");--> statement-breakpoint
 CREATE INDEX "idx_road_segment_minzoom" ON "conditions"."road_segment" USING btree ("min_zoom");--> statement-breakpoint
@@ -1025,4 +1028,4 @@ CREATE INDEX "idx_sensor_baseline_source_bucket" ON "conditions"."sensor_baselin
 CREATE INDEX "idx_sensor_segment_segment" ON "conditions"."sensor_segment" USING btree ("segment_id");--> statement-breakpoint
 CREATE INDEX "idx_source_poll_attempt_source_time" ON "conditions"."source_poll_attempt" USING btree ("source","attempted_at");--> statement-breakpoint
 CREATE INDEX "idx_source_poll_attempt_time" ON "conditions"."source_poll_attempt" USING btree ("attempted_at","id");--> statement-breakpoint
-CREATE INDEX "idx_spent_token_spent_at" ON "conditions"."spent_token" USING btree ("spent_at");
+CREATE INDEX "spent_token_expires_at_idx" ON "conditions"."spent_token" USING btree ("expires_at");

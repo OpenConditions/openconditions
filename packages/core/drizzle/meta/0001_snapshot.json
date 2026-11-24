@@ -1,6 +1,6 @@
 {
-  "id": "d03116e5-189d-4164-8678-879690ad38a5",
-  "prevId": "8c41a7af-dcab-4f25-bbaf-b18f5dee71a5",
+  "id": "22cdbfd4-3903-4d7a-a217-74f4c3c9d07c",
+  "prevId": "c8545041-a1c3-4654-ae20-0c5116df9540",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -444,7 +444,22 @@
           "concurrently": false
         }
       },
-      "foreignKeys": {},
+      "foreignKeys": {
+        "report_evidence_actor_key_id_fkey": {
+          "name": "report_evidence_actor_key_id_fkey",
+          "tableFrom": "report_evidence",
+          "columnsFrom": [
+            "actor_key_id"
+          ],
+          "tableTo": "reporter",
+          "schemaTo": "conditions",
+          "columnsTo": [
+            "key_id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -527,7 +542,22 @@
           "concurrently": false
         }
       },
-      "foreignKeys": {},
+      "foreignKeys": {
+        "report_refusal_actor_key_id_fkey": {
+          "name": "report_refusal_actor_key_id_fkey",
+          "tableFrom": "report_refusal",
+          "columnsFrom": [
+            "actor_key_id"
+          ],
+          "tableTo": "reporter",
+          "schemaTo": "conditions",
+          "columnsTo": [
+            "key_id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -555,13 +585,6 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
-        },
-        "subject_component_key": {
-          "name": "subject_component_key",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "''"
         },
         "claim_type": {
           "name": "claim_type",
@@ -601,45 +624,6 @@
         }
       },
       "indexes": {
-        "uq_sub_claim_subject_key_type": {
-          "name": "uq_sub_claim_subject_key_type",
-          "columns": [
-            {
-              "expression": "subject_class",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "subject_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "subject_component_key",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "key_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "claim_type",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "with": {},
-          "method": "btree",
-          "concurrently": false
-        },
         "idx_sub_claim_key": {
           "name": "idx_sub_claim_key",
           "columns": [
@@ -656,9 +640,35 @@
           "concurrently": false
         }
       },
-      "foreignKeys": {},
+      "foreignKeys": {
+        "sub_claim_key_id_fkey": {
+          "name": "sub_claim_key_id_fkey",
+          "tableFrom": "sub_claim",
+          "columnsFrom": [
+            "key_id"
+          ],
+          "tableTo": "reporter",
+          "schemaTo": "conditions",
+          "columnsTo": [
+            "key_id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "sub_claim_subject_class_subject_id_key_id_claim_type_key": {
+          "name": "sub_claim_subject_class_subject_id_key_id_claim_type_key",
+          "columns": [
+            "subject_class",
+            "subject_id",
+            "key_id",
+            "claim_type"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
       "policies": {},
       "checkConstraints": {
         "sub_claim_claim_type_enum": {
@@ -4629,7 +4639,23 @@
           "notNull": true
         }
       },
-      "indexes": {},
+      "indexes": {
+        "federation_tombstone_expires_at_idx": {
+          "name": "federation_tombstone_expires_at_idx",
+          "columns": [
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {
         "federation_tombstone_canonical_id_peer_instance_id_pk": {
@@ -5143,18 +5169,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "osm_uid": {
-          "name": "osm_uid",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "email_lookup_hmac": {
-          "name": "email_lookup_hmac",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
         "reputation_alpha": {
           "name": "reputation_alpha",
           "type": "double precision",
@@ -5169,13 +5183,6 @@
         },
         "corroborated_count": {
           "name": "corroborated_count",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "flagged_count": {
-          "name": "flagged_count",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
@@ -5213,7 +5220,23 @@
           "notNull": true
         }
       },
-      "indexes": {},
+      "indexes": {
+        "reporter_last_active_at_idx": {
+          "name": "reporter_last_active_at_idx",
+          "columns": [
+            {
+              "expression": "last_active_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
@@ -6518,14 +6541,20 @@
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
         }
       },
       "indexes": {
-        "idx_spent_token_spent_at": {
-          "name": "idx_spent_token_spent_at",
+        "spent_token_expires_at_idx": {
+          "name": "spent_token_expires_at_idx",
           "columns": [
             {
-              "expression": "spent_at",
+              "expression": "expires_at",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -6569,7 +6598,22 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {},
+      "foreignKeys": {
+        "token_quota_key_id_fkey": {
+          "name": "token_quota_key_id_fkey",
+          "tableFrom": "token_quota",
+          "columnsFrom": [
+            "key_id"
+          ],
+          "tableTo": "reporter",
+          "schemaTo": "conditions",
+          "columnsTo": [
+            "key_id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
       "compositePrimaryKeys": {
         "token_quota_key_id_epoch_pk": {
           "name": "token_quota_key_id_epoch_pk",

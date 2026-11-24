@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { publicVerif, type Token } from "@cloudflare/privacypass-ts";
 import { generateReporterKey, type ReporterKey } from "@openconditions/contrib-core";
 import { SecretsKey, sealSecretsKeyCheck, storedSecret } from "@openconditions/core/server";
@@ -52,6 +53,14 @@ afterAll(async () => {
 
 function proofFor(key: ReporterKey, overrides: Partial<DeviceProof> = {}): DeviceProof {
   return { keyId: key.keyId, ...overrides };
+}
+
+/** When the spent row of `tokenBytes` expires. */
+async function spentExpiry(tokenBytes: Uint8Array): Promise<string | undefined> {
+  const hash = createHash("sha256").update(tokenBytes).digest("hex");
+  const [row] = await sql<{ expires_at: Date }[]>`
+    SELECT expires_at FROM conditions.spent_token WHERE token_hash = ${hash}`;
+  return row?.expires_at.toISOString();
 }
 
 async function enroll(key: ReporterKey, now = NOW) {
@@ -243,7 +252,7 @@ describe("enrollReporter", () => {
   it("a verifier-CONFIRMED osmAuth grants the 0.1 bump", async () => {
     const key = await generateReporterKey();
     const confirming = {
-      verify: async () => ({ verified: true, osmUid: "12345" }),
+      verify: async () => ({ verified: true }),
     };
     const entitlement = await enrollReporter(
       sql,
@@ -468,6 +477,8 @@ describe("issuance + redemption round-trip (real privacypass-ts client)", () => 
     await expect(
       verifier.verify(sql, garbage, { purpose: "report", epoch: "x" }, NOW),
     ).resolves.toBe(false);
+    // It can never redeem, so its spent row may go at once.
+    expect(await spentExpiry(garbage)).toBe(NOW);
   }, 30_000);
 
   it("refuses issuance for a reporter blocked after the grant was minted", async () => {
@@ -539,6 +550,8 @@ describe("issuer key rotation", () => {
 
     const verifier = new TokenVerifier({ issuerName: DEFAULT_ISSUER_NAME, log: noopLog });
     await expect(verifier.verify(sql, tokenBytes, ctx, NOW)).resolves.toBe(true);
+    // The spent row lives as long as the key the token was issued under.
+    expect(await spentExpiry(tokenBytes)).toBe("2026-08-01T00:00:00.000Z");
   }, 120_000);
 });
 

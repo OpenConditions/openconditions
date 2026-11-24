@@ -7,7 +7,8 @@
  *     conditions.spent_token — a conflict on the primary key means the token
  *     was already spent, so the answer is false before any crypto runs. If
  *     the insert succeeds but verification then fails, the row is KEPT: a bad
- *     token burning its own hash is harmless.
+ *     token burning its own hash is harmless. The row expires with the issuer
+ *     key the token names, after which the token cannot redeem anyway.
  *  2. Rebuild the expected TokenChallenge from the domain-separated public
  *     context and compare its SHA-256 against the challengeDigest the token
  *     signed over (constant-time). A token issued for context A can never
@@ -55,9 +56,25 @@ export class TokenVerifier {
       await globalThis.crypto.subtle.digest("SHA-256", tokenBytes as BufferSource),
     ).toString("hex");
 
+    let token: Token | undefined;
+    try {
+      token = Token.deserialize(BLIND_RSA, tokenBytes);
+    } catch {
+      token = undefined;
+    }
+
+    // The token expires with the issuer key it names: no token redeems
+    // after its key's validity ends, so its spent row is kept until then. A
+    // token that names no stored key, or does not parse, can never redeem,
+    // and its row may go at once.
+    const now = new Date(nowIso);
+    const namedKeyId =
+      token === undefined ? null : Buffer.from(token.authInput.tokenKeyId).toString("hex");
     const inserted = await sql<{ token_hash: string }[]>`
-      INSERT INTO conditions.spent_token (token_hash, purpose, spent_at)
-      VALUES (${tokenHash}, ${purpose}, ${new Date(nowIso)})
+      INSERT INTO conditions.spent_token (token_hash, purpose, spent_at, expires_at)
+      VALUES (${tokenHash}, ${purpose}, ${now},
+              COALESCE((SELECT not_after FROM conditions.issuer_key WHERE key_id = ${namedKeyId}),
+                       ${now}))
       ON CONFLICT (token_hash) DO NOTHING
       RETURNING token_hash
     `;
@@ -66,10 +83,7 @@ export class TokenVerifier {
       return false;
     }
 
-    let token: Token;
-    try {
-      token = Token.deserialize(BLIND_RSA, tokenBytes);
-    } catch {
+    if (token === undefined) {
       this.log.info({ purpose, outcome: "malformed" }, "token redemption refused");
       return false;
     }

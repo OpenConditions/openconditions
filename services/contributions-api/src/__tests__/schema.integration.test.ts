@@ -38,25 +38,36 @@ describe("contribution tables exist", () => {
     );
   }, 30_000);
 
-  it("reporter has its columns", async () => {
-    const cols = await tableColumns("reporter");
-    for (const c of [
-      "key_id",
-      "pub_jwk",
-      "osm_uid",
-      "email_lookup_hmac",
-      "reputation_alpha",
-      "reputation_beta",
-      "corroborated_count",
-      "flagged_count",
-      "trust_signal",
-      "entitlement_expires_at",
-      "status",
-      "created_at",
-      "last_active_at",
-    ]) {
-      expect(cols.has(c)).toBe(true);
+  it("reporter has its columns and keeps nothing it does not use", async () => {
+    expect(await tableColumns("reporter")).toEqual(
+      new Set([
+        "key_id",
+        "pub_jwk",
+        "reputation_alpha",
+        "reputation_beta",
+        "corroborated_count",
+        "trust_signal",
+        "entitlement_expires_at",
+        "status",
+        "created_at",
+        "last_active_at",
+      ]),
+    );
+  }, 30_000);
+
+  it("refuses a reporter without an activity or entitlement time, which retention reads", async () => {
+    for (const column of ["last_active_at", "entitlement_expires_at"]) {
+      const [col] = await sql<{ is_nullable: string }[]>`
+        SELECT is_nullable FROM information_schema.columns
+        WHERE table_schema = 'conditions' AND table_name = 'reporter'
+          AND column_name = ${column}`;
+      expect(col?.is_nullable).toBe("NO");
     }
+    await expect(
+      sql`INSERT INTO conditions.reporter (key_id, pub_jwk, reputation_alpha, reputation_beta,
+            entitlement_expires_at, created_at, last_active_at)
+          VALUES ('k-no-activity', '{}'::jsonb, 1, 1, now(), now(), NULL)`,
+    ).rejects.toThrow(/last_active_at/);
   }, 30_000);
 
   it("token_quota and issuer_key have their columns", async () => {
@@ -76,13 +87,12 @@ describe("contribution tables exist", () => {
 });
 
 describe("crowd evidence keyed by record", () => {
-  it("sub_claim names its subject by class, id and component", async () => {
+  it("sub_claim names its subject by class and id", async () => {
     expect(await tableColumns("sub_claim")).toEqual(
       new Set([
         "id",
         "subject_class",
         "subject_id",
-        "subject_component_key",
         "claim_type",
         "key_id",
         "reason",
@@ -109,19 +119,14 @@ describe("crowd evidence keyed by record", () => {
     );
   }, 30_000);
 
-  it("defaults the component keys to the empty string, never null", async () => {
-    const cols = await sql<
-      { table_name: string; column_name: string; is_nullable: string; column_default: string }[]
-    >`
-      SELECT table_name, column_name, is_nullable, column_default FROM information_schema.columns
+  it("defaults the evidence component key to the empty string, never null", async () => {
+    const cols = await sql<{ is_nullable: string; column_default: string }[]>`
+      SELECT is_nullable, column_default FROM information_schema.columns
       WHERE table_schema = 'conditions'
-        AND ((table_name = 'report_evidence' AND column_name = 'component_key')
-          OR (table_name = 'sub_claim' AND column_name = 'subject_component_key'))`;
-    expect(cols).toHaveLength(2);
-    for (const col of cols) {
-      expect(col.is_nullable).toBe("NO");
-      expect(col.column_default).toContain("''");
-    }
+        AND table_name = 'report_evidence' AND column_name = 'component_key'`;
+    expect(cols).toHaveLength(1);
+    expect(cols[0]!.is_nullable).toBe("NO");
+    expect(cols[0]!.column_default).toContain("''");
   }, 30_000);
 
   it("carries the evidence summary on situation with the right nullability", async () => {
@@ -150,7 +155,7 @@ describe("crowd evidence keyed by record", () => {
     const names = idx.map((i) => i.indexname);
     expect(names).toEqual(
       expect.arrayContaining([
-        "uq_sub_claim_subject_key_type",
+        "sub_claim_subject_class_subject_id_key_id_claim_type_key",
         "idx_sub_claim_key",
         "idx_report_evidence_record",
         "idx_report_evidence_merged",
@@ -159,30 +164,135 @@ describe("crowd evidence keyed by record", () => {
     );
     expect(names).not.toContain("idx_report_evidence_observation");
     expect(names).not.toContain("idx_sub_claim_subject");
+    expect(names).not.toContain("uq_sub_claim_subject_key_type");
   }, 30_000);
 });
 
 describe("spent_token single-use ledger", () => {
   it("creates spent_token with its columns", async () => {
     expect(await tableColumns("spent_token")).toEqual(
-      new Set(["token_hash", "purpose", "spent_at"]),
+      new Set(["token_hash", "purpose", "spent_at", "expires_at"]),
     );
   }, 30_000);
 
   it("token_hash is the primary key (a second spend violates it)", async () => {
-    await sql`INSERT INTO conditions.spent_token (token_hash, purpose, spent_at)
-      VALUES ('hash-dup', 'report:-:2026-07-12', now())`;
+    await sql`INSERT INTO conditions.spent_token (token_hash, purpose, spent_at, expires_at)
+      VALUES ('hash-dup', 'report:-:2026-07-12', now(), now())`;
     await expect(
-      sql`INSERT INTO conditions.spent_token (token_hash, purpose, spent_at)
-        VALUES ('hash-dup', 'report:-:2026-07-13', now())`,
+      sql`INSERT INTO conditions.spent_token (token_hash, purpose, spent_at, expires_at)
+        VALUES ('hash-dup', 'report:-:2026-07-13', now(), now())`,
     ).rejects.toThrow(/spent_token_pkey|duplicate key/);
   }, 30_000);
 
-  it("indexes spent_at for the retention sweep", async () => {
-    const idx = await sql<{ indexname: string }[]>`
-      SELECT indexname FROM pg_indexes
-      WHERE schemaname = 'conditions' AND tablename = 'spent_token'`;
-    expect(idx.map((i) => i.indexname)).toContain("idx_spent_token_spent_at");
+  it("refuses a spent token without its expiry", async () => {
+    await expect(
+      sql`INSERT INTO conditions.spent_token (token_hash, purpose, spent_at)
+        VALUES ('hash-no-expiry', 'report:-:2026-07-12', now())`,
+    ).rejects.toThrow(/expires_at/);
+  }, 30_000);
+
+  it("indexes the expiries the retention sweep reads", async () => {
+    const idx = await sql<{ tablename: string; indexname: string }[]>`
+      SELECT tablename, indexname FROM pg_indexes WHERE schemaname = 'conditions'`;
+    const names = idx.map((i) => `${i.tablename}.${i.indexname}`);
+    expect(names).toEqual(
+      expect.arrayContaining([
+        "spent_token.spent_token_expires_at_idx",
+        "federation_tombstone.federation_tombstone_expires_at_idx",
+        "reporter.reporter_last_active_at_idx",
+      ]),
+    );
+    expect(names).not.toContain("spent_token.idx_spent_token_spent_at");
+  }, 30_000);
+});
+
+describe("reporter erasure", () => {
+  const FKS = [
+    ["sub_claim", "sub_claim_key_id_fkey", "key_id", "c"],
+    ["report_refusal", "report_refusal_actor_key_id_fkey", "actor_key_id", "c"],
+    ["token_quota", "token_quota_key_id_fkey", "key_id", "c"],
+    ["report_evidence", "report_evidence_actor_key_id_fkey", "actor_key_id", "n"],
+  ] as const;
+
+  it("references reporter from every table keyed by a reporter's key, each column indexed", async () => {
+    const fks = await sql<
+      { table: string; name: string; column: string; on_delete: string; target: string }[]
+    >`
+      SELECT c.conrelid::regclass::text AS table, c.conname AS name,
+             a.attname AS column, c.confdeltype AS on_delete,
+             c.confrelid::regclass::text AS target
+      FROM pg_constraint c
+      JOIN pg_attribute a ON a.attrelid = c.conrelid AND a.attnum = c.conkey[1]
+      WHERE c.contype = 'f' AND c.confrelid = 'conditions.reporter'::regclass
+      ORDER BY c.conname`;
+    expect(
+      fks.map((f) => [f.table.replace(/^conditions\./, ""), f.name, f.column, f.on_delete]),
+    ).toEqual([...FKS].sort((a, b) => a[1].localeCompare(b[1])));
+    for (const [table, , column] of FKS) {
+      const [{ indexed }] = await sql<{ indexed: boolean }[]>`
+        SELECT EXISTS (
+          SELECT 1 FROM pg_index i
+          JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = i.indkey[0]
+          WHERE i.indrelid = ${`conditions.${table}`}::regclass AND a.attname = ${column}
+        ) AS indexed`;
+      expect(indexed, `${table}.${column} leads an index`).toBe(true);
+    }
+  }, 30_000);
+
+  it("deletes a reporter's votes, refusals and quotas and clears it from its evidence", async () => {
+    const at = "2026-07-12T08:00:00.000Z";
+    for (const key of ["k-erased", "k-kept"]) {
+      await sql`INSERT INTO conditions.reporter (key_id, pub_jwk, reputation_alpha,
+          reputation_beta, entitlement_expires_at, created_at, last_active_at)
+        VALUES (${key}, '{}'::jsonb, 1, 1, ${at}, ${at}, ${at})`;
+      await sql`INSERT INTO conditions.sub_claim
+          (id, subject_class, subject_id, claim_type, key_id, signature, created_at)
+        VALUES (${`sc-${key}`}, 'situation', 'subj-erasure', 'confirm', ${key}, 'sig', ${at})`;
+      await sql`INSERT INTO conditions.report_refusal (actor_key_id, cell, occurred_at)
+        VALUES (${key}, 'cell', ${at})`;
+      await sql`INSERT INTO conditions.token_quota (key_id, epoch, issued)
+        VALUES (${key}, '2026-07-12', 3)`;
+      await sql`INSERT INTO conditions.report_evidence
+          (record_class, record_id, evidence_kind, actor_key_id, occurred_at)
+        VALUES ('situation', 'subj-erasure', 'confirm', ${key}, ${at})`;
+    }
+
+    await sql`DELETE FROM conditions.reporter WHERE key_id = 'k-erased'`;
+
+    const count = async (table: string, column: string, key: string) => {
+      const [{ n }] = await sql.unsafe<{ n: number }[]>(
+        `SELECT count(*)::int AS n FROM conditions.${table} WHERE ${column} = $1`,
+        [key],
+      );
+      return n;
+    };
+    for (const [table, , column, action] of FKS) {
+      if (action !== "c") continue;
+      expect(await count(table, column, "k-erased"), table).toBe(0);
+      expect(await count(table, column, "k-kept"), table).toBe(1);
+    }
+    const evidence = await sql<{ actor_key_id: string | null }[]>`
+      SELECT actor_key_id FROM conditions.report_evidence
+      WHERE record_id = 'subj-erasure' ORDER BY actor_key_id NULLS FIRST`;
+    expect(evidence.map((e) => e.actor_key_id)).toEqual([null, "k-kept"]);
+  }, 30_000);
+
+  it("refuses crowd rows of a key that is not an enrolled reporter", async () => {
+    await expect(
+      sql`INSERT INTO conditions.sub_claim
+          (id, subject_class, subject_id, claim_type, key_id, signature, created_at)
+        VALUES ('sc-stranger', 'situation', 'subj-1', 'confirm', 'k-stranger', 'sig', now())`,
+    ).rejects.toThrow(/sub_claim_key_id_fkey/);
+    await expect(
+      sql`INSERT INTO conditions.report_evidence
+          (record_class, record_id, evidence_kind, actor_key_id, occurred_at)
+        VALUES ('situation', 'subj-1', 'confirm', 'k-stranger', now())`,
+    ).rejects.toThrow(/report_evidence_actor_key_id_fkey/);
+    await expect(
+      sql`INSERT INTO conditions.report_evidence
+          (record_class, record_id, evidence_kind, actor_key_id, occurred_at)
+        VALUES ('situation', 'subj-1', 'report', NULL, now())`,
+    ).resolves.toBeDefined();
   }, 30_000);
 });
 
@@ -248,6 +358,9 @@ describe("CHECK constraints", () => {
 
 describe("unique sub_claim (subject, key, type)", () => {
   it("rejects a duplicate (subject, key, claim_type) sub-claim", async () => {
+    await sql`INSERT INTO conditions.reporter (key_id, pub_jwk, reputation_alpha, reputation_beta,
+        entitlement_expires_at, created_at, last_active_at)
+      VALUES ('key-dup', '{}'::jsonb, 1, 1, now(), now(), now())`;
     await sql`INSERT INTO conditions.sub_claim
         (id, subject_class, subject_id, claim_type, key_id, signature, created_at)
       VALUES ('sc-1', 'situation', 'subj-dup', 'confirm', 'key-dup', 'sig-1', now())`;
@@ -255,7 +368,7 @@ describe("unique sub_claim (subject, key, type)", () => {
       sql`INSERT INTO conditions.sub_claim
           (id, subject_class, subject_id, claim_type, key_id, signature, created_at)
         VALUES ('sc-2', 'situation', 'subj-dup', 'confirm', 'key-dup', 'sig-2', now())`,
-    ).rejects.toThrow(/uq_sub_claim_subject_key_type/);
+    ).rejects.toThrow(/sub_claim_subject_class_subject_id_key_id_claim_type_key/);
   }, 30_000);
 
   it("allows the same key a different claim_type on the same subject", async () => {
@@ -266,7 +379,7 @@ describe("unique sub_claim (subject, key, type)", () => {
     ).resolves.toBeDefined();
   }, 30_000);
 
-  it("tells subjects apart by class and component", async () => {
+  it("tells subjects apart by class", async () => {
     await expect(
       sql`INSERT INTO conditions.sub_claim
           (id, subject_class, subject_id, claim_type, key_id, signature, created_at)
@@ -274,15 +387,8 @@ describe("unique sub_claim (subject, key, type)", () => {
     ).resolves.toBeDefined();
     await expect(
       sql`INSERT INTO conditions.sub_claim
-          (id, subject_class, subject_id, subject_component_key, claim_type, key_id, signature,
-           created_at)
-        VALUES ('sc-5', 'feature', 'subj-dup', 'evse-1', 'confirm', 'key-dup', 'sig-5', now())`,
-    ).resolves.toBeDefined();
-    await expect(
-      sql`INSERT INTO conditions.sub_claim
-          (id, subject_class, subject_id, subject_component_key, claim_type, key_id, signature,
-           created_at)
-        VALUES ('sc-6', 'feature', 'subj-dup', 'evse-1', 'confirm', 'key-dup', 'sig-6', now())`,
-    ).rejects.toThrow(/uq_sub_claim_subject_key_type/);
+          (id, subject_class, subject_id, claim_type, key_id, signature, created_at)
+        VALUES ('sc-5', 'feature', 'subj-dup', 'confirm', 'key-dup', 'sig-5', now())`,
+    ).rejects.toThrow(/sub_claim_subject_class_subject_id_key_id_claim_type_key/);
   }, 30_000);
 });

@@ -13,6 +13,7 @@ import {
   check,
   date,
   doublePrecision,
+  foreignKey,
   index,
   integer,
   jsonb,
@@ -351,19 +352,19 @@ export const segmentSpeed = conditionsSchema.table(
  * its P-256 public key. Carries the Beta reliability posterior
  * (`reputation_alpha`/`reputation_beta`) trained only by externally resolved
  * outcomes, participation counters, and the entitlement window that gates
- * whether the key may still submit.
+ * whether the key may still submit. Enrollment refreshes `last_active_at` and
+ * `entitlement_expires_at`; the records sweep deletes a reporter once both are
+ * more than twelve months old, and the delete takes the reporter's votes,
+ * refusals and token quotas with it and clears it from the evidence ledger.
  */
 export const reporter = conditionsSchema.table(
   "reporter",
   {
     keyId: text("key_id").primaryKey(),
     pubJwk: jsonb("pub_jwk").notNull(),
-    osmUid: text("osm_uid"),
-    emailLookupHmac: text("email_lookup_hmac"),
     reputationAlpha: doublePrecision("reputation_alpha").notNull(),
     reputationBeta: doublePrecision("reputation_beta").notNull(),
     corroboratedCount: integer("corroborated_count").notNull().default(0),
-    flaggedCount: integer("flagged_count").notNull().default(0),
     trustSignal: doublePrecision("trust_signal"),
     entitlementExpiresAt: timestamp("entitlement_expires_at", { withTimezone: true }).notNull(),
     status: text("status").notNull().default("active"),
@@ -371,6 +372,7 @@ export const reporter = conditionsSchema.table(
     lastActiveAt: timestamp("last_active_at", { withTimezone: true }).notNull(),
   },
   (t) => [
+    index("reporter_last_active_at_idx").on(t.lastActiveAt),
     check("reporter_reputation_alpha_positive", sql`${t.reputationAlpha} > 0`),
     check("reporter_reputation_beta_positive", sql`${t.reputationBeta} > 0`),
     check("reporter_status_enum", sql`${t.status} IN ('active','blocked')`),
@@ -379,7 +381,8 @@ export const reporter = conditionsSchema.table(
 
 /**
  * Per-(key, epoch) count of anti-abuse tokens already issued — the rate-limit
- * ledger for a reporter's submission entitlement.
+ * ledger for a reporter's submission entitlement. The records sweep deletes a
+ * row once its epoch (a UTC day) has ended.
  */
 export const tokenQuota = conditionsSchema.table(
   "token_quota",
@@ -388,7 +391,14 @@ export const tokenQuota = conditionsSchema.table(
     epoch: text("epoch").notNull(),
     issued: integer("issued").notNull().default(0),
   },
-  (t) => [primaryKey({ columns: [t.keyId, t.epoch] })],
+  (t) => [
+    primaryKey({ columns: [t.keyId, t.epoch] }),
+    foreignKey({
+      name: "token_quota_key_id_fkey",
+      columns: [t.keyId],
+      foreignColumns: [reporter.keyId],
+    }).onDelete("cascade"),
+  ],
 );
 
 /**
@@ -397,8 +407,9 @@ export const tokenQuota = conditionsSchema.table(
  * token carries a random 32-byte nonce, so the hash is unique per token).
  * Redemption INSERTs here FIRST and treats a primary-key violation as
  * already-spent — fail closed. `purpose` records the domain-separated public
- * context the token was redeemed under; `spent_at` feeds a later retention
- * sweep.
+ * context the token was redeemed under. `expires_at` is the token's own
+ * expiry, the end of its issuer key's validity: no token redeems after it, so
+ * the records sweep deletes the row then.
  */
 export const spentToken = conditionsSchema.table(
   "spent_token",
@@ -406,8 +417,9 @@ export const spentToken = conditionsSchema.table(
     tokenHash: text("token_hash").primaryKey(),
     purpose: text("purpose").notNull(),
     spentAt: timestamp("spent_at", { withTimezone: true }).notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
   },
-  (t) => [index("idx_spent_token_spent_at").on(t.spentAt)],
+  (t) => [index("spent_token_expires_at_idx").on(t.expiresAt)],
 );
 
 /**
@@ -535,8 +547,9 @@ export const federationJournal = conditionsSchema.table(
  * still records the fact. A peer's erasure (`peer_instance_id` that peer)
  * refuses only that peer's deliveries, so no peer can block another's
  * records; this instance's own (`peer_instance_id` empty) refuses every
- * peer's. `expires_at` is the 30-day retention of the deletion fact. The ROW
- * is the deletion fact — never the erased content.
+ * peer's. `expires_at` is the 30-day retention of the deletion fact, and the
+ * records sweep deletes the row once it passes. The ROW is the deletion fact —
+ * never the erased content.
  */
 export const federationTombstone = conditionsSchema.table(
   "federation_tombstone",
@@ -547,7 +560,10 @@ export const federationTombstone = conditionsSchema.table(
     tombstonedAt: timestamp("tombstoned_at", { withTimezone: true }).notNull().defaultNow(),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
   },
-  (t) => [primaryKey({ columns: [t.canonicalId, t.peerInstanceId] })],
+  (t) => [
+    primaryKey({ columns: [t.canonicalId, t.peerInstanceId] }),
+    index("federation_tombstone_expires_at_idx").on(t.expiresAt),
+  ],
 );
 
 /**

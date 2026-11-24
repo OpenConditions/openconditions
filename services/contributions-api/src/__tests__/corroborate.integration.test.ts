@@ -99,6 +99,24 @@ describe("applyCorroboration", () => {
     expect(await evidenceOf(sql, late)).toMatchObject({ tombstone_reason: "superseded" });
   }, 30_000);
 
+  it("credits no key for a merged report whose reporter has since been deleted", async () => {
+    const early = await report(alice, T_EARLY);
+    const late = await report(bob, T_LATE);
+    // The late report's record still names bob in its provenance.
+    await sql`DELETE FROM conditions.reporter WHERE key_id = ${bob.keyId}`;
+
+    await applyCorroboration(sql, registry, late, early, T_MERGE);
+
+    const confirms = await confirmsOf(early);
+    expect(confirms).toHaveLength(1);
+    expect(confirms[0]).toMatchObject({
+      actor_key_id: null,
+      source_id: "crowd",
+      details: { via: "phenomenon-match", merged: late },
+    });
+    expect(await evidenceOf(sql, late)).toMatchObject({ tombstone_reason: "superseded" });
+  }, 30_000);
+
   it("is COMMUTATIVE: the earlier report survives regardless of argument order", async () => {
     for (const reversed of [false, true]) {
       await sql`TRUNCATE conditions.situation, conditions.report_evidence CASCADE`;

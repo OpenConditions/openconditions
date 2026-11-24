@@ -33,8 +33,16 @@ afterAll(async () => {
 
 beforeEach(async () => {
   await sql`TRUNCATE conditions.situation, conditions.observation_latest,
-    conditions.source_status CASCADE`;
+    conditions.source_status, conditions.reporter, conditions.report_evidence,
+    conditions.spent_token, conditions.federation_tombstone CASCADE`;
 });
+
+/** A reporter last enrolled at `at`, its entitlement ending `entitledFor` later. */
+async function reporterActive(key: string, at: string, entitledFor = "1 day") {
+  await sql`INSERT INTO conditions.reporter (key_id, pub_jwk, reputation_alpha, reputation_beta,
+      entitlement_expires_at, created_at, last_active_at)
+    VALUES (${key}, '{}'::jsonb, 1, 1, ${at}::timestamptz + ${entitledFor}::interval, ${at}, ${at})`;
+}
 
 /** The source polled successfully at `at`. */
 async function polled(source: string, at: string) {
@@ -315,6 +323,7 @@ describe("sweepRecords", () => {
       { ...write, complete: true },
     );
     const id = "oc:situation:nl-ndw-events:voted";
+    await reporterActive("k", LATER);
     await sql`INSERT INTO conditions.report_evidence
         (record_class, record_id, evidence_kind, actor_key_id, occurred_at)
       VALUES ('situation', ${id}, 'confirm', 'k', now())`;

@@ -381,6 +381,12 @@ describe("co-reporting monitoring view", () => {
     kind: "report" | "confirm" | "negate",
     occurredAt: string,
   ): Promise<void> {
+    // Evidence names a key only of an enrolled reporter.
+    await sql`
+      INSERT INTO conditions.reporter (key_id, pub_jwk, reputation_alpha, reputation_beta,
+        entitlement_expires_at, created_at, last_active_at)
+      VALUES (${keyId}, '{}'::jsonb, 1, 1, ${occurredAt}, ${occurredAt}, ${occurredAt})
+      ON CONFLICT (key_id) DO NOTHING`;
     await sql`
       INSERT INTO conditions.report_evidence
         (record_class, record_id, evidence_kind, actor_key_id, occurred_at, details)
