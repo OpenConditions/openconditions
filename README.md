@@ -122,12 +122,15 @@ Requires Node 24+ and pnpm 11+ (and a reachable PostGIS).
 pnpm install
 pnpm build
 
+# Once: the secrets key, kept in a file Git ignores and reused on every start.
+[ -f .secrets-key ] || (umask 077 && openssl rand -hex 32 > .secrets-key)
+
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/openconditions \
-OPENCONDITIONS_SECRETS_KEY=$(openssl rand -hex 32) \
+OPENCONDITIONS_SECRETS_KEY_FILE="$PWD/.secrets-key" \
   pnpm --filter @openconditions/ingest dev
 ```
 
-The service applies its migrations, starts polling the enabled feeds, and serves on `:4100`. Keep the secrets key you generate: a later start with another key refuses to read what the first one stored (see [secrets encrypted at rest](#secrets-encrypted-at-rest)).
+The service applies its migrations, starts polling the enabled feeds, and serves on `:4100`. Keep `.secrets-key`: a start with another key refuses to read what the first one stored (see [secrets encrypted at rest](#secrets-encrypted-at-rest)).
 
 ### Public API
 
@@ -207,13 +210,22 @@ public-scope. Reads with a bbox fetch stale on-demand feeds first, waiting at mo
 
 ## Secrets encrypted at rest
 
-OpenConditions keeps three kinds of secret in the database: the OAuth grants of feeds that need an account login (the access and refresh tokens, for example EUMETSAT's), the contributions API's token-issuer private keys, and the federation service's instance private keys. They are stored encrypted with AES-256-GCM under one key, `OPENCONDITIONS_SECRETS_KEY`, which never enters the database. Each value is bound to its table, column and row, so a value copied to another row does not decrypt. A database dump or backup therefore holds none of these secrets in clear, and it is of no use for them without the key.
+OpenConditions keeps three kinds of secret in its tables: the OAuth grants of feeds that need an account login (the access and refresh tokens, for example EUMETSAT's), the contributions API's token-issuer private keys, and the federation service's instance private keys. They are stored encrypted with AES-256-GCM under one key, `OPENCONDITIONS_SECRETS_KEY`. The OpenConditions tables never hold that key. Each value is bound to its table, column and row, so a value copied to another row does not decrypt. A dump of the OpenConditions tables therefore holds none of these secrets in clear.
 
-Generate the key once with `openssl rand -hex 32`: it is 64 hexadecimal characters, and surrounding whitespace is ignored. Every OpenConditions service of an instance that reads these secrets must hold the same key: the ingest service (and its feed-auth command), the heavy-feeds ingest process, the contributions API and, when federation is enabled, the federation service. Under OpenMapX each service has its own credentials in the admin services panel, so enter the same key once in each of these services; OpenMapX mounts it as a file and sets `OPENCONDITIONS_SECRETS_KEY_FILE`. Outside OpenMapX, set `OPENCONDITIONS_SECRETS_KEY_FILE` to a file holding the key, or `OPENCONDITIONS_SECRETS_KEY` to the key itself.
+The key is 64 hexadecimal characters; surrounding whitespace is ignored. Generate it once, for the ingest service, with `openssl rand -hex 32`. Every other OpenConditions service of the instance that reads these secrets gets a copy of that same value, never a newly generated one: the heavy-feeds ingest process, the contributions API and, when federation is enabled, the federation service. The ingest service's feed-auth command reads the ingest container's key. After migrating, the ingest service seals a fixed check value with its key in `conditions.secrets_key_check`, once. Every other service waits for that row at start and refuses to start when its key does not open it, with an error saying that its key differs from the one the ingest service sealed. A service that needs the key also refuses to start without it or with a value that is not a key. At start each service decrypts every secret it keeps. A key that cannot decrypt one stops the start with a "wrong key" error that names the table and row, never the key or the value.
 
-A service that needs the key refuses to start without it or with a value that is not a key. At start it also decrypts every secret it keeps; a key that cannot decrypt one stops the start with a "wrong key" error that names the table and row, never the key or the value.
+Where the key lives depends on how OpenConditions runs:
 
-The key belongs in your recovery set, kept apart from the database: never put it in a database backup, or the backup holds the secrets after all. Losing it loses the secrets for good. You would then have to log in again to every OAuth grant with the ingest container's feed-auth command (`node dist/feed-auth.js login <grant>`), and the contributions API and the federation service would need new issuer and instance keys. A new federation instance key changes this instance's federation identity: peers that pinned the old key no longer trust this instance until they pin the new one. To start over after a lost key, generate a new key, delete the rows of `conditions.oauth_grant`, `conditions.issuer_key` and `conditions.federation_instance_key`, start the services, and log the grants in again.
+- **Standalone**, the key lives only where the operator puts it: a file named by `OPENCONDITIONS_SECRETS_KEY_FILE` (or the variable `OPENCONDITIONS_SECRETS_KEY` itself), and the operator's recovery set. A database backup holds only the encrypted secrets and is of no use for them without the key, as long as the key file stays out of the backup.
+- **Under OpenMapX**, each service's credentials in the admin services panel are separate, so the key is entered once per service: generated for `openconditions-ingest` and copied into the others. OpenMapX mounts it as a file and sets `OPENCONDITIONS_SECRETS_KEY_FILE`. OpenMapX's credential vault stores the key in OpenMapX's own table `public.service_secret`, in the same database, encrypted with OpenMapX's secrets key (the file `infra/docker/secrets/secrets-key` its render generates). A full database backup therefore holds the OpenConditions key, encrypted, next to the secrets it protects. Such a backup is safe for these secrets only while OpenMapX's secrets key file stays out of it, which is how OpenMapX keeps that file: out of backups, in the recovery set.
+
+Both keys belong in your recovery set: the OpenConditions secrets key and, under OpenMapX, OpenMapX's secrets key. There is no tool to re-encrypt the secrets under a new key, so a lost key and a compromised key both mean starting over:
+
+1. Generate a new key and enter it in every OpenConditions service (under OpenMapX, in each service's credentials).
+2. Delete the rows of `conditions.secrets_key_check`, `conditions.oauth_grant`, `conditions.issuer_key` and `conditions.federation_instance_key`, then start the services; the ingest service seals the check row with the new key.
+3. Log in to every OAuth grant again with the ingest container's feed-auth command (`node dist/feed-auth.js login <grant>`).
+
+The consequences go beyond the logins. The contributions API makes new issuer keys, and crowd tokens issued under the deleted keys no longer redeem. The federation service makes a new instance key, which changes this instance's federation identity: peers that pinned the old key no longer trust this instance until they pin the new one. A database backup taken before the restart brings back rows the new key cannot open, so a service started on such a restore stops with "wrong key" until the old key is back or the steps above are repeated.
 
 ## Crowd reporting
 

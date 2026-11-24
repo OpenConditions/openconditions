@@ -73,7 +73,7 @@ operator's erasure (see `docs/federation-gdpr.md`).
 | `OPENCONDITIONS_ALLOW_POLICE_CATEGORY`  | `true` lets crowd reports of police presence land.                                              | off                                |
 | `OPENCONDITIONS_SCHEMA_WAIT_TIMEOUT_MS` | How long the service waits at start for the schema version, in milliseconds.                    | 300000                             |
 
-Each of the four secrets may instead be a file named by `<KEY>_FILE`. The secrets key must be the one every other OpenConditions service of the instance holds; see [Secrets encrypted at rest](../../README.md#secrets-encrypted-at-rest). Under
+Each of the four secrets may instead be a file named by `<KEY>_FILE`. The secrets key is a copy of the ingest service's, never a newly generated one: after the schema version the service waits for the ingest service's key check (`conditions.secrets_key_check`) and refuses to start when its key does not open it; see [Secrets encrypted at rest](../../README.md#secrets-encrypted-at-rest). Under
 OpenMapX the service is a community service whose `container.environment`
 reaches the container verbatim, so `service.json` declares these as
 `configSchema` fields. The secrets are vault secrets the operator sets once in
