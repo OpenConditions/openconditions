@@ -445,3 +445,37 @@ describe("reader scope", () => {
     expect(await listed("operator")).toContain(twin["id"]);
   });
 });
+
+describe("a series' history", () => {
+  test("is read from its retention class alone", async () => {
+    const [series] = await sql<{ series_id: string; retention_days: number }[]>`
+      SELECT series_id::text AS series_id, retention_days FROM conditions.observation_latest
+       WHERE subject_key = ${`feature:${station["id"]}#e5`} AND property = 'fuel.price'
+         AND source_id = ${PUBLIC}`;
+    expect(series?.retention_days).not.toBeNull();
+    const { series_id: id, retention_days: own } = series!;
+    // One reading in the series' own class, and one stored under another, as
+    // one written before the property's retention changed would be: past the
+    // series' retention, it is never read.
+    const other = retentionClasses(registry).find((days) => days !== own)!;
+    const reading = (days: number, start: string, price: number) => sql`
+      INSERT INTO conditions.observation (series_id, retention_days, phenomenon_start,
+        fetched_at, recorded_at, temporality, aggregation, value_money)
+      VALUES (${id}::bigint, ${days}, ${start}, ${NOW}, ${NOW}, 'live', 'none', ${price})`;
+    await reading(own, "2026-09-22T12:01:00.000Z", 1.5);
+    await reading(other, "2026-09-22T12:02:00.000Z", 9.5);
+    try {
+      const read = await seriesOf("operator", PUBLIC);
+      expect(read).toMatchObject({ status: "found" });
+      const prices = (read as { records: Rec[] }).records.map((r) =>
+        Number((r["result"] as { amount: string }).amount),
+      );
+      expect(prices).toContain(1.5);
+      expect(prices).not.toContain(9.5);
+    } finally {
+      await sql`DELETE FROM conditions.observation
+        WHERE series_id = ${id}::bigint AND phenomenon_start IN
+          ('2026-09-22T12:01:00.000Z', '2026-09-22T12:02:00.000Z')`;
+    }
+  });
+});

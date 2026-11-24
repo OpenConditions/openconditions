@@ -555,12 +555,24 @@ export async function readSeries(
          LEFT JOIN conditions.source_poll_attempt a ON a.id = o.fetch_id
          LEFT JOIN conditions.contributor_receipt receipt
            ON receipt.id = o.extra #>> '{provenance,creditReceiptId}' AND receipt.version = ${CONTRIBUTOR_RECEIPT_VERSION}
-        WHERE o.series_id = $1 AND o.phenomenon_start >= $2 AND o.phenomenon_start < $3
+        WHERE o.series_id = $1 AND o.retention_days = $7
+          AND o.phenomenon_start >= $2 AND o.phenomenon_start < $3
           AND ($4::text IS NULL
             OR (o.phenomenon_start, o.issued_at) > ($4::text::timestamptz, $5::text::timestamptz))
         ORDER BY o.phenomenon_start, o.issued_at
         LIMIT $6`,
-      [series.series_id, from, to, start ?? null, issued ?? null, q.limit + 1],
+      // The series' retention class names the one partition its history is
+      // in; a reading stored under a class the property no longer keeps is
+      // past the series' retention and left to that partition's own.
+      [
+        series.series_id,
+        from,
+        to,
+        start ?? null,
+        issued ?? null,
+        q.limit + 1,
+        series.retention_days,
+      ],
     );
     const page = rows.slice(0, q.limit);
     // A polled feed's change-only reading held until the next change; the
