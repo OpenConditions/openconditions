@@ -98,6 +98,19 @@ function kernelChecks(table: string) {
   ];
 }
 
+/**
+ * What the records sweep looks up every few minutes: live records past their
+ * expiry, and tombstones old enough to purge.
+ */
+function sweepIndexes(table: string, t: { expiresAt: AnyPgColumn; tombstonedAt: AnyPgColumn }) {
+  return [
+    index(`${table}_expires_at_idx`).on(t.expiresAt).where(sql`${t.tombstonedAt} IS NULL`),
+    index(`${table}_tombstoned_at_idx`)
+      .on(t.tombstonedAt)
+      .where(sql`${t.tombstonedAt} IS NOT NULL`),
+  ];
+}
+
 /** A class's revision history: every content change, with what changed. */
 function revisionTable(table: string, parentColumn: string, parent: () => AnyPgColumn) {
   return conditionsSchema.table(
@@ -156,8 +169,8 @@ export const situation = conditionsSchema.table(
     index("idx_situation_valid_to").on(t.validTo),
     index("idx_situation_expires").on(t.expiresAt),
     index("idx_situation_group").on(t.groupId),
-    index("idx_situation_crowd_evidence")
-      .on(t.origin, t.evidenceState)
+    index("situation_evidence_state_crowd_idx")
+      .on(t.evidenceState)
       .where(sql`${t.origin} = 'crowd'`),
     index("idx_situation_tombstoned").on(t.tombstonedAt).where(sql`${t.tombstonedAt} IS NOT NULL`),
     // The nightly archive prune looks up the erased records.
@@ -224,6 +237,7 @@ export const feature = conditionsSchema.table(
     index("idx_feature_source").on(t.sourceId, t.id),
     index("idx_feature_canonical").on(t.canonicalId),
     index("idx_feature_kind_lifecycle").on(t.kind, t.lifecycle),
+    ...sweepIndexes("feature", t),
     // Linking finds the features that share an external id with a written one,
     // one id at a time, often in the transaction that just wrote them: entries
     // go into the index directly, as a pending list would be scanned whole on
@@ -337,6 +351,7 @@ export const offer = conditionsSchema.table(
     index("idx_offer_geom").using("gist", t.geom),
     index("idx_offer_source").on(t.sourceId, t.id),
     index("idx_offer_canonical").on(t.canonicalId),
+    ...sweepIndexes("offer", t),
     index("idx_offer_rights_revoked").on(t.id).where(sql`${t.tombstoneReason} = 'rights_revoked'`),
     // Records in byte order of their ids, as federation lists them to compare state.
     index("idx_offer_id_bytes").on(sql`${t.id} COLLATE "C"`),

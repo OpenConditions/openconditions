@@ -283,10 +283,7 @@ export const segmentObservation = conditionsSchema.table(
     observedAt: timestamp("observed_at", { withTimezone: true }).notNull(),
     expiresAt: timestamp("expires_at", { withTimezone: true }),
   },
-  (t) => [
-    primaryKey({ columns: [t.segmentId, t.source] }),
-    index("idx_segment_observation_segment").on(t.segmentId),
-  ],
+  (t) => [primaryKey({ columns: [t.segmentId, t.source] })],
 );
 
 /**
@@ -310,10 +307,7 @@ export const segmentProfile = conditionsSchema.table(
     contributing: text("contributing").array().notNull().default(sql`'{}'::text[]`),
     computedAt: timestamp("computed_at", { withTimezone: true }).notNull(),
   },
-  (t) => [
-    primaryKey({ columns: [t.segmentId, t.dow, t.todHour] }),
-    index("idx_segment_profile_segment").on(t.segmentId),
-  ],
+  (t) => [primaryKey({ columns: [t.segmentId, t.dow, t.todHour] })],
 );
 
 /**
@@ -322,30 +316,26 @@ export const segmentProfile = conditionsSchema.table(
  * rows per segment, then propagating one hop into adjacent gap segments
  * along the same ref/highway.
  */
-export const segmentSpeed = conditionsSchema.table(
-  "segment_speed",
-  {
-    segmentId: text("segment_id").primaryKey(),
-    currentKph: doublePrecision("current_kph"),
-    freeFlowKph: doublePrecision("free_flow_kph"),
-    speedRatio: doublePrecision("speed_ratio"),
-    los: text("los").notNull(),
-    confidence: text("confidence").notNull(),
-    sourceTier: text("source_tier"),
-    contributing: text("contributing").array(),
-    isEstimated: boolean("is_estimated").notNull().default(false),
-    /** Selected native identities and captured display receipts; rights stay in contributing. */
-    nativeFieldSources: jsonb("native_field_sources"),
-    fieldSources: jsonb("field_sources"),
-    fieldContributors: jsonb("field_contributors"),
-    fieldLineageComplete: jsonb("field_lineage_complete"),
-    /** Exact captured permission IDs; null means missing evidence and is never public. */
-    permissionLicenses: text("permission_licenses").array(),
-    observedAt: timestamp("observed_at", { withTimezone: true }),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
-  },
-  (t) => [index("idx_segment_speed_los").on(t.los)],
-);
+export const segmentSpeed = conditionsSchema.table("segment_speed", {
+  segmentId: text("segment_id").primaryKey(),
+  currentKph: doublePrecision("current_kph"),
+  freeFlowKph: doublePrecision("free_flow_kph"),
+  speedRatio: doublePrecision("speed_ratio"),
+  los: text("los").notNull(),
+  confidence: text("confidence").notNull(),
+  sourceTier: text("source_tier"),
+  contributing: text("contributing").array(),
+  isEstimated: boolean("is_estimated").notNull().default(false),
+  /** Selected native identities and captured display receipts; rights stay in contributing. */
+  nativeFieldSources: jsonb("native_field_sources"),
+  fieldSources: jsonb("field_sources"),
+  fieldContributors: jsonb("field_contributors"),
+  fieldLineageComplete: jsonb("field_lineage_complete"),
+  /** Exact captured permission IDs; null means missing evidence and is never public. */
+  permissionLicenses: text("permission_licenses").array(),
+  observedAt: timestamp("observed_at", { withTimezone: true }),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+});
 
 /**
  * One row per pseudonymous crowd reporter, keyed by the RFC 7638 thumbprint of

@@ -1,6 +1,6 @@
 {
-  "id": "984bf055-861e-4411-9e71-9a7c41a9081b",
-  "prevId": "410a7429-8bea-412b-8b37-bfc46a1fe89c",
+  "id": "ee1ec12a-3460-48cd-9da2-82ab67e63cfd",
+  "prevId": "d7ab9ad9-1b9c-413e-bd86-28f231620a68",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -1888,6 +1888,38 @@
           "method": "btree",
           "concurrently": false
         },
+        "feature_expires_at_idx": {
+          "name": "feature_expires_at_idx",
+          "columns": [
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"conditions\".\"feature\".\"tombstoned_at\" IS NULL",
+          "concurrently": false
+        },
+        "feature_tombstoned_at_idx": {
+          "name": "feature_tombstoned_at_idx",
+          "columns": [
+            {
+              "expression": "tombstoned_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"conditions\".\"feature\".\"tombstoned_at\" IS NOT NULL",
+          "concurrently": false
+        },
         "idx_feature_external_ids": {
           "name": "idx_feature_external_ids",
           "columns": [
@@ -2644,6 +2676,38 @@
           "method": "btree",
           "concurrently": false
         },
+        "offer_expires_at_idx": {
+          "name": "offer_expires_at_idx",
+          "columns": [
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"conditions\".\"offer\".\"tombstoned_at\" IS NULL",
+          "concurrently": false
+        },
+        "offer_tombstoned_at_idx": {
+          "name": "offer_tombstoned_at_idx",
+          "columns": [
+            {
+              "expression": "tombstoned_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"conditions\".\"offer\".\"tombstoned_at\" IS NOT NULL",
+          "concurrently": false
+        },
         "idx_offer_rights_revoked": {
           "name": "idx_offer_rights_revoked",
           "columns": [
@@ -3249,15 +3313,9 @@
           "method": "btree",
           "concurrently": false
         },
-        "idx_situation_crowd_evidence": {
-          "name": "idx_situation_crowd_evidence",
+        "situation_evidence_state_crowd_idx": {
+          "name": "situation_evidence_state_crowd_idx",
           "columns": [
-            {
-              "expression": "origin",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
             {
               "expression": "evidence_state",
               "isExpression": false,
@@ -5605,23 +5663,7 @@
           "notNull": false
         }
       },
-      "indexes": {
-        "idx_segment_observation_segment": {
-          "name": "idx_segment_observation_segment",
-          "columns": [
-            {
-              "expression": "segment_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "with": {},
-          "method": "btree",
-          "concurrently": false
-        }
-      },
+      "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {
         "segment_observation_segment_id_source_pk": {
@@ -5704,23 +5746,7 @@
           "notNull": true
         }
       },
-      "indexes": {
-        "idx_segment_profile_segment": {
-          "name": "idx_segment_profile_segment",
-          "columns": [
-            {
-              "expression": "segment_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "with": {},
-          "method": "btree",
-          "concurrently": false
-        }
-      },
+      "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {
         "segment_profile_segment_id_dow_tod_hour_pk": {
@@ -5839,23 +5865,7 @@
           "notNull": true
         }
       },
-      "indexes": {
-        "idx_segment_speed_los": {
-          "name": "idx_segment_speed_los",
-          "columns": [
-            {
-              "expression": "los",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "with": {},
-          "method": "btree",
-          "concurrently": false
-        }
-      },
+      "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},

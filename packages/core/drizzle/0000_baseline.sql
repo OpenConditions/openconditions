@@ -976,6 +976,8 @@ CREATE INDEX "idx_feature_kind_type" ON "conditions"."feature" USING btree ("kin
 CREATE INDEX "idx_feature_source" ON "conditions"."feature" USING btree ("source_id","id");--> statement-breakpoint
 CREATE INDEX "idx_feature_canonical" ON "conditions"."feature" USING btree ("canonical_id");--> statement-breakpoint
 CREATE INDEX "idx_feature_kind_lifecycle" ON "conditions"."feature" USING btree ("kind","lifecycle");--> statement-breakpoint
+CREATE INDEX "feature_expires_at_idx" ON "conditions"."feature" USING btree ("expires_at") WHERE "conditions"."feature"."tombstoned_at" IS NULL;--> statement-breakpoint
+CREATE INDEX "feature_tombstoned_at_idx" ON "conditions"."feature" USING btree ("tombstoned_at") WHERE "conditions"."feature"."tombstoned_at" IS NOT NULL;--> statement-breakpoint
 CREATE INDEX "idx_feature_external_ids" ON "conditions"."feature" USING gin (("record" -> 'externalIds') jsonb_path_ops) WITH (fastupdate=off);--> statement-breakpoint
 CREATE INDEX "idx_feature_rights_revoked" ON "conditions"."feature" USING btree ("id") WHERE "conditions"."feature"."tombstone_reason" = 'rights_revoked';--> statement-breakpoint
 CREATE INDEX "idx_feature_id_bytes" ON "conditions"."feature" USING btree ("id" COLLATE "C");--> statement-breakpoint
@@ -989,6 +991,8 @@ CREATE INDEX "idx_offer_kind_valid_to" ON "conditions"."offer" USING btree ("kin
 CREATE INDEX "idx_offer_geom" ON "conditions"."offer" USING gist ("geom");--> statement-breakpoint
 CREATE INDEX "idx_offer_source" ON "conditions"."offer" USING btree ("source_id","id");--> statement-breakpoint
 CREATE INDEX "idx_offer_canonical" ON "conditions"."offer" USING btree ("canonical_id");--> statement-breakpoint
+CREATE INDEX "offer_expires_at_idx" ON "conditions"."offer" USING btree ("expires_at") WHERE "conditions"."offer"."tombstoned_at" IS NULL;--> statement-breakpoint
+CREATE INDEX "offer_tombstoned_at_idx" ON "conditions"."offer" USING btree ("tombstoned_at") WHERE "conditions"."offer"."tombstoned_at" IS NOT NULL;--> statement-breakpoint
 CREATE INDEX "idx_offer_rights_revoked" ON "conditions"."offer" USING btree ("id") WHERE "conditions"."offer"."tombstone_reason" = 'rights_revoked';--> statement-breakpoint
 CREATE INDEX "idx_offer_id_bytes" ON "conditions"."offer" USING btree ("id" COLLATE "C");--> statement-breakpoint
 CREATE INDEX "idx_offer_revision_recorded" ON "conditions"."offer_revision" USING btree ("recorded_at");--> statement-breakpoint
@@ -1000,7 +1004,7 @@ CREATE INDEX "idx_situation_canonical" ON "conditions"."situation" USING btree (
 CREATE INDEX "idx_situation_valid_to" ON "conditions"."situation" USING btree ("valid_to");--> statement-breakpoint
 CREATE INDEX "idx_situation_expires" ON "conditions"."situation" USING btree ("expires_at");--> statement-breakpoint
 CREATE INDEX "idx_situation_group" ON "conditions"."situation" USING btree ("group_id");--> statement-breakpoint
-CREATE INDEX "idx_situation_crowd_evidence" ON "conditions"."situation" USING btree ("origin","evidence_state") WHERE "conditions"."situation"."origin" = 'crowd';--> statement-breakpoint
+CREATE INDEX "situation_evidence_state_crowd_idx" ON "conditions"."situation" USING btree ("evidence_state") WHERE "conditions"."situation"."origin" = 'crowd';--> statement-breakpoint
 CREATE INDEX "idx_situation_tombstoned" ON "conditions"."situation" USING btree ("tombstoned_at") WHERE "conditions"."situation"."tombstoned_at" IS NOT NULL;--> statement-breakpoint
 CREATE INDEX "idx_situation_rights_revoked" ON "conditions"."situation" USING btree ("id") WHERE "conditions"."situation"."tombstone_reason" = 'rights_revoked';--> statement-breakpoint
 CREATE INDEX "idx_situation_id_bytes" ON "conditions"."situation" USING btree ("id" COLLATE "C");--> statement-breakpoint
@@ -1021,9 +1025,6 @@ CREATE INDEX "reporter_last_active_at_idx" ON "conditions"."reporter" USING btre
 CREATE INDEX "idx_road_segment_geom" ON "conditions"."road_segment" USING gist ("geom");--> statement-breakpoint
 CREATE INDEX "idx_road_segment_way" ON "conditions"."road_segment" USING btree ("way_id");--> statement-breakpoint
 CREATE INDEX "idx_road_segment_minzoom" ON "conditions"."road_segment" USING btree ("min_zoom");--> statement-breakpoint
-CREATE INDEX "idx_segment_observation_segment" ON "conditions"."segment_observation" USING btree ("segment_id");--> statement-breakpoint
-CREATE INDEX "idx_segment_profile_segment" ON "conditions"."segment_profile" USING btree ("segment_id");--> statement-breakpoint
-CREATE INDEX "idx_segment_speed_los" ON "conditions"."segment_speed" USING btree ("los");--> statement-breakpoint
 CREATE INDEX "idx_sensor_baseline_source_bucket" ON "conditions"."sensor_baseline" USING btree ("source","dow_bucket","tod_bucket");--> statement-breakpoint
 CREATE INDEX "idx_sensor_segment_segment" ON "conditions"."sensor_segment" USING btree ("segment_id");--> statement-breakpoint
 CREATE INDEX "idx_source_poll_attempt_source_time" ON "conditions"."source_poll_attempt" USING btree ("source","attempted_at");--> statement-breakpoint

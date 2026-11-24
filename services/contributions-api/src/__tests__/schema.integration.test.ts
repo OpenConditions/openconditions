@@ -159,7 +159,7 @@ describe("crowd evidence keyed by record", () => {
         "idx_sub_claim_key",
         "idx_report_evidence_record",
         "idx_report_evidence_merged",
-        "idx_situation_crowd_evidence",
+        "situation_evidence_state_crowd_idx",
       ]),
     );
     expect(names).not.toContain("idx_report_evidence_observation");
