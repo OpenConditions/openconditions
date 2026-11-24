@@ -3,6 +3,7 @@ import { describe, expect, test } from "vitest";
 
 interface Property {
   default?: unknown;
+  description?: string;
   "x-openmapx-secret"?: boolean;
 }
 
