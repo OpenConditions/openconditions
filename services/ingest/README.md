@@ -14,8 +14,10 @@ road-surface sensor and their `weather.*` and `road.*` readings, maintenance
 tracking into anonymous `vehicle.position` readings, and border feeds into
 crossings with a lane group per queue and its `border.wait` reading, and
 writes them to the shared PostGIS `conditions` schema. Also serves the public,
-rate-limited record API (described at `GET /openapi.json`) and the routing
-outputs (`/segments/conditions.json`, Valhalla exclusions):
+rate-limited record API and the routing outputs (`/segments/conditions.json`,
+Valhalla exclusions), both described at `GET /openapi.json`. Paths never break:
+a breaking change gets a new path, and the old one keeps its contract (see
+[the public API](../../README.md#public-api)):
 
 - situations: `/situations` (JSON, `.geojson`, `.jsonld`), `/situations/{id}`,
   `/traff.xml`, `/datex2/situations.xml`, and the `/stream` of server-sent events;

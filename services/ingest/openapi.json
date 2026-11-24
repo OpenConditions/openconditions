@@ -3,7 +3,7 @@
   "info": {
     "title": "OpenConditions",
     "version": "1.0.0",
-    "description": "Road conditions as model records. Collections are paginated by a keyset cursor: a walk is complete when `next` is null. TraFF is instead one complete bounded feed, or 413 when filters must be narrowed. A request without a bearer token reads in the public scope, which withholds restricted sources and licences that are not public; the operator token reads in the operator scope, which withholds nothing. The emitters always read in the public scope."
+    "description": "Road conditions as model records, and the routing, speed and status products built from them. Collections are paginated by a keyset cursor: a walk is complete when `next` is null. TraFF is instead one complete bounded feed, or 413 when filters must be narrowed. A request without a bearer token reads in the public scope, which withholds restricted sources and licences that are not public; the operator token reads in the operator scope, which withholds nothing. The emitters always read in the public scope. Paths never break: a path keeps its meaning, and its responses gain members but never lose or change one. A breaking change gets a new path, and the old path keeps its contract."
   },
   "components": {
     "securitySchemes": {
@@ -2603,6 +2603,266 @@
             "content": {
               "application/json": {}
             }
+          },
+          "401": {
+            "description": "A bearer token other than the configured operator token (with none configured, a bearer token reads in public scope)",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "429": {
+            "description": "The client's rate limit is spent; `Retry-After` says when to retry",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/feeds/status": {
+      "get": {
+        "operationId": "getFeedStatus",
+        "summary": "The feeds of the catalogue with their operational status: `{ schemaVersion, instanceId, collectedAt, graph, feeds }`. `graph` is the road graph's `{ generation, status, regions }` (`status` one of `ready`, `partial`, `missing`, `unknown`). Each feed has its id, name, domain, credential flags (`hasCredentials`, `missingEnv`), `selectionState`, cadence, freshness window and rights, its durable poll status, and `binding` metrics where its events bind to the road graph; discovered catalogue children and disabled feeds (`state: disabled`, `disabledReason`) are listed too.",
+        "parameters": [],
+        "security": [
+          {},
+          {
+            "operatorToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "401": {
+            "description": "A bearer token other than the configured operator token (with none configured, a bearer token reads in public scope)",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "429": {
+            "description": "The client's rate limit is spent; `Retry-After` says when to retry",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/valhalla/exclusions.json": {
+      "get": {
+        "operationId": "getValhallaExclusions",
+        "summary": "The bound closures in effect at `at` inside `bbox` as Valhalla exclusions, with the routing evidence they come from (`routing_evidence`, as `/segments/conditions.json` serves it). Only `exact` and `likely` bindings are read. `Cache-Control` lasts until the earliest freshness, expiry, validity end or transition of a served condition, at most 90 s. `X-Data-License` lists the licences of the rows served (`unknown` when there are none).",
+        "parameters": [
+          {
+            "name": "bbox",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "west,south,east,north in WGS84 degrees, west not greater than east"
+            },
+            "description": "west,south,east,north in WGS84 degrees, west not greater than east"
+          },
+          {
+            "name": "at",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "The ISO 8601 instant the effects are evaluated at; default now"
+            },
+            "description": "The ISO 8601 instant the effects are evaluated at; default now"
+          }
+        ],
+        "security": [
+          {},
+          {
+            "operatorToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "A bearer token other than the configured operator token (with none configured, a bearer token reads in public scope)",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "429": {
+            "description": "The client's rate limit is spent; `Retry-After` says when to retry",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/segments.geojson": {
+      "get": {
+        "operationId": "listSegmentsGeoJson",
+        "summary": "The directed road segments inside `bbox` (at most 20,000) as a GeoJSON FeatureCollection, each with its current fused speed, level of service and confidence where it has one, and per field the sources and contributors behind it. In the public scope a speed any restricted source contributed to is withheld: the segment keeps its geometry without speed properties. `X-Data-License` lists the licences of the rows served (`unknown` when there are none).",
+        "parameters": [
+          {
+            "name": "bbox",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "west,south,east,north in WGS84 degrees, west not greater than east"
+            },
+            "description": "west,south,east,north in WGS84 degrees, west not greater than east"
+          }
+        ],
+        "security": [
+          {},
+          {
+            "operatorToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/geo+json": {}
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "A bearer token other than the configured operator token (with none configured, a bearer token reads in public scope)",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "429": {
+            "description": "The client's rate limit is spent; `Retry-After` says when to retry",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/segments/speed.csv": {
+      "get": {
+        "operationId": "getSegmentSpeedCsv",
+        "summary": "One CSV row per directed segment that has a current fused speed: OSM way id, direction, current and free-flow speed and level of service, for routing. A segment without a speed is left out, and in the public scope so is a speed any restricted source contributed to. `X-Data-License` lists the licences of the rows served (`unknown` when there are none).",
+        "parameters": [],
+        "security": [
+          {},
+          {
+            "operatorToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/csv": {}
+            }
+          },
+          "401": {
+            "description": "A bearer token other than the configured operator token (with none configured, a bearer token reads in public scope)",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "429": {
+            "description": "The client's rate limit is spent; `Retry-After` says when to retry",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/segments/profiles.json": {
+      "get": {
+        "operationId": "getSegmentProfiles",
+        "summary": "The weekly speed profile of every directed segment that has one: `[{ way_id, dir, free_flow_kph, constrained_kph, hourly, lineage_version, native_sources, contributors, lineage_complete }]`. `hourly[dow * 24 + hour]` is the speed in km/h (null where no bucket exists), Sunday first, in the segment's region-local time. In the public scope a segment is left out whole when any of its buckets was built from a restricted source or from no recorded source. `X-Data-License` lists the licences of the rows served (`unknown` when there are none).",
+        "parameters": [],
+        "security": [
+          {},
+          {
+            "operatorToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "401": {
+            "description": "A bearer token other than the configured operator token (with none configured, a bearer token reads in public scope)",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "429": {
+            "description": "The client's rate limit is spent; `Retry-After` says when to retry",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/segments/conditions.json": {
+      "get": {
+        "operationId": "getSegmentConditions",
+        "summary": "The bound effects in effect at `at`, optionally inside `bbox`, one row per effect keyed by directed OSM way spans, with each row's routing evidence (source, licence, attribution, rights, freshness and validity). Only `exact` and `likely` bindings are read. `X-Data-License` lists the licences of the rows served (`unknown` when there are none).",
+        "parameters": [
+          {
+            "name": "bbox",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "west,south,east,north in WGS84 degrees, west not greater than east"
+            },
+            "description": "west,south,east,north in WGS84 degrees, west not greater than east"
+          },
+          {
+            "name": "at",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "The ISO 8601 instant the effects are evaluated at; default now"
+            },
+            "description": "The ISO 8601 instant the effects are evaluated at; default now"
+          }
+        ],
+        "security": [
+          {},
+          {
+            "operatorToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "400": {
+            "description": "Invalid request"
           },
           "401": {
             "description": "A bearer token other than the configured operator token (with none configured, a bearer token reads in public scope)",

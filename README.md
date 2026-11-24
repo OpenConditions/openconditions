@@ -144,7 +144,13 @@ also `minSeverity`, `horizonDays`, `subtype`, a time window `from`/`to` that inc
 TraFF is a [complete bounded feed](docs/traff.md), with no page controls or continuation header. `canonical=1` serves the
 canonical view: one feature per cluster of features several sources describe, and the fused reading of
 a property several sources or the crowd report. Everything is rate-limited; `GET /openapi.json`
-describes it all, and [storage](docs/storage.md#read-api) says what each route reads.
+describes it all, the routing, speed and status products (`/feeds/status`, `/valhalla/exclusions.json`,
+`/segments.geojson`, `/segments/speed.csv`, `/segments/profiles.json`, `/segments/conditions.json`)
+included, and [storage](docs/storage.md#read-api) says what each route reads.
+
+Paths never break. A path keeps its meaning, and its responses may gain members but never lose or
+change one. A breaking change gets a new path, and the old path keeps serving its contract, so the
+paths carry no version prefix.
 
 | Endpoint                             | Content                                                                                                                        |
 | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
