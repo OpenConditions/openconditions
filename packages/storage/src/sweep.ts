@@ -50,7 +50,7 @@ export interface SweepCounts {
   reporters: number;
   /** Token quota rows of an epoch that has ended. */
   tokenQuotas: number;
-  /** Spent-token rows past the token's own expiry. */
+  /** Spent-token rows a day past the token's own expiry. */
   spentTokens: number;
   /** Federation erasure facts past their retention. */
   federationTombstones: number;
