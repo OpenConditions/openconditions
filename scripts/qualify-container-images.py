@@ -579,6 +579,29 @@ try {
 }
 """
 
+# The instance id every service of the fixture runs with. The ingest service
+# seals it after migrating; the contributions and federation services wait for
+# that row and refuse another id.
+QUALIFICATION_INSTANCE_ID = "qualification.example.org"
+
+# The ingest service's instance id seal, as sealInstanceId writes it: one row,
+# written once, then read back and compared, so a service started next with
+# the same id finds it and one with another id is refused.
+SEAL_INSTANCE_ID = """
+import postgres from "postgres";
+const id = process.env.OPENCONDITIONS_INSTANCE_ID;
+const sql = postgres(process.env.DATABASE_URL, { max: 1 });
+try {
+  await sql`
+    INSERT INTO conditions.instance_identity (id, instance_id) VALUES (1, ${id})
+    ON CONFLICT (id) DO NOTHING`;
+  const [row] = await sql`SELECT instance_id FROM conditions.instance_identity WHERE id = 1`;
+  if (row?.instance_id !== id) throw new Error("the sealed instance id differs");
+} finally {
+  await sql.end();
+}
+"""
+
 
 def ingest_migration_script(source):
     """The source's migrations, recorded in conditions.__drizzle_migrations as the
@@ -739,11 +762,15 @@ def runtime_smoke(image, identity, source, output, *, exercise=None):
             "OPENCONDITIONS_GRANT_SECRET": uuid.uuid4().hex + uuid.uuid4().hex,
             "OPENCONDITIONS_REVIEWER_TOKEN": uuid.uuid4().hex + uuid.uuid4().hex,
             "OPENCONDITIONS_SECRETS_KEY": uuid.uuid4().hex + uuid.uuid4().hex,
+            "OPENCONDITIONS_INSTANCE_ID": QUALIFICATION_INSTANCE_ID,
         }
-        if image == "contributions-api":
-            # The ingest service seals the secrets key check after migrating,
-            # and this service waits for it; seal it as ingest does, inside
-            # the image, before the service starts.
+
+        def seal(script, *names):
+            """Run a seal the ingest service writes after migrating, inside the
+            image, with the named variables of the service's environment."""
+            passed = []
+            for name in ("DATABASE_URL", *names):
+                passed += ["-e", f"{name}={env[name]}"]
             command(
                 [
                     "docker",
@@ -755,18 +782,23 @@ def runtime_smoke(image, identity, source, output, *, exercise=None):
                     network,
                     "--platform",
                     PLATFORM,
-                    "-e",
-                    f"DATABASE_URL={env['DATABASE_URL']}",
-                    "-e",
-                    f"OPENCONDITIONS_SECRETS_KEY={env['OPENCONDITIONS_SECRETS_KEY']}",
+                    *passed,
                     "--entrypoint",
                     "node",
                     loaded,
                     "--input-type=module",
                     "-e",
-                    SEAL_SECRETS_KEY_CHECK,
+                    script,
                 ]
             )
+
+        if image in ("contributions-api", "federation"):
+            # These services wait at start for what the ingest service seals
+            # after migrating, and refuse to start with another value; seal it
+            # as ingest does before the service starts.
+            seal(SEAL_INSTANCE_ID, "OPENCONDITIONS_INSTANCE_ID")
+        if image == "contributions-api":
+            seal(SEAL_SECRETS_KEY_CHECK, "OPENCONDITIONS_SECRETS_KEY")
         args = [
             "docker",
             "run",
@@ -836,6 +868,14 @@ def runtime_smoke(image, identity, source, output, *, exercise=None):
             if tables < 10:
                 fail("migrations were not applied")
             record["checks"]["migratedTables"] = tables
+            # The ingest service seals its own id at start; the others started
+            # only because the id they were given matched the sealed one.
+            sealed = command(
+                [*sql, "select instance_id from conditions.instance_identity where id = 1"]
+            ).stdout.strip()
+            if sealed != QUALIFICATION_INSTANCE_ID:
+                fail("the instance id was not sealed as the service requires")
+            record["checks"]["sealedInstanceId"] = sealed
             if image == "ingest":
                 record["checks"]["osmiumVersion"] = command(
                     ["docker", "exec", app, "osmium", "--version"]
