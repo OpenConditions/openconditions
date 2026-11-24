@@ -277,6 +277,24 @@ describe("reporter erasure", () => {
     expect(evidence.map((e) => e.actor_key_id)).toEqual([null, "k-kept"]);
   }, 30_000);
 
+  it("strips a deleted reporter's key in a trigger running as the deleting role, search path pinned", async () => {
+    const [trigger] = await sql<{ name: string; before_delete_row: boolean; fn: string }[]>`
+      SELECT t.tgname AS name,
+             (t.tgtype & 1) = 1 AND (t.tgtype & 2) = 2 AND (t.tgtype & 8) = 8 AS before_delete_row,
+             t.tgfoid::regprocedure::text AS fn
+      FROM pg_trigger t
+      WHERE t.tgrelid = 'conditions.reporter'::regclass AND NOT t.tgisinternal`;
+    expect(trigger).toEqual({
+      name: "reporter_strip_key",
+      before_delete_row: true,
+      fn: "conditions.reporter_strip_key()",
+    });
+    const [fn] = await sql<{ prosecdef: boolean; proconfig: string[] }[]>`
+      SELECT prosecdef, proconfig FROM pg_proc
+      WHERE oid = 'conditions.reporter_strip_key()'::regprocedure`;
+    expect(fn).toEqual({ prosecdef: false, proconfig: ["search_path=pg_catalog, pg_temp"] });
+  }, 30_000);
+
   it("refuses crowd rows of a key that is not an enrolled reporter", async () => {
     await expect(
       sql`INSERT INTO conditions.sub_claim

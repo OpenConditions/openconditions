@@ -517,6 +517,52 @@ CREATE TRIGGER federation_capture AFTER INSERT OR UPDATE ON "conditions"."offer"
 CREATE TRIGGER federation_capture AFTER INSERT OR UPDATE ON "conditions"."observation_latest"
   FOR EACH ROW EXECUTE FUNCTION "conditions".federation_observation_capture();
 --> statement-breakpoint
+-- Deleting a crowd reporter also removes its key from what it reported, in
+-- the deleting transaction, whoever deletes it: its latest crowd readings,
+-- its crowd situations, their revisions and their journal entries lose
+-- `provenance.reporter` (the whole object: a reporter without its key is
+-- not a valid record, a record without a reporter is). The rows are found
+-- through the reporter's evidence, which still names the key until the
+-- delete clears it, so no index on the readings is needed and flow updates
+-- stay heap-only. Removing the reporter changes neither revision nor
+-- evidence, so the capture journals nothing. Its caller holds the crowd lock
+-- first, as landings do, so a landing never writes the key back.
+CREATE FUNCTION "conditions".reporter_strip_key() RETURNS trigger LANGUAGE plpgsql
+SET search_path = pg_catalog, pg_temp AS $$
+BEGIN
+  UPDATE "conditions"."observation_latest" AS l
+     SET reading = l.reading #- '{provenance,reporter}'
+   WHERE l.crowd_record_id IS NOT NULL
+     AND l.crowd_record_id IN (
+       SELECT e.record_id FROM "conditions"."report_evidence" AS e
+        WHERE e.actor_key_id = OLD.key_id AND e.record_class = 'observation')
+     AND l.reading #>> '{provenance,reporter,keyId}' = OLD.key_id;
+  UPDATE "conditions"."situation" AS s
+     SET record = s.record #- '{provenance,reporter}'
+   WHERE s.id IN (
+       SELECT e.record_id FROM "conditions"."report_evidence" AS e
+        WHERE e.actor_key_id = OLD.key_id AND e.record_class = 'situation')
+     AND s.record #>> '{provenance,reporter,keyId}' = OLD.key_id;
+  UPDATE "conditions"."situation_revision" AS r
+     SET snapshot = r.snapshot #- '{provenance,reporter}'
+   WHERE r.situation_id IN (
+       SELECT e.record_id FROM "conditions"."report_evidence" AS e
+        WHERE e.actor_key_id = OLD.key_id AND e.record_class = 'situation')
+     AND r.snapshot #>> '{provenance,reporter,keyId}' = OLD.key_id;
+  UPDATE "conditions"."federation_outbox" AS o
+     SET snapshot = o.snapshot #- '{provenance,reporter}'
+   WHERE o.record_class = 'situation'
+     AND o.record_id IN (
+       SELECT e.record_id FROM "conditions"."report_evidence" AS e
+        WHERE e.actor_key_id = OLD.key_id AND e.record_class = 'situation')
+     AND o.snapshot #>> '{provenance,reporter,keyId}' = OLD.key_id;
+  RETURN OLD;
+END;
+$$;
+--> statement-breakpoint
+CREATE TRIGGER reporter_strip_key BEFORE DELETE ON "conditions"."reporter"
+  FOR EACH ROW EXECUTE FUNCTION "conditions".reporter_strip_key();
+--> statement-breakpoint
 -- The federation journal's first epoch. The timeline is filled in by the
 -- federation service once it can read it.
 INSERT INTO "conditions"."federation_journal" (epoch, started_at, seen_xid, timeline_id)

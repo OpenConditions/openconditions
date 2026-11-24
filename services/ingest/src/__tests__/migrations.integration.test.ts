@@ -101,7 +101,7 @@ it("migrating after the conditions schema was dropped recreates every table", as
   }
 }, 120_000);
 
-it("after a fresh migrate, segment_flow, the helper functions and the four triggers exist", async () => {
+it("after a fresh migrate, segment_flow, the helper functions, the four capture triggers and the reporter strip exist", async () => {
   const db = await createTestDatabase();
   try {
     const functions = await db.sql<{ name: string }[]>`
@@ -132,6 +132,7 @@ it("after a fresh migrate, segment_flow, the helper functions and the four trigg
       "grant_consumer_roles",
       "observation_fusion_provenance",
       "observation_record",
+      "reporter_strip_key",
       "segment_flow",
     ]);
     // OpenMapX renders traffic tiles through this signature.
@@ -149,6 +150,12 @@ it("after a fresh migrate, segment_flow, the helper functions and the four trigg
       },
       { relation: "conditions.offer", fn: "conditions.federation_record_capture" },
       { relation: "conditions.situation", fn: "conditions.federation_situation_capture" },
+    ]);
+    const strip = await db.sql<{ relation: string; fn: string }[]>`
+      SELECT tgrelid::regclass::text AS relation, tgfoid::regproc::text AS fn FROM pg_trigger
+      WHERE tgname = 'reporter_strip_key'`;
+    expect(strip).toEqual([
+      { relation: "conditions.reporter", fn: "conditions.reporter_strip_key" },
     ]);
     const [observation] = await db.sql<{ kind: string; strategy: string }[]>`
       SELECT c.relkind AS kind, p.partstrat AS strategy FROM pg_class c
