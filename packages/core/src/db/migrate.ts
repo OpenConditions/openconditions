@@ -35,8 +35,9 @@ export function resolveMigrationsFolder(): string {
  * schema they describe: the history stays apart from another Drizzle
  * project's in a shared database (OpenMapX keeps its own in `drizzle`), the
  * role that owns `conditions` needs no other schema, and dropping `conditions`
- * drops its history with it. Idempotent. Only the ingest service runs it at
- * boot; the other services wait for its result with `waitForSchemaVersion`.
+ * drops its history with it. Idempotent. Only the ingest service's processes
+ * (the primary and, when enabled, the heavy-feeds process) run it at boot;
+ * the other services wait for its result with `waitForSchemaVersion`.
  *
  * Takes a connection string (not a client) and opens its own short-lived
  * `max: 1` connection: drizzle's postgres-js driver replaces the client's type
