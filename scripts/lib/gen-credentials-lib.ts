@@ -153,15 +153,6 @@ interface ServiceField {
 }
 
 /**
- * The ingest service's own configuration, hand-written here and written into
- * `service.json` beside the fields generated from the catalogue. Under
- * OpenMapX a community service's `container.environment` reaches the
- * container verbatim (a `${VAR}` stays literal), so everything an operator
- * sets is one of these: a setting with its default, or a vault secret.
- * An empty default renders the variable empty, which every reader takes as
- * its built-in default.
- */
-/**
  * The descriptions the heavy-feeds ingest manifest gives in place of the
  * ingest service's: it holds the key the ingest service generated and never
  * generates its own.
@@ -171,6 +162,15 @@ export const FEEDS_PROCESS_DESCRIPTIONS: Readonly<Record<string, string>> = {
     "Required. Copy the value of openconditions-ingest's Secrets key; never generate a new one. The OAuth grant tokens this process refreshes are encrypted with it, and it refuses to start with any other key. It is not recoverable from the OpenConditions tables: the copy in your recovery set is the ingest service's.",
 };
 
+/**
+ * The ingest service's own configuration, hand-written here and written into
+ * `service.json` beside the fields generated from the catalogue. Under
+ * OpenMapX a community service's `container.environment` reaches the
+ * container verbatim (a `${VAR}` stays literal), so everything an operator
+ * sets is one of these: a setting with its default, or a vault secret.
+ * An empty default renders the variable empty, which every reader takes as
+ * its built-in default.
+ */
 export const SERVICE_FIELDS: Readonly<Record<string, ServiceField>> = {
   PUN_COORDINATION_DIR: {
     title: "PUN persistent client coordination directory",
