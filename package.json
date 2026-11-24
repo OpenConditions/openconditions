@@ -18,7 +18,7 @@
     "build:domains": "turbo run build --filter=@openconditions/datex2... --filter=@openconditions/ocpi... --filter=@openconditions/roads... --filter=@openconditions/fuel... --filter=@openconditions/parking... --filter=@openconditions/charging... --filter=@openconditions/cameras... --filter=@openconditions/hazards... --filter=@openconditions/weather... --filter=@openconditions/vehicles... --filter=@openconditions/border... --output-logs=errors-only",
     "gen:credentials": "pnpm build:domains && tsx scripts/gen-credentials.ts --write",
     "check-credentials": "pnpm build:domains && tsx scripts/gen-credentials.ts",
-    "check:migrations": "pnpm --filter @openconditions/core db:check",
+    "check:migrations": "pnpm --filter @openconditions/model build && node scripts/check-drizzle-drift.ts",
     "gen:feed-schemas": "pnpm build:domains && tsx scripts/gen-feed-schemas.ts --write",
     "check:feed-schemas": "pnpm build:domains && tsx scripts/gen-feed-schemas.ts",
     "feeds:lint": "pnpm build:domains && tsx scripts/feeds-lint.ts",

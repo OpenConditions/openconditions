@@ -32,8 +32,7 @@
     "build": "tsup",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "db:generate": "pnpm --filter @openconditions/model build && drizzle-kit generate",
-    "db:check": "pnpm --filter @openconditions/model build && drizzle-kit check && drizzle-kit generate && git status --porcelain -- drizzle | (! grep .)"
+    "db:generate": "pnpm --filter @openconditions/model build && drizzle-kit generate"
   },
   "devDependencies": {
     "@openconditions/test-database": "workspace:*",
