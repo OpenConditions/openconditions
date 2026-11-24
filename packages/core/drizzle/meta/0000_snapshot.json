@@ -1,5 +1,5 @@
 {
-  "id": "f667d34c-4e49-4cc7-bba2-c2e5f3b53ba2",
+  "id": "cf9c85ca-52cc-4a3e-874a-72f5cb2d94d9",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -879,6 +879,68 @@
             "cycle": false
           }
         },
+        "effective_from": {
+          "name": "effective_from",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "since_at": {
+          "name": "since_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "effective_until": {
+          "name": "effective_until",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "value_num": {
+          "name": "value_num",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "confidence_score": {
+          "name": "confidence_score",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "corroborations": {
+          "name": "corroborations",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "retention_days": {
+          "name": "retention_days",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fused_public": {
+          "name": "fused_public",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
         "subject_key": {
           "name": "subject_key",
           "type": "text",
@@ -910,6 +972,24 @@
           "primaryKey": false,
           "notNull": true
         },
+        "access_mode": {
+          "name": "access_mode",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "result_type": {
+          "name": "result_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "template_hash": {
+          "name": "template_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
         "feature_id": {
           "name": "feature_id",
           "type": "text",
@@ -928,57 +1008,15 @@
           "primaryKey": false,
           "notNull": false
         },
-        "geom": {
-          "name": "geom",
-          "type": "geometry(Geometry, 4326)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "reading": {
-          "name": "reading",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "template": {
-          "name": "template",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "template_hash": {
-          "name": "template_hash",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "contributor_receipt_id": {
-          "name": "contributor_receipt_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
         "crowd_record_id": {
           "name": "crowd_record_id",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "access_mode": {
-          "name": "access_mode",
+        "contributor_receipt_id": {
+          "name": "contributor_receipt_id",
           "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "result_type": {
-          "name": "result_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "value_num": {
-          "name": "value_num",
-          "type": "double precision",
           "primaryKey": false,
           "notNull": false
         },
@@ -1006,24 +1044,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "effective_from": {
-          "name": "effective_from",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "effective_until": {
-          "name": "effective_until",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "since_at": {
-          "name": "since_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true
-        },
         "fused_from": {
           "name": "fused_from",
           "type": "text[]",
@@ -1036,49 +1056,29 @@
           "primaryKey": false,
           "notNull": false
         },
-        "fused_public": {
-          "name": "fused_public",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false
-        },
         "evidence_state": {
           "name": "evidence_state",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "confidence_score": {
-          "name": "confidence_score",
-          "type": "double precision",
+        "geom": {
+          "name": "geom",
+          "type": "geometry(Geometry, 4326)",
           "primaryKey": false,
           "notNull": false
         },
-        "corroborations": {
-          "name": "corroborations",
-          "type": "integer",
+        "reading": {
+          "name": "reading",
+          "type": "jsonb",
           "primaryKey": false,
-          "notNull": true,
-          "default": 0
+          "notNull": true
         },
-        "expires_at": {
-          "name": "expires_at",
-          "type": "timestamp with time zone",
+        "template": {
+          "name": "template",
+          "type": "jsonb",
           "primaryKey": false,
-          "notNull": false
-        },
-        "retention_days": {
-          "name": "retention_days",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
+          "notNull": true
         }
       },
       "indexes": {
@@ -1368,37 +1368,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "sample_count": {
-          "name": "sample_count",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "contributor_receipt_ids": {
-          "name": "contributor_receipt_ids",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "lineage_complete": {
-          "name": "lineage_complete",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "bins": {
-          "name": "bins",
-          "type": "smallint[]",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "counts": {
-          "name": "counts",
-          "type": "integer[]",
-          "primaryKey": false,
-          "notNull": false
-        },
         "min": {
           "name": "min",
           "type": "double precision",
@@ -1416,6 +1385,37 @@
           "type": "double precision",
           "primaryKey": false,
           "notNull": true
+        },
+        "sample_count": {
+          "name": "sample_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "lineage_complete": {
+          "name": "lineage_complete",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "contributor_receipt_ids": {
+          "name": "contributor_receipt_ids",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bins": {
+          "name": "bins",
+          "type": "smallint[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "counts": {
+          "name": "counts",
+          "type": "integer[]",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {

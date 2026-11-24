@@ -59,43 +59,46 @@ export const contributorReceipt = conditionsSchema.table("contributor_receipt", 
 
 export const observationLatest = conditionsSchema.table(
   "observation_latest",
+  // Fixed-width columns first, widest alignment first, then the
+  // variable-length ones, the reading and template last: no row pays
+  // alignment padding.
   {
     seriesId: bigint("series_id", { mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),
+    effectiveFrom: tstz("effective_from").notNull(),
+    sinceAt: tstz("since_at").notNull(),
+    updatedAt: tstz("updated_at").notNull().defaultNow(),
+    effectiveUntil: tstz("effective_until"),
+    expiresAt: tstz("expires_at"),
+    valueNum: doublePrecision("value_num"),
+    confidenceScore: doublePrecision("confidence_score"),
+    corroborations: integer("corroborations").notNull().default(0),
+    retentionDays: smallint("retention_days"),
+    fusedPublic: boolean("fused_public"),
     subjectKey: text("subject_key").notNull(),
     property: text("property").notNull(),
     qualifierKey: text("qualifier_key").notNull().default(""),
     sourceId: text("source_id").notNull(),
     subjectKind: text("subject_kind").notNull(),
+    accessMode: text("access_mode").notNull(),
+    resultType: text("result_type").notNull(),
+    templateHash: text("template_hash").notNull(),
     featureId: text("feature_id"),
     componentKey: text("component_key"),
     situationId: text("situation_id"),
-    geom: geometry("geom"),
-    reading: jsonb("reading").notNull(),
-    template: jsonb("template").notNull(),
-    templateHash: text("template_hash").notNull(),
-    contributorReceiptId: text("contributor_receipt_id"),
     /** A crowd row's record id (null on every other row, so no feed update changes an indexed value). */
     crowdRecordId: text("crowd_record_id"),
-    accessMode: text("access_mode").notNull(),
-    resultType: text("result_type").notNull(),
-    valueNum: doublePrecision("value_num"),
+    contributorReceiptId: text("contributor_receipt_id"),
     valueMoney: numeric("value_money", { precision: 14, scale: 4 }),
     valueText: text("value_text"),
     unit: text("unit"),
     currency: text("currency"),
-    effectiveFrom: tstz("effective_from").notNull(),
-    effectiveUntil: tstz("effective_until"),
-    sinceAt: tstz("since_at").notNull(),
     fusedFrom: text("fused_from").array(),
     /** A fused row's contributing sources (their rows' `source_id`), in contributor order without repeats. */
     fusedSources: text("fused_sources").array(),
-    fusedPublic: boolean("fused_public"),
     evidenceState: text("evidence_state"),
-    confidenceScore: doublePrecision("confidence_score"),
-    corroborations: integer("corroborations").notNull().default(0),
-    expiresAt: tstz("expires_at"),
-    retentionDays: smallint("retention_days"),
-    updatedAt: tstz("updated_at").notNull().defaultNow(),
+    geom: geometry("geom"),
+    reading: jsonb("reading").notNull(),
+    template: jsonb("template").notNull(),
   },
   (t) => [
     // A series is its subject, property, qualifiers and source.
@@ -144,17 +147,18 @@ export const observationLatest = conditionsSchema.table(
 export const observationRollupHourly = conditionsSchema.table(
   "observation_rollup_hourly",
   {
+    // Fixed-width columns first, as in observation_latest.
     seriesId: bigint("series_id", { mode: "number" }).notNull(),
     hourUtc: tstz("hour_utc").notNull(),
-    sampleCount: integer("sample_count").notNull(),
-    /** Distinct immutable receipt IDs of every sample in this bucket. */
-    contributorReceiptIds: text("contributor_receipt_ids").array(),
-    lineageComplete: boolean("lineage_complete").notNull().default(false),
-    bins: smallint("bins").array(),
-    counts: integer("counts").array(),
     min: doublePrecision("min").notNull(),
     max: doublePrecision("max").notNull(),
     mean: doublePrecision("mean").notNull(),
+    sampleCount: integer("sample_count").notNull(),
+    lineageComplete: boolean("lineage_complete").notNull().default(false),
+    /** Distinct immutable receipt IDs of every sample in this bucket. */
+    contributorReceiptIds: text("contributor_receipt_ids").array(),
+    bins: smallint("bins").array(),
+    counts: integer("counts").array(),
   },
   (t) => [
     primaryKey({ name: "observation_rollup_hourly_pkey", columns: [t.seriesId, t.hourUtc] }),

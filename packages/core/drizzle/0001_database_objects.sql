@@ -10,27 +10,29 @@
 -- first by the series' retention class (a property's raw-history days, 0 for
 -- keep-everything), then by the reading's start, so retention drops whole
 -- partitions. The ingest service creates and drops the partitions; a row with
--- no partition is an error, never a default partition.
+-- no partition is an error, never a default partition. The fixed-width
+-- columns come first, widest alignment first, so no row pays alignment
+-- padding between them.
 CREATE TABLE "conditions"."observation" (
 	"series_id" bigint NOT NULL,
-	"retention_days" smallint NOT NULL,
 	"phenomenon_start" timestamp with time zone NOT NULL,
-	"phenomenon_end" timestamp with time zone,
 	"issued_at" timestamp with time zone DEFAULT '-infinity' NOT NULL,
-	"result_time" timestamp with time zone,
-	"valid_until" timestamp with time zone,
 	"fetched_at" timestamp with time zone NOT NULL,
 	"recorded_at" timestamp with time zone NOT NULL,
+	"phenomenon_end" timestamp with time zone,
+	"result_time" timestamp with time zone,
+	"valid_until" timestamp with time zone,
+	"value_num" double precision,
+	"fetch_id" bigint,
+	"retention_days" smallint NOT NULL,
+	"raw_part" smallint,
 	"temporality" text NOT NULL,
 	"aggregation" text NOT NULL,
-	"value_num" double precision,
 	"value_money" numeric(14, 4),
 	"value_text" text,
 	"value_json" jsonb,
 	"quality" jsonb,
 	"baseline" jsonb,
-	"fetch_id" bigint,
-	"raw_part" smallint,
 	"extra" jsonb,
 	CONSTRAINT "observation_pkey" PRIMARY KEY ("series_id", "phenomenon_start", "issued_at", "retention_days"),
 	CONSTRAINT "observation_retention_days_check" CHECK ("retention_days" >= 0)
