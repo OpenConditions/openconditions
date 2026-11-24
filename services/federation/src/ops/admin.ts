@@ -18,7 +18,11 @@
  */
 import { pathToFileURL } from "node:url";
 import { eraseRecord } from "@openconditions/contributions-api/federation/tombstone";
-import { type RevisionedClass, resolveInstanceId } from "@openconditions/core/server";
+import {
+  type RevisionedClass,
+  resolveInstanceId,
+  verifyInstanceId,
+} from "@openconditions/core/server";
 import { blockPeer, listBlockedPeers, unblockPeer } from "@openconditions/federation";
 import { requireCredential } from "@openconditions/ingest-framework";
 import type { Registry } from "@openconditions/model";
@@ -123,6 +127,21 @@ export async function runAdminCommand(args: readonly string[], deps: AdminDeps):
   return usage();
 }
 
+/**
+ * This instance's id from `env`, checked against the one the ingest service
+ * sealed, as every service checks it at start: the erasure rewrites records
+ * under it. Throws when no id is sealed yet or `env` names another.
+ */
+export async function sealedInstanceId(sql: postgres.Sql, env: NodeJS.ProcessEnv): Promise<string> {
+  const instanceId = resolveInstanceId(env);
+  if ((await verifyInstanceId(sql, instanceId)) === "absent") {
+    throw new Error(
+      "conditions.instance_identity is empty: start the ingest service once, which seals the instance id, before using federation-admin",
+    );
+  }
+  return instanceId;
+}
+
 async function main(): Promise<void> {
   const sql = postgres(requireCredential(process.env, "DATABASE_URL"), {
     max: 1,
@@ -133,7 +152,7 @@ async function main(): Promise<void> {
     process.exitCode = await runAdminCommand(process.argv.slice(2), {
       sql,
       registry: productionRegistry(),
-      instanceId: resolveInstanceId(process.env),
+      instanceId: await sealedInstanceId(sql, process.env),
       operator: "federation-admin",
       now: () => new Date().toISOString(),
       out: (line) => process.stdout.write(`${line}\n`),
