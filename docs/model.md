@@ -719,7 +719,9 @@ kind or a property with crowd rules takes reports, anything else does not.
   value now: a property, a feature (and component) or a place, the result as
   the property's observations carry it, and where the reporter stood. A
   sub-claim confirms, negates or flags any record, named by class, id and,
-  for a feature, component key.
+  for a feature, component key. Every claim and sub-claim carries the claim
+  format version as its top-level member `v` (now `1`), inside the signed
+  bytes; one without it or of another version is refused.
 - Landing turns a claim into a crowd record. The record's id hashes the
   reporter's key with the claim's nonce, so a replay lands the same id and
   the id never reveals the key; the key itself stays in `provenance.reporter`

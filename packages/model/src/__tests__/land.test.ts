@@ -22,6 +22,7 @@ const ctx: LandingContext = {
 };
 
 const priceClaim = (overrides: Record<string, unknown> = {}) => ({
+  v: 1,
   claimClass: "observation",
   subject: { featureId: "oc:feature:es-minetur:4375", componentKey: "e5" },
   property: "fuel.price",

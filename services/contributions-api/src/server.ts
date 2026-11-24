@@ -11,6 +11,7 @@
  */
 
 import {
+  CLAIM_VERSION,
   checkGeometryPlausibility,
   type SignedReport,
   type SignedSubClaim,
@@ -159,6 +160,21 @@ interface SubClaimBody {
 }
 
 const SUB_CLAIM_ACTIONS = new Set(["confirm", "negate", "flag"]);
+
+/** The stable code of a signed claim whose `v` is missing or not one this service verifies. */
+export const CLAIM_VERSION_UNSUPPORTED = "CLAIM_VERSION_UNSUPPORTED";
+
+/** Whether a signed body names the claim version this service verifies; checked before the signature. */
+function hasClaimVersion(body: unknown): boolean {
+  return body !== null && typeof body === "object" && (body as { v?: unknown }).v === CLAIM_VERSION;
+}
+
+function unsupportedClaimVersion(label: string): { error: string; code: string } {
+  return {
+    error: `${label}.v must be ${CLAIM_VERSION}, the signed claim version this service verifies`,
+    code: CLAIM_VERSION_UNSUPPORTED,
+  };
+}
 
 /** Minimal keyed token bucket for the enrollment endpoint: per address, or the relay's. */
 class EnrollLimiter {
@@ -369,6 +385,9 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     }
     if (typeof report.keyId !== "string" || report.keyId.length === 0) {
       return reply.status(400).send({ error: "report.keyId is required" });
+    }
+    if (!hasClaimVersion(report.claim)) {
+      return reply.status(400).send(unsupportedClaimVersion("report.claim"));
     }
     const nowIso = now();
 
@@ -609,6 +628,9 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     }
     if (typeof subClaim.keyId !== "string" || subClaim.keyId.length === 0) {
       return reply.status(400).send({ error: "subClaim.keyId is required" });
+    }
+    if (!hasClaimVersion(subClaim)) {
+      return reply.status(400).send(unsupportedClaimVersion("subClaim"));
     }
     const nowIso = now();
 

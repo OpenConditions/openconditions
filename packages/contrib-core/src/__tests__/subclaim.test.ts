@@ -11,6 +11,7 @@ import { P256_ORDER } from "../lowS.js";
 
 function makeBody(overrides: Record<string, unknown> = {}): SubClaimBody {
   return {
+    v: 1,
     subject: { class: "situation", id: "oc:situation:example:a46" },
     claimType: "confirm",
     reportedAt: "2026-07-11T12:05:00Z",
@@ -26,6 +27,19 @@ describe("signSubClaim / verifySubClaim", () => {
     expect(sub.alg).toBe("ES256");
     expect(sub.keyId).toBe(key.keyId);
     await expect(verifySubClaim(sub)).resolves.toStrictEqual({ ok: true, keyId: key.keyId });
+  });
+
+  it("signs the claim version and refuses a body without it or of another", async () => {
+    const key = await generateReporterKey();
+    const { v: _v, ...unversioned } = makeBody();
+    await expect(signSubClaim(unversioned as unknown as SubClaimBody, key)).rejects.toThrow(
+      /subClaim\.v/,
+    );
+    await expect(signSubClaim(makeBody({ v: 2 }), key)).rejects.toThrow(/subClaim\.v/);
+    const sub = await signSubClaim(makeBody(), key);
+    const bumped = await verifySubClaim({ ...sub, v: 2 } as unknown as SignedSubClaim);
+    expect(bumped.ok).toBe(false);
+    expect(bumped.error).toMatch(/subClaim\.v/);
   });
 
   it("verifies with a knownJwk when pubJwk is absent", async () => {

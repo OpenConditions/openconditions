@@ -10,6 +10,8 @@ on (`@openconditions/core`, `model`, `contrib-core`).
 
 ## Crowd reports
 
+Every signed claim and sub-claim body carries the claim version as its top-level member `"v": 1`, inside the signed bytes (see [the wire contract](../../packages/contrib-core/README.md#claim-version)). A report or vote whose body lacks it or names another version is refused with `400` and `{ error, code: "CLAIM_VERSION_UNSUPPORTED" }` before its signature is checked.
+
 - `POST /contrib/reports` — a signed model claim. A situation claim lands as a
   situation record of the `crowd` source (`landClaim`, then the write seam),
   with its first `report` evidence row; its evidence decides when it ends

@@ -7,6 +7,7 @@ export type {
   SituationClaim,
   SubClaimBody,
 } from "@openconditions/model";
+export { CLAIM_VERSION } from "@openconditions/model";
 
 /**
  * A report claim plus its detached signature envelope. The envelope fields

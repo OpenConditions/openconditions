@@ -130,6 +130,7 @@ export const crowdAttribution = { provider: "oc.example.org", license: "CC0-1.0"
 
 export function accidentClaim(overrides: Record<string, unknown> = {}) {
   return {
+    v: 1,
     claimClass: "situation",
     kind: "incident",
     type: "accident",

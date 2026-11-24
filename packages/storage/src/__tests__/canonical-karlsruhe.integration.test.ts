@@ -208,6 +208,7 @@ describe("a crowd reading on the canonical car park", () => {
       registry,
       {
         claim: {
+          v: 1,
           claimClass: "observation",
           subject: { featureId: canonical.canonical_feature_id, componentKey },
           property: "charging.evse_status",

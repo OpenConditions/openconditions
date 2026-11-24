@@ -203,6 +203,7 @@ export async function landEvseReport(
     facilitiesRegistry,
     {
       claim: {
+        v: 1,
         claimClass: "observation",
         subject: { featureId: opts.canonicalId, componentKey: opts.componentKey },
         property: "charging.evse_status",
@@ -242,6 +243,7 @@ export async function landPlacePriceReport(
     facilitiesRegistry,
     {
       claim: {
+        v: 1,
         claimClass: "observation",
         subject: { location: opts.location },
         property: "fuel.price",

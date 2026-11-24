@@ -68,6 +68,7 @@ function crowdAccident(evidence?: string) {
     registry,
     {
       claim: {
+        v: 1,
         claimClass: "situation",
         kind: "incident",
         type: "accident",

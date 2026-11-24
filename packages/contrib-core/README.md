@@ -14,21 +14,47 @@ and Node 24+.
 ## Wire contract
 
 - `ReportClaim` — the signable report content, a `SituationClaim`
-  (`claimClass: "situation"`, `kind`, `type`, `subtype?`, `geometry`,
+  (`v: 1`, `claimClass: "situation"`, `kind`, `type`, `subtype?`, `geometry`,
   `fuzziness`, `severityLevel?`, `effects?`, `details?`, `text?`, `reportedAt`,
-  `nonce`) or an `ObservationClaim` (`claimClass: "observation"`, the subject,
-  `property`, `qualifiers?`, `result`, the reporter's position, `reportedAt`,
-  `nonce`). The ES256 signature covers exactly `canonicalize(claim)` (RFC 8785)
-  encoded as UTF-8.
+  `nonce`) or an `ObservationClaim` (`v: 1`, `claimClass: "observation"`, the
+  subject, `property`, `qualifiers?`, `result`, the reporter's position,
+  `reportedAt`, `nonce`). The ES256 signature covers exactly
+  `canonicalize(claim)` (RFC 8785) encoded as UTF-8.
 - `SignedReport` — claim + detached envelope (`alg: "ES256"`, `keyId`,
   optional `pubJwk`, `signature` as base64url raw 64-byte `r||s`). `pubJwk`
   is embedded on first submission; servers cache it and verify subsequent
   envelopes against the cached key (`knownJwk` takes precedence and must
   match any embedded key).
 - `SubClaimBody` / `SignedSubClaim` — confirm/negate/flag reactions to a
-  stored record, named by its `RecordRef` (`{class, id, componentKey?}`). The
-  signature covers only the body, never the envelope fields; the `keyId` is
-  bound instead by the RFC 7638 thumbprint check at verification.
+  stored record (`v: 1`, `subject`, `claimType`, `reason?`, `geometry?`,
+  `reportedAt`, `nonce`), named by its `RecordRef`
+  (`{class, id, componentKey?}`). The signature covers only the body, never
+  the envelope fields; the `keyId` is bound instead by the RFC 7638
+  thumbprint check at verification.
+
+### Claim version
+
+Every signed body, a report claim and a sub-claim body alike, carries the
+top-level member `v`, the claim format version (`CLAIM_VERSION`, now `1`).
+It is part of the signed bytes, so it cannot be changed without invalidating
+the signature. Signing and verification refuse a body without `v` or with
+any other value; the contributions API answers such a request with `400` and
+`code: "CLAIM_VERSION_UNSUPPORTED"` before it checks the signature. A change
+to what a claim's members mean, or to which members it has, takes a new
+version; clients then sign the new one and servers state which versions they
+verify.
+
+### No instance binding
+
+A claim names no target instance or audience, deliberately. A claim is the
+reporter's statement about the world, and the instance that lands it adds
+its own id to the record it creates (`oc:<class>:<instanceId>:<localId>`,
+the local id derived from the reporter's key and the claim's nonce). A claim
+copied to another instance verifies there too; it lands there as that
+instance's record of the same statement, and replays on any one instance land
+the same record. Each instance admits only reporters it enrolled (a report or
+vote needs that instance's reporting grant for the key), so a copied claim
+reaches an instance only through a reporter enrolled there.
 
 `signReport(registry, claim, key)` and `verifyReport(registry, report,
 knownJwk?)` validate the claim against the registry the caller runs

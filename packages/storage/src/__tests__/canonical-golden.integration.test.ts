@@ -433,6 +433,7 @@ describe("a crowd reading on a component whose canonical key changes", () => {
       registry,
       {
         claim: {
+          v: 1,
           claimClass: "observation",
           subject: { featureId: before.canonical_feature_id, componentKey: reportedKey },
           property: "fuel.price",

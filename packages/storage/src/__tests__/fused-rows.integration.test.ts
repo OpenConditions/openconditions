@@ -694,6 +694,7 @@ describe("where a crowd-won public fusion sits", () => {
       registry,
       {
         claim: {
+          v: 1,
           claimClass: "observation",
           subject: { featureId: canonical, componentKey: e10Key },
           property: "fuel.price",
@@ -927,6 +928,7 @@ describe("property scopes in fusion reads", () => {
       registry,
       {
         claim: {
+          v: 1,
           claimClass: "observation",
           subject: { featureId: canonical, componentKey },
           property: "fuel.price",

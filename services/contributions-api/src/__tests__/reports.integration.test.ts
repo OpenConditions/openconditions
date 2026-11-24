@@ -367,6 +367,18 @@ describe("POST /contrib/reports — rejections at the trust boundary", () => {
     expect(res.statusCode).toBe(400);
   }, 60_000);
 
+  it("rejects a claim without the claim version, or of another, with 400 CLAIM_VERSION_UNSUPPORTED", async () => {
+    const key = await generateReporterKey();
+    const grant = await enroll(key);
+    const { v: _v, ...unversioned } = makeClaim({ nonce: "no-version-0000001" });
+    for (const claim of [unversioned, makeClaim({ nonce: "no-version-0000001", v: 2 as 1 })]) {
+      const res = await postReport(await withClaim(key, claim), grant);
+      expect(res.statusCode).toBe(400);
+      expect(res.json()).toMatchObject({ code: "CLAIM_VERSION_UNSUPPORTED" });
+    }
+    expect(await readSituation(crowdId(key, "no-version-0000001"))).toBeUndefined();
+  }, 60_000);
+
   it("rejects a claim the registry refuses with 400 at verification and writes nothing", async () => {
     const key = await generateReporterKey();
     const grant = await enroll(key);
@@ -437,6 +449,7 @@ describe("POST /contrib/reports — rejections at the trust boundary", () => {
     const report = await signReport(
       registry,
       {
+        v: 1,
         claimClass: "observation",
         subject: { featureId: "oc:feature:de-bnetza:site-1", componentKey: "evse-1" },
         property: "charging.evse_status",

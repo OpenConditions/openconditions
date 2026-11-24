@@ -112,6 +112,7 @@ async function signSub(
 ): Promise<SignedSubClaim> {
   return signSubClaim(
     {
+      v: 1,
       subject: { class: "situation", id },
       claimType,
       reportedAt: nowValue,
