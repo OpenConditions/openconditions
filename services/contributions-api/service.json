@@ -1,7 +1,7 @@
 {
   "id": "openconditions-contributions-api",
   "name": "OpenConditions Contributions API",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "platform": "1.0",
   "description": "Crowd-report intake and evidence lifecycle for road conditions: verifies signed device reports, deduplicates and corroborates co-located phenomena, cross-validates against official feeds, and serves the operator reviewer surface — all over the shared PostGIS `conditions` schema. Peer confirmation never routes or trains reputation on its own; only official-feed cross-validation (and operator resolution) does.",
   "author": "OpenConditions",
@@ -11,7 +11,7 @@
   "quality": "community",
   "container": {
     "image": "ghcr.io/openconditions/contributions-api",
-    "tag": "0.8.1",
+    "tag": "0.8.2",
     "expose": [
       4200
     ],
@@ -39,7 +39,7 @@
       "retries": 5,
       "startPeriod": "30s"
     },
-    "digest": "sha256:4f79cd82038af4877bca038a14f7357d6e151d8f80ef3b2d091868b8bd711055"
+    "digest": "sha256:87c8e548f24910e7fe3cd3ad69844f8f6e01d1d1e9a2d5105cf9f198b3153445"
   },
   "provides": [
     "openconditions/crowd-reports-api"
