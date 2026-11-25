@@ -693,33 +693,33 @@
     "selectionState": "approved"
   },
   {
-    "qualifier": "a26-warning",
-    "name": "Autobahn A26 — warning",
+    "qualifier": "a25-warning",
+    "name": "Autobahn A25 — warning",
     "endpoints": {
       "main": {
-        "url": "https://verkehr.autobahn.de/o/autobahn/A26/services/warning",
+        "url": "https://verkehr.autobahn.de/o/autobahn/A25/services/warning",
         "cadenceSec": 300
       }
     },
     "selectionState": "approved"
   },
   {
-    "qualifier": "a26-closure",
-    "name": "Autobahn A26 — closure",
+    "qualifier": "a25-closure",
+    "name": "Autobahn A25 — closure",
     "endpoints": {
       "main": {
-        "url": "https://verkehr.autobahn.de/o/autobahn/A26/services/closure",
+        "url": "https://verkehr.autobahn.de/o/autobahn/A25/services/closure",
         "cadenceSec": 300
       }
     },
     "selectionState": "approved"
   },
   {
-    "qualifier": "a26-roadworks",
-    "name": "Autobahn A26 — roadworks",
+    "qualifier": "a25-roadworks",
+    "name": "Autobahn A25 — roadworks",
     "endpoints": {
       "main": {
-        "url": "https://verkehr.autobahn.de/o/autobahn/A26/services/roadworks",
+        "url": "https://verkehr.autobahn.de/o/autobahn/A25/services/roadworks",
         "cadenceSec": 900
       }
     },
@@ -2838,6 +2838,39 @@
     "selectionState": "approved"
   },
   {
+    "qualifier": "a524-warning",
+    "name": "Autobahn A524 — warning",
+    "endpoints": {
+      "main": {
+        "url": "https://verkehr.autobahn.de/o/autobahn/A524/services/warning",
+        "cadenceSec": 300
+      }
+    },
+    "selectionState": "approved"
+  },
+  {
+    "qualifier": "a524-closure",
+    "name": "Autobahn A524 — closure",
+    "endpoints": {
+      "main": {
+        "url": "https://verkehr.autobahn.de/o/autobahn/A524/services/closure",
+        "cadenceSec": 300
+      }
+    },
+    "selectionState": "approved"
+  },
+  {
+    "qualifier": "a524-roadworks",
+    "name": "Autobahn A524 — roadworks",
+    "endpoints": {
+      "main": {
+        "url": "https://verkehr.autobahn.de/o/autobahn/A524/services/roadworks",
+        "cadenceSec": 900
+      }
+    },
+    "selectionState": "approved"
+  },
+  {
     "qualifier": "a535-warning",
     "name": "Autobahn A535 — warning",
     "endpoints": {
@@ -3531,66 +3564,33 @@
     "selectionState": "approved"
   },
   {
-    "qualifier": "a672-warning",
-    "name": "Autobahn A672 — warning",
+    "qualifier": "a861-warning",
+    "name": "Autobahn A861 — warning",
     "endpoints": {
       "main": {
-        "url": "https://verkehr.autobahn.de/o/autobahn/A672/services/warning",
+        "url": "https://verkehr.autobahn.de/o/autobahn/A861/services/warning",
         "cadenceSec": 300
       }
     },
     "selectionState": "approved"
   },
   {
-    "qualifier": "a672-closure",
-    "name": "Autobahn A672 — closure",
+    "qualifier": "a861-closure",
+    "name": "Autobahn A861 — closure",
     "endpoints": {
       "main": {
-        "url": "https://verkehr.autobahn.de/o/autobahn/A672/services/closure",
+        "url": "https://verkehr.autobahn.de/o/autobahn/A861/services/closure",
         "cadenceSec": 300
       }
     },
     "selectionState": "approved"
   },
   {
-    "qualifier": "a672-roadworks",
-    "name": "Autobahn A672 — roadworks",
+    "qualifier": "a861-roadworks",
+    "name": "Autobahn A861 — roadworks",
     "endpoints": {
       "main": {
-        "url": "https://verkehr.autobahn.de/o/autobahn/A672/services/roadworks",
-        "cadenceSec": 900
-      }
-    },
-    "selectionState": "approved"
-  },
-  {
-    "qualifier": "a952-warning",
-    "name": "Autobahn A952 — warning",
-    "endpoints": {
-      "main": {
-        "url": "https://verkehr.autobahn.de/o/autobahn/A952/services/warning",
-        "cadenceSec": 300
-      }
-    },
-    "selectionState": "approved"
-  },
-  {
-    "qualifier": "a952-closure",
-    "name": "Autobahn A952 — closure",
-    "endpoints": {
-      "main": {
-        "url": "https://verkehr.autobahn.de/o/autobahn/A952/services/closure",
-        "cadenceSec": 300
-      }
-    },
-    "selectionState": "approved"
-  },
-  {
-    "qualifier": "a952-roadworks",
-    "name": "Autobahn A952 — roadworks",
-    "endpoints": {
-      "main": {
-        "url": "https://verkehr.autobahn.de/o/autobahn/A952/services/roadworks",
+        "url": "https://verkehr.autobahn.de/o/autobahn/A861/services/roadworks",
         "cadenceSec": 900
       }
     },
