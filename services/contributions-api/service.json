@@ -50,6 +50,13 @@
   },
   "configSchema": {
     "type": "object",
+    "required": [
+      "DATABASE_URL",
+      "OPENCONDITIONS_SECRETS_KEY",
+      "OPENCONDITIONS_GRANT_SECRET",
+      "OPENCONDITIONS_REVIEWER_TOKEN",
+      "OPENCONDITIONS_INSTANCE_ID"
+    ],
     "properties": {
       "DATABASE_URL": {
         "type": "string",

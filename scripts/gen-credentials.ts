@@ -8,6 +8,8 @@ import {
   credentialsDocFor,
   envExampleFor,
   FEEDS_PROCESS_DESCRIPTIONS,
+  FEEDS_PROCESS_REQUIRED_FIELDS,
+  REQUIRED_SERVICE_FIELDS,
 } from "./lib/gen-credentials-lib.js";
 
 export interface GenPaths {
@@ -34,9 +36,13 @@ interface ServiceJson {
 function nextServiceJson(
   svc: ServiceJson,
   catalog: CredentialCatalog,
+  required: readonly string[],
   descriptions: Readonly<Record<string, string>> = {},
 ): string {
   const properties = configSchemaPropertiesFor(catalog);
+  for (const key of required) {
+    if (properties[key] === undefined) throw new Error(`no config field ${key} to require`);
+  }
   for (const [key, description] of Object.entries(descriptions)) {
     const field = properties[key] as Record<string, unknown> | undefined;
     if (field === undefined) throw new Error(`no config field ${key} to describe`);
@@ -51,7 +57,7 @@ function nextServiceJson(
   }
   const next = {
     ...svc,
-    configSchema: { type: "object", ...(svc.configSchema ?? {}), properties },
+    configSchema: { type: "object", ...(svc.configSchema ?? {}), required, properties },
   };
   return `${JSON.stringify(next, null, 2)}\n`;
 }
@@ -189,14 +195,14 @@ export function applyOrCheck(
   const svc = JSON.parse(readFileSync(paths.serviceJson, "utf8")) as ServiceJson;
   const targets: [string, string][] = [
     [paths.envExample, nextEnvExample(safeRead(paths.envExample), catalog)],
-    [paths.serviceJson, nextServiceJson(svc, catalog)],
+    [paths.serviceJson, nextServiceJson(svc, catalog, REQUIRED_SERVICE_FIELDS)],
     [paths.doc, credentialsDocFor(catalog, svc.id)],
   ];
   if (paths.feedsServiceJson) {
     const feeds = JSON.parse(readFileSync(paths.feedsServiceJson, "utf8")) as ServiceJson;
     targets.push([
       paths.feedsServiceJson,
-      nextServiceJson(feeds, catalog, FEEDS_PROCESS_DESCRIPTIONS),
+      nextServiceJson(feeds, catalog, FEEDS_PROCESS_REQUIRED_FIELDS, FEEDS_PROCESS_DESCRIPTIONS),
     ]);
   }
   const drift: string[] = [];

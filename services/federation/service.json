@@ -60,6 +60,7 @@
   },
   "configSchema": {
     "type": "object",
+    "required": ["DATABASE_URL", "OPENCONDITIONS_INSTANCE_ID"],
     "properties": {
       "DATABASE_URL": {
         "type": "string",

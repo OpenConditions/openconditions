@@ -163,6 +163,24 @@ export const FEEDS_PROCESS_DESCRIPTIONS: Readonly<Record<string, string>> = {
 };
 
 /**
+ * The fields the ingest service refuses to start without, which its
+ * manifest lists as `configSchema.required`: OpenMapX then applies a
+ * configuration only once an enabled service has a value or a stored secret
+ * for each, and names the ones it lacks.
+ */
+export const REQUIRED_SERVICE_FIELDS: readonly string[] = [
+  "DATABASE_URL",
+  "OPENCONDITIONS_SECRETS_KEY",
+  "OPENCONDITIONS_INSTANCE_ID",
+];
+
+/** The heavy-feeds process's required fields: the ingest service's, and the feeds it polls. */
+export const FEEDS_PROCESS_REQUIRED_FIELDS: readonly string[] = [
+  ...REQUIRED_SERVICE_FIELDS,
+  "OPENCONDITIONS_INGEST_FEEDS",
+];
+
+/**
  * The ingest service's own configuration, hand-written here and written into
  * `service.json` beside the fields generated from the catalogue. Under
  * OpenMapX a community service's `container.environment` reaches the

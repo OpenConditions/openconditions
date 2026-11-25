@@ -150,13 +150,6 @@ describe("service manifests on OpenMapX's config model", () => {
     }
   });
 
-  test.each(manifests)(
-    "%s: no JSON Schema `required` (OpenMapX validates it against the non-secret values only)",
-    (_dir, m) => {
-      expect(m.configSchema?.required).toBeUndefined();
-    },
-  );
-
   test.each(manifests)("%s: OpenMapX accepts it as a community service", (_dir, m) => {
     expect(m.configSchema?.type).toBe("object");
     // A third-party volume is namespaced by the service id; no platform proxy route.
@@ -446,14 +439,38 @@ describe("OpenMapX's community manifest rules", () => {
     expect(extension["license"]).toBe("AGPL-3.0-or-later");
   });
 
+  // OpenMapX applies a configuration only once every enabled service has a
+  // value or a stored secret for each key its schema requires, and names the
+  // missing ones; a service not enabled is not held to them. Each list is
+  // exactly what the service refuses to start without.
+  const required: Record<string, string[]> = {
+    ingest: ["DATABASE_URL", "OPENCONDITIONS_SECRETS_KEY", "OPENCONDITIONS_INSTANCE_ID"],
+    "ingest-heavy": [
+      "DATABASE_URL",
+      "OPENCONDITIONS_SECRETS_KEY",
+      "OPENCONDITIONS_INSTANCE_ID",
+      "OPENCONDITIONS_INGEST_FEEDS",
+    ],
+    "contributions-api": [
+      "DATABASE_URL",
+      "OPENCONDITIONS_SECRETS_KEY",
+      "OPENCONDITIONS_GRANT_SECRET",
+      "OPENCONDITIONS_REVIEWER_TOKEN",
+      "OPENCONDITIONS_INSTANCE_ID",
+    ],
+    // The secrets key is needed only when federation is enabled.
+    federation: ["DATABASE_URL", "OPENCONDITIONS_INSTANCE_ID"],
+  };
+
   test.each(manifests)(
-    // OpenMapX checks `required` against the saved non-secret values, which
-    // never hold a secret, and every service's configuration in one
-    // generation, so a required field would block configuring the platform.
-    // Each service refuses to start without what it needs instead, and says so.
-    "services/%s/service.json lists no configSchema required fields",
-    (_dir, m) => {
-      expect(m.configSchema?.required).toBeUndefined();
+    "services/%s/service.json requires exactly the settings the service cannot start without",
+    (dir, m) => {
+      expect(m.configSchema?.required).toEqual(required[dir]);
+      for (const key of required[dir] ?? []) expect(properties(m), key).toHaveProperty(key);
     },
   );
+
+  test("every OpenConditions service manifest is covered", () => {
+    expect(manifests.map(([dir]) => dir).sort()).toEqual(Object.keys(required).sort());
+  });
 });
