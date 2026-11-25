@@ -11274,12 +11274,12 @@
     {
       "operator": "autobahn",
       "product": "events",
-      "name": "Autobahn A26 — warning",
+      "name": "Autobahn A25 — warning",
       "format": "autobahn",
       "tier": "authoritative",
       "endpoints": {
         "main": {
-          "url": "https://verkehr.autobahn.de/o/autobahn/A26/services/warning",
+          "url": "https://verkehr.autobahn.de/o/autobahn/A25/services/warning",
           "cadenceSec": 300
         }
       },
@@ -11294,7 +11294,7 @@
       },
       "privacyUrl": "https://www.autobahn.de/datenschutz",
       "homepage": "https://verkehr.autobahn.de",
-      "id": "de-autobahn-a26-warning-events",
+      "id": "de-autobahn-a25-warning-events",
       "domain": "roads",
       "region": "de",
       "file": "feeds/roads/de.jsonc",
@@ -11328,23 +11328,23 @@
       },
       "cadenceSec": 300,
       "country": "DE",
-      "qualifier": "a26-warning",
+      "qualifier": "a25-warning",
       "selectionState": "approved",
       "parentSourceId": "de-autobahn-events",
       "policyIds": [
         "de-autobahn-events",
-        "de-autobahn-a26-warning-events"
+        "de-autobahn-a25-warning-events"
       ]
     },
     {
       "operator": "autobahn",
       "product": "events",
-      "name": "Autobahn A26 — closure",
+      "name": "Autobahn A25 — closure",
       "format": "autobahn",
       "tier": "authoritative",
       "endpoints": {
         "main": {
-          "url": "https://verkehr.autobahn.de/o/autobahn/A26/services/closure",
+          "url": "https://verkehr.autobahn.de/o/autobahn/A25/services/closure",
           "cadenceSec": 300
         }
       },
@@ -11359,7 +11359,7 @@
       },
       "privacyUrl": "https://www.autobahn.de/datenschutz",
       "homepage": "https://verkehr.autobahn.de",
-      "id": "de-autobahn-a26-closure-events",
+      "id": "de-autobahn-a25-closure-events",
       "domain": "roads",
       "region": "de",
       "file": "feeds/roads/de.jsonc",
@@ -11393,23 +11393,23 @@
       },
       "cadenceSec": 300,
       "country": "DE",
-      "qualifier": "a26-closure",
+      "qualifier": "a25-closure",
       "selectionState": "approved",
       "parentSourceId": "de-autobahn-events",
       "policyIds": [
         "de-autobahn-events",
-        "de-autobahn-a26-closure-events"
+        "de-autobahn-a25-closure-events"
       ]
     },
     {
       "operator": "autobahn",
       "product": "events",
-      "name": "Autobahn A26 — roadworks",
+      "name": "Autobahn A25 — roadworks",
       "format": "autobahn",
       "tier": "authoritative",
       "endpoints": {
         "main": {
-          "url": "https://verkehr.autobahn.de/o/autobahn/A26/services/roadworks",
+          "url": "https://verkehr.autobahn.de/o/autobahn/A25/services/roadworks",
           "cadenceSec": 900
         }
       },
@@ -11424,7 +11424,7 @@
       },
       "privacyUrl": "https://www.autobahn.de/datenschutz",
       "homepage": "https://verkehr.autobahn.de",
-      "id": "de-autobahn-a26-roadworks-events",
+      "id": "de-autobahn-a25-roadworks-events",
       "domain": "roads",
       "region": "de",
       "file": "feeds/roads/de.jsonc",
@@ -11458,12 +11458,12 @@
       },
       "cadenceSec": 900,
       "country": "DE",
-      "qualifier": "a26-roadworks",
+      "qualifier": "a25-roadworks",
       "selectionState": "approved",
       "parentSourceId": "de-autobahn-events",
       "policyIds": [
         "de-autobahn-events",
-        "de-autobahn-a26-roadworks-events"
+        "de-autobahn-a25-roadworks-events"
       ]
     },
     {
@@ -23949,6 +23949,201 @@
     {
       "operator": "autobahn",
       "product": "events",
+      "name": "Autobahn A524 — warning",
+      "format": "autobahn",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://verkehr.autobahn.de/o/autobahn/A524/services/warning",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "LicenseRef-GeoNutzV",
+      "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/",
+      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+      "terms": {
+        "url": "https://mobilithek.info/offers/573189053963235328",
+        "reviewedAt": "2026-10-29",
+        "note": "Mobilithek offer 573189053963235328 'Die Autobahn App' (publisher Die Autobahn GmbH des Bundes): rights LICENSE_FREE_USE_OPEN_DATA, standardLicense http://dcat-ap.de/def/licenses/geonutz/20130319. The offer describes the app's Verkehrsmeldungen, Sperrungen and Baustellen, which this API serves. Autobahn GmbH's DATEX II publications of the same data on Mobilithek attach GeoNutzV ('Der Bezug der Daten unterliegt den Bedingungen der GeoNutzV', MDM documentation of the motorway traffic centre publications). Formerly declared DL-DE-BY-2.0, for which no Autobahn GmbH statement exists."
+      },
+      "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "homepage": "https://verkehr.autobahn.de",
+      "id": "de-autobahn-a524-warning-events",
+      "domain": "roads",
+      "region": "de",
+      "file": "feeds/roads/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": true,
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "changeNotice": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://mobilithek.info/offers/573189053963235328",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "DE",
+      "qualifier": "a524-warning",
+      "selectionState": "approved",
+      "parentSourceId": "de-autobahn-events",
+      "policyIds": [
+        "de-autobahn-events",
+        "de-autobahn-a524-warning-events"
+      ]
+    },
+    {
+      "operator": "autobahn",
+      "product": "events",
+      "name": "Autobahn A524 — closure",
+      "format": "autobahn",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://verkehr.autobahn.de/o/autobahn/A524/services/closure",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "LicenseRef-GeoNutzV",
+      "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/",
+      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+      "terms": {
+        "url": "https://mobilithek.info/offers/573189053963235328",
+        "reviewedAt": "2026-10-29",
+        "note": "Mobilithek offer 573189053963235328 'Die Autobahn App' (publisher Die Autobahn GmbH des Bundes): rights LICENSE_FREE_USE_OPEN_DATA, standardLicense http://dcat-ap.de/def/licenses/geonutz/20130319. The offer describes the app's Verkehrsmeldungen, Sperrungen and Baustellen, which this API serves. Autobahn GmbH's DATEX II publications of the same data on Mobilithek attach GeoNutzV ('Der Bezug der Daten unterliegt den Bedingungen der GeoNutzV', MDM documentation of the motorway traffic centre publications). Formerly declared DL-DE-BY-2.0, for which no Autobahn GmbH statement exists."
+      },
+      "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "homepage": "https://verkehr.autobahn.de",
+      "id": "de-autobahn-a524-closure-events",
+      "domain": "roads",
+      "region": "de",
+      "file": "feeds/roads/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": true,
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "changeNotice": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://mobilithek.info/offers/573189053963235328",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "DE",
+      "qualifier": "a524-closure",
+      "selectionState": "approved",
+      "parentSourceId": "de-autobahn-events",
+      "policyIds": [
+        "de-autobahn-events",
+        "de-autobahn-a524-closure-events"
+      ]
+    },
+    {
+      "operator": "autobahn",
+      "product": "events",
+      "name": "Autobahn A524 — roadworks",
+      "format": "autobahn",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://verkehr.autobahn.de/o/autobahn/A524/services/roadworks",
+          "cadenceSec": 900
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "LicenseRef-GeoNutzV",
+      "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/",
+      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+      "terms": {
+        "url": "https://mobilithek.info/offers/573189053963235328",
+        "reviewedAt": "2026-10-29",
+        "note": "Mobilithek offer 573189053963235328 'Die Autobahn App' (publisher Die Autobahn GmbH des Bundes): rights LICENSE_FREE_USE_OPEN_DATA, standardLicense http://dcat-ap.de/def/licenses/geonutz/20130319. The offer describes the app's Verkehrsmeldungen, Sperrungen and Baustellen, which this API serves. Autobahn GmbH's DATEX II publications of the same data on Mobilithek attach GeoNutzV ('Der Bezug der Daten unterliegt den Bedingungen der GeoNutzV', MDM documentation of the motorway traffic centre publications). Formerly declared DL-DE-BY-2.0, for which no Autobahn GmbH statement exists."
+      },
+      "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "homepage": "https://verkehr.autobahn.de",
+      "id": "de-autobahn-a524-roadworks-events",
+      "domain": "roads",
+      "region": "de",
+      "file": "feeds/roads/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": true,
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "changeNotice": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://mobilithek.info/offers/573189053963235328",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 900,
+      "country": "DE",
+      "qualifier": "a524-roadworks",
+      "selectionState": "approved",
+      "parentSourceId": "de-autobahn-events",
+      "policyIds": [
+        "de-autobahn-events",
+        "de-autobahn-a524-roadworks-events"
+      ]
+    },
+    {
+      "operator": "autobahn",
+      "product": "events",
       "name": "Autobahn A535 — warning",
       "format": "autobahn",
       "tier": "authoritative",
@@ -28044,12 +28239,12 @@
     {
       "operator": "autobahn",
       "product": "events",
-      "name": "Autobahn A672 — warning",
+      "name": "Autobahn A861 — warning",
       "format": "autobahn",
       "tier": "authoritative",
       "endpoints": {
         "main": {
-          "url": "https://verkehr.autobahn.de/o/autobahn/A672/services/warning",
+          "url": "https://verkehr.autobahn.de/o/autobahn/A861/services/warning",
           "cadenceSec": 300
         }
       },
@@ -28064,7 +28259,7 @@
       },
       "privacyUrl": "https://www.autobahn.de/datenschutz",
       "homepage": "https://verkehr.autobahn.de",
-      "id": "de-autobahn-a672-warning-events",
+      "id": "de-autobahn-a861-warning-events",
       "domain": "roads",
       "region": "de",
       "file": "feeds/roads/de.jsonc",
@@ -28098,23 +28293,23 @@
       },
       "cadenceSec": 300,
       "country": "DE",
-      "qualifier": "a672-warning",
+      "qualifier": "a861-warning",
       "selectionState": "approved",
       "parentSourceId": "de-autobahn-events",
       "policyIds": [
         "de-autobahn-events",
-        "de-autobahn-a672-warning-events"
+        "de-autobahn-a861-warning-events"
       ]
     },
     {
       "operator": "autobahn",
       "product": "events",
-      "name": "Autobahn A672 — closure",
+      "name": "Autobahn A861 — closure",
       "format": "autobahn",
       "tier": "authoritative",
       "endpoints": {
         "main": {
-          "url": "https://verkehr.autobahn.de/o/autobahn/A672/services/closure",
+          "url": "https://verkehr.autobahn.de/o/autobahn/A861/services/closure",
           "cadenceSec": 300
         }
       },
@@ -28129,7 +28324,7 @@
       },
       "privacyUrl": "https://www.autobahn.de/datenschutz",
       "homepage": "https://verkehr.autobahn.de",
-      "id": "de-autobahn-a672-closure-events",
+      "id": "de-autobahn-a861-closure-events",
       "domain": "roads",
       "region": "de",
       "file": "feeds/roads/de.jsonc",
@@ -28163,23 +28358,23 @@
       },
       "cadenceSec": 300,
       "country": "DE",
-      "qualifier": "a672-closure",
+      "qualifier": "a861-closure",
       "selectionState": "approved",
       "parentSourceId": "de-autobahn-events",
       "policyIds": [
         "de-autobahn-events",
-        "de-autobahn-a672-closure-events"
+        "de-autobahn-a861-closure-events"
       ]
     },
     {
       "operator": "autobahn",
       "product": "events",
-      "name": "Autobahn A672 — roadworks",
+      "name": "Autobahn A861 — roadworks",
       "format": "autobahn",
       "tier": "authoritative",
       "endpoints": {
         "main": {
-          "url": "https://verkehr.autobahn.de/o/autobahn/A672/services/roadworks",
+          "url": "https://verkehr.autobahn.de/o/autobahn/A861/services/roadworks",
           "cadenceSec": 900
         }
       },
@@ -28194,7 +28389,7 @@
       },
       "privacyUrl": "https://www.autobahn.de/datenschutz",
       "homepage": "https://verkehr.autobahn.de",
-      "id": "de-autobahn-a672-roadworks-events",
+      "id": "de-autobahn-a861-roadworks-events",
       "domain": "roads",
       "region": "de",
       "file": "feeds/roads/de.jsonc",
@@ -28228,207 +28423,12 @@
       },
       "cadenceSec": 900,
       "country": "DE",
-      "qualifier": "a672-roadworks",
+      "qualifier": "a861-roadworks",
       "selectionState": "approved",
       "parentSourceId": "de-autobahn-events",
       "policyIds": [
         "de-autobahn-events",
-        "de-autobahn-a672-roadworks-events"
-      ]
-    },
-    {
-      "operator": "autobahn",
-      "product": "events",
-      "name": "Autobahn A952 — warning",
-      "format": "autobahn",
-      "tier": "authoritative",
-      "endpoints": {
-        "main": {
-          "url": "https://verkehr.autobahn.de/o/autobahn/A952/services/warning",
-          "cadenceSec": 300
-        }
-      },
-      "freshnessWindowSec": 900,
-      "license": "LicenseRef-GeoNutzV",
-      "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/",
-      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
-      "terms": {
-        "url": "https://mobilithek.info/offers/573189053963235328",
-        "reviewedAt": "2026-10-29",
-        "note": "Mobilithek offer 573189053963235328 'Die Autobahn App' (publisher Die Autobahn GmbH des Bundes): rights LICENSE_FREE_USE_OPEN_DATA, standardLicense http://dcat-ap.de/def/licenses/geonutz/20130319. The offer describes the app's Verkehrsmeldungen, Sperrungen and Baustellen, which this API serves. Autobahn GmbH's DATEX II publications of the same data on Mobilithek attach GeoNutzV ('Der Bezug der Daten unterliegt den Bedingungen der GeoNutzV', MDM documentation of the motorway traffic centre publications). Formerly declared DL-DE-BY-2.0, for which no Autobahn GmbH statement exists."
-      },
-      "privacyUrl": "https://www.autobahn.de/datenschutz",
-      "homepage": "https://verkehr.autobahn.de",
-      "id": "de-autobahn-a952-warning-events",
-      "domain": "roads",
-      "region": "de",
-      "file": "feeds/roads/de.jsonc",
-      "maintainers": [],
-      "rights": {
-        "display": true,
-        "redistribution": true,
-        "derivedRedistribution": true,
-        "commercialUse": true,
-        "attributionRequired": true,
-        "changeNotice": true,
-        "retention": true,
-        "shareAlike": false
-      },
-      "evidence": {
-        "url": "https://mobilithek.info/offers/573189053963235328",
-        "reviewedAt": "2026-10-29"
-      },
-      "permissions": {
-        "display": "yes",
-        "redistribute": "yes",
-        "derive": "yes",
-        "retain": "yes",
-        "commercial": "yes"
-      },
-      "restricted": false,
-      "coverage": {
-        "countries": [
-          "DE"
-        ]
-      },
-      "cadenceSec": 300,
-      "country": "DE",
-      "qualifier": "a952-warning",
-      "selectionState": "approved",
-      "parentSourceId": "de-autobahn-events",
-      "policyIds": [
-        "de-autobahn-events",
-        "de-autobahn-a952-warning-events"
-      ]
-    },
-    {
-      "operator": "autobahn",
-      "product": "events",
-      "name": "Autobahn A952 — closure",
-      "format": "autobahn",
-      "tier": "authoritative",
-      "endpoints": {
-        "main": {
-          "url": "https://verkehr.autobahn.de/o/autobahn/A952/services/closure",
-          "cadenceSec": 300
-        }
-      },
-      "freshnessWindowSec": 900,
-      "license": "LicenseRef-GeoNutzV",
-      "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/",
-      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
-      "terms": {
-        "url": "https://mobilithek.info/offers/573189053963235328",
-        "reviewedAt": "2026-10-29",
-        "note": "Mobilithek offer 573189053963235328 'Die Autobahn App' (publisher Die Autobahn GmbH des Bundes): rights LICENSE_FREE_USE_OPEN_DATA, standardLicense http://dcat-ap.de/def/licenses/geonutz/20130319. The offer describes the app's Verkehrsmeldungen, Sperrungen and Baustellen, which this API serves. Autobahn GmbH's DATEX II publications of the same data on Mobilithek attach GeoNutzV ('Der Bezug der Daten unterliegt den Bedingungen der GeoNutzV', MDM documentation of the motorway traffic centre publications). Formerly declared DL-DE-BY-2.0, for which no Autobahn GmbH statement exists."
-      },
-      "privacyUrl": "https://www.autobahn.de/datenschutz",
-      "homepage": "https://verkehr.autobahn.de",
-      "id": "de-autobahn-a952-closure-events",
-      "domain": "roads",
-      "region": "de",
-      "file": "feeds/roads/de.jsonc",
-      "maintainers": [],
-      "rights": {
-        "display": true,
-        "redistribution": true,
-        "derivedRedistribution": true,
-        "commercialUse": true,
-        "attributionRequired": true,
-        "changeNotice": true,
-        "retention": true,
-        "shareAlike": false
-      },
-      "evidence": {
-        "url": "https://mobilithek.info/offers/573189053963235328",
-        "reviewedAt": "2026-10-29"
-      },
-      "permissions": {
-        "display": "yes",
-        "redistribute": "yes",
-        "derive": "yes",
-        "retain": "yes",
-        "commercial": "yes"
-      },
-      "restricted": false,
-      "coverage": {
-        "countries": [
-          "DE"
-        ]
-      },
-      "cadenceSec": 300,
-      "country": "DE",
-      "qualifier": "a952-closure",
-      "selectionState": "approved",
-      "parentSourceId": "de-autobahn-events",
-      "policyIds": [
-        "de-autobahn-events",
-        "de-autobahn-a952-closure-events"
-      ]
-    },
-    {
-      "operator": "autobahn",
-      "product": "events",
-      "name": "Autobahn A952 — roadworks",
-      "format": "autobahn",
-      "tier": "authoritative",
-      "endpoints": {
-        "main": {
-          "url": "https://verkehr.autobahn.de/o/autobahn/A952/services/roadworks",
-          "cadenceSec": 900
-        }
-      },
-      "freshnessWindowSec": 900,
-      "license": "LicenseRef-GeoNutzV",
-      "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/",
-      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
-      "terms": {
-        "url": "https://mobilithek.info/offers/573189053963235328",
-        "reviewedAt": "2026-10-29",
-        "note": "Mobilithek offer 573189053963235328 'Die Autobahn App' (publisher Die Autobahn GmbH des Bundes): rights LICENSE_FREE_USE_OPEN_DATA, standardLicense http://dcat-ap.de/def/licenses/geonutz/20130319. The offer describes the app's Verkehrsmeldungen, Sperrungen and Baustellen, which this API serves. Autobahn GmbH's DATEX II publications of the same data on Mobilithek attach GeoNutzV ('Der Bezug der Daten unterliegt den Bedingungen der GeoNutzV', MDM documentation of the motorway traffic centre publications). Formerly declared DL-DE-BY-2.0, for which no Autobahn GmbH statement exists."
-      },
-      "privacyUrl": "https://www.autobahn.de/datenschutz",
-      "homepage": "https://verkehr.autobahn.de",
-      "id": "de-autobahn-a952-roadworks-events",
-      "domain": "roads",
-      "region": "de",
-      "file": "feeds/roads/de.jsonc",
-      "maintainers": [],
-      "rights": {
-        "display": true,
-        "redistribution": true,
-        "derivedRedistribution": true,
-        "commercialUse": true,
-        "attributionRequired": true,
-        "changeNotice": true,
-        "retention": true,
-        "shareAlike": false
-      },
-      "evidence": {
-        "url": "https://mobilithek.info/offers/573189053963235328",
-        "reviewedAt": "2026-10-29"
-      },
-      "permissions": {
-        "display": "yes",
-        "redistribute": "yes",
-        "derive": "yes",
-        "retain": "yes",
-        "commercial": "yes"
-      },
-      "restricted": false,
-      "coverage": {
-        "countries": [
-          "DE"
-        ]
-      },
-      "cadenceSec": 900,
-      "country": "DE",
-      "qualifier": "a952-roadworks",
-      "selectionState": "approved",
-      "parentSourceId": "de-autobahn-events",
-      "policyIds": [
-        "de-autobahn-events",
-        "de-autobahn-a952-roadworks-events"
+        "de-autobahn-a861-roadworks-events"
       ]
     },
     {
@@ -36912,84 +36912,6 @@
     {
       "operator": "wzdx",
       "product": "events",
-      "name": "WZDx — Maricopa County DOT (arizona)",
-      "format": "wzdx",
-      "tier": "authoritative",
-      "endpoints": {
-        "main": {
-          "url": "https://wzdxapi.aztech.org/construction",
-          "cadenceSec": 300
-        }
-      },
-      "freshnessWindowSec": 900,
-      "license": "NOASSERTION",
-      "attribution": "Maricopa County DOT",
-      "attributionPolicy": {
-        "placement": "visible",
-        "surfaces": [
-          "map",
-          "content",
-          "image"
-        ],
-        "basis": "unresolved",
-        "reviewedAt": "2026-10-14",
-        "evidenceUrls": [
-          "https://datahub.transportation.gov/resource/69qe-yiui.json",
-          "https://github.com/usdot-jpo-ode/wzdx"
-        ],
-        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
-      },
-      "terms": {
-        "note": "WZDx registry metadata (no dataset grant verified)"
-      },
-      "privacyUrl": "https://www.transportation.gov/privacy",
-      "homepage": "https://datahub.transportation.gov",
-      "id": "us-wzdx-d863f1f7d976968f-events",
-      "domain": "roads",
-      "region": "us",
-      "file": "feeds/roads/us.jsonc",
-      "maintainers": [],
-      "rights": {
-        "display": null,
-        "redistribution": null,
-        "derivedRedistribution": null,
-        "commercialUse": null,
-        "attributionRequired": null,
-        "changeNotice": null,
-        "retention": null,
-        "shareAlike": false
-      },
-      "evidence": null,
-      "permissions": {
-        "display": "unknown",
-        "redistribute": "unknown",
-        "derive": "unknown",
-        "retain": "unknown",
-        "commercial": "unknown"
-      },
-      "restricted": true,
-      "coverage": {
-        "countries": [
-          "US"
-        ]
-      },
-      "cadenceSec": 300,
-      "country": "US",
-      "qualifier": "d863f1f7d976968f",
-      "snapshot": {
-        "completeness": "complete",
-        "recordsPath": "features"
-      },
-      "selectionState": "discovered",
-      "parentSourceId": "us-wzdx-events",
-      "policyIds": [
-        "us-wzdx-events",
-        "us-wzdx-d863f1f7d976968f-events"
-      ]
-    },
-    {
-      "operator": "wzdx",
-      "product": "events",
       "name": "WZDx — Wisconsin DOT (wisconsin)",
       "format": "wzdx",
       "tier": "authoritative",
@@ -37063,6 +36985,84 @@
       "policyIds": [
         "us-wzdx-events",
         "us-wzdx-51e508db5ef42c5e-events"
+      ]
+    },
+    {
+      "operator": "wzdx",
+      "product": "events",
+      "name": "WZDx — Maricopa County DOT (arizona)",
+      "format": "wzdx",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://wzdxapi.aztech.org/construction",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "NOASSERTION",
+      "attribution": "Maricopa County DOT",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://datahub.transportation.gov/resource/69qe-yiui.json",
+          "https://github.com/usdot-jpo-ode/wzdx"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
+      "terms": {
+        "note": "WZDx registry metadata (no dataset grant verified)"
+      },
+      "privacyUrl": "https://www.transportation.gov/privacy",
+      "homepage": "https://datahub.transportation.gov",
+      "id": "us-wzdx-d863f1f7d976968f-events",
+      "domain": "roads",
+      "region": "us",
+      "file": "feeds/roads/us.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": null,
+        "redistribution": null,
+        "derivedRedistribution": null,
+        "commercialUse": null,
+        "attributionRequired": null,
+        "changeNotice": null,
+        "retention": null,
+        "shareAlike": false
+      },
+      "evidence": null,
+      "permissions": {
+        "display": "unknown",
+        "redistribute": "unknown",
+        "derive": "unknown",
+        "retain": "unknown",
+        "commercial": "unknown"
+      },
+      "restricted": true,
+      "coverage": {
+        "countries": [
+          "US"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "US",
+      "qualifier": "d863f1f7d976968f",
+      "snapshot": {
+        "completeness": "complete",
+        "recordsPath": "features"
+      },
+      "selectionState": "discovered",
+      "parentSourceId": "us-wzdx-events",
+      "policyIds": [
+        "us-wzdx-events",
+        "us-wzdx-d863f1f7d976968f-events"
       ]
     },
     {
@@ -37776,84 +37776,6 @@
     {
       "operator": "wzdx",
       "product": "events",
-      "name": "WZDx — Delaware DOT (delaware)",
-      "format": "wzdx",
-      "tier": "authoritative",
-      "endpoints": {
-        "main": {
-          "url": "https://wzdx.e-dot.com/del_dot_feed_wzdx_v4.1.geojson",
-          "cadenceSec": 300
-        }
-      },
-      "freshnessWindowSec": 900,
-      "license": "NOASSERTION",
-      "attribution": "Delaware DOT",
-      "attributionPolicy": {
-        "placement": "visible",
-        "surfaces": [
-          "map",
-          "content",
-          "image"
-        ],
-        "basis": "unresolved",
-        "reviewedAt": "2026-10-14",
-        "evidenceUrls": [
-          "https://datahub.transportation.gov/resource/69qe-yiui.json",
-          "https://github.com/usdot-jpo-ode/wzdx"
-        ],
-        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
-      },
-      "terms": {
-        "note": "WZDx registry metadata (no dataset grant verified)"
-      },
-      "privacyUrl": "https://www.transportation.gov/privacy",
-      "homepage": "https://datahub.transportation.gov",
-      "id": "us-wzdx-7945221f406463df-events",
-      "domain": "roads",
-      "region": "us",
-      "file": "feeds/roads/us.jsonc",
-      "maintainers": [],
-      "rights": {
-        "display": null,
-        "redistribution": null,
-        "derivedRedistribution": null,
-        "commercialUse": null,
-        "attributionRequired": null,
-        "changeNotice": null,
-        "retention": null,
-        "shareAlike": false
-      },
-      "evidence": null,
-      "permissions": {
-        "display": "unknown",
-        "redistribute": "unknown",
-        "derive": "unknown",
-        "retain": "unknown",
-        "commercial": "unknown"
-      },
-      "restricted": true,
-      "coverage": {
-        "countries": [
-          "US"
-        ]
-      },
-      "cadenceSec": 300,
-      "country": "US",
-      "qualifier": "7945221f406463df",
-      "snapshot": {
-        "completeness": "complete",
-        "recordsPath": "features"
-      },
-      "selectionState": "discovered",
-      "parentSourceId": "us-wzdx-events",
-      "policyIds": [
-        "us-wzdx-events",
-        "us-wzdx-7945221f406463df-events"
-      ]
-    },
-    {
-      "operator": "wzdx",
-      "product": "events",
       "name": "WZDx — Quebec City (n/a)",
       "format": "wzdx",
       "tier": "authoritative",
@@ -37928,6 +37850,84 @@
       "policyIds": [
         "us-wzdx-events",
         "us-wzdx-914cf87008410abe-events"
+      ]
+    },
+    {
+      "operator": "wzdx",
+      "product": "events",
+      "name": "WZDx — Delaware DOT (delaware)",
+      "format": "wzdx",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://wzdx.e-dot.com/del_dot_feed_wzdx_v4.1.geojson",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "NOASSERTION",
+      "attribution": "Delaware DOT",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://datahub.transportation.gov/resource/69qe-yiui.json",
+          "https://github.com/usdot-jpo-ode/wzdx"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
+      "terms": {
+        "note": "WZDx registry metadata (no dataset grant verified)"
+      },
+      "privacyUrl": "https://www.transportation.gov/privacy",
+      "homepage": "https://datahub.transportation.gov",
+      "id": "us-wzdx-7945221f406463df-events",
+      "domain": "roads",
+      "region": "us",
+      "file": "feeds/roads/us.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": null,
+        "redistribution": null,
+        "derivedRedistribution": null,
+        "commercialUse": null,
+        "attributionRequired": null,
+        "changeNotice": null,
+        "retention": null,
+        "shareAlike": false
+      },
+      "evidence": null,
+      "permissions": {
+        "display": "unknown",
+        "redistribute": "unknown",
+        "derive": "unknown",
+        "retain": "unknown",
+        "commercial": "unknown"
+      },
+      "restricted": true,
+      "coverage": {
+        "countries": [
+          "US"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "US",
+      "qualifier": "7945221f406463df",
+      "snapshot": {
+        "completeness": "complete",
+        "recordsPath": "features"
+      },
+      "selectionState": "discovered",
+      "parentSourceId": "us-wzdx-events",
+      "policyIds": [
+        "us-wzdx-events",
+        "us-wzdx-7945221f406463df-events"
       ]
     },
     {
@@ -38786,6 +38786,162 @@
       "policyIds": [
         "us-wzdx-events",
         "us-wzdx-c23026733b3ba176-events"
+      ]
+    },
+    {
+      "operator": "wzdx",
+      "product": "events",
+      "name": "WZDx — City of Omaha (nebraska)",
+      "format": "wzdx",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://us-datacloud.one.network/nebraska/omaha/feed.json?app_key=c4090b04-26de-c9ee-873b2bd9a38c",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "NOASSERTION",
+      "attribution": "City of Omaha",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://datahub.transportation.gov/resource/69qe-yiui.json",
+          "https://github.com/usdot-jpo-ode/wzdx"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
+      "terms": {
+        "note": "WZDx registry metadata (no dataset grant verified)"
+      },
+      "privacyUrl": "https://www.transportation.gov/privacy",
+      "homepage": "https://datahub.transportation.gov",
+      "id": "us-wzdx-c96c7beae558e825-events",
+      "domain": "roads",
+      "region": "us",
+      "file": "feeds/roads/us.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": null,
+        "redistribution": null,
+        "derivedRedistribution": null,
+        "commercialUse": null,
+        "attributionRequired": null,
+        "changeNotice": null,
+        "retention": null,
+        "shareAlike": false
+      },
+      "evidence": null,
+      "permissions": {
+        "display": "unknown",
+        "redistribute": "unknown",
+        "derive": "unknown",
+        "retain": "unknown",
+        "commercial": "unknown"
+      },
+      "restricted": true,
+      "coverage": {
+        "countries": [
+          "US"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "US",
+      "qualifier": "c96c7beae558e825",
+      "snapshot": {
+        "completeness": "complete",
+        "recordsPath": "features"
+      },
+      "selectionState": "discovered",
+      "parentSourceId": "us-wzdx-events",
+      "policyIds": [
+        "us-wzdx-events",
+        "us-wzdx-c96c7beae558e825-events"
+      ]
+    },
+    {
+      "operator": "wzdx",
+      "product": "events",
+      "name": "WZDx — New York State DOT (New York)",
+      "format": "wzdx",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://nysdot.carsprogram.org/carsapi_v1/api/wzdx",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "NOASSERTION",
+      "attribution": "New York State DOT",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://datahub.transportation.gov/resource/69qe-yiui.json",
+          "https://github.com/usdot-jpo-ode/wzdx"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
+      "terms": {
+        "note": "WZDx registry metadata (no dataset grant verified)"
+      },
+      "privacyUrl": "https://www.transportation.gov/privacy",
+      "homepage": "https://datahub.transportation.gov",
+      "id": "us-wzdx-972f2b4fc2007e2c-events",
+      "domain": "roads",
+      "region": "us",
+      "file": "feeds/roads/us.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": null,
+        "redistribution": null,
+        "derivedRedistribution": null,
+        "commercialUse": null,
+        "attributionRequired": null,
+        "changeNotice": null,
+        "retention": null,
+        "shareAlike": false
+      },
+      "evidence": null,
+      "permissions": {
+        "display": "unknown",
+        "redistribute": "unknown",
+        "derive": "unknown",
+        "retain": "unknown",
+        "commercial": "unknown"
+      },
+      "restricted": true,
+      "coverage": {
+        "countries": [
+          "US"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "US",
+      "qualifier": "972f2b4fc2007e2c",
+      "snapshot": {
+        "completeness": "complete",
+        "recordsPath": "features"
+      },
+      "selectionState": "discovered",
+      "parentSourceId": "us-wzdx-events",
+      "policyIds": [
+        "us-wzdx-events",
+        "us-wzdx-972f2b4fc2007e2c-events"
       ]
     },
     {
