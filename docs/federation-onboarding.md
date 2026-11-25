@@ -507,7 +507,7 @@ its own, adds the service to OpenMapX's network:
 services:
   openconditions-federation:
     # The release of the installed extension's services; never a moving tag.
-    image: ghcr.io/openconditions/federation:0.8.1
+    image: ghcr.io/openconditions/federation:0.8.2
     restart: unless-stopped
     environment:
       # The ingest service's own role, never the PostgreSQL superuser.
@@ -553,7 +553,7 @@ volumes:
   openconditions-federation-data:
 ```
 
-These two containers join OpenMapX's platform network, which OpenMapX otherwise reserves for its built-in services: a community service OpenMapX runs gets a network of its own and reaches only the services it is granted. Started this way, outside OpenMapX, they can reach every service on that network, so run only these two pinned images. Pin the federation image to the release of the installed extension (`0.8.1` above; take the `tag` of `services/federation/service.json` at that release), and keep the archive server on a fixed Caddy release pinned by digest.
+These two containers join OpenMapX's platform network, which OpenMapX otherwise reserves for its built-in services: a community service OpenMapX runs gets a network of its own and reaches only the services it is granted. Started this way, outside OpenMapX, they can reach every service on that network, so run only these two pinned images. Pin the federation image to the release of the installed extension (`0.8.2` above; take the `tag` of `services/federation/service.json` at that release), and keep the archive server on a fixed Caddy release pinned by digest.
 
 The file `federation-secrets/secrets-key` holds the same value that was entered as the Secrets key of `openconditions-ingest` in OpenMapX's admin services panel, taken from the recovery set. It must be readable by the container's user, and it stays out of the `federation` config folder and out of backups. The service refuses to start with any other key; see [secrets encrypted at rest](../README.md#secrets-encrypted-at-rest).
 
