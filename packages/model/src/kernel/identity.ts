@@ -11,8 +11,26 @@ export function isSourceId(value: string): boolean {
   return SOURCE_ID_PATTERN.test(value);
 }
 
+const DNS_LABEL = "[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?";
+
+/**
+ * An instance's own id, as an operator configures it: a lower-case DNS name,
+ * labels of letters, digits and inner dashes up to 63 characters, joined by
+ * single dots, 253 characters at most. Every such id is also a record-id
+ * namespace ({@link INSTANCE_ID_PATTERN}). That looser pattern stays the one
+ * record ids and provenance are parsed with, on purpose: a namespace is also
+ * a source id (`oc:situation:nl-ndw-events:…`), and a stored record's source
+ * identity is not a configured instance id. Wherever an instance names
+ * itself or a peer (the service's environment, the actor and peers configs,
+ * the registry), this grammar applies.
+ */
+export const CONFIGURED_INSTANCE_ID_PATTERN = new RegExp(`^${DNS_LABEL}(?:\\.${DNS_LABEL})*$`);
+
+/** The longest instance id: a DNS name's limit. */
+export const MAX_INSTANCE_ID_LENGTH = 253;
+
 export function isInstanceId(value: string): boolean {
-  return INSTANCE_ID_PATTERN.test(value);
+  return value.length <= MAX_INSTANCE_ID_LENGTH && CONFIGURED_INSTANCE_ID_PATTERN.test(value);
 }
 
 export interface RecordIdParts {

@@ -121,6 +121,7 @@ async function signSub(
   overrides: Partial<SubClaimBody> = {},
 ): Promise<SignedSubClaim> {
   const body: SubClaimBody = {
+    v: 1,
     subject: typeof subject === "string" ? situationRef(subject) : subject,
     claimType,
     reportedAt: nowValue,
@@ -642,6 +643,20 @@ describe("POST /contrib/reports/:class/:id/:action — rejections at the trust b
     }
     expect((await vote(id, "confirm", signed, grant)).statusCode).toBe(200);
     expect(await countSubClaims(id, key.keyId, "confirm")).toBe(1);
+  }, 60_000);
+
+  it("rejects a sub-claim without the claim version, or of another, with 400 CLAIM_VERSION_UNSUPPORTED", async () => {
+    const { id } = await landSituation("reject-version-0001");
+    const keyB = await generateReporterKey();
+    const grantB = await enroll(keyB);
+    const signed = await signSub(keyB, id, "confirm");
+    const { v: _v, ...unversioned } = signed;
+    for (const body of [unversioned, { ...signed, v: 2 }]) {
+      const res = await vote(id, "confirm", body as unknown as SignedSubClaim, grantB);
+      expect(res.statusCode).toBe(400);
+      expect(res.json()).toMatchObject({ code: "CLAIM_VERSION_UNSUPPORTED" });
+    }
+    expect(await countSubClaims(id, keyB.keyId, "confirm")).toBe(0);
   }, 60_000);
 
   it("rejects a claimType that disagrees with the route action with 400", async () => {

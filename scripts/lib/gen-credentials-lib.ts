@@ -163,6 +163,24 @@ export const FEEDS_PROCESS_DESCRIPTIONS: Readonly<Record<string, string>> = {
 };
 
 /**
+ * The fields the ingest service refuses to start without, which its
+ * manifest lists as `configSchema.required`: OpenMapX then applies a
+ * configuration only once an enabled service has a value or a stored secret
+ * for each, and names the ones it lacks.
+ */
+export const REQUIRED_SERVICE_FIELDS: readonly string[] = [
+  "DATABASE_URL",
+  "OPENCONDITIONS_SECRETS_KEY",
+  "OPENCONDITIONS_INSTANCE_ID",
+];
+
+/** The heavy-feeds process's required fields: the ingest service's, and the feeds it polls. */
+export const FEEDS_PROCESS_REQUIRED_FIELDS: readonly string[] = [
+  ...REQUIRED_SERVICE_FIELDS,
+  "OPENCONDITIONS_INGEST_FEEDS",
+];
+
+/**
  * The ingest service's own configuration, hand-written here and written into
  * `service.json` beside the fields generated from the catalogue. Under
  * OpenMapX a community service's `container.environment` reaches the
@@ -250,7 +268,7 @@ export const SERVICE_FIELDS: Readonly<Record<string, ServiceField>> = {
   OPENCONDITIONS_EGRESS_ALLOWED_HOSTS: {
     title: "Egress allowed private hosts",
     description:
-      "Comma-separated hostnames the egress guard lets the service fetch although they resolve to private addresses, e.g. overpass for a self-hosted Overpass on the compose network. Empty: none.",
+      "Comma-separated hostnames the egress guard lets the service fetch although they resolve to private addresses, e.g. openmapx-overpass for OpenMapX's Overpass service. Empty: none.",
     default: "",
   },
   OPENCONDITIONS_DOWNLOAD_MAX_BYTES: {
@@ -332,7 +350,7 @@ export const SERVICE_FIELDS: Readonly<Record<string, ServiceField>> = {
   OPENCONDITIONS_INSTANCE_ID: {
     title: "Instance id",
     description:
-      "This instance's stable id, the namespace of every record it originates and its name to federation peers: lower-case letters, digits, dots and dashes, e.g. maps.example.org. Set it before federating, and to the same value as the contributions API's. Empty: local.",
+      "Required. This instance's stable id, the namespace of every record it originates and its name to federation peers: a lower-case DNS name, e.g. maps.example.org. Set it before the first start; it can never change afterwards. The first ingest process to start seals it in the database, and every OpenConditions service of the instance (the heavy-feeds ingest, contributions API and federation) needs this same value. The service refuses to start without it, with a value that is not a DNS name, or with another id than the sealed one.",
     default: "",
   },
   OPENCONDITIONS_CROWD_LICENSE: {

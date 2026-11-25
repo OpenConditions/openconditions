@@ -1,5 +1,10 @@
 import { defineConfig } from "vitest/config";
 
+// Every service requires an instance id, and a poll writes as the one in its
+// environment, as the service validated it at boot. Tests that check a
+// missing or another id pass their own environment.
+const env = { OPENCONDITIONS_INSTANCE_ID: "test.example.org" };
+
 // Explicit projects keep quick unit runs separate from disposable database suites.
 export default defineConfig({
   test: {
@@ -22,6 +27,7 @@ export default defineConfig({
         test: {
           name: "unit",
           environment: "node",
+          env,
           globals: true,
           testTimeout: 15_000,
           include: ["packages/**/*.test.ts", "services/**/*.test.ts", "scripts/**/*.test.ts"],
@@ -37,6 +43,7 @@ export default defineConfig({
         test: {
           name: "integration",
           environment: "node",
+          env,
           globals: true,
           // After the unit project and two files at a time: the database
           // suites are the heavy ones.

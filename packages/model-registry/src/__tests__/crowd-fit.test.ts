@@ -157,6 +157,7 @@ describe("what drivers report", () => {
         registry,
         {
           claim: {
+            v: 1,
             claimClass: "situation",
             ...classification,
             geometry: here,
@@ -203,6 +204,7 @@ describe("what drivers report", () => {
       registry,
       {
         claim: {
+          v: 1,
           claimClass: "situation",
           kind: "transit_disruption",
           type: "disruption",
@@ -275,6 +277,7 @@ describe("a closure the motorway operator publishes", () => {
       registry,
       {
         claim: {
+          v: 1,
           claimClass: "situation",
           kind: "closure",
           type: "closure",
@@ -303,6 +306,7 @@ describe("a closure the motorway operator publishes", () => {
       registry,
       {
         claim: {
+          v: 1,
           claimClass: "situation",
           kind: "closure",
           type: "closure",
@@ -415,6 +419,7 @@ describe("a charge point two sources describe", () => {
       registry,
       {
         claim: {
+          v: 1,
           claimClass: "observation",
           subject: { featureId: live.feature["id"] as string, componentKey: charging },
           property: "charging.evse_status",
@@ -446,6 +451,7 @@ describe("a charge point two sources describe", () => {
       registry,
       {
         claim: {
+          v: 1,
           claimClass: "observation",
           subject: { featureId: live.feature["id"] as string, componentKey: charging },
           property: "charging.evse_status",
@@ -467,6 +473,7 @@ describe("a charge point two sources describe", () => {
       registry,
       {
         claim: {
+          v: 1,
           claimClass: "observation",
           subject: { featureId: live.feature["id"] as string, componentKey: "no-such-point" },
           property: "charging.evse_status",
@@ -558,6 +565,7 @@ describe("a charge point the operator reports out of order", () => {
         registry,
         {
           claim: {
+            v: 1,
             claimClass: "observation",
             subject: { featureId: feature["id"] as string, componentKey: lorenz.evses[0]!.uid },
             property: "charging.evse_status",
@@ -619,6 +627,7 @@ describe("a fuel price a driver reads off the pole", () => {
       registry,
       {
         claim: {
+          v: 1,
           claimClass: "observation",
           subject: { featureId: id, componentKey: "e5" },
           property: "fuel.price",

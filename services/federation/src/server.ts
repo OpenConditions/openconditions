@@ -10,7 +10,7 @@
  * Exported as build() so tests can fastify.inject; only main.ts listens.
  */
 
-import { verifySecretsKeyCheck } from "@openconditions/core/server";
+import { verifyInstanceId, verifySecretsKeyCheck } from "@openconditions/core/server";
 import {
   ACTOR_WELL_KNOWN_PATH,
   anonymousRateKey,
@@ -170,12 +170,15 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
   const peers = options.peers ?? (await PeerBook.load(sql, settings.peers));
   // A key other than the one the ingest service sealed the check row with
   // stops the boot, and so does one that cannot open the stored instance
-  // keys, naming the key. An absent row is let through on purpose: the only
-  // callers are main.ts, which has already waited for the row with
-  // waitForSecretsKeyCheck, and tests that build the server on a database no
-  // ingest service started on. The package is private and declares no entry
-  // point, so no other path reaches it without that wait.
+  // keys, naming the key, or an actor of another instance than the sealed
+  // one. An absent row is let through on purpose: the only callers are
+  // main.ts, which has already waited for both rows with
+  // waitForSecretsKeyCheck and waitForInstanceId, and tests that build the
+  // server on a database no ingest service started on. The package is
+  // private and declares no entry point, so no other path reaches it without
+  // that wait.
   await verifySecretsKeyCheck(sql, secretsKey);
+  await verifyInstanceId(sql, actorConfig.instanceId);
   await assertInstanceKeysOpen(sql, secretsKey);
   await maintainInstanceKey(sql, secretsKey, now(), actorConfig.instanceId);
 

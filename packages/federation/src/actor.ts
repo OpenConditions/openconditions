@@ -15,6 +15,7 @@
  * its subscriptions accept. The operator configures only the protocol
  * versions it offers and the convergence bound it promises.
  */
+import { isInstanceId } from "@openconditions/model";
 import type { KeyEndorsement, PublicInstanceKey } from "./keys.js";
 import { RECORD_FILTER_KEYS } from "./record-filter.js";
 import { DELIVERY_MODES } from "./subscriptions.js";
@@ -216,6 +217,9 @@ export function parseActorConfig(source: string | unknown): ActorConfig {
     if (typeof cfg[field] !== "string" || cfg[field].length === 0) {
       fail(field, "must be a non-empty string");
     }
+  }
+  if (!isInstanceId(cfg["instanceId"] as string)) {
+    fail("instanceId", "must be an instance id, a lower-case DNS name");
   }
   if (!isHttpUrl(cfg["baseUrl"])) fail("baseUrl", "must be an http(s) URL");
   if (cfg["trustTier"] !== 0 && cfg["trustTier"] !== 1 && cfg["trustTier"] !== 2) {

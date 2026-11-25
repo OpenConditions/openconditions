@@ -588,9 +588,10 @@ BEGIN
   END IF;
   -- The contributions service's own role gets what its queries use. It reads
   -- the migration history to wait for the schema version, and the stored
-  -- codes and the secrets key check at start. It keeps the crowd's
-  -- reporters, block list, reports, votes and evidence, the issuer's keys and
-  -- the tokens it issues and redeems. A report lands as a situation, with its
+  -- codes, the secrets key check and the sealed instance id at start. It
+  -- keeps the crowd's reporters, block list, reports, votes and evidence,
+  -- the issuer's keys and the tokens it issues and redeems. A report lands
+  -- as a situation, with its
   -- effects, revision and graph binding, or as a latest reading of a feed's
   -- feature; its evidence refreshes the fused readings, and a cross-check
   -- reads the feeds' readings and their history. Its writes to situations and
@@ -606,7 +607,8 @@ BEGIN
       "conditions"."feature_canonical", "conditions"."observation",
       "conditions"."observation_rollup_progress", "conditions"."source_status",
       "conditions"."source_poll_attempt", "conditions"."federation_subscription",
-      "conditions"."secrets_key_check" TO openconditions_contributions;
+      "conditions"."secrets_key_check", "conditions"."instance_identity"
+      TO openconditions_contributions;
     GRANT INSERT ON "conditions"."situation_revision" TO openconditions_contributions;
     GRANT SELECT, INSERT ON "conditions"."issuer_key", "conditions"."spent_token",
       "conditions"."report_evidence", "conditions"."sub_claim", "conditions"."contributor_receipt",

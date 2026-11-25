@@ -339,6 +339,7 @@ async function vote(
 ) {
   const subClaim = await signSubClaim(
     {
+      v: 1,
       subject: { class: recordClass, id },
       claimType: action,
       reportedAt: clock.now,
@@ -490,6 +491,7 @@ describe("the contributions service as its own role", () => {
     const price = async (delta: number, reportedAt: string) => {
       const who = await reporter();
       const claim = {
+        v: 1,
         claimClass: "observation",
         property: "fuel.price",
         subject: { featureId: station["id"], componentKey: "e5" },
@@ -548,6 +550,7 @@ describe("the contributions service as its own role", () => {
       featureId = site.feature["id"],
     ) =>
       ({
+        v: 1,
         claimClass: "observation",
         property: "charging.evse_status",
         result: { type: "category", value, vocabulary: "evse_status" },

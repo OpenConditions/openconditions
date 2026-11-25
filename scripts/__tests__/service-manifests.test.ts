@@ -150,13 +150,6 @@ describe("service manifests on OpenMapX's config model", () => {
     }
   });
 
-  test.each(manifests)(
-    "%s: no JSON Schema `required` (OpenMapX validates it against the non-secret values only)",
-    (_dir, m) => {
-      expect(m.configSchema?.required).toBeUndefined();
-    },
-  );
-
   test.each(manifests)("%s: OpenMapX accepts it as a community service", (_dir, m) => {
     expect(m.configSchema?.type).toBe("object");
     // A third-party volume is namespaced by the service id; no platform proxy route.
@@ -194,7 +187,7 @@ describe("service manifests on OpenMapX's config model", () => {
    * contributions API fetches nothing through the egress guard or the
    * downloader, writes single records rather than a feed's poll, and runs no
    * rollups. The federation service bundles the contributions API for its
-   * inbox only: it issues no grants, serves no reviewer, lands no crowd
+   * inbox only: it issues no grants, serves no reviewer, trusts no relay, lands no crowd
    * report of its own and runs no sweep, and downloads no feed.
    */
   const unreached: Record<string, readonly string[]> = {
@@ -227,6 +220,8 @@ describe("service manifests on OpenMapX's config model", () => {
       "OPENCONDITIONS_LATEST_CACHE_MB",
       "OPENCONDITIONS_MAX_FEED_BYTES",
       "OPENCONDITIONS_MAX_OBSERVATIONS_PER_POLL",
+      "OPENCONDITIONS_RELAY_ENROLL_LIMIT_PER_MINUTE",
+      "OPENCONDITIONS_RELAY_TOKEN",
       "OPENCONDITIONS_REVIEWER_TOKEN",
       "OPENCONDITIONS_ROLLUP_DAILY_DAYS",
       "OPENCONDITIONS_ROLLUP_HOURLY_DAYS",
@@ -339,17 +334,19 @@ describe("service manifests on OpenMapX's config model", () => {
     }
   });
 
-  test("contributions-api: its database URL, secrets key, grant secret and reviewer token are vault secrets", () => {
+  test("contributions-api: its database URL, secrets key, grant secret, reviewer token and relay token are vault secrets", () => {
     const m = manifest("contributions-api");
     expect(m.container.environment).toEqual({ PORT: "4200", HOST: "0.0.0.0" });
     expect(secrets(m).sort()).toEqual([
       "DATABASE_URL",
       "OPENCONDITIONS_GRANT_SECRET",
+      "OPENCONDITIONS_RELAY_TOKEN",
       "OPENCONDITIONS_REVIEWER_TOKEN",
       "OPENCONDITIONS_SECRETS_KEY",
     ]);
     const expected = {
       OPENCONDITIONS_INSTANCE_ID: "",
+      OPENCONDITIONS_RELAY_ENROLL_LIMIT_PER_MINUTE: "",
       OPENCONDITIONS_SCHEMA_WAIT_TIMEOUT_MS: "",
       OPENCONDITIONS_ISSUER_NAME: "",
       OPENCONDITIONS_CROSS_VALIDATE_SWEEP: "",
@@ -383,5 +380,97 @@ describe("service manifests on OpenMapX's config model", () => {
       services: { service: string }[];
     };
     expect(extension.services.map((s) => s.service)).not.toContain(manifest("federation").id);
+  });
+});
+
+describe("OpenMapX's community manifest rules", () => {
+  const extension = JSON.parse(readFileSync(new URL("extension.json", repo), "utf8")) as Record<
+    string,
+    unknown
+  > & { services: { service: string }[] };
+  const ID = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+  const SEMVER =
+    /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
+  const all = (): [string, Record<string, unknown>][] => [
+    ["extension.json", extension],
+    ...manifests.map(
+      ([dir, m]) =>
+        [`services/${dir}/service.json`, m as unknown as Record<string, unknown>] as [
+          string,
+          Record<string, unknown>,
+        ],
+    ),
+  ];
+
+  test.each(all())("%s declares platform 1.0, a semver version and a valid id", (_path, m) => {
+    expect(m["platform"]).toBe("1.0");
+    expect(m["version"]).toMatch(SEMVER);
+    expect(m["id"]).toMatch(ID);
+    expect((m["id"] as string).length).toBeLessThanOrEqual(48);
+  });
+
+  test.each(manifests)("services/%s/service.json is labelled community", (_dir, m) => {
+    expect((m as unknown as { quality: string }).quality).toBe("community");
+  });
+
+  test.each(manifests)(
+    "services/%s/service.json names its capabilities and data types under the openconditions vendor",
+    (_dir, m) => {
+      const raw = m as unknown as {
+        provides?: (string | { capability: string })[];
+        produces?: { type: string }[];
+        consumes?: { type: string }[];
+      };
+      const names = [
+        ...(raw.provides ?? []).map((p) => (typeof p === "string" ? p : p.capability)),
+        ...(raw.produces ?? []).map((p) => p.type),
+        ...(raw.consumes ?? []).map((c) => c.type),
+      ];
+      for (const name of names) expect(name).toMatch(/^openconditions\/[a-z0-9]+(-[a-z0-9]+)*$/);
+    },
+  );
+
+  test("the extension's licence is the licence of every service it installs", () => {
+    for (const { service } of extension.services) {
+      const found = manifests.find(([, m]) => m.id === service);
+      expect(found, service).toBeDefined();
+      expect((found![1] as unknown as { license: string }).license).toBe(extension["license"]);
+    }
+    expect(extension["license"]).toBe("AGPL-3.0-or-later");
+  });
+
+  // OpenMapX applies a configuration only once every enabled service has a
+  // value or a stored secret for each key its schema requires, and names the
+  // missing ones; a service not enabled is not held to them. Each list is
+  // exactly what the service refuses to start without.
+  const required: Record<string, string[]> = {
+    ingest: ["DATABASE_URL", "OPENCONDITIONS_SECRETS_KEY", "OPENCONDITIONS_INSTANCE_ID"],
+    "ingest-heavy": [
+      "DATABASE_URL",
+      "OPENCONDITIONS_SECRETS_KEY",
+      "OPENCONDITIONS_INSTANCE_ID",
+      "OPENCONDITIONS_INGEST_FEEDS",
+    ],
+    "contributions-api": [
+      "DATABASE_URL",
+      "OPENCONDITIONS_SECRETS_KEY",
+      "OPENCONDITIONS_GRANT_SECRET",
+      "OPENCONDITIONS_REVIEWER_TOKEN",
+      "OPENCONDITIONS_INSTANCE_ID",
+    ],
+    // The secrets key is needed only when federation is enabled.
+    federation: ["DATABASE_URL", "OPENCONDITIONS_INSTANCE_ID"],
+  };
+
+  test.each(manifests)(
+    "services/%s/service.json requires exactly the settings the service cannot start without",
+    (dir, m) => {
+      expect(m.configSchema?.required).toEqual(required[dir]);
+      for (const key of required[dir] ?? []) expect(properties(m), key).toHaveProperty(key);
+    },
+  );
+
+  test("every OpenConditions service manifest is covered", () => {
+    expect(manifests.map(([dir]) => dir).sort()).toEqual(Object.keys(required).sort());
   });
 });

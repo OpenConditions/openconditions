@@ -68,6 +68,7 @@ const CONTRIBUTIONS_GRANTS = [
     "feature_canonical",
     "feature_component",
     "federation_subscription",
+    "instance_identity",
     "observation",
     "observation_rollup_progress",
     "offer",

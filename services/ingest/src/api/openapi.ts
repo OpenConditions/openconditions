@@ -229,6 +229,76 @@ export const API_ROUTES: readonly ApiRoute[] = [
   },
 ];
 
+const PublishBbox = z
+  .string()
+  .describe("west,south,east,north in WGS84 degrees, west not greater than east");
+const PublishAt = z
+  .string()
+  .describe("The ISO 8601 instant the effects are evaluated at; default now");
+
+/** How a routing or speed product credits its sources, appended to its summary. */
+const LICENSE_HEADER =
+  " `X-Data-License` lists the licences of the rows served (`unknown` when there are none).";
+
+/**
+ * The routing, speed and status products: every route here is registered by
+ * `registerPublishRoutes`. Each reads in the request's scope: the public
+ * scope drops a restricted source's rows and rows whose licence is not
+ * public, the operator scope serves every row.
+ */
+export const PUBLISH_ROUTES: readonly ApiRoute[] = [
+  {
+    path: "/feeds/status",
+    operationId: "getFeedStatus",
+    summary:
+      "The feeds of the catalogue with their operational status: `{ schemaVersion, instanceId, collectedAt, graph, feeds }`. `graph` is the road graph's `{ generation, status, regions }` (`status` one of `ready`, `partial`, `missing`, `unknown`). Each feed has its id, name, domain, credential flags (`hasCredentials`, `missingEnv`), `selectionState`, cadence, freshness window and rights, its durable poll status, and `binding` metrics where its events bind to the road graph; discovered catalogue children and disabled feeds (`state: disabled`, `disabledReason`) are listed too.",
+    produces: ["application/json"],
+  },
+  {
+    path: "/valhalla/exclusions.json",
+    operationId: "getValhallaExclusions",
+    summary:
+      "The bound closures in effect at `at` inside `bbox` as Valhalla exclusions, with the routing evidence they come from (`routing_evidence`, as `/segments/conditions.json` serves it). Only `exact` and `likely` bindings are read. `Cache-Control` lasts until the earliest freshness, expiry, validity end or transition of a served condition, at most 90 s." +
+      LICENSE_HEADER,
+    query: z.object({ bbox: PublishBbox, at: PublishAt.optional() }),
+    produces: ["application/json"],
+  },
+  {
+    path: "/segments.geojson",
+    operationId: "listSegmentsGeoJson",
+    summary:
+      "The directed road segments inside `bbox` (at most 20,000) as a GeoJSON FeatureCollection, each with its current fused speed, level of service and confidence where it has one, and per field the sources and contributors behind it. In the public scope a speed any restricted source contributed to is withheld: the segment keeps its geometry without speed properties." +
+      LICENSE_HEADER,
+    query: z.object({ bbox: PublishBbox }),
+    produces: ["application/geo+json"],
+  },
+  {
+    path: "/segments/speed.csv",
+    operationId: "getSegmentSpeedCsv",
+    summary:
+      "One CSV row per directed segment that has a current fused speed: OSM way id, direction, current and free-flow speed and level of service, for routing. A segment without a speed is left out, and in the public scope so is a speed any restricted source contributed to." +
+      LICENSE_HEADER,
+    produces: ["text/csv"],
+  },
+  {
+    path: "/segments/profiles.json",
+    operationId: "getSegmentProfiles",
+    summary:
+      "The weekly speed profile of every directed segment that has one: `[{ way_id, dir, free_flow_kph, constrained_kph, hourly, lineage_version, native_sources, contributors, lineage_complete }]`. `hourly[dow * 24 + hour]` is the speed in km/h (null where no bucket exists), Sunday first, in the segment's region-local time. In the public scope a segment is left out whole when any of its buckets was built from a restricted source or from no recorded source." +
+      LICENSE_HEADER,
+    produces: ["application/json"],
+  },
+  {
+    path: "/segments/conditions.json",
+    operationId: "getSegmentConditions",
+    summary:
+      "The bound effects in effect at `at`, optionally inside `bbox`, one row per effect keyed by directed OSM way spans, with each row's routing evidence (source, licence, attribution, rights, freshness and validity). Only `exact` and `likely` bindings are read." +
+      LICENSE_HEADER,
+    query: z.object({ bbox: PublishBbox.optional(), at: PublishAt.optional() }),
+    produces: ["application/json"],
+  },
+];
+
 /** A zod schema's request-side JSON Schema, without the meta keys a parameter does not take. */
 function inputSchema(schema: z.ZodType): Record<string, unknown> {
   const { $schema: _, ...rest } = z.toJSONSchema(schema, { io: "input", unrepresentable: "any" });
@@ -262,10 +332,13 @@ function parameters(route: ApiRoute): unknown[] {
 /** The record API's version: it changes with the API, not with each release of the service. */
 export const API_VERSION = "1.0.0";
 
-/** The OpenAPI 3.1 document of the record API, generated from the routes' own request schemas. */
+/**
+ * The OpenAPI 3.1 document of the record API and the routing, speed and
+ * status products, generated from the record routes' own request schemas.
+ */
 export function openApiDocument() {
   const paths: Record<string, unknown> = {};
-  for (const route of API_ROUTES) {
+  for (const route of [...API_ROUTES, ...PUBLISH_ROUTES]) {
     paths[route.path] = {
       get: {
         operationId: route.operationId,
@@ -307,7 +380,7 @@ export function openApiDocument() {
       title: "OpenConditions",
       version: API_VERSION,
       description:
-        "Road conditions as model records. Collections are paginated by a keyset cursor: a walk is complete when `next` is null. TraFF is instead one complete bounded feed, or 413 when filters must be narrowed. A request without a bearer token reads in the public scope, which withholds restricted sources and licences that are not public; the operator token reads in the operator scope, which withholds nothing. The emitters always read in the public scope.",
+        "Road conditions as model records, and the routing, speed and status products built from them. Collections are paginated by a keyset cursor: a walk is complete when `next` is null. TraFF is instead one complete bounded feed, or 413 when filters must be narrowed. A request without a bearer token reads in the public scope, which withholds restricted sources and licences that are not public; the operator token reads in the operator scope, which withholds nothing. The emitters always read in the public scope. Paths never break: a path keeps its meaning, and its responses gain members but never lose or change one. A breaking change gets a new path, and the old path keeps its contract.",
     },
     components: {
       securitySchemes: {

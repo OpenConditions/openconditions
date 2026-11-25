@@ -9,6 +9,7 @@
  * a rolled-back document serving only retired unpinned keys, or a document
  * served from a different actor URL is rejected.
  */
+import { isInstanceId } from "@openconditions/model";
 import type { ActorCoverage, ActorDocument } from "./actor.js";
 import { rawEd25519FromMultibase } from "./multibase.js";
 import type { PeerPull, PeerSubscribe } from "./peer-subscribe.js";
@@ -103,8 +104,8 @@ export function loadPeers(source: string | unknown): PeerRecord[] {
     const record = entry as Record<string, unknown>;
 
     const instanceId = record["instanceId"];
-    if (typeof instanceId !== "string" || instanceId.length === 0) {
-      fail(index, "instanceId must be a non-empty string");
+    if (typeof instanceId !== "string" || !isInstanceId(instanceId)) {
+      fail(index, "instanceId must be an instance id, a lower-case DNS name");
     }
     if (seen.has(instanceId)) fail(index, `duplicate instanceId "${instanceId}"`);
     seen.add(instanceId);

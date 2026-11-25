@@ -8,6 +8,8 @@ import {
   credentialsDocFor,
   envExampleFor,
   FEEDS_PROCESS_DESCRIPTIONS,
+  FEEDS_PROCESS_REQUIRED_FIELDS,
+  REQUIRED_SERVICE_FIELDS,
 } from "./lib/gen-credentials-lib.js";
 
 export interface GenPaths {
@@ -34,9 +36,13 @@ interface ServiceJson {
 function nextServiceJson(
   svc: ServiceJson,
   catalog: CredentialCatalog,
+  required: readonly string[],
   descriptions: Readonly<Record<string, string>> = {},
 ): string {
   const properties = configSchemaPropertiesFor(catalog);
+  for (const key of required) {
+    if (properties[key] === undefined) throw new Error(`no config field ${key} to require`);
+  }
   for (const [key, description] of Object.entries(descriptions)) {
     const field = properties[key] as Record<string, unknown> | undefined;
     if (field === undefined) throw new Error(`no config field ${key} to describe`);
@@ -51,7 +57,7 @@ function nextServiceJson(
   }
   const next = {
     ...svc,
-    configSchema: { type: "object", ...(svc.configSchema ?? {}), properties },
+    configSchema: { type: "object", ...(svc.configSchema ?? {}), required, properties },
   };
   return `${JSON.stringify(next, null, 2)}\n`;
 }
@@ -77,6 +83,13 @@ DATABASE_URL=postgres://openconditions:openconditions@localhost:5432/openconditi
 # your recovery set and out of database backups.
 # OPENCONDITIONS_SECRETS_KEY_FILE may name a file holding it instead.
 OPENCONDITIONS_SECRETS_KEY=
+
+# Instance id (REQUIRED): a lower-case DNS name, usually the instance's public
+# host name, e.g. maps.example.org. Set it once, before the first start, to the
+# same value on every OpenConditions service of the instance. The first ingest
+# start seals it in the database, and every service refuses another id; it is
+# part of every record id, so it never changes.
+OPENCONDITIONS_INSTANCE_ID=
 
 # HTTP server (optional; defaults shown)
 PORT=4100
@@ -182,14 +195,14 @@ export function applyOrCheck(
   const svc = JSON.parse(readFileSync(paths.serviceJson, "utf8")) as ServiceJson;
   const targets: [string, string][] = [
     [paths.envExample, nextEnvExample(safeRead(paths.envExample), catalog)],
-    [paths.serviceJson, nextServiceJson(svc, catalog)],
+    [paths.serviceJson, nextServiceJson(svc, catalog, REQUIRED_SERVICE_FIELDS)],
     [paths.doc, credentialsDocFor(catalog, svc.id)],
   ];
   if (paths.feedsServiceJson) {
     const feeds = JSON.parse(readFileSync(paths.feedsServiceJson, "utf8")) as ServiceJson;
     targets.push([
       paths.feedsServiceJson,
-      nextServiceJson(feeds, catalog, FEEDS_PROCESS_DESCRIPTIONS),
+      nextServiceJson(feeds, catalog, FEEDS_PROCESS_REQUIRED_FIELDS, FEEDS_PROCESS_DESCRIPTIONS),
     ]);
   }
   const drift: string[] = [];

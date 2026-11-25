@@ -42,6 +42,28 @@ describe("record ids", () => {
     expect(isInstanceId("-local")).toBe(false);
   });
 
+  it("takes a configured instance id only as a lower-case DNS name", () => {
+    expect(isInstanceId("openmapx.com")).toBe(true);
+    expect(isInstanceId("node-a")).toBe(true);
+    expect(isInstanceId(`${"a".repeat(63)}.example.org`)).toBe(true);
+    for (const bad of [
+      "",
+      "a..b",
+      "a-.b",
+      "a.-b",
+      ".a",
+      "a.",
+      "a_b",
+      "a:b",
+      `${"a".repeat(64)}.org`,
+    ]) {
+      expect(isInstanceId(bad), bad).toBe(false);
+    }
+    const long = Array.from({ length: 64 }, () => "abc").join(".");
+    expect(long.length).toBeGreaterThan(253);
+    expect(isInstanceId(long)).toBe(false);
+  });
+
   it("keeps canonicalId = sha256([namespace, localId]) with the namespace normalised", () => {
     expect(canonicalIdOf(" DE-NDW ", "x")).toBe(canonicalIdOf("de-ndw", "x"));
     expect(canonicalIdOf("a:b", "c")).not.toBe(canonicalIdOf("a", "b:c"));

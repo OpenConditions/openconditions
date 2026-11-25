@@ -16,7 +16,7 @@
  * peers and removes its earlier outbox entries, and its fact is recorded.
  */
 
-import { type RevisionedClass, resolveInstanceId } from "@openconditions/core/server";
+import type { RevisionedClass } from "@openconditions/core/server";
 import type { Registry } from "@openconditions/model";
 import { tombstoneRecords, updateCanonicalView } from "@openconditions/storage";
 import type postgres from "postgres";
@@ -65,7 +65,7 @@ export async function eraseRecord(
   registry: Registry,
   ref: { class: RevisionedClass; id: string },
   now: string,
-  instanceId: string = resolveInstanceId(),
+  instanceId: string,
 ): Promise<"erased" | "already erased" | "not found"> {
   return sql.begin(async (tx) => {
     await lockRecord(tx, ref.class, ref.id);

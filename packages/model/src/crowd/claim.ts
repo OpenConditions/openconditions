@@ -14,6 +14,14 @@ import { majorOf } from "../registry/define.js";
  * is plain JSON.
  */
 export const CLAIM_CLASSES = ["situation", "observation"] as const;
+
+/**
+ * The signed-claim format version: every report claim and sub-claim body
+ * carries it as its top-level member `v`, inside the signed bytes, and a
+ * claim of another version is refused. A change to what a claim's bytes mean
+ * takes a new version.
+ */
+export const CLAIM_VERSION = 1;
 export const SUB_CLAIM_TYPES = ["confirm", "negate", "flag"] as const;
 
 /** Anti-replay token: 16–64 characters of [A-Za-z0-9_-]. */
@@ -27,6 +35,7 @@ type Text = { lang: string; text: string; machine?: true }[];
 
 /** "Something is happening here": a situation the reporter sees. */
 export interface SituationClaim {
+  v: typeof CLAIM_VERSION;
   claimClass: "situation";
   kind: string;
   type: string;
@@ -44,6 +53,7 @@ export interface SituationClaim {
 
 /** "This is the value now": a reading of a property of a feature or a place. */
 export interface ObservationClaim {
+  v: typeof CLAIM_VERSION;
   claimClass: "observation";
   subject: { featureId: string; componentKey?: string } | { location: LocationRef };
   property: string;
@@ -65,6 +75,7 @@ export type ReportClaim = SituationClaim | ObservationClaim;
 
 /** A reporter's reaction to any record: it is still there, it is gone, or it is wrong. */
 export interface SubClaimBody {
+  v: typeof CLAIM_VERSION;
   subject: RecordRef;
   claimType: (typeof SUB_CLAIM_TYPES)[number];
   /** Why a record is flagged. */
@@ -95,6 +106,7 @@ export function claimSchema(registry: Registry): z.ZodType<ReportClaim> {
 
   const situation = z
     .strictObject({
+      v: z.literal(CLAIM_VERSION),
       claimClass: z.literal("situation"),
       kind: enumOrNever(crowdKinds.map((e) => e.code)),
       type: z.string().min(1),
@@ -145,6 +157,7 @@ export function claimSchema(registry: Registry): z.ZodType<ReportClaim> {
 
   const observation = z
     .strictObject({
+      v: z.literal(CLAIM_VERSION),
       claimClass: z.literal("observation"),
       subject: z.union([
         z.strictObject({
@@ -208,6 +221,7 @@ export function validateClaim(registry: Registry, claim: unknown): ValidationRes
 }
 
 export const SubClaimBodySchema = z.strictObject({
+  v: z.literal(CLAIM_VERSION),
   subject: z
     .strictObject({
       class: z.enum(["feature", "situation", "observation", "offer"]),

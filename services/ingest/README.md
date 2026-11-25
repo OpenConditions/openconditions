@@ -14,8 +14,10 @@ road-surface sensor and their `weather.*` and `road.*` readings, maintenance
 tracking into anonymous `vehicle.position` readings, and border feeds into
 crossings with a lane group per queue and its `border.wait` reading, and
 writes them to the shared PostGIS `conditions` schema. Also serves the public,
-rate-limited record API (described at `GET /openapi.json`) and the routing
-outputs (`/segments/conditions.json`, Valhalla exclusions):
+rate-limited record API and the routing outputs (`/segments/conditions.json`,
+Valhalla exclusions), both described at `GET /openapi.json`. Paths never break:
+a breaking change gets a new path, and the old one keeps its contract (see
+[the public API](../../README.md#public-api)):
 
 - situations: `/situations` (JSON, `.geojson`, `.jsonld`), `/situations/{id}`,
   `/traff.xml`, `/datex2/situations.xml`, and the `/stream` of server-sent events;
@@ -104,7 +106,11 @@ escapes it.
     `OPENCONDITIONS_OPERATOR_TOKEN`, run
     `pnpm openmapx services start api data-manager` on the OpenMapX host;
     the admin panel never recreates `api`.
-- **Settings**: every other knob (`OPENCONDITIONS_INSTANCE_ID`, the crowd
+- **Instance id**: `OPENCONDITIONS_INSTANCE_ID`, required, a lower-case DNS
+  name set once before the first start and never changed. The first ingest
+  process seals it in the database, and every other service needs the same
+  value; see [the instance id](../../README.md#the-instance-id).
+- **Settings**: every other knob (the crowd
   credit `/sources` states, `OPENCONDITIONS_CROWD_LICENSE` and
   `OPENCONDITIONS_CROWD_SOURCE_URI`, which must equal the contributions
   API's, the rate

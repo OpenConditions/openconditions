@@ -235,6 +235,7 @@ async function post(report: SignedReport, grant: string) {
 
 const claimOf = (over: Rec) =>
   ({
+    v: 1,
     claimClass: "observation",
     property: "charging.evse_status",
     result: { type: "category", value: "out_of_order", vocabulary: "evse_status" },
@@ -439,6 +440,7 @@ describe("a charge point two sources describe", () => {
         payload: {
           subClaim: await signSubClaim(
             {
+              v: 1,
               subject: { class: "observation", id },
               claimType: action,
               reportedAt: clock.now,
@@ -604,6 +606,7 @@ describe("observation report submission quotas", () => {
         payload: {
           subClaim: await signSubClaim(
             {
+              v: 1,
               subject: { class: "observation", id },
               claimType: action,
               reportedAt: clock.now,
@@ -622,6 +625,7 @@ describe("observation report submission quotas", () => {
       payload: {
         subClaim: await signSubClaim(
           {
+            v: 1,
             subject: { class: "observation", id: ids[0]! },
             claimType: "flag",
             reportedAt: clock.now,

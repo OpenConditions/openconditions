@@ -6,6 +6,7 @@ const messages = (r: ReturnType<typeof validateClaim>) =>
   r.ok ? [] : r.issues.map((i) => `${i.path.join(".")}: ${i.message}`);
 
 const priceClaim = (overrides: Record<string, unknown> = {}) => ({
+  v: 1,
   claimClass: "observation",
   subject: { featureId: "oc:feature:es-minetur:4375", componentKey: "e5" },
   property: "fuel.price",
@@ -84,6 +85,17 @@ describe("report claims", () => {
     expect(validateClaim(crowdRegistry, accidentClaim({ nonce: "short" })).ok).toBe(false);
   });
 
+  it("takes only the claim version 1, as its top-level member v", () => {
+    const { v: _v, ...unversioned } = accidentClaim();
+    expect(messages(validateClaim(crowdRegistry, unversioned))).toEqual([
+      expect.stringMatching(/^v: /),
+    ]);
+    expect(messages(validateClaim(crowdRegistry, accidentClaim({ v: 2 })))).toEqual([
+      expect.stringMatching(/^v: /),
+    ]);
+    expect(validateClaim(crowdRegistry, priceClaim({ v: "1" })).ok).toBe(false);
+  });
+
   it("validates an observation claim's result and qualifiers as its property's observations", () => {
     expect(messages(validateClaim(crowdRegistry, priceClaim()))).toEqual([]);
     expect(
@@ -141,6 +153,7 @@ describe("report claims", () => {
 
 describe("sub-claims", () => {
   const body = {
+    v: 1,
     subject: { class: "observation", id: "oc:observation:oc.example.org:abc" },
     claimType: "negate",
     reportedAt: "2026-10-01T11:58:00Z",
@@ -164,6 +177,9 @@ describe("sub-claims", () => {
       false,
     );
     expect(validateSubClaim({ ...body, claimType: "like" }).ok).toBe(false);
+    const { v: _v, ...unversioned } = body;
+    expect(validateSubClaim(unversioned).ok).toBe(false);
+    expect(validateSubClaim({ ...body, v: 2 }).ok).toBe(false);
     expect(
       validateSubClaim({
         ...body,

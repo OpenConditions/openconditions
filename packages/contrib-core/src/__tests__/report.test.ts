@@ -16,6 +16,7 @@ const registry = productionRegistry();
 
 function makeClaim(overrides: Record<string, unknown> = {}): ReportClaim {
   return {
+    v: 1,
     claimClass: "situation",
     kind: "incident",
     type: "obstruction",
@@ -76,6 +77,23 @@ describe("signReport / verifyReport", () => {
     expect(report.keyId).toBe(key.keyId);
     expect(report.pubJwk).toStrictEqual(key.publicJwk);
     await expect(verify(report)).resolves.toStrictEqual({ ok: true, keyId: key.keyId });
+  });
+
+  it("signs the claim version inside the signed bytes and refuses a claim without it or of another", async () => {
+    const key = await generateReporterKey();
+    const claim = makeClaim();
+    expect(new TextDecoder().decode(canonicalClaimBytes(claim))).toContain('"v":1');
+    const { v: _v, ...unversioned } = claim;
+    await expect(sign(unversioned as unknown as ReportClaim, key)).rejects.toThrow(/claim\.v/);
+    await expect(sign(makeClaim({ v: 2 }), key)).rejects.toThrow(/claim\.v/);
+    // A signed claim whose version is changed afterwards fails the schema before the signature.
+    const report = await sign(claim, key);
+    const bumped = await verify({
+      ...report,
+      claim: { ...report.claim, v: 2 } as unknown as ReportClaim,
+    });
+    expect(bumped.ok).toBe(false);
+    expect(bumped.error).toMatch(/claim\.v/);
   });
 
   it("verifies with a server-cached knownJwk when pubJwk is absent", async () => {

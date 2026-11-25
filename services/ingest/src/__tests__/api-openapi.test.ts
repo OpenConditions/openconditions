@@ -3,8 +3,11 @@ import { productionRegistry } from "@openconditions/model-registry";
 import Fastify from "fastify";
 import type postgres from "postgres";
 import { describe, expect, it } from "vitest";
-import { API_ROUTES, openApiDocument } from "../api/openapi.js";
+import { API_ROUTES, openApiDocument, PUBLISH_ROUTES } from "../api/openapi.js";
 import { registerApiRoutes } from "../api/routes.js";
+import { FeedStatusStore } from "../feed-status.js";
+import { registerPublishRoutes } from "../publish-routes.js";
+import { REPO_CATALOG } from "./helpers/catalog.js";
 
 const CHECKED_IN = new URL("../../openapi.json", import.meta.url);
 
@@ -44,6 +47,66 @@ describe("the OpenAPI document", () => {
     );
     expect([...new Set(registered)].sort()).toEqual([...documented].sort());
     await app.close();
+  });
+
+  it("documents exactly the routing, speed and status routes the service publishes", async () => {
+    const app = Fastify();
+    const registered: string[] = [];
+    app.addHook("onRoute", (route) => {
+      if (route.method === "GET" || (Array.isArray(route.method) && route.method.includes("GET"))) {
+        registered.push(route.url);
+      }
+    });
+    registerPublishRoutes(app, {} as postgres.Sql, new FeedStatusStore(), REPO_CATALOG);
+    await app.ready();
+    expect([...new Set(registered)].sort()).toEqual(PUBLISH_ROUTES.map((r) => r.path).sort());
+    expect(PUBLISH_ROUTES.map((r) => r.path).sort()).toEqual([
+      "/feeds/status",
+      "/segments.geojson",
+      "/segments/conditions.json",
+      "/segments/profiles.json",
+      "/segments/speed.csv",
+      "/valhalla/exclusions.json",
+    ]);
+    await app.close();
+  });
+
+  it("documents the publish routes' filters, media types and scope", () => {
+    const doc = openApiDocument();
+    const op = (path: string) =>
+      (
+        doc.paths[path] as {
+          get: {
+            parameters: { name: string; required: boolean }[];
+            security: Record<string, string[]>[];
+            responses: Record<string, { content?: Record<string, unknown> }>;
+          };
+        }
+      ).get;
+    const required = (path: string) =>
+      op(path)
+        .parameters.filter((p) => p.required)
+        .map((p) => p.name);
+    expect(required("/valhalla/exclusions.json")).toEqual(["bbox"]);
+    expect(op("/valhalla/exclusions.json").parameters.map((p) => p.name)).toEqual(["bbox", "at"]);
+    expect(required("/segments.geojson")).toEqual(["bbox"]);
+    expect(required("/segments/conditions.json")).toEqual([]);
+    expect(op("/segments/conditions.json").parameters.map((p) => p.name)).toEqual(["bbox", "at"]);
+    expect(op("/segments/speed.csv").parameters).toEqual([]);
+    expect(Object.keys(op("/segments/speed.csv").responses["200"]!.content!)).toEqual(["text/csv"]);
+    expect(Object.keys(op("/segments.geojson").responses["200"]!.content!)).toEqual([
+      "application/geo+json",
+    ]);
+    for (const route of PUBLISH_ROUTES) {
+      expect(op(route.path).security, route.path).toEqual([{}, { operatorToken: [] }]);
+      expect(op(route.path).responses["429"], route.path).toBeDefined();
+    }
+  });
+
+  it("states that paths never break and that a breaking change takes a new path", () => {
+    const { description } = openApiDocument().info;
+    expect(description).toMatch(/Paths never break/);
+    expect(description).toMatch(/A breaking change gets a new path/);
   });
 
   it("describes the feature, offer and observation routes with their own filters", () => {

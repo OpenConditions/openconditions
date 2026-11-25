@@ -266,6 +266,7 @@ export function crowdReportDraft(nonce: string, now = WRITTEN_AT): Rec {
     registry,
     {
       claim: {
+        v: 1,
         claimClass: "situation",
         kind: "incident",
         type: "accident",

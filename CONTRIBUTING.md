@@ -41,8 +41,13 @@ Requirements:
 ```bash
 pnpm install
 
-# Run the ingest service against a local PostGIS (any reachable PostGIS works):
+# Run the ingest service against a local PostGIS (any reachable PostGIS works),
+# with a secrets key kept in a file Git ignores and a development instance id;
+# the database is sealed to both on the first start:
+[ -f .secrets-key ] || (umask 077 && openssl rand -hex 32 > .secrets-key)
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/openconditions \
+OPENCONDITIONS_SECRETS_KEY_FILE="$PWD/.secrets-key" \
+OPENCONDITIONS_INSTANCE_ID=dev.localhost \
   pnpm --filter @openconditions/ingest dev
 
 # Work on the Python resolver:

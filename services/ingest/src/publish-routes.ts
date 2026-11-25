@@ -293,6 +293,7 @@ export function registerFeedStatusRoute(
   sourceStatus?: SourceStatusReader,
   graphStatus?: FeedGraphStatusReader,
 ): void {
+  // The service validated it at boot, before any route was registered.
   const instanceId = resolveInstanceId();
   app.get("/feeds/status", async () => {
     const collectedAt = new Date().toISOString();

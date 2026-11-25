@@ -1,10 +1,11 @@
+import { sealInstanceId } from "@openconditions/core/server";
 import { isPeerBlocked } from "@openconditions/federation";
 import { productionRegistry } from "@openconditions/model-registry";
 import { syncSources } from "@openconditions/storage";
 import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { type AdminDeps, runAdminCommand } from "../ops/admin.js";
+import { type AdminDeps, runAdminCommand, sealedInstanceId } from "../ops/admin.js";
 import { OWN_INSTANCE, ownSituation, situationId, storeSituation } from "./record-fixtures.js";
 
 let db: TestDatabase;
@@ -118,6 +119,23 @@ describe("the federation admin command", () => {
       const { code, lines } = await run(...args);
       expect(code).toBe(2);
       expect(lines[0]).toMatch(/^usage: federation-admin/);
+    }
+  });
+
+  it("runs as the sealed instance id only", async () => {
+    const env = { OPENCONDITIONS_INSTANCE_ID: OWN_INSTANCE };
+    await expect(sealedInstanceId(sql, env)).rejects.toThrow(
+      /conditions\.instance_identity is empty/,
+    );
+    await sealInstanceId(sql, OWN_INSTANCE);
+    try {
+      await expect(sealedInstanceId(sql, env)).resolves.toBe(OWN_INSTANCE);
+      await expect(
+        sealedInstanceId(sql, { OPENCONDITIONS_INSTANCE_ID: "other.example.org" }),
+      ).rejects.toThrow(/differs from/);
+      await expect(sealedInstanceId(sql, {})).rejects.toThrow(/is required/);
+    } finally {
+      await sql`TRUNCATE conditions.instance_identity`;
     }
   });
 });

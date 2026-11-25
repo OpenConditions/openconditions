@@ -18,6 +18,10 @@ default. Packages that carry a different license have their own `LICENSE` file
 and a matching `license` field in their `package.json` (or `pyproject.toml`);
 that per-package license takes precedence for that package.
 
+The OpenMapX extension bundle (`extension.json`) installs only the ingest and
+contributions services, so it declares their licence, AGPL-3.0-or-later, and
+every service manifest declares the licence of the service it runs.
+
 The third-party Docker images OpenConditions runs alongside (PostGIS, and — when
 self-hosting OpenMapX — Valhalla, Redis, …) run as **separate containers
 communicating over the network**. They are not linked into OpenConditions' code

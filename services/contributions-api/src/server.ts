@@ -11,6 +11,7 @@
  */
 
 import {
+  CLAIM_VERSION,
   checkGeometryPlausibility,
   type SignedReport,
   type SignedSubClaim,
@@ -21,6 +22,7 @@ import { type GeoJsonGeometry, reliabilityLowerBound } from "@openconditions/cor
 import {
   resolveInstanceId,
   secretsKeyFromEnv,
+  verifyInstanceId,
   verifySecretsKeyCheck,
 } from "@openconditions/core/server";
 import { resolveCrowdCredit } from "@openconditions/ingest-framework";
@@ -54,6 +56,12 @@ import { TokenVerifier } from "./issuer/verify.js";
 import { ClaimRefusedError, GeometryInvalidError, landReport } from "./landing/land.js";
 import { ConflictingReportError, landObservationReport } from "./landing/observation.js";
 import { isPoliceCategoryEnabled, isPoliceClaim } from "./policy/police.js";
+import {
+  RELAY_BUCKET,
+  RELAY_WARNING_INTERVAL_MS,
+  relayStatus,
+  resolveRelayTrust,
+} from "./relay.js";
 import { makeRequireReviewer, resolveReviewerToken } from "./reviewer/auth.js";
 import { blockKey, listBlocked, unblockKey } from "./reviewer/blocklist.js";
 import { acceptSituation, rejectSituation } from "./reviewer/decide.js";
@@ -158,7 +166,22 @@ interface SubClaimBody {
 
 const SUB_CLAIM_ACTIONS = new Set(["confirm", "negate", "flag"]);
 
-/** Minimal per-IP token bucket for the enrollment endpoint. */
+/** The stable code of a signed claim whose `v` is missing or not one this service verifies. */
+export const CLAIM_VERSION_UNSUPPORTED = "CLAIM_VERSION_UNSUPPORTED";
+
+/** Whether a signed body names the claim version this service verifies; checked before the signature. */
+function hasClaimVersion(body: unknown): boolean {
+  return body !== null && typeof body === "object" && (body as { v?: unknown }).v === CLAIM_VERSION;
+}
+
+function unsupportedClaimVersion(label: string): { error: string; code: string } {
+  return {
+    error: `${label}.v must be ${CLAIM_VERSION}, the signed claim version this service verifies`,
+    code: CLAIM_VERSION_UNSUPPORTED,
+  };
+}
+
+/** Minimal keyed token bucket for the enrollment endpoint: per address, or the relay's. */
 class EnrollLimiter {
   private readonly buckets = new Map<string, { tokens: number; lastRefill: number }>();
 
@@ -167,16 +190,16 @@ class EnrollLimiter {
     private readonly windowMs: number,
   ) {}
 
-  allow(ip: string, nowMs: number): boolean {
+  allow(key: string, nowMs: number): boolean {
     if (this.buckets.size > 10_000) {
-      for (const [key, stale] of this.buckets) {
-        if (nowMs - stale.lastRefill > this.windowMs * 2) this.buckets.delete(key);
+      for (const [stored, stale] of this.buckets) {
+        if (nowMs - stale.lastRefill > this.windowMs * 2) this.buckets.delete(stored);
       }
     }
-    let bucket = this.buckets.get(ip);
+    let bucket = this.buckets.get(key);
     if (bucket === undefined) {
       bucket = { tokens: this.max, lastRefill: nowMs };
-      this.buckets.set(ip, bucket);
+      this.buckets.set(key, bucket);
     }
     const elapsed = nowMs - bucket.lastRefill;
     bucket.tokens = Math.min(this.max, bucket.tokens + (elapsed / this.windowMs) * this.max);
@@ -223,29 +246,56 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
   // production exactly like the grant secret.
   const reviewerToken = resolveReviewerToken(env, (msg) => attesterLog.warn(msg));
   const requireReviewer = makeRequireReviewer(reviewerToken);
+  // A set but short relay token, or a malformed relay limit, fails boot.
+  const relay = resolveRelayTrust(env);
 
-  // A key other than the one the ingest service sealed the check row with
-  // stops the boot; then every stored issuer key must open. An absent row is
-  // let through on purpose: the only callers are main.ts, which has already
-  // waited for the row with waitForSecretsKeyCheck, and tests that build the
+  // A key other than the one the ingest service sealed the check row with,
+  // or an instance id other than the sealed one, stops the boot; then every
+  // stored issuer key must open. An absent row is let through on purpose: the
+  // only callers are main.ts, which has already waited for both rows with
+  // waitForSecretsKeyCheck and waitForInstanceId, and tests that build the
   // server on a database no ingest service started on. None of the package's
   // entry points exposes this function, so no other path reaches it without
   // that wait.
   await verifySecretsKeyCheck(sql, secretsKey);
+  await verifyInstanceId(sql, instanceId);
   await assertIssuerKeysOpen(sql, secretsKey);
   await ensureIssuerKeys(sql, secretsKey, now(), issuerName);
 
   const verifier = new TokenVerifier({ issuerName, log: originLog });
   app.decorate("tokenVerifier", verifier);
 
+  // The only address-keyed limit: a relayed request is counted in the relay's
+  // bucket, since the relay forwards no client address (see relay.ts).
   const enrollLimiter = new EnrollLimiter(ATTESTER_POLICY.enrollRateLimitPerMinute, 60_000);
+  const relayEnrollLimiter =
+    relay === undefined ? undefined : new EnrollLimiter(relay.enrollLimitPerMinute, 60_000);
+  // A relay whose token differs from this service's is limited by its own
+  // address, for all its users together; say so, at most every ten minutes,
+  // naming neither token nor address.
+  let lastRelayMismatchWarning = Number.NEGATIVE_INFINITY;
 
   app.get("/status", async (_req, reply) => {
     return reply.send({ status: "ok", service: "openconditions-contributions-api" });
   });
 
   app.post<{ Body: EnrollBody }>("/contrib/enroll", async (req, reply) => {
-    if (!enrollLimiter.allow(req.ip, Date.now())) {
+    const nowMs = Date.now();
+    const relayed = relayStatus(req, relay);
+    if (
+      relayed === "other-bearer" &&
+      nowMs - lastRelayMismatchWarning >= RELAY_WARNING_INTERVAL_MS
+    ) {
+      lastRelayMismatchWarning = nowMs;
+      attesterLog.warn(
+        "an enrollment carried a bearer token other than OPENCONDITIONS_RELAY_TOKEN and was limited by its address: check that the relay's OPENCONDITIONS_RELAY_TOKEN equals this service's",
+      );
+    }
+    const allowed =
+      relayEnrollLimiter !== undefined && relayed === "relayed"
+        ? relayEnrollLimiter.allow(RELAY_BUCKET, nowMs)
+        : enrollLimiter.allow(req.ip, nowMs);
+    if (!allowed) {
       return reply.status(429).send({ error: "Too many enrollment attempts" });
     }
     const { pubJwk, proof } = req.body ?? {};
@@ -355,6 +405,9 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     }
     if (typeof report.keyId !== "string" || report.keyId.length === 0) {
       return reply.status(400).send({ error: "report.keyId is required" });
+    }
+    if (!hasClaimVersion(report.claim)) {
+      return reply.status(400).send(unsupportedClaimVersion("report.claim"));
     }
     const nowIso = now();
 
@@ -595,6 +648,9 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     }
     if (typeof subClaim.keyId !== "string" || subClaim.keyId.length === 0) {
       return reply.status(400).send({ error: "subClaim.keyId is required" });
+    }
+    if (!hasClaimVersion(subClaim)) {
+      return reply.status(400).send(unsupportedClaimVersion("subClaim"));
     }
     const nowIso = now();
 

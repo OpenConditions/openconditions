@@ -2,12 +2,13 @@
   "id": "openconditions-ingest-heavy",
   "name": "OpenConditions Ingest (heavy feeds)",
   "version": "0.8.1",
+  "platform": "1.0",
   "description": "Optional second OpenConditions ingest process, from the same image: it polls only the feeds its Feeds this process polls setting names (such as nl-ndw-flow and nl-ndw-charging), so their long parses and writes stop delaying the other feeds. It serves no API and runs no maintenance; openconditions-ingest does both and must leave these feeds to it (its Feeds left to another process setting).",
   "author": "OpenConditions",
   "license": "AGPL-3.0-or-later",
   "homepage": "https://openconditions.org",
   "documentation": "https://github.com/openconditions/openconditions/blob/main/services/ingest/README.md#a-second-ingest-process",
-  "quality": "community-verified",
+  "quality": "community",
   "container": {
     "image": "ghcr.io/openconditions/ingest",
     "tag": "0.8.1",
@@ -147,7 +148,7 @@
       "OPENCONDITIONS_EGRESS_ALLOWED_HOSTS": {
         "type": "string",
         "title": "Egress allowed private hosts",
-        "description": "Comma-separated hostnames the egress guard lets the service fetch although they resolve to private addresses, e.g. overpass for a self-hosted Overpass on the compose network. Empty: none.",
+        "description": "Comma-separated hostnames the egress guard lets the service fetch although they resolve to private addresses, e.g. openmapx-overpass for OpenMapX's Overpass service. Empty: none.",
         "default": "",
         "x-openmapx-secret": false
       },
@@ -250,7 +251,7 @@
       "OPENCONDITIONS_INSTANCE_ID": {
         "type": "string",
         "title": "Instance id",
-        "description": "This instance's stable id, the namespace of every record it originates and its name to federation peers: lower-case letters, digits, dots and dashes, e.g. maps.example.org. Set it before federating, and to the same value as the contributions API's. Empty: local.",
+        "description": "Required. This instance's stable id, the namespace of every record it originates and its name to federation peers: a lower-case DNS name, e.g. maps.example.org. Set it before the first start; it can never change afterwards. The first ingest process to start seals it in the database, and every OpenConditions service of the instance (the heavy-feeds ingest, contributions API and federation) needs this same value. The service refuses to start without it, with a value that is not a DNS name, or with another id than the sealed one.",
         "default": "",
         "x-openmapx-secret": false
       },
@@ -1286,6 +1287,12 @@
           "notes": "The legacy API key (consumer key and secret from api.eumetsat.int/api-key) does not work: licensed Copernicus data answers it with 403 'Copernicus license required'. A refresh token obtained elsewhere can be stored instead with `node dist/feed-auth.js import eumetsat`, which reads it from stdin (`docker compose exec -T ingest node dist/feed-auth.js import eumetsat < token-file`). If the service is stopped for 30 days the login lapses and must be repeated."
         }
       }
-    }
+    },
+    "required": [
+      "DATABASE_URL",
+      "OPENCONDITIONS_SECRETS_KEY",
+      "OPENCONDITIONS_INSTANCE_ID",
+      "OPENCONDITIONS_INGEST_FEEDS"
+    ]
   }
 }

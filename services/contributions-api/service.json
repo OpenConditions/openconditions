@@ -2,12 +2,13 @@
   "id": "openconditions-contributions-api",
   "name": "OpenConditions Contributions API",
   "version": "0.8.1",
+  "platform": "1.0",
   "description": "Crowd-report intake and evidence lifecycle for road conditions: verifies signed device reports, deduplicates and corroborates co-located phenomena, cross-validates against official feeds, and serves the operator reviewer surface — all over the shared PostGIS `conditions` schema. Peer confirmation never routes or trains reputation on its own; only official-feed cross-validation (and operator resolution) does.",
   "author": "OpenConditions",
   "license": "AGPL-3.0-or-later",
   "homepage": "https://openconditions.org",
   "documentation": "https://github.com/openconditions/openconditions",
-  "quality": "community-verified",
+  "quality": "community",
   "container": {
     "image": "ghcr.io/openconditions/contributions-api",
     "tag": "0.8.1",
@@ -49,6 +50,13 @@
   },
   "configSchema": {
     "type": "object",
+    "required": [
+      "DATABASE_URL",
+      "OPENCONDITIONS_SECRETS_KEY",
+      "OPENCONDITIONS_GRANT_SECRET",
+      "OPENCONDITIONS_REVIEWER_TOKEN",
+      "OPENCONDITIONS_INSTANCE_ID"
+    ],
     "properties": {
       "DATABASE_URL": {
         "type": "string",
@@ -74,10 +82,23 @@
         "description": "Required. Bearer token of the operator reviewer surface; generate with openssl rand -hex 32. The service refuses to start without it.",
         "x-openmapx-secret": true
       },
+      "OPENCONDITIONS_RELAY_TOKEN": {
+        "type": "string",
+        "title": "Relay token",
+        "description": "Bearer token of the application that relays its users' crowd requests from one address, at least 32 characters; generate with openssl rand -hex 32. Must equal OpenMapX's own OPENCONDITIONS_RELAY_TOKEN, which OpenMapX's api service sends. A request bearing it is counted against the relay enroll limit instead of its address's (10 enrollments a minute), since the relay forwards no user's address. Unset, every request is limited by its address, and all OpenMapX users share one address's limit. A set but shorter token fails boot.",
+        "x-openmapx-secret": true
+      },
+      "OPENCONDITIONS_RELAY_ENROLL_LIMIT_PER_MINUTE": {
+        "type": "string",
+        "title": "Relay enroll limit (per minute)",
+        "description": "Enrollments a minute the requests bearing the relay token may make together, a whole number above 0. Empty: 600.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
       "OPENCONDITIONS_INSTANCE_ID": {
         "type": "string",
         "title": "Instance id",
-        "description": "This instance's stable id, the namespace of the crowd records it lands and its crowd's credit: lower-case letters, digits, dots and dashes, e.g. maps.example.org. Set it to the same value as the ingest service's. Empty: local.",
+        "description": "Required. This instance's stable id, the namespace of the crowd records it lands and its crowd's credit: a lower-case DNS name, e.g. maps.example.org. Copy the value of openconditions-ingest's Instance id. The service refuses to start without it, with a value that is not a DNS name, or with another id than the one the ingest service sealed in the database.",
         "default": "",
         "x-openmapx-secret": false
       },

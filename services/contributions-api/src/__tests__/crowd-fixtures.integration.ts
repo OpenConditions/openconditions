@@ -31,6 +31,7 @@ export const CROWD_ATTRIBUTION: Attribution = {
 /** A crowd report of an obstruction (debris on the road) at a point. */
 export function situationClaim(over: Partial<SituationClaim> = {}): SituationClaim {
   return {
+    v: 1,
     claimClass: "situation",
     kind: "incident",
     type: "obstruction",

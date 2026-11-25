@@ -22,3 +22,4 @@ export type {
   SubClaimType,
   VerifyResult,
 } from "./types.js";
+export { CLAIM_VERSION } from "./types.js";

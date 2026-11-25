@@ -39,6 +39,7 @@ function rawSignature(r: bigint, s: bigint): Uint8Array<ArrayBuffer> {
 
 function makeClaim(): ReportClaim {
   return {
+    v: 1,
     claimClass: "situation",
     kind: "incident",
     type: "obstruction",

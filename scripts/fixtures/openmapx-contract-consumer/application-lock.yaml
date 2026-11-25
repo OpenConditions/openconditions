@@ -16,7 +16,7 @@ packages:
   "@openmapx/extension-cli@file:portable.tgz":
     resolution:
       {
-        integrity: sha512-cQoHGIH33TBuBgOJKo5MJfF6f3rzhWUtIJof+GQsJyeKN3eyxVF7Q/tXTYRnL8QTid3OMJ48nXfVSfjSwF1tYQ==,
+        integrity: sha512-lLBjn1UvAcBGmnXHJ1x1IpRVJ/NpMM72TqNPWrg+fxwetqfzICJSul2pmEpj8kibyj+REkiCJrVKyOYZOc8LIA==,
         tarball: file:portable.tgz,
       }
     version: 0.1.0
