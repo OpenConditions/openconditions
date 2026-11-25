@@ -134,6 +134,7 @@ function reports(image = "contributions-api") {
                   : `openconditions-${image}`,
             },
             migratedTables: 58,
+            sealedInstanceId: "qualification.example.org",
             ...(image === "ingest"
               ? {
                   osmiumVersion: "osmium version 1.19.1",
@@ -325,6 +326,8 @@ describe("complete image matrix evidence", () => {
     "duplicate-cleanup",
     "wrong-runtime-image",
     "zero-migrations",
+    "missing-seal",
+    "wrong-seal",
     "failed-cleanup",
     "stale-db",
     "empty-coverage",
@@ -353,6 +356,8 @@ describe("complete image matrix evidence", () => {
     if (kind === "wrong-runtime-image")
       d["runtime.json"].dockerRuntimeImageId = "sha256:" + "f".repeat(64);
     if (kind === "zero-migrations") d["runtime.json"].checks.migratedTables = 0;
+    if (kind === "missing-seal") delete d["runtime.json"].checks.sealedInstanceId;
+    if (kind === "wrong-seal") d["runtime.json"].checks.sealedInstanceId = "other.example.org";
     if (kind === "failed-cleanup") d["runtime.json"].cleanup[0].absent = false;
     if (kind === "stale-db") d["scanner-db.json"].NextUpdate = "2026-10-26T20:00:00Z";
     if (kind === "empty-coverage") d["scan.json"].Results = [];

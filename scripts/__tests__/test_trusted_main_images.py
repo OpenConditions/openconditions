@@ -123,6 +123,7 @@ def image_bundle(root, role):
                 else "openconditions-" + role,
             },
             "migratedTables": 58,
+            "sealedInstanceId": "qualification.example.org",
         }
     if role == "ingest":
         checks.update(

@@ -349,7 +349,7 @@ def verify_reports(directory, image, source, expected_execution):
     expected_checks = (
         {"openlrGraphHttpNative"}
         if image == "openlr-resolver"
-        else {"httpNativeCrypto", "migratedTables"}
+        else {"httpNativeCrypto", "migratedTables", "sealedInstanceId"}
     )
     if image == "ingest":
         expected_checks |= {
@@ -392,6 +392,8 @@ def verify_reports(directory, image, source, expected_execution):
             or checks["migratedTables"] < 10
         ):
             fail("runtime HTTP/migrations qualification missing")
+        if checks["sealedInstanceId"] != QUALIFICATION_INSTANCE_ID:
+            fail("runtime instance id seal qualification missing")
         if image == "ingest" and (
             checks["bundledFeedsMigrationsImpit"] is not True
             or not checks["osmiumVersion"].startswith("osmium version 1.19.1")
