@@ -127,7 +127,7 @@ function normalizeSpace(value: string): string {
 }
 
 function parseStrictNumber(token: string): number | undefined {
-  if (!/^[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?$/.test(token)) return undefined;
+  if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(token)) return undefined;
   const n = Number(token);
   return Number.isFinite(n) ? n : undefined;
 }
