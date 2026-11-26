@@ -1,5 +1,6 @@
 export * from "./cause-natures.js";
 export * from "./classify.js";
+export * from "./crosswalk/cifs.js";
 export * from "./crosswalk/datex2.js";
 export * from "./crosswalk/emitters.js";
 export * from "./crosswalk/ibi511.js";
@@ -17,6 +18,7 @@ export * from "./severity.js";
 export * from "./structure-restrictions.js";
 export * from "./tolls.js";
 export * from "./travel-time.js";
+export * from "./vocabularies/cifs.js";
 export * from "./vocabularies/datex2.js";
 export * from "./vocabularies/datex2-infrastructure.js";
 export * from "./vocabularies/gtfs-rt.js";

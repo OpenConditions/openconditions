@@ -76,10 +76,7 @@ OHGO). DATEX II models this correctly as-is: `loc:PointLocation` is a valid
 DATEX II v3 location type for a point sensor, so no linear geometry is needed
 and the emitter never fabricates one by buffering a point into a segment (see
 `docs/datex-conformance.md` for what full SRTI conformance still requires).
-**CIFS** (Waze/Google) is not built yet and does expect a linear polyline plus
-a direction; how a point-sensor reading should project into a CIFS `line` is
-an open design question left to whenever CIFS is actually implemented — it
-must not silently invent geometry either.
+**CIFS** (Waze/Google) is implemented in `@openconditions/roads` and `@openconditions/publishers` (see [`docs/cifs.md`](./cifs.md)). The CIFS emitter never fabricates linear geometry from a point sensor: point-only alerts are exported only when they carry explicit bilateral direction (`direction.value === "both"`), and directional or unstated point-sensor congestion is withheld until linear geometry is available.
 
 ## Excluded / deferred
 

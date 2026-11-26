@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   AtQuery,
+  CifsQuery,
   FeatureListQuery,
   FeatureQuery,
   GridQuery,
@@ -75,6 +76,28 @@ export const API_ROUTES: readonly ApiRoute[] = [
     tooLarge:
       "More than 20,000 candidate situations or 32 MiB of XML; narrow bbox, source or time filters",
     produces: ["application/xml"],
+    alwaysPublic: true,
+  },
+  {
+    path: "/cifs.xml",
+    operationId: "listSituationsCifsXml",
+    summary:
+      "A complete public point-in-time CIFS v2 XML feed (`cifsv2.xsd`) from one database snapshot, not paged. No cursor, limit, simplify or historical from/to parameters. At most 20,000 candidate situations and 32 MiB of UTF-8 XML; narrow bbox, source or time filters on 413. Road closures require a complete, mandatory, confirmed, road-wide closure effect, explicit validity.start and a non-circular line up to 20 km; single-point alerts require explicit bilateral direction.",
+    query: CifsQuery,
+    tooLarge:
+      "More than 20,000 candidate situations or 32 MiB of XML; narrow bbox, source or time filters",
+    produces: ["application/xml"],
+    alwaysPublic: true,
+  },
+  {
+    path: "/cifs.json",
+    operationId: "listSituationsCifsJson",
+    summary:
+      "A complete public point-in-time CIFS v2 JSON feed from one database snapshot, not paged, sharing the exact projection of `/cifs.xml`. No cursor, limit, simplify or historical from/to parameters. At most 20,000 candidate situations and 32 MiB of UTF-8 JSON; narrow bbox, source or time filters on 413.",
+    query: CifsQuery,
+    tooLarge:
+      "More than 20,000 candidate situations or 32 MiB of JSON; narrow bbox, source or time filters",
+    produces: ["application/json"],
     alwaysPublic: true,
   },
   {

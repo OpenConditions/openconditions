@@ -17,6 +17,7 @@ export type MappingTarget =
   | "wzdx"
   | "open511"
   | "ibi511"
+  | "cifs"
   | "alert_c"
   | "traff"
   | "gtfs_rt"
@@ -43,6 +44,7 @@ export const INGEST_MAPPING_TARGETS: readonly MappingTarget[] = [
   "wzdx",
   "open511",
   "ibi511",
+  "cifs",
   "ocpi",
   "oicp",
   "parkapi",

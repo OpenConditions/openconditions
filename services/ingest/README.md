@@ -20,7 +20,7 @@ a breaking change gets a new path, and the old one keeps its contract (see
 [the public API](../../README.md#public-api)):
 
 - situations: `/situations` (JSON, `.geojson`, `.jsonld`), `/situations/{id}`,
-  `/traff.xml`, `/datex2/situations.xml`, and the `/stream` of server-sent events;
+  `/traff.xml`, `/cifs.xml`, `/cifs.json`, `/datex2/situations.xml`, and the `/stream` of server-sent events;
 - features: `/features` (JSON, `.geojson`, `.jsonld`; `canonical=1` for the
   canonical view, `expand=components` for components) and `/features/{id}`;
 - offers: `/offers` and `/offers/{id}`;
@@ -47,7 +47,7 @@ bearer one included, reads in the public scope, and the service logs
 response is `Cache-Control: private, no-store`. The speed surface
 (`/segments.geojson`, `/segments/speed.csv`) withholds, in the public scope, a
 speed any restricted source contributed to. The emitters
-(`/situations.geojson`, `/situations.jsonld`, `/traff.xml`,
+(`/situations.geojson`, `/situations.jsonld`, `/traff.xml`, `/cifs.xml`, `/cifs.json`,
 `/datex2/situations.xml`, `/stream`, `/features.geojson`, `/features.jsonld`)
 are public feeds and always read in the public scope. A crowd reporter's key is
 stripped in every scope. What each route reads is in

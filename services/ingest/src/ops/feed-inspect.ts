@@ -4,9 +4,11 @@ import { publicRecords, resolveAttribution } from "@openconditions/ingest-framew
 import { sealRecord } from "@openconditions/model";
 import { productionRegistry } from "@openconditions/model-registry";
 import {
+  cifsIncidentsOf,
   datexRecordsOf,
   type ExportDiagnostic,
   effectStatesAt,
+  situationsToCifsXml,
   situationsToDatex,
   situationsToGeoJSON,
   situationsToTraff,
@@ -116,6 +118,7 @@ export function inspectFeed(
         projection: {
           public: { eligible: false, reason: "invalid_draft" },
           traff: { messages: 0, reason: "invalid_draft", diagnostics: [] as ExportDiagnostic[] },
+          cifs: { incidents: 0, reason: "invalid_draft", diagnostics: [] as ExportDiagnostic[] },
           datex: { records: 0, reason: "invalid_draft", diagnostics: [] as ExportDiagnostic[] },
         },
       };
@@ -132,6 +135,7 @@ export function inspectFeed(
         ? "non_public_license"
         : null;
     const traffDiagnostics: ExportDiagnostic[] = [];
+    const cifsDiagnostics: ExportDiagnostic[] = [];
     const datexDiagnostics: ExportDiagnostic[] = [];
     const traff = shown
       ? situationsToTraff(registry, [shown], instant, (d) => traffDiagnostics.push(d))
@@ -140,6 +144,9 @@ export function inspectFeed(
     // XMLBuilder always emits this unprefixed element; attributes may contain
     // escaped text, never a literal '<message'. No independent eligibility gate.
     const messages = (traff.match(/<message(?:\s|>)/g) ?? []).length;
+    const cifsCount = shown
+      ? cifsIncidentsOf(shown, instant, (d) => cifsDiagnostics.push(d)).length
+      : 0;
     const datexCount = shown
       ? datexRecordsOf(shown, instant, (d) => datexDiagnostics.push(d)).length
       : 0;
@@ -160,6 +167,16 @@ export function inspectFeed(
                 "no_representable_message")
               : null),
           diagnostics: traffDiagnostics,
+        },
+        cifs: {
+          incidents: cifsCount,
+          reason:
+            reason ??
+            (cifsCount === 0
+              ? (cifsDiagnostics.find((d) => d.disposition === "withheld")?.code ??
+                "no_representable_message")
+              : null),
+          diagnostics: cifsDiagnostics,
         },
         datex: {
           records: datexCount,
@@ -206,6 +223,7 @@ export function inspectFeed(
     exports: {
       geojson: situationsToGeoJSON(publicSituations, info, { at: instant }),
       traff: situationsToTraff(registry, publicSituations, instant),
+      cifs: situationsToCifsXml(publicSituations, instant, { timestamp }),
       datex: situationsToDatex(
         publicSituations,
         instant,

@@ -856,6 +856,328 @@
         }
       }
     },
+    "/cifs.xml": {
+      "get": {
+        "operationId": "listSituationsCifsXml",
+        "summary": "A complete public point-in-time CIFS v2 XML feed (`cifsv2.xsd`) from one database snapshot, not paged. No cursor, limit, simplify or historical from/to parameters. At most 20,000 candidate situations and 32 MiB of UTF-8 XML; narrow bbox, source or time filters on 413. Road closures require a complete, mandatory, confirmed, road-wide closure effect, explicit validity.start and a non-circular line up to 20 km; single-point alerts require explicit bilateral direction.",
+        "parameters": [
+          {
+            "name": "bbox",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "west,south,east,north in WGS84 degrees"
+            },
+            "description": "west,south,east,north in WGS84 degrees"
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated kind codes",
+              "type": "string"
+            },
+            "description": "comma-separated kind codes"
+          },
+          {
+            "name": "excludeKind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated kind codes left out",
+              "type": "string"
+            },
+            "description": "comma-separated kind codes left out"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated type codes",
+              "type": "string"
+            },
+            "description": "comma-separated type codes"
+          },
+          {
+            "name": "domain",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated source ids",
+              "type": "string"
+            },
+            "description": "comma-separated source ids"
+          },
+          {
+            "name": "origin",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated origins: feed, crowd, federation, derived",
+              "type": "string"
+            },
+            "description": "comma-separated origins: feed, crowd, federation, derived"
+          },
+          {
+            "name": "minSeverity",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["minor", "moderate", "major", "critical"]
+            }
+          },
+          {
+            "name": "at",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+              "description": "the instant situations are current at"
+            },
+            "description": "the instant situations are current at"
+          },
+          {
+            "name": "horizonDays",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 366,
+              "description": "only situations starting within this many days after `at`"
+            },
+            "description": "only situations starting within this many days after `at`"
+          },
+          {
+            "name": "dedupe",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["0", "1"],
+              "description": "1 conservatively folds compatible reports across the complete feed; unknown or incomplete reports remain separate"
+            },
+            "description": "1 conservatively folds compatible reports across the complete feed; unknown or incomplete reports remain separate"
+          },
+          {
+            "name": "subtype",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated subtype codes",
+              "type": "string"
+            },
+            "description": "comma-separated subtype codes"
+          }
+        ],
+        "security": [{}],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/xml": {}
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "A bearer token other than the configured operator token (with none configured, a bearer token reads in public scope)",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "413": {
+            "description": "More than 20,000 candidate situations or 32 MiB of XML; narrow bbox, source or time filters",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "429": {
+            "description": "The client's rate limit is spent; `Retry-After` says when to retry",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/cifs.json": {
+      "get": {
+        "operationId": "listSituationsCifsJson",
+        "summary": "A complete public point-in-time CIFS v2 JSON feed from one database snapshot, not paged, sharing the exact projection of `/cifs.xml`. No cursor, limit, simplify or historical from/to parameters. At most 20,000 candidate situations and 32 MiB of UTF-8 JSON; narrow bbox, source or time filters on 413.",
+        "parameters": [
+          {
+            "name": "bbox",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "west,south,east,north in WGS84 degrees"
+            },
+            "description": "west,south,east,north in WGS84 degrees"
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated kind codes",
+              "type": "string"
+            },
+            "description": "comma-separated kind codes"
+          },
+          {
+            "name": "excludeKind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated kind codes left out",
+              "type": "string"
+            },
+            "description": "comma-separated kind codes left out"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated type codes",
+              "type": "string"
+            },
+            "description": "comma-separated type codes"
+          },
+          {
+            "name": "domain",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated source ids",
+              "type": "string"
+            },
+            "description": "comma-separated source ids"
+          },
+          {
+            "name": "origin",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated origins: feed, crowd, federation, derived",
+              "type": "string"
+            },
+            "description": "comma-separated origins: feed, crowd, federation, derived"
+          },
+          {
+            "name": "minSeverity",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["minor", "moderate", "major", "critical"]
+            }
+          },
+          {
+            "name": "at",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+              "description": "the instant situations are current at"
+            },
+            "description": "the instant situations are current at"
+          },
+          {
+            "name": "horizonDays",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 366,
+              "description": "only situations starting within this many days after `at`"
+            },
+            "description": "only situations starting within this many days after `at`"
+          },
+          {
+            "name": "dedupe",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["0", "1"],
+              "description": "1 conservatively folds compatible reports across the complete feed; unknown or incomplete reports remain separate"
+            },
+            "description": "1 conservatively folds compatible reports across the complete feed; unknown or incomplete reports remain separate"
+          },
+          {
+            "name": "subtype",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated subtype codes",
+              "type": "string"
+            },
+            "description": "comma-separated subtype codes"
+          }
+        ],
+        "security": [{}],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "A bearer token other than the configured operator token (with none configured, a bearer token reads in public scope)",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "413": {
+            "description": "More than 20,000 candidate situations or 32 MiB of JSON; narrow bbox, source or time filters",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "429": {
+            "description": "The client's rate limit is spent; `Retry-After` says when to retry",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
     "/datex2/situations.xml": {
       "get": {
         "operationId": "listSituationsDatex",

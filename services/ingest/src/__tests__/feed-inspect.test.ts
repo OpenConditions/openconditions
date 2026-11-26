@@ -23,8 +23,10 @@ describe("offline feed inspection", () => {
     });
     expect(report.exports.geojson.features).toHaveLength(3);
     expect(report.exports.traff).toContain("<message ");
+    expect(report.exports.cifs).toContain("<incidents");
     expect(report.exports.datex).toContain("sit:situation");
     expect(report.records[0]!.projection.traff.messages).toBeGreaterThan(0);
+    expect(report.records[0]!.projection.cifs).toBeDefined();
   });
 
   it("keeps local drafts visible while explaining public source and licence withholding", () => {
@@ -37,6 +39,7 @@ describe("offline feed inspection", () => {
       );
       expect(report.exports.geojson.features).toHaveLength(0);
       expect(report.exports.traff).not.toContain("<message ");
+      expect(report.exports.cifs).not.toContain("<incident ");
     }
   });
 
@@ -68,6 +71,7 @@ describe("offline feed inspection", () => {
     expect(report.counts).toMatchObject({ parsed: 1, valid: 1, publicEligible: 1 });
     expect(report.records[0]!.projection).toMatchObject({
       traff: { messages: 0, reason: "vehicle_specific_effect" },
+      cifs: { incidents: 0, reason: "vehicle_specific_effect" },
       datex: { records: 0, reason: "vehicle_specific_effect" },
     });
     expect(report.exports.geojson.features[0]!.geometry).not.toBeNull();
@@ -155,7 +159,7 @@ it("exposes publisher loss paths alongside actual outputs, including successful 
     ],
     at,
   );
-  for (const format of ["traff", "datex"] as const) {
+  for (const format of ["traff", "cifs", "datex"] as const) {
     expect(weights.records[0]!.projection[format].diagnostics).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -174,6 +178,7 @@ it("does not run XML diagnostics on records blocked before projection", () => {
   const report = inspectFeed({ ...feed, restricted: true }, [payload], at);
   for (const record of report.records) {
     expect(record.projection.traff).toMatchObject({ reason: "restricted_source", diagnostics: [] });
+    expect(record.projection.cifs).toMatchObject({ reason: "restricted_source", diagnostics: [] });
     expect(record.projection.datex).toMatchObject({ reason: "restricted_source", diagnostics: [] });
   }
 });

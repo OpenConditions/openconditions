@@ -1,0 +1,33 @@
+{
+  "timestamp": "2026-11-26T20:00:00.000Z",
+  "incidents": [
+    {
+      "id": "105025184-105025186-105025189-105025193.001",
+      "type": "CONSTRUCTION",
+      "subtype": "",
+      "description": "Bauphase 1",
+      "reference": "MobiData BW",
+      "location": {
+        "polyline": "48.002535 7.808793 48.002159 7.809804 48.001200 7.812280 47.999522 7.816695",
+        "street": "B31a Umkirch-Freiburg",
+        "direction": "ONE_DIRECTION"
+      },
+      "starttime": "2026-08-24T00:00:00.000+02:00",
+      "endtime": "2027-07-02T23:59:00.000+02:00"
+    },
+    {
+      "id": "80747046-80747048-80747051-80747216-sperrung.001",
+      "type": "ROAD_CLOSED",
+      "subtype": "ROAD_CLOSED_CONSTRUCTION",
+      "description": "B311 Ausbau Mengen-Rulfingen - Mengen",
+      "reference": "MobiData BW",
+      "location": {
+        "polyline": "48.032693 9.298790 48.033512 9.299247 48.036359 9.302873 48.041292 9.315211",
+        "street": "B311 Krauchenwies-Mengen",
+        "direction": "BOTH_DIRECTIONS"
+      },
+      "starttime": "2027-03-01T00:00:00.000+01:00",
+      "endtime": "2027-12-03T23:59:00.000+01:00"
+    }
+  ]
+}

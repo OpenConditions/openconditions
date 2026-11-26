@@ -13,6 +13,14 @@ export const SAMPLES: SkipSamples = {
       }),
     },
   },
+  "roads/cifs": {
+    reason: "no_geometry",
+    payloads: {
+      main: JSON.stringify({
+        incidents: [{ id: "no-geo", type: "ACCIDENT", description: "x", street: "Main St" }],
+      }),
+    },
+  },
   "roads/open511": {
     reason: "unknown_value",
     payloads: {

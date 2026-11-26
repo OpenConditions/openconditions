@@ -1,5 +1,6 @@
 import { type MappingTarget, parseSituationCode, type SituationClass } from "@openconditions/model";
 import { CAUSE_NATURES } from "./cause-natures.js";
+import { isValidCifsPair } from "./crosswalk/cifs.js";
 import {
   AUTOBAHN_SITUATIONS,
   CARS_SITUATIONS,
@@ -114,6 +115,18 @@ export function natureFromCauses(causes: readonly string[]): RoadClassification 
 /** An IBI 511 event's classification from its `EventType`. */
 export function ibi511Classification(eventType: string): RoadClassification | undefined {
   return lookup(["ibi511"], [eventType]);
+}
+
+/**
+ * A CIFS incident's classification from its `type` and optional `subtype`.
+ * Validates that `(type, subtype)` is a legal pairing before lookup, returning
+ * `undefined` for unknown types, mismatched pairs, or `CHIT_CHAT`.
+ */
+export function cifsClassification(type: string, subtype?: string): RoadClassification | undefined {
+  const t = type.trim();
+  const s = subtype?.trim() || undefined;
+  if (!isValidCifsPair(t, s)) return undefined;
+  return lookup(["cifs"], s !== undefined ? [s, t] : [t]);
 }
 
 /**

@@ -1598,6 +1598,8 @@
             "bnetza",
             "cpo",
             "provider",
+            "cifs:incident",
+            "cifs:parent_event",
             "siren",
             "afdc",
             "netex:line",

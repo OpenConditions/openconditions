@@ -90,6 +90,10 @@ const GEOMETRYLESS_SAMPLE: Record<string, string> = {
   "ohgo-events": JSON.stringify({ Results: [{ id: "no-geo", description: "x" }] }),
 
   "vic-disruptions": JSON.stringify({ disruptions: [{ id: "no-geo", name: "x" }] }),
+
+  cifs: JSON.stringify({
+    incidents: [{ id: "no-geo", type: "ACCIDENT", description: "x", street: "Main St" }],
+  }),
 };
 
 /**

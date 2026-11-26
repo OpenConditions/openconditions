@@ -5,6 +5,7 @@ import {
 } from "@openconditions/ingest-framework";
 import { parseAutobahn } from "./autobahn.js";
 import { parseCars, parseCarsSnapshot } from "./cars.js";
+import { parseCifs, parseCifsSnapshot } from "./cifs.js";
 import { parseDatexSituations, parseDatexSnapshot } from "./datex.js";
 import { parseDigitraffic, parseDigitrafficSnapshot } from "./digitraffic.js";
 import type { RoadFeed } from "./feed-schema.js";
@@ -59,6 +60,7 @@ const SITUATION_PARSERS = {
   "ohgo-events": parseOhgoEvents as SituationParser,
   "vic-disruptions": parseVicDisruptions as SituationParser,
   "wa-webeoc": parseWaWebeoc,
+  cifs: parseCifs,
 } satisfies Record<string, SituationParser>;
 
 /** Every situation format; the wire formats `SITUATION_PARSERS` reads. */
@@ -88,7 +90,15 @@ const SNAPSHOT_REPORTERS: Record<
   datex2: parseDatexSnapshot,
   cars: parseCarsSnapshot,
   "wa-webeoc": parseWaWebeocSnapshot,
+  cifs: parseCifsSnapshot,
 };
+
+/**
+ * Formats that always reconcile through {@link SNAPSHOT_REPORTERS} and default
+ * to `situationsComplete: false` with bounded freshness until a catalogue source
+ * explicitly qualifies `snapshot: { completeness: "complete" }`.
+ */
+const ACCOUNTED_PARTIAL_FORMATS = new Set(["wa-webeoc", "cifs"]);
 
 /**
  * One poll of a roads event feed as situation drafts. Every payload of the
@@ -108,16 +118,18 @@ export function parseEvents(
     opts.fetchedAt !== undefined ? new Date(opts.fetchedAt) : undefined,
   );
   const at = opts.fetchedAt !== undefined ? { fetchedAt: opts.fetchedAt } : {};
+  const accountedPartial = ACCOUNTED_PARTIAL_FORMATS.has(feed.format);
   const reporter =
-    (feed.snapshot?.completeness === "complete" || feed.format === "wa-webeoc") &&
+    (feed.snapshot?.completeness === "complete" || accountedPartial) &&
     Object.hasOwn(SNAPSHOT_REPORTERS, feed.format)
       ? SNAPSHOT_REPORTERS[feed.format]
       : undefined;
   const out = emptyParseOutput();
-  // Received-row accounting cannot qualify disappearance. WA must retain
-  // absent predecessors until the source's refresh/identity/withdrawal gate
-  // is deliberately qualified by a complete-snapshot declaration.
-  if (feed.format === "wa-webeoc") {
+  // Received-row accounting alone cannot qualify disappearance. Formats in
+  // ACCOUNTED_PARTIAL_FORMATS retain absent predecessors until the source's
+  // refresh/identity/withdrawal gate is deliberately qualified by a
+  // complete-snapshot declaration.
+  if (accountedPartial) {
     out.situationsComplete = feed.snapshot?.completeness === "complete";
   }
   if (reporter === undefined) {
@@ -144,7 +156,7 @@ export function parseEvents(
     members,
     ...at,
   });
-  if (feed.format === "wa-webeoc") {
+  if (accountedPartial && (feed.format === "wa-webeoc" || out.situationsComplete !== true)) {
     // Partial-source retention must not keep a vanished incident public forever.
     // This is an operator retrieval TTL, not an inferred publisher timestamp.
     for (const draft of out.situations) {

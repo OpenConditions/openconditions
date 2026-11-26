@@ -21,7 +21,7 @@ Road domain, v0.1:
   their readings. Congestion is computed from a self-derived free-flow baseline (85th
   percentile), with native reference speeds where a feed ships one and OSM `maxspeed` as a day-one proxy.
   See [docs/speed-coverage.md](docs/speed-coverage.md).
-- **Emitters:** a paged record API, GeoJSON, JSON-LD, TraFF, DATEX II, Valhalla exclusions, and an SSE stream —
+- **Emitters:** a paged record API, GeoJSON, JSON-LD, TraFF, CIFS (XML & JSON), DATEX II, Valhalla exclusions, and an SSE stream —
   all public, rate-limited, and bbox-filterable.
 - **Graph binding:** road situations, and effects with a location of their own, are bound to the directed
   OSM segment spine (`way_id:f|b` spans with confidence); see [docs/graph-binding.md](docs/graph-binding.md).
@@ -89,14 +89,14 @@ packages/            reusable libraries (Apache-2.0 unless noted)
                      facilities, maritime, vehicles, weather
   core/              canonical model, severity, freshness, read helpers, DB schema/migrations (./server)
   ingest-framework/  feed descriptors, credentials, guarded fetch, catalogue resolvers, licences, domain plugins
-  roads/             road parsers (DATEX II / Open511 / WZDx and more), the roads domain, TMC location tables
+  roads/             road parsers (DATEX II / Open511 / WZDx / CIFS and more), the roads domain, TMC location tables
     bind/            event → segment resolver + evaluation corpus
   parking/ fuel/ charging/ cameras/ hazards/ weather/ vehicles/ border/
                      each domain's parsers and its ingest domain
   datex2/            DATEX II decoding shared by the domains (XML, publications, value decoders)
   ocpi/              OCPI wire types, decoders and dialects
   openlr/            OpenLR binary decode + resolver client
-  publishers/        outbound emitters (GeoJSON, JSON-LD, TraFF, DATEX II, SSE, Valhalla)
+  publishers/        outbound emitters (GeoJSON, JSON-LD, TraFF, CIFS, DATEX II, SSE, Valhalla)
   storage/           the source catalogue and the record writer (AGPL-3.0)
   contrib-core/      the signed, portable crowd report and sub-claim format
   federation/        instance identity: Ed25519 keys, the actor document, the pinned peers registry

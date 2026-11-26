@@ -237,6 +237,8 @@ describe("the OpenAPI document", () => {
       "/situations.geojson",
       "/situations.jsonld",
       "/traff.xml",
+      "/cifs.xml",
+      "/cifs.json",
       "/datex2/situations.xml",
       "/stream",
       "/features.geojson",
@@ -292,4 +294,28 @@ describe("complete TraFF API contract", () => {
     expect(op.parameters.map((p) => p.name)).not.toContain("limit");
     expect(op.responses["413"]).toBeDefined();
   });
+});
+
+describe("complete CIFS API contract", () => {
+  it.each(["/cifs.xml", "/cifs.json"])(
+    "%s offers point-in-time filters without page controls, simplify or from/to and documents 413",
+    (path) => {
+      const op = (
+        openApiDocument().paths[path] as {
+          get: {
+            parameters: { name: string }[];
+            responses: Record<string, unknown>;
+          };
+        }
+      ).get;
+      expect(op.parameters.map((p) => p.name)).toContain("bbox");
+      expect(op.parameters.map((p) => p.name)).toContain("at");
+      expect(op.parameters.map((p) => p.name)).not.toContain("cursor");
+      expect(op.parameters.map((p) => p.name)).not.toContain("limit");
+      expect(op.parameters.map((p) => p.name)).not.toContain("simplify");
+      expect(op.parameters.map((p) => p.name)).not.toContain("from");
+      expect(op.parameters.map((p) => p.name)).not.toContain("to");
+      expect(op.responses["413"]).toBeDefined();
+    },
+  );
 });

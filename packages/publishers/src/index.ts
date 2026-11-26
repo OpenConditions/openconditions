@@ -3,6 +3,7 @@ export * from "./feature-geojson.js";
 export * from "./record-archive.js";
 export * from "./segment-conditions.js";
 export * from "./segments.js";
+export * from "./situation-cifs.js";
 export * from "./situation-datex.js";
 export * from "./situation-geojson.js";
 export * from "./situation-traff.js";
