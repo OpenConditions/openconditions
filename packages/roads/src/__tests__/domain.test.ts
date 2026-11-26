@@ -55,6 +55,7 @@ describe("roads formats", () => {
       [
         "autobahn",
         "cars",
+        "cifs",
         "datex2",
         "digitraffic",
         "flatjson",

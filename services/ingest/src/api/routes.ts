@@ -41,6 +41,8 @@ import {
   featuresToGeoJSON,
   featuresToJsonLd,
   nextEffectTransition,
+  situationsToCifsJson,
+  situationsToCifsXml,
   situationsToDatex,
   situationsToGeoJSON,
   situationsToJsonLd,
@@ -59,6 +61,7 @@ import type { InFlight } from "../shutdown.js";
 import { openApiDocument } from "./openapi.js";
 import {
   AtQuery,
+  CifsQuery,
   FeatureListQuery,
   FeatureQuery,
   GridQuery,
@@ -75,7 +78,14 @@ import {
 import { scopeOf } from "./scope.js";
 import { crowdSourceOf, sourcesOf } from "./sources.js";
 import { taxonomyOf } from "./taxonomy.js";
-import { MAX_TRAFF_BYTES, readTraffSnapshot, TraffFeedTooLargeError } from "./traff.js";
+import {
+  CifsFeedTooLargeError,
+  MAX_CIFS_BYTES,
+  MAX_TRAFF_BYTES,
+  readCifsSnapshot,
+  readTraffSnapshot,
+  TraffFeedTooLargeError,
+} from "./traff.js";
 
 type Rec = Record<string, unknown>;
 
@@ -549,6 +559,42 @@ export function registerApiRoutes(
       return reply.status(413).send({ error: error.message });
     }
   });
+
+  async function serveCifs(req: FastifyRequest, reply: FastifyReply, wire: "xml" | "json") {
+    const q = parse(CifsQuery, req.query, reply);
+    if (!q) return reply;
+    const at = q.at ? new Date(q.at) : now();
+    try {
+      const read = await readCifsSnapshot(sql, {
+        at,
+        ...filtersOf(q),
+        ...(q.subtype ? { subtypes: q.subtype } : {}),
+        ...(q.horizonDays !== undefined ? { horizonDays: q.horizonDays } : {}),
+      });
+      const shown = egress(read, "public");
+      const records = q.dedupe === "1" ? dedupeSituations(shown) : shown;
+      const info = { timestamp: at.toISOString() };
+      const body =
+        wire === "xml"
+          ? situationsToCifsXml(records, at, info)
+          : JSON.stringify(situationsToCifsJson(records, at, info));
+      if (Buffer.byteLength(body, "utf8") > MAX_CIFS_BYTES) throw new CifsFeedTooLargeError();
+      cacheFor(reply, records, at);
+      reply.header(
+        "Content-Type",
+        wire === "xml" ? "application/xml; charset=utf-8" : "application/json; charset=utf-8",
+      );
+      reply.header("X-Data-License", licensesOf(records));
+      return reply.send(body);
+    } catch (error) {
+      if (!(error instanceof CifsFeedTooLargeError)) throw error;
+      reply.header("Cache-Control", "no-store");
+      return reply.status(413).send({ error: error.message });
+    }
+  }
+
+  app.get("/cifs.xml", (req, reply) => serveCifs(req, reply, "xml"));
+  app.get("/cifs.json", (req, reply) => serveCifs(req, reply, "json"));
 
   app.get("/datex2/situations.xml", async (req, reply) => {
     const q = parseSituations(req, reply);

@@ -9,6 +9,7 @@ import {
   xmlCharProblems,
   xsdErrors,
 } from "@openconditions/conformance";
+import { CIFS_SCHEMA, CIFS_V2 } from "@openconditions/conformance/standards/cifs-v2";
 import {
   DATEX2_V3,
   MESSAGE_CONTAINER_SCHEMA,
@@ -22,6 +23,7 @@ import type { ExportDiagnostic } from "../export-diagnostics.js";
 import { featuresToGeoJSON, featuresToJsonLd } from "../feature-geojson.js";
 import { type ArchivableRecord, publishedRecords, recordArchiveBuffer } from "../record-archive.js";
 import { segmentConditionsToJson } from "../segment-conditions.js";
+import { situationsToCifsJson, situationsToCifsXml } from "../situation-cifs.js";
 import { situationsToDatex } from "../situation-datex.js";
 import { situationsToGeoJSON, situationsToJsonLd } from "../situation-geojson.js";
 import { situationsToTraff } from "../situation-traff.js";
@@ -94,6 +96,37 @@ describe("situationsToDatex over random situations", () => {
           const xml = situationsToDatex(situations, AT, INFO, "de");
           expect(xmlProblems(xml)).toEqual([]);
           expect(await xsdErrors(xml, schemas, MESSAGE_CONTAINER_SCHEMA, "fuzz.xml")).toEqual([]);
+        }),
+        fuzzParameters(25),
+      );
+    },
+    fuzzTimeout(20_000),
+  );
+});
+
+describe("situationsToCifs over random situations", () => {
+  let schemas: SchemaFile[] = [];
+  let unavailable: string | undefined;
+
+  beforeAll(async () => {
+    const pinned = await pinnedOrUnavailable(CIFS_V2);
+    if ("files" in pinned) schemas = pinned.files;
+    else unavailable = pinned.unavailable;
+  }, 120_000);
+
+  it(
+    "writes well-formed XML the CIFS v2 XSD accepts and matching JSON with valid diagnostics",
+    async ({ skip }) => {
+      if (unavailable) skip(unavailable);
+      await fc.assert(
+        fc.asyncProperty(batch, async (situations) => {
+          const diagnostics: ExportDiagnostic[] = [];
+          const xml = situationsToCifsXml(situations, AT, INFO, (d) => diagnostics.push(d));
+          const json = situationsToCifsJson(situations, AT, INFO);
+          expect(xmlProblems(xml)).toEqual([]);
+          expect(diagnosticProblems(diagnostics)).toEqual([]);
+          expect(Array.isArray(json.incidents)).toBe(true);
+          expect(await xsdErrors(xml, schemas, CIFS_SCHEMA, "fuzz-cifs.xml")).toEqual([]);
         }),
         fuzzParameters(25),
       );

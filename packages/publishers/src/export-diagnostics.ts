@@ -95,7 +95,7 @@ export class ProjectionDiagnostics {
    * and one that can state which vehicles an effect applies to, which
    * (`states.vehicles`). */
   blocked(
-    format: "traff" | "datex",
+    format: "traff" | "datex" | "cifs",
     states: {
       timing?: (validity: Validity, effect?: Effect) => boolean;
       place?: (location: Rec) => boolean;
@@ -112,7 +112,7 @@ export class ProjectionDiagnostics {
       }
       if (
         (path === "/validity" && ["unknown", "ended", "cancelled"].includes(validity.status)) ||
-        (format === "traff" && validity.status === "suspended")
+        ((format === "traff" || format === "cifs") && validity.status === "suspended")
       )
         fields.push("status");
       for (const field of fields) {

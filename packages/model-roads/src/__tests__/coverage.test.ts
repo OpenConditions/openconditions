@@ -12,6 +12,7 @@ import {
 } from "@openconditions/model";
 import { describe, expect, it } from "vitest";
 import { CAUSE_NATURES } from "../cause-natures.js";
+import { CIFS_INCIDENTS, CIFS_SITUATIONS, isValidCifsPair } from "../crosswalk/cifs.js";
 import {
   DATEX2_CAUSES,
   DATEX2_CERTAINTIES,
@@ -65,6 +66,7 @@ import {
   WORKER_PRESENCE_METHODS,
 } from "../kinds.js";
 import { roadsModule } from "../module.js";
+import { CIFS_SUBTYPES, CIFS_TYPES, CIFS_XSD_SUBTYPES } from "../vocabularies/cifs.js";
 import { DATEX2_V2, DATEX2_V3 } from "../vocabularies/datex2.js";
 import { GTFS_RT } from "../vocabularies/gtfs-rt.js";
 import { IBI511 } from "../vocabularies/ibi511.js";
@@ -195,12 +197,18 @@ describe("source crosswalk coverage", () => {
     expect(sorted(Object.keys(IBI511_SITUATIONS))).toEqual(sorted(IBI511.eventTypes));
   });
 
+  it("maps every CIFS type and subtype", () => {
+    expect(sorted(Object.keys(CIFS_SITUATIONS))).toEqual(sorted([...CIFS_TYPES, ...CIFS_SUBTYPES]));
+    expect(CIFS_SITUATIONS.CHIT_CHAT).toBeNull();
+  });
+
   it("maps only to registered classifications and values", () => {
     for (const table of [
       DATEX2_SITUATIONS,
       WZDX_SITUATIONS,
       OPEN511_SITUATIONS,
       IBI511_SITUATIONS,
+      CIFS_SITUATIONS,
       DIGITRAFFIC_SITUATIONS,
       LTA_SITUATIONS,
       GDDKIA_SITUATIONS,
@@ -353,5 +361,22 @@ describe("emitter crosswalk coverage", () => {
     expect(sorted(Object.keys(GTFS_RT_CAUSE_VALUES))).toEqual(sorted(CAUSES));
     for (const cause of Object.values(GTFS_RT_CAUSE_VALUES))
       expect(GTFS_RT.causes).toContain(cause);
+  });
+
+  it("gives every registered type an XSD-valid CIFS incident code or an explicit null", () => {
+    for (const type of registeredTypes) expect(Object.keys(CIFS_INCIDENTS), type).toContain(type);
+    for (const [code, target] of Object.entries(CIFS_INCIDENTS)) {
+      expect(isRegistered(code), code).toBe(true);
+      if (target === null) continue;
+      expect(CIFS_TYPES as readonly string[], code).toContain(target.type);
+      expect(target.type, code).not.toBe("CONSTRUCTION");
+      expect(target.type, code).not.toBe("CHIT_CHAT");
+      if (target.subtype !== undefined) {
+        expect(CIFS_XSD_SUBTYPES as readonly string[], code).toContain(target.subtype);
+      }
+      expect(isValidCifsPair(target.type, target.subtype), code).toBe(true);
+      const back = CIFS_SITUATIONS[target.subtype ?? target.type];
+      expect(back, `${code} → ${target.subtype ?? target.type}`).not.toBeNull();
+    }
   });
 });

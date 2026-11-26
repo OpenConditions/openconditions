@@ -81,6 +81,7 @@ const EXTERNAL_ID_SCHEME: Record<string, string> = {
   "datex2-measured": "datex:record",
   wzdx: "wzdx:road_event",
   open511: "open511",
+  cifs: "cifs:incident",
 };
 
 /**

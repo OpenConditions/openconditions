@@ -3,6 +3,7 @@ export * from "./bind/index.js";
 export * from "./cars.js";
 export * from "./cars-signs.js";
 export * from "./catalog/index.js";
+export * from "./cifs.js";
 export * from "./datex.js";
 export * from "./datex-restrictions.js";
 export * from "./dedupe.js";

@@ -44,12 +44,16 @@ export type RoadReferenceDecoder = (typeof ROAD_REFERENCE_DECODERS)[number];
 
 const MAIN: EndpointRole = { required: true };
 
-function situations(id: SituationFormatCode): FeedFormat<RoadFeed> {
+function situations(
+  id: SituationFormatCode,
+  extra: Partial<Pick<FeedFormat<RoadFeed>, "reparseUnchanged" | "transactionalRoles">> = {},
+): FeedFormat<RoadFeed> {
   return {
     id,
     kind: "situations",
     products: ["events", "conditions"],
     endpoints: { main: MAIN },
+    ...extra,
     parse: (feed, payloads, ctx) =>
       parseEvents(feed, payloads["main"] ?? [], { fetchedAt: ctx.fetchedAt }),
   };
@@ -174,6 +178,10 @@ const FORMATS: FeedFormat<RoadFeed>[] = [
   situations("ohgo-events"),
   situations("vic-disruptions"),
   situations("wa-webeoc"),
+  // Partial-snapshot CIFS drafts carry a retrieval TTL (freshness.expiresAt);
+  // HTTP 304 must replay the last accepted payload so revalidated records renew
+  // expiry, and transactionalRoles prevents a rejected poll from poisoning it.
+  situations("cifs", { reparseUnchanged: true, transactionalRoles: true }),
   measurements(
     "datex2-measured",
     { required: false, decoders: ["datex2-sites", "france-comptage-csv"] },

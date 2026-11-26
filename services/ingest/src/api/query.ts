@@ -150,6 +150,22 @@ export const TraffQuery = SituationListBase.omit({ cursor: true, limit: true })
   })
   .superRefine(checkSituationWindow);
 
+/** A complete CIFS feed is point-in-time (`at`), without page controls, `simplify`, or historical `from`/`to` windows. */
+export const CifsQuery = SituationListBase.omit({
+  cursor: true,
+  limit: true,
+  simplify: true,
+  from: true,
+  to: true,
+}).extend({
+  dedupe: z
+    .enum(["0", "1"])
+    .describe(
+      "1 conservatively folds compatible reports across the complete feed; unknown or incomplete reports remain separate",
+    )
+    .optional(),
+});
+
 /** What is wrong with a situation read's time window, if anything. */
 export function windowIssue(from: Date, to: Date): string | undefined {
   if (from > to) return "from must not be after to";

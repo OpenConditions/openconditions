@@ -12,6 +12,7 @@ import {
   withPropertyCrosswalks,
   withSituationCrosswalks,
 } from "@openconditions/model";
+import { CIFS_SITUATIONS } from "./crosswalk/cifs.js";
 import {
   DATEX2_CAUSES,
   DATEX2_CERTAINTIES,
@@ -83,6 +84,7 @@ export const ROADS_SOURCE_FORMATS = [
   "cars",
   "cars-signs",
   "caltrans-cms",
+  "cifs",
   "datex2-elaborated",
   "datex2-locations",
   "datex2-measured",
@@ -169,6 +171,7 @@ const situationKinds = withSituationCrosswalks(
     { target: "wzdx", table: WZDX_SITUATIONS },
     { target: "open511", table: OPEN511_SITUATIONS },
     { target: "ibi511", table: IBI511_SITUATIONS },
+    { target: "cifs", table: CIFS_SITUATIONS },
   ],
   [
     { target: "traff", table: TRAFF_EVENTS },
@@ -237,6 +240,10 @@ export const roadsModule: RegistryModule = {
     }),
     extendVocabulary({ vocabulary: "source_format", values: ROADS_SOURCE_FORMATS }),
     extendVocabulary({ vocabulary: "source_format", values: CAMERA_SOURCE_FORMATS }),
+    extendVocabulary({
+      vocabulary: "external_id_scheme",
+      values: ["cifs:incident", "cifs:parent_event"],
+    }),
     ...situationKinds,
     cameraStatusVocabulary,
     vmsWorkingStatusVocabulary,
