@@ -18,6 +18,7 @@ import { type RoadFeed, roadsFeedShape } from "./feed-schema.js";
 import type { FlowContext, FlowOutput, FlowSites } from "./flow-output.js";
 import type { FlowFormatCode } from "./flow-parsers.js";
 import { measuredDataReader, parseEvents, parseFlows, type SituationFormatCode } from "./parse.js";
+import { parseSevasFeed } from "./sevas-feed.js";
 
 /**
  * What a roads feed publishes: situations, conditions, measured traffic flow,
@@ -154,6 +155,17 @@ const measuredDataStream: StreamingParse<RoadFeed> = {
 };
 
 const FORMATS: FeedFormat<RoadFeed>[] = [
+  {
+    id: "sevas",
+    kind: "situations",
+    products: ["events", "conditions"],
+    endpoints: { main: MAIN },
+    parse: parseSevasFeed,
+    reparseUnchanged: true,
+    transactionalRoles: true,
+    atomicCandidate: true,
+    mayBeEmpty: true,
+  },
   {
     id: "caltrans-cms",
     kind: "features",

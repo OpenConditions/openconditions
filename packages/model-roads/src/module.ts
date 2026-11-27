@@ -111,6 +111,7 @@ export const ROADS_SOURCE_FORMATS = [
   "ohgo",
   "ohgo-events",
   "open511",
+  "sevas",
   "trafikverket",
   "trafikverket-flow",
   "vic-disruptions",

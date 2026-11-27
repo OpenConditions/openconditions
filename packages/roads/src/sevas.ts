@@ -175,6 +175,8 @@ export function parseSevasSnapshot(
       recordSeen = false;
       p = undefined;
       if (++report.inputCount > MAX_MEMBERS) fail("member limit exceeded");
+    } else if (stack.length === 2 && !([GML, WFS].includes(tag.uri) && tag.local === "boundedBy")) {
+      fail("unexpected FeatureCollection child");
     } else if (member && stack.length === 3) {
       if (recordSeen || tag.uri !== MS || tag.local !== "restriktionen_segmente")
         fail("unexpected WFS member");

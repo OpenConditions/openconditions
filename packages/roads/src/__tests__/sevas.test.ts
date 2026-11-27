@@ -26,6 +26,13 @@ describe("SEVAS complete GML reader", () => {
     ]);
     expect(report.records.some((r) => r.disposition === "terminal")).toBe(true);
   });
+  it("accepts the provider's WFS boundedBy envelope without counting it as a member", () => {
+    const xml = FIXTURE.replace(
+      "<wfs:member>",
+      '<wfs:boundedBy><gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326"><gml:lowerCorner>50 6</gml:lowerCorner><gml:upperCorner>53 9</gml:upperCorner></gml:Envelope></wfs:boundedBy><wfs:member>',
+    );
+    expect(parseSevasSnapshot(xml, SOURCE).inputCount).toBe(14);
+  });
 
   it.each([
     ["wrong count", (s: string) => s.replace('numberMatched="14"', 'numberMatched="15"')],
@@ -36,6 +43,10 @@ describe("SEVAS complete GML reader", () => {
         s.replace('numberReturned="14"', 'numberReturned="14" next="https://sevas.nrw.de/next"'),
     ],
     ["truncation", (s: string) => s.slice(0, -50)],
+    [
+      "unexpected root member",
+      (s: string) => s.replace("</wfs:FeatureCollection>", "<wfs:other/></wfs:FeatureCollection>"),
+    ],
     [
       "wrong namespace",
       (s: string) => s.replace("http://www.opengis.net/wfs/2.0", "https://wrong.test"),
@@ -76,6 +87,24 @@ describe("SEVAS complete GML reader", () => {
       records: [],
       errors: [],
     });
+  });
+
+  it("ignores geometry serialization whitespace but fingerprints every source predicate", () => {
+    const first = parseSevasSnapshot(FIXTURE, SOURCE).records[0]!;
+    const spaced = FIXTURE.replace(
+      /(<gml:posList[^>]*>)([^<]+)(<\/gml:posList>)/,
+      (_s, a, b, c) => `${a}${b.trim().split(/\s+/).join("  \n ")}${c}`,
+    );
+    expect(parseSevasSnapshot(spaced, SOURCE).records[0]?.fingerprint).toBe(first.fingerprint);
+    for (const token of [
+      "<ms:vz_unrecognized>true</ms:vz_unrecognized>",
+      "<ms:vz_1053_33>8,5</ms:vz_1053_33>",
+    ]) {
+      const changed = FIXTURE.replace(/<ms:vz_1053_33>[^<]*<\/ms:vz_1053_33>/, token);
+      expect(parseSevasSnapshot(changed, SOURCE).records[0]?.fingerprint).not.toBe(
+        first.fingerprint,
+      );
+    }
   });
 
   it.each(["244.1", "257-57", "250", "260", "251"])(
