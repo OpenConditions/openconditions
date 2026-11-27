@@ -197,7 +197,7 @@ function schedules(
     const to = minutes(end ?? "");
     // Berlin changes clocks around 02:00. Fixed elapsed durations cannot
     // faithfully express overnight or transition-overlapping wall-clock ranges.
-    if (from === undefined || to === undefined || to <= from || (from < 180 && to > 120)) {
+    if (from === undefined || to === undefined || to <= from || (from < 180 && to >= 120)) {
       unsupported();
       return;
     }

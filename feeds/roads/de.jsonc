@@ -2,6 +2,36 @@
   "$schema": "../schema/roads.schema.json",
   "feeds": [
     {
+      "subdivision": "nw",
+      "operator": "sevas",
+      "product": "conditions",
+      "name": "SEVAS NRW weight, height and truck-access restrictions",
+      "coverage": { "countries": ["DE-NW"] },
+      "homepage": "https://sevas.nrw.de",
+      "tier": "authoritative",
+      "format": "sevas",
+      "timezone": "Europe/Berlin",
+      "snapshot": { "completeness": "complete" },
+      "acquisitionLimits": { "requests": 1, "bytes": 134217728, "deadlineSec": 180 },
+      "endpoints": {
+        "main": {
+          "url": "https://sevas.nrw.de/osm/sevas?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=ms:restriktionen_segmente&COUNT=100000&SRSNAME=urn:ogc:def:crs:EPSG::4326",
+          "cadenceSec": 21600,
+          "timeoutSec": 120,
+        },
+      },
+      "freshnessWindowSec": 172800,
+      "license": "DL-DE-ZERO-2.0",
+      "licenseUrl": "https://www.govdata.de/dl-de/zero-2-0",
+      "attribution": "NRW.Mobidrom / SEVAS",
+      "privacyUrl": "https://sevas.nrw.de/datenschutz",
+      "terms": {
+        "url": "https://open.nrw/dataset/sevas___daten_zur_navigation_von_lkw_ab_3_5_tonnen_1580828998",
+        "reviewedAt": "2026-11-27",
+        "note": "The official Open.NRW dataset explicitly licenses the SEVAS WFS distribution under Datenlizenz Deutschland – Zero – Version 2.0. Corroborating distribution metadata: https://www.mobilitaetsdaten.nrw/api/ckan/de/dataset/sevas-nrw. Native parser scope: signs 253, 262 and 265; other source members are accounted separately. Six-hour polling and 48-hour retrieval freshness are operator choices; see docs/sevas.md.",
+      },
+    },
+    {
       // Federal motorway network — enumerated from the Autobahn road index by the
       // catalog resolver, which replaced the bespoke discovery closure. The main
       // endpoint names the index the resolver reads; each road's services are its

@@ -64,7 +64,10 @@ export function parseSevasSnapshot(
         properties: p,
         crs,
         dimension,
-        position: position.trim().split(/\s+/).map(Number),
+        position: position
+          .trim()
+          .split(/\s+/)
+          .map((token) => (Number.isFinite(Number(token)) ? Number(token) : token)),
       }),
     };
     if (OUT_OF_SCOPE.has(p["typ"]!)) {

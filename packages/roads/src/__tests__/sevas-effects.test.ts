@@ -3,6 +3,7 @@ import {
   buildRegistry,
   isValidityInEffectAt,
   kernelModule,
+  routingBlockers,
   sealRecord,
 } from "@openconditions/model";
 import { roadsModule } from "@openconditions/model-roads";
@@ -141,6 +142,7 @@ describe("SEVAS canonical restriction semantics", () => {
     { tage_grppe: "3" },
     { zeit1_von: "22:00", zeit1_bis: "07:00" },
     { zeit1_von: "01:00", zeit1_bis: "04:00" },
+    { zeit1_von: "01:00", zeit1_bis: "02:00" },
     { zeit1_von: "08:00", zeit1_bis: "" },
   ])("keeps unrepresentable schedules partial %j", (p) => {
     const e = effect(p);
@@ -155,7 +157,10 @@ describe("SEVAS canonical restriction semantics", () => {
       const e = effect({ zeit1_von: "22:00", zeit1_bis: "06:00" });
       expect(e.normalization).toBe("partial");
       expect(e.validity?.periods).toBeUndefined();
-      expect(Date.parse(at)).toBeGreaterThan(0);
+      expect(routingBlockers(e)).toContain("not_normalized");
+      const mayRouteAt =
+        isValidityInEffectAt(e.validity!, new Date(at)) && routingBlockers(e).length === 0;
+      expect(mayRouteAt).toBe(false);
     },
   );
   it("seals real drafts with retrieval expiry and no invented source clock", () => {

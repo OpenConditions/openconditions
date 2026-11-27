@@ -67,6 +67,20 @@ describe("SEVAS complete GML reader", () => {
     );
     expect(parseSevasSnapshot(bad, SOURCE).records[0]?.disposition).toBe("unlocatable");
   });
+  it.each([
+    '<gml:posList srsDimension="2">bad coordinates</gml:posList>',
+    '<gml:posList srsDimension="3">51 8 1 52 9 2</gml:posList>',
+  ])("accounts unusable coordinate syntax as unlocatable: %s", (replacement) => {
+    const xml = FIXTURE.replace(/<gml:posList[^>]*>[^<]+<\/gml:posList>/, replacement);
+    expect(parseSevasSnapshot(xml, SOURCE).records[0]?.disposition).toBe("unlocatable");
+  });
+  it("collapses identical duplicates without making them conflicting source revisions", () => {
+    const report = parseSevasSnapshot(FIXTURE, SOURCE);
+    const combined = reconcileRoadSnapshots([report, report]);
+    expect(combined.inputCount).toBe(28);
+    expect(combined.duplicates).toBe(14);
+    expect(combined.observations).toHaveLength(13);
+  });
 
   it("rejects missing identity and conflicting semantic duplicates", () => {
     const missing = FIXTURE.replace("<ms:segment_id>5855075</ms:segment_id>", "");
