@@ -22,7 +22,7 @@ export function redactUrl(value: string): string {
     url.hash = "";
     const query = new URLSearchParams();
     for (const [key, val] of url.searchParams)
-      query.append(key, HARMLESS_QUERY.has(key.toLowerCase()) ? val : "[REDACTED]");
+      if (HARMLESS_QUERY.has(key.toLowerCase())) query.append(key, val);
     url.search = query.toString();
     return url.href;
   } catch {
@@ -32,9 +32,10 @@ export function redactUrl(value: string): string {
 /** Bounded display hints exclude contact details and inline credential assignments. */
 export function hint(value: unknown): string {
   if (typeof value !== "string") return "";
+  // Bound regex work, but drop a cut token rather than retaining a partial email/URL.
+  const bounded = value.length > 4096 ? value.slice(0, 4096).replace(/\S+$/u, "") : value;
   return (
-    value
-      .slice(0, 4096)
+    bounded
       .replace(/(?:https?|mqtts?):\/\/[^\s<>"']+/gi, (url) => redactUrl(url))
       .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[CONTACT]")
       .replace(/\b(?:phone|tel|telephone)\s*[:.]?\s*\+?\d[\d ().-]{7,}\d/gi, "[CONTACT]")
@@ -45,6 +46,7 @@ export function hint(value: unknown): string {
       // biome-ignore lint/suspicious/noControlCharactersInRegex: Strip unsafe metadata control characters.
       .replace(/[\u0000-\u001f\u007f-\u009f]/g, " ")
       .trim()
+      .slice(0, 4096)
   );
 }
 export function record(value: unknown): Record<string, unknown> | undefined {

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { licenseOf } from "../lib/feed-discovery/normalize.js";
 import { parseRdf } from "../lib/feed-discovery/rdf.js";
 
 const ns =
@@ -76,4 +77,38 @@ it("detects missing catalog records and record primary-topic datasets", () => {
       ),
     ).missingDataset,
   ).toBe(true);
+});
+
+it.each([
+  "<t:license><t:LicenseDocument><t:title>Proprietary</t:title></t:LicenseDocument></t:license>",
+  '<t:license r:nodeID="missing"/>',
+  "<t:license/>",
+])("never replaces an unresolved distribution licence with dataset CC0: %s", (declaration) => {
+  const d = parseRdf(
+    wrap(
+      dataset(
+        `<t:license r:resource="http://publications.europa.eu/resource/authority/licence/CC0"/><c:distribution><c:Distribution>${declaration}<c:downloadURL r:resource="https://example.org/data"/></c:Distribution></c:distribution>`,
+      ),
+    ),
+  ).distributions[0]!;
+  expect(d.licenses.origin).toBe("distribution");
+  expect(licenseOf(d.licenses)).toMatchObject({ state: "unmapped", public: false });
+});
+it.each([
+  "<t:rights><t:RightsStatement><t:title>Proprietary</t:title></t:RightsStatement></t:rights>",
+  '<t:rights r:nodeID="missing"/>',
+])("preserves unresolved distribution rights instead of dataset fallback: %s", (declaration) => {
+  const d = parseRdf(
+    wrap(
+      dataset(
+        `<t:rights r:resource="https://example.org/free"/><c:distribution><c:Distribution>${declaration}</c:Distribution></c:distribution>`,
+      ),
+    ),
+  ).distributions[0]!;
+  expect(d.evidenceOrigins.rights).toBe("distribution");
+  expect(d.rights).toContain("unresolved:blank-node");
+  expect(d.rights).not.toContain("https://example.org/free");
+});
+it("does not count structural indentation as literal text", () => {
+  expect(parseRdf(wrap(`${" ".repeat(18000)}${dataset(" ")}`)).datasets).toHaveLength(1);
 });

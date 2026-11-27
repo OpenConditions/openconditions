@@ -130,6 +130,11 @@ export function parseRdf(xml: string): {
       if (value.trim()) reject();
       return;
     }
+    // Indentation between RDF child nodes is structure, not a literal value.
+    if (current.kind !== "property") {
+      if (value.trim()) reject();
+      return;
+    }
     current.text += value;
     if (current.text.length > 16384) reject();
   };
@@ -179,12 +184,14 @@ export function parseRdf(xml: string): {
     [
       ...new Set(
         vals(n, key).flatMap((v) => {
-          if (!v.ref) return v.text ? [v.text] : [];
+          if (!v.ref) return v.text ? [v.text] : ["unresolved:blank-node"];
           const target = graph.get(v.ref);
           const own = v.ref.startsWith("_:") ? [] : [v.ref];
-          return target
+          const resolved = target
             ? [...own, ...values(target, `${DCT}type`), ...values(target, `${DCT}identifier`)]
             : own;
+          // A declaration is not absence: never replace unreadable rights with dataset grants.
+          return resolved.length ? resolved : ["unresolved:blank-node"];
         }),
       ),
     ].sort();

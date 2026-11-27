@@ -107,7 +107,7 @@ describe("discovery metadata normalization", () => {
   it("redacts all unknown query values, userinfo, fragments, contacts and free-text credentials", () => {
     expect(
       redactUrl("https://alice:password@example.org/path?surprise=secret&service=WFS#token"),
-    ).toBe("https://example.org/path?surprise=%5BREDACTED%5D&service=WFS");
+    ).toBe("https://example.org/path?service=WFS");
     const text = hint(
       "email a.person@example.org phone +49 123 456789 token=secret https://u:p@example.org/x?unusual=secret <script>",
     );
@@ -140,4 +140,15 @@ it("retains dataset usage restrictions as explicit fallback alongside an open di
   ).distributions[0]!;
   expect(d.usageConditions).toEqual(["contractual-arrangement"]);
   expect(d.evidenceOrigins.usageConditions).toBe("dataset");
+});
+
+it("does not leave a truncated email at the display length boundary", () => {
+  const text = hint("x".repeat(4084) + " john.doe@example.org");
+  expect(text).not.toContain("john.doe");
+  expect(text.length).toBeLessThanOrEqual(4096);
+});
+it("drops arbitrary query keys as well as values, including bare tokens", () => {
+  expect(redactUrl("https://example.org/data?f00dfeedcafe1234&api_key=secret&service=WFS")).toBe(
+    "https://example.org/data?service=WFS",
+  );
 });

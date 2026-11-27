@@ -17,6 +17,35 @@ export const LIMITS = {
   requestMs: 30000,
   catalogMs: 90000,
 } as const;
+/** Exact requests built by this tool; safe to expose their constant paging parameters. */
+export function metadataRequestUrl(catalog: CatalogId, start = 0): string {
+  if (catalog === "latvia") return CATALOGS.latvia;
+  const url = new URL(CATALOGS[catalog]);
+  url.search = new URLSearchParams({
+    q: "*:*",
+    sort: "id asc",
+    rows: String(LIMITS.rows),
+    start: String(start),
+  }).toString();
+  return url.href;
+}
+export function isMetadataRequestUrl(value: string): boolean {
+  if (value === CATALOGS.latvia) return true;
+  try {
+    const url = new URL(value),
+      start = Number(url.searchParams.get("start"));
+    return (
+      Number.isSafeInteger(start) &&
+      start >= 0 &&
+      start < LIMITS.datasets &&
+      (["mobidrom", "belgium"] as const).some(
+        (catalog) => value === metadataRequestUrl(catalog, start),
+      )
+    );
+  } catch {
+    return false;
+  }
+}
 /** No environment-owned private-host exceptions or redirects. */
 export function metadataFetch(): typeof fetch {
   return guardedFetch(undefined, {
@@ -43,7 +72,11 @@ async function body(
   url: string,
   fetchFn: typeof fetch,
   catalogSignal: AbortSignal,
+  remainingBytes: number,
 ): Promise<{ text: string; bytes: number }> {
+  if (remainingBytes <= 0) throw new DiscoveryError("total_cap");
+  const maxBytes = Math.min(LIMITS.responseBytes, remainingBytes);
+  const capCode = remainingBytes < LIMITS.responseBytes ? "total_cap" : "body_cap";
   const signal = AbortSignal.any([catalogSignal, AbortSignal.timeout(LIMITS.requestMs)]);
   // Also race injected fetch/readers: an implementation ignoring AbortSignal cannot hold the CLI open.
   let abort: () => void = () => {};
@@ -65,9 +98,9 @@ async function body(
           throw new DiscoveryError("redirect_refused");
         if (!response.ok) throw new DiscoveryError("http_status");
         const declared = Number(response.headers.get("content-length"));
-        if (Number.isFinite(declared) && declared > LIMITS.responseBytes) {
+        if (Number.isFinite(declared) && declared > maxBytes) {
           await response.body?.cancel();
-          throw new DiscoveryError("body_cap");
+          throw new DiscoveryError(capCode);
         }
         const reader = response.body?.getReader();
         if (!reader) return { text: "", bytes: 0 };
@@ -79,7 +112,7 @@ async function body(
             const chunk = await reader.read();
             if (chunk.done) break;
             bytes += chunk.value.byteLength;
-            if (bytes > LIMITS.responseBytes) throw new DiscoveryError("body_cap");
+            if (bytes > maxBytes) throw new DiscoveryError(capCode);
             chunks.push(chunk.value);
           }
         } catch (error) {
@@ -119,7 +152,7 @@ export async function acquire(
   let total = 0;
   const request = async (url: string) => {
     result.metadataUrls.push(url);
-    const response = await body(url, fetchFn, signal);
+    const response = await body(url, fetchFn, signal, LIMITS.totalBytes - total);
     total += response.bytes;
     if (total > LIMITS.totalBytes) throw new DiscoveryError("total_cap");
     return response.text;
@@ -137,15 +170,9 @@ export async function acquire(
         start = 0;
       const seen = new Set<string>();
       for (let page = 0; page < LIMITS.pages; page++) {
-        const url = new URL(CATALOGS[catalog]);
-        url.search = new URLSearchParams({
-          q: "*:*",
-          sort: "id asc",
-          rows: String(LIMITS.rows),
-          start: String(start),
-        }).toString();
+        const url = metadataRequestUrl(catalog, start);
         let json: unknown;
-        const text = await request(url.href);
+        const text = await request(url);
         try {
           json = JSON.parse(text);
         } catch {

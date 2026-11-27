@@ -1,4 +1,4 @@
-import { acquire, CATALOGS } from "./acquire.js";
+import { acquire, CATALOGS, isMetadataRequestUrl } from "./acquire.js";
 import { readInventory } from "./inventory.js";
 import type { CatalogId, CatalogResult, Distribution, InventoryFeed, Report } from "./model.js";
 import { redactUrl } from "./normalize.js";
@@ -25,7 +25,12 @@ export async function discoverFeeds(options: DiscoverOptions = {}): Promise<Repo
     distributions: Distribution[] = [];
   for (const catalog of catalogs) {
     const acquired = await acquire(catalog, options.fetchFn);
-    results.push({ ...acquired.result, metadataUrls: acquired.result.metadataUrls.map(redactUrl) });
+    results.push({
+      ...acquired.result,
+      metadataUrls: acquired.result.metadataUrls.map((url) =>
+        isMetadataRequestUrl(url) ? url : redactUrl(url),
+      ),
+    });
     distributions.push(...acquired.distributions);
   }
   const report = buildReport(distributions, inventory, generatedAt);

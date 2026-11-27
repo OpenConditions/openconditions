@@ -229,3 +229,33 @@ it("enforces the catalog deadline across individually timely pages and hung inje
     vi.useRealTimers();
   }
 });
+it("refuses a declared response exceeding the remaining catalog budget before reading it", async () => {
+  let calls = 0,
+    reads = 0;
+  const found = await acquire(
+    "belgium",
+    fixture(() => {
+      if (calls++ < 3)
+        return Response.json({
+          success: true,
+          result: { count: 4, results: [data(calls)] },
+          ignored: "x".repeat(8 * 1024 * 1024),
+        });
+      return new Response(
+        new ReadableStream(
+          {
+            pull(controller) {
+              reads++;
+              controller.enqueue(new TextEncoder().encode("not-json"));
+              controller.close();
+            },
+          },
+          { highWaterMark: 0 },
+        ),
+        { headers: { "content-length": String(8 * 1024 * 1024) } },
+      );
+    }),
+  );
+  expect(found.result.diagnostics).toEqual(["total_cap"]);
+  expect(reads).toBe(0);
+});

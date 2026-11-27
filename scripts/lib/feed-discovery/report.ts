@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { lstat, realpath, rename, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { FEEDS_DIR } from "../catalog-paths.js";
+import { isMetadataRequestUrl } from "./acquire.js";
 import type { Report } from "./model.js";
 import { redactUrl } from "./normalize.js";
 
@@ -17,7 +18,7 @@ function escapeMarkdown(value: string): string {
   );
 }
 function link(value: string): string {
-  const url = redactUrl(value);
+  const url = isMetadataRequestUrl(value) ? value : redactUrl(value);
   if (!/^https?:/.test(url)) return escapeMarkdown(url);
   // Escape link syntax in both label and href. Only URL schemes vetted above are linked.
   const target = url.replace(

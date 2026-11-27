@@ -75,10 +75,21 @@ function domains(d: Distribution): Candidate["domains"] {
     re.test(text) ? [{ domain, reason: "theme_or_keyword_hint" }] : [],
   );
 }
+function blockingCaveats(caveats: readonly string[]): number {
+  return caveats.filter(
+    (c) =>
+      !c.startsWith("possible_multinational_coverage:") &&
+      ![
+        "metadata_only_not_ingestion_approval",
+        "samples_are_not_source_endpoints",
+        "coverage_not_exhaustively_known",
+      ].includes(c),
+  ).length;
+}
 function excluded(d: Distribution, found: Candidate["domains"]): boolean {
   return (
     !found.length &&
-    /gbfs|sharing-and-hiring|shared.mobility|timetable|gtfs|transit.stop|public.transport.stop|transportstops|transport-stops|stop.place/i.test(
+    /gbfs|sharing-and-hiring|shared.mobility|timetable|gtfs|transit.stop|public.transport.stop|transportstops|transport-stops|stop.place|public-transport-scheduled-transport|netex/i.test(
       [...d.themes, ...d.formats, ...d.standards, d.title].join(" "),
     )
   );
@@ -169,6 +180,7 @@ export function buildReport(
       ...d.usageConditions,
     ].join(" ");
     if (/(?:^|[\s/])push(?:$|[\s/])/i.test(access)) caveats.push("push_subscription_unqualified");
+    if (/unresolved:/i.test(access)) caveats.push("unresolved_rights_or_access");
     if (/mqtt/i.test(access)) caveats.push("mqtt_subscription_unqualified");
     if (/fee|contract|registration|restricted|permission|authentication/i.test(access))
       caveats.push("access_or_usage_requires_review");
@@ -218,18 +230,7 @@ export function buildReport(
       }
     }
     let priority: Priority = gap ? "research_gap" : "research_extension";
-    if (
-      caveats.some(
-        (c) =>
-          !c.startsWith("possible_multinational_coverage:") &&
-          ![
-            "metadata_only_not_ingestion_approval",
-            "samples_are_not_source_endpoints",
-            "coverage_not_exhaustively_known",
-          ].includes(c),
-      )
-    )
-      priority = "review_constraints";
+    if (blockingCaveats(caveats) > 0) priority = "review_constraints";
     if (
       overlap.some(
         (m) => m.reason === "exact_endpoint" || m.reason === "already_configured_dataset",
@@ -283,7 +284,10 @@ export function buildReport(
   for (const candidate of candidates)
     candidate.relatedCandidates = [...new Set(candidate.relatedCandidates)].sort();
   candidates.sort(
-    (a, b) => ORDER.indexOf(a.priority) - ORDER.indexOf(b.priority) || a.id.localeCompare(b.id),
+    (a, b) =>
+      ORDER.indexOf(a.priority) - ORDER.indexOf(b.priority) ||
+      blockingCaveats(a.caveats) - blockingCaveats(b.caveats) ||
+      a.id.localeCompare(b.id),
   );
   return {
     schemaVersion: 1,
@@ -302,7 +306,7 @@ export function buildReport(
       "Candidates always need human review; public catalog access and recognized licenses do not establish payload access, freshness, parser support or ingestion readiness.",
       "Country-domain configuration is not geographic coverage proof; global, multinational and bbox feeds may overlap. Operator overlays and runtime children are not inspected.",
       "Partial catalog results never establish withdrawal. Only three fixed catalogs and the tested mobilityDCAT RDF/XML subset are supported.",
-      "Query values are redacted except harmless OGC/WFS parameters. Credentials embedded in URL paths or unlabelled free text cannot be reliably detected.",
+      "Unknown query keys and values are omitted except harmless OGC/WFS parameters; fixed metadata request URLs retain their constructed paging values. Credentials embedded in URL paths or unlabelled free text cannot be reliably detected.",
     ],
   };
 }

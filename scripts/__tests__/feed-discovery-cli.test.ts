@@ -77,6 +77,7 @@ describe("discovery command and report", () => {
     expect(report.candidates).toHaveLength(1);
     expect(report.catalogs.map((c) => c.complete)).toEqual([true, false]);
     expect(calls).toHaveLength(2);
+    expect(report.catalogs.flatMap((c) => c.metadataUrls)).toEqual(calls);
     expect(JSON.stringify(report)).not.toContain("secret-body");
   });
   it("escapes untrusted Markdown and uses redacted URLs for label and href", () => {
@@ -97,7 +98,7 @@ describe("discovery command and report", () => {
     expect(text).not.toContain("custom=secret");
     expect(text).not.toContain("u:p");
     expect(text).toContain("needs_review");
-    expect(text).toContain("%5BREDACTED%5D");
+    expect(text).not.toContain("custom=");
   });
   it("writes atomically and refuses baked catalog paths, JSONC and symlink aliases", async () => {
     const dir = await mkdtemp(join(tmpdir(), "oc-discovery-output-"));

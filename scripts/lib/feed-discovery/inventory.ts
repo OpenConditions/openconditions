@@ -17,7 +17,19 @@ export async function readInventory(dir: string = FEEDS_DIR): Promise<InventoryF
         ...(typeof endpoint.url === "string" ? [endpoint.url] : []),
         ...(endpoint.urls ?? []),
       ]),
-      termsUrls: feed.terms?.url ? [feed.terms.url] : [],
+      // Explicit metadata citations are used only for dataset association, never as endpoints.
+      termsUrls: [
+        ...(feed.terms?.url ? [feed.terms.url] : []),
+        ...(feed.terms?.note?.match(/https?:\/\/[^\s<>"`]+/g) ?? [])
+          .map((url) => url.replace(/[.,;:!?)\]}]+$/g, ""))
+          .filter((url) => {
+            try {
+              return ["http:", "https:"].includes(new URL(url).protocol);
+            } catch {
+              return false;
+            }
+          }),
+      ],
       countries: feed.coverage?.countries ?? [],
       bbox: !!feed.coverage?.bbox,
     })),

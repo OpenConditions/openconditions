@@ -43,6 +43,7 @@ describe("human-review queue and baked inventory", () => {
     expect(buildReport([lead()], [], now).candidates[0]?.priority).toBe("research_gap");
   });
   it.each([
+    { rights: ["unresolved:blank-node"] },
     { communication: ["push"] },
     { protocols: ["mqtt"] },
     { downloadUrls: [] },
@@ -240,3 +241,54 @@ it("compares original query values before redaction when linking catalogs", () =
   );
   expect(r.candidates.map((c) => c.relatedCandidates)).toEqual([[], []]);
 });
+
+it("ranks fewer blocking caveats first within a tier, independently of IDs", () => {
+  const good = lead({
+    datasetId: "z-simple",
+    downloadUrls: [],
+    accessUrls: ["https://example.org/data"],
+  });
+  const blocked = lead({
+    datasetId: "a-blocked",
+    downloadUrls: [],
+    communication: ["push"],
+    protocols: ["mqtt"],
+    licenses: { origin: "distribution", declarations: [] },
+  });
+  const report = buildReport([blocked, good], [], now);
+  expect(report.candidates.map((c) => c.datasetId)).toEqual(["z-simple", "a-blocked"]);
+  expect(report.candidates.every((c) => c.priority === "review_constraints")).toBe(true);
+});
+it("matches the real SEVAS landing-page listing through its explicit catalog citation", async () => {
+  const inventory = await readInventory();
+  const report = buildReport(
+    [
+      lead({
+        catalog: "mobidrom",
+        datasetName: "sevas-nrw",
+        metadataUrl: "https://www.mobilitaetsdaten.nrw/api/ckan/de/dataset/2d22d6e3",
+        title: "SEVAS NRW",
+        downloadUrls: [],
+        accessUrls: ["https://sevas.nrw.de/hilfe/export/dienste/wfs"],
+      }),
+    ],
+    inventory,
+    now,
+  );
+  expect(report.candidates[0]?.overlap).toContainEqual({
+    feedId: "de-nw-sevas-conditions",
+    disabled: false,
+    reason: "already_configured_dataset",
+  });
+});
+it.each(["public-transport-scheduled-transport", "NeTEx"])(
+  "excludes timetable-only %s but preserves NeTEx parking",
+  (theme) => {
+    const plain = lead({ title: "Public services", formats: [theme], themes: [theme] });
+    expect(buildReport([plain], [], now).excluded.no_oc_domain).toBe(1);
+    expect(
+      buildReport([{ ...plain, title: "Parking facilities", themes: ["parking"] }], [], now)
+        .candidates,
+    ).toHaveLength(1);
+  },
+);
