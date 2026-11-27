@@ -1,6 +1,8 @@
 import { readFileSync } from "node:fs";
 import {
   buildRegistry,
+  type Effect,
+  effectStateAt,
   isValidityInEffectAt,
   kernelModule,
   routingBlockers,
@@ -49,7 +51,48 @@ function effect(p: Record<string, string | undefined> = {}) {
   )[0]!;
 }
 
+function finalEffect(days: string): Effect {
+  const props = { ...base, tage_einzl: days };
+  const escapeXml = (s: string) => s.replaceAll("&", "&amp;").replaceAll("<", "&lt;");
+  const xml = `<wfs:FeatureCollection xmlns:wfs="http://www.opengis.net/wfs/2.0" xmlns:ms="http://mapserver.gis.umn.edu/mapserver" xmlns:gml="http://www.opengis.net/gml/3.2" numberMatched="1" numberReturned="1"><wfs:member><ms:restriktionen_segmente>${Object.entries(
+    props,
+  )
+    .map(([k, v]) => `<ms:${k}>${escapeXml(v)}</ms:${k}>`)
+    .join(
+      "",
+    )}<ms:msGeometry><gml:LineString srsName="urn:ogc:def:crs:EPSG::4326"><gml:posList srsDimension="2">51 8 51.1 8.1</gml:posList></gml:LineString></ms:msGeometry></ms:restriktionen_segmente></wfs:member></wfs:FeatureCollection>`;
+  const output = parseSevasFeed(
+    roadFeed({ id: source.id, format: "sevas", freshnessWindowSec: 172800 }),
+    { main: [Buffer.from(xml)] },
+    { fetchedAt: "2026-11-27T00:00:00Z", cadenceSec: 21600, reference: {} },
+  );
+  const sealed = sealRecord(buildRegistry([kernelModule, roadsModule]), output.situations[0], {
+    instanceId: "test.local",
+    revision: 1,
+    recordedAt: "2026-11-27T00:00:00Z",
+  });
+  if (!sealed.ok) throw new Error(JSON.stringify(sealed.issues));
+  return (sealed.value["effects"] as Effect[])[0]!;
+}
+
 describe("SEVAS canonical restriction semantics", () => {
+  it.each(["2026-03-29T22:30:00Z", "2026-10-25T22:30:00Z"])(
+    "keeps a restricted all-day weekday unknown across DST at %s",
+    (at) => {
+      const e = finalEffect("0000001");
+      expect(effectStateAt(e, { status: "active" }, new Date(at)).state).toBe("unknown");
+      expect(e.normalization).toBe("partial");
+      expect(routingBlockers(e)).toContain("not_normalized");
+    },
+  );
+  it("treats all-seven-days without clocks as standing across the autumn extra hour", () => {
+    const e = finalEffect("1111111");
+    expect(e.validity?.periods).toBeUndefined();
+    expect(e.normalization).toBe("complete");
+    expect(effectStateAt(e, { status: "active" }, new Date("2026-10-25T22:30:00Z")).state).toBe(
+      "active",
+    );
+  });
   it("rejects overflowing truck threshold overrides", () => {
     expect(effect({ typ: "253", vz_1053_33: "9".repeat(400) }).normalization).toBe("unsupported");
   });

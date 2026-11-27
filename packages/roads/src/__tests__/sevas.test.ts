@@ -68,6 +68,31 @@ describe("SEVAS complete GML reader", () => {
     expect(parseSevasSnapshot(bad, SOURCE).records[0]?.disposition).toBe("unlocatable");
   });
   it.each([
+    [
+      "mixed geometry",
+      (s: string) =>
+        s.replace(
+          "</ms:msGeometry>",
+          "<gml:Point><gml:pos>51 8</gml:pos></gml:Point></ms:msGeometry>",
+        ),
+    ],
+    [
+      "foreign predicate",
+      (s: string) =>
+        s.replace(
+          "<ms:typ>253</ms:typ>",
+          '<ms:typ>253</ms:typ><other:restriction xmlns:other="https://example.test/foreign">weekends</other:restriction>',
+        ),
+    ],
+    [
+      "foreign member sibling",
+      (s: string) =>
+        s.replace("</wfs:member>", "<gml:Point><gml:pos>51 8</gml:pos></gml:Point></wfs:member>"),
+    ],
+  ] as const)("rejects %s instead of dropping semantic XML", (_name, mutate) => {
+    expect(() => parseSevasSnapshot(mutate(FIXTURE), SOURCE)).toThrow();
+  });
+  it.each([
     '<gml:posList srsDimension="2">bad coordinates</gml:posList>',
     '<gml:posList srsDimension="3">51 8 1 52 9 2</gml:posList>',
   ])("accounts unusable coordinate syntax as unlocatable: %s", (replacement) => {

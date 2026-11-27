@@ -211,5 +211,8 @@ function schedules(
     });
   }
   if (windows.length) return windows;
-  return byDay ? [{ repeatFrequency: "P1W", byDay, scheduleTimezone: "Europe/Berlin" }] : undefined;
+  // Calendar-day selectors without clocks would default to 24 elapsed hours,
+  // which over/undershoots Berlin's DST days. All seven days need no period.
+  if (byDay && byDay.length !== 7) unsupported();
+  return undefined;
 }

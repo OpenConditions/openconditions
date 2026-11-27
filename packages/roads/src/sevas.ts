@@ -1,3 +1,4 @@
+import { recordSkipped } from "@openconditions/ingest-framework";
 import { SaxesParser, type SaxesTagNS } from "saxes";
 import type { RoadEvent } from "./model.js";
 import { canonicalSnapshotValue, type RoadSnapshotReport } from "./snapshot.js";
@@ -45,6 +46,7 @@ export function parseSevasSnapshot(
   let dimension: string | undefined;
   let lineCount = 0;
   let posCount = 0;
+  let geometryCount = 0;
   const now = new Date().toISOString();
   const fail = (message: string): never => {
     throw new Error(`sevas: ${message}`);
@@ -98,6 +100,7 @@ export function parseSevasSnapshot(
       ) ||
       !coordinates.some((c) => c[0] !== coordinates[0]![0] || c[1] !== coordinates[0]![1])
     ) {
+      recordSkipped(src.id, "no_geometry", 1);
       report.records.push({ ...base, disposition: "unlocatable" });
       return;
     }
@@ -190,12 +193,46 @@ export function parseSevasSnapshot(
       dimension = undefined;
       lineCount = 0;
       posCount = 0;
+      geometryCount = 0;
     } else if (p && stack.length === 4 && tag.uri === MS && tag.local !== "msGeometry") {
       field = tag.local;
       if (Object.hasOwn(p, field) || Object.keys(p).length >= 100)
         fail("duplicate or excessive segment fields");
       value = "";
     } else if (field) fail("nested scalar field");
+    if (p && stack.length === 4) {
+      if (tag.uri === MS && tag.local === "msGeometry") {
+        if (++geometryCount > 1) fail("duplicate segment geometry");
+      } else if (tag.uri !== MS && !(tag.uri === GML && tag.local === "boundedBy")) {
+        fail("foreign segment child");
+      }
+    }
+    if (
+      parent?.uri === MS &&
+      parent.local === "msGeometry" &&
+      !(tag.uri === GML && tag.local === "LineString")
+    )
+      fail("unsupported or mixed segment geometry");
+    if (
+      parent?.uri === GML &&
+      parent.local === "LineString" &&
+      !(tag.uri === GML && tag.local === "posList")
+    )
+      fail("unexpected LineString child");
+    if (
+      [GML, WFS].includes(parent?.uri ?? "") &&
+      parent?.local === "boundedBy" &&
+      !(tag.uri === GML && tag.local === "Envelope")
+    )
+      fail("unexpected boundedBy child");
+    if (
+      parent?.uri === GML &&
+      parent.local === "Envelope" &&
+      !(tag.uri === GML && ["lowerCorner", "upperCorner"].includes(tag.local))
+    )
+      fail("unexpected envelope child");
+    if (parent?.uri === GML && ["posList", "lowerCorner", "upperCorner"].includes(parent.local))
+      fail("nested geometry coordinate");
     if (
       p &&
       parent?.local === "msGeometry" &&
@@ -203,7 +240,7 @@ export function parseSevasSnapshot(
       tag.uri === GML &&
       tag.local === "LineString"
     ) {
-      lineCount++;
+      if (++lineCount > 1) fail("multiple LineStrings");
       crs = attr(tag, "srsName");
     }
     if (
@@ -213,7 +250,7 @@ export function parseSevasSnapshot(
       tag.uri === GML &&
       tag.local === "posList"
     ) {
-      posCount++;
+      if (++posCount > 1) fail("multiple coordinate lists");
       dimension = attr(tag, "srsDimension") ?? attr(parent, "srsDimension");
     }
   });

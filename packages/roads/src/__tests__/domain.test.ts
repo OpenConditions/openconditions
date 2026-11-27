@@ -66,6 +66,7 @@ describe("roads formats", () => {
         "lta",
         "ohgo-events",
         "open511",
+        "sevas",
         "trafikverket",
         "vic-disruptions",
         "wa-webeoc",

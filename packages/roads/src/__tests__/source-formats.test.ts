@@ -7,9 +7,15 @@ import { SITUATION_FORMAT_CODES, situationParserOf } from "../parse.js";
 
 describe("road source formats", () => {
   it("declares a format for every parser", () => {
-    // Sign devices have dedicated feature formats.
+    // Sign devices and the native SEVAS canonical adapter have dedicated formats.
     expect(Object.keys(roadsDomain.formats).sort()).toEqual(
-      [...SITUATION_FORMAT_CODES, ...FLOW_FORMAT_CODES, "cars-signs", "caltrans-cms"].sort(),
+      [
+        ...SITUATION_FORMAT_CODES,
+        ...FLOW_FORMAT_CODES,
+        "cars-signs",
+        "caltrans-cms",
+        "sevas",
+      ].sort(),
     );
   });
 
