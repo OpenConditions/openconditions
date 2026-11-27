@@ -166,7 +166,7 @@ export function parseEvents(
       ).toISOString();
     }
   }
-  out.records = accountingOf(reconciled, source.id, members);
+  out.records = roadSnapshotAccounting(reconciled, source.id, members);
   return out;
 }
 
@@ -174,7 +174,7 @@ export function parseEvents(
  * A reconciled snapshot's counts, with the situations and ids of the records
  * it could not place, and how many accepted records each situation folds.
  */
-function accountingOf(
+export function roadSnapshotAccounting(
   snapshot: ReconciledRoadSnapshot,
   sourceId: string,
   members: ReadonlyMap<string, readonly string[]>,

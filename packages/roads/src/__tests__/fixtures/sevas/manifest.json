@@ -1,0 +1,21 @@
+{
+  "sourceUrl": "https://sevas.nrw.de/osm/sevas?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=ms%3Arestriktionen_segmente&COUNT=100000&SRSNAME=urn%3Aogc%3Adef%3Acrs%3AEPSG%3A%3A4326",
+  "capturedAt": "2026-11-27T00:01:55.903833+00:00",
+  "originalSha256": "4b322db21fd313fa867f51841fbf6c21e861e0e184a39c2b577abe66af882603",
+  "originalBytes": 88236588,
+  "originalMembers": 34829,
+  "fixtureSha256": "9c386bab5ce7f89af921fd494c396618c3dfdbcca547733163345edb60ed0068",
+  "license": "DL-DE-ZERO-2.0",
+  "rightsEvidence": [
+    "https://open.nrw/dataset/sevas___daten_zur_navigation_von_lkw_ab_3_5_tonnen_1580828998",
+    "https://www.mobilitaetsdaten.nrw/api/ckan/de/dataset/sevas-nrw"
+  ],
+  "reviewedAt": "2026-11-27",
+  "attribution": "NRW.Mobidrom / SEVAS",
+  "reductions": [
+    "Selected 14 actual source segments covering scoped signs, supplementary flags, geometry directions and schedules; source row values unchanged.",
+    "Re-serialized XML and reset root counts to the selected fixture size; discarded root extent and schemaLocation."
+  ],
+  "syntheticVariants": "Mutations are constructed explicitly in tests, never presented as source captures.",
+  "sourceResponseTimestamp": "2026-11-27T01:01:43"
+}

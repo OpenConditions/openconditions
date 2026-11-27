@@ -4,6 +4,12 @@ const point = { type: "Point", coordinates: [8.68, 50.11] };
 
 /** Samples of the roads event formats and the sign format. */
 export const SAMPLES: SkipSamples = {
+  "roads/sevas": {
+    reason: "no_geometry",
+    payloads: {
+      main: '<wfs:FeatureCollection xmlns:wfs="http://www.opengis.net/wfs/2.0" xmlns:ms="http://mapserver.gis.umn.edu/mapserver" numberMatched="1" numberReturned="1"><wfs:member><ms:restriktionen_segmente><ms:segment_id>1</ms:segment_id><ms:typ>265</ms:typ></ms:restriktionen_segmente></wfs:member></wfs:FeatureCollection>',
+    },
+  },
   "roads/wa-webeoc": {
     reason: "no_geometry",
     payloads: {

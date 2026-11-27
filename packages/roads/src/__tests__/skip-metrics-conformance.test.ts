@@ -97,11 +97,12 @@ const GEOMETRYLESS_SAMPLE: Record<string, string> = {
 };
 
 /**
- * Formats that legitimately need no instrumentation, with the reason. Empty
- * today — listed here so an exemption is a deliberate, reviewed entry rather
- * than a silent omission.
+ * Formats outside this legacy parser harness, with their direct format coverage.
  */
-const EXEMPT: Record<string, string> = {};
+const EXEMPT: Record<string, string> = {
+  sevas:
+    "Native FeedFormat.parse bypasses situationParserOf; ingest skip-reasons/roads-events.ts exercises its counted GML no_geometry reporting, and sevas-lifecycle.integration.test.ts proves known-ID last-good protection.",
+};
 
 const src = (id: string): SourceDescriptor => ({
   id,
