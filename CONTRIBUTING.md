@@ -29,6 +29,8 @@ covered by our [Code of Conduct](CODE_OF_CONDUCT.md).
   version / commit SHA).
 - **Documentation** — the README and per-service READMEs welcome improvements.
 
+For on-demand research into additional public catalog listings, use the [catalog discovery command](docs/feed-discovery.md). Its reports retain rights, access and overlap uncertainty for human review.
+
 ## Development setup
 
 Requirements:
